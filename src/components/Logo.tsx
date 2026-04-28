@@ -2,10 +2,11 @@ import { cn } from '@/lib/utils';
 import logo from '@/assets/taclink-logo.png';
 
 /**
- * The official TacLink mark — hexagonal badge with compass + crosshair,
- * pistol and knife. The mark already includes "TACLINK / FIND. BOOK. TRAIN."
- * lockup, so when `showTagline` is false we crop to just the hex badge by
- * showing only the upper portion of the artwork via aspect ratio.
+ * Official TacLink mark — hexagonal badge + stencil wordmark + tagline.
+ * The source artwork is black on white; we invert it for our dark theme.
+ *
+ * - `showTagline=false` (default): shows the hex badge only (top portion).
+ * - `showTagline=true`: shows the full lockup with TACLINK + FIND. BOOK. TRAIN.
  */
 export const Logo = ({
   size = 'md',
@@ -16,38 +17,35 @@ export const Logo = ({
   showTagline?: boolean;
   className?: string;
 }) => {
-  const heightClass = {
-    sm: 'h-6',
-    md: 'h-9',
-    lg: 'h-14',
-    xl: 'h-24',
-  }[size];
+  const dim = { sm: 24, md: 36, lg: 56, xl: 96 }[size];
 
-  // The full artwork is roughly square. If we don't want the wordmark + tagline
-  // we clip to the top ~62% which contains just the hex badge.
-  if (!showTagline) {
+  // Invert the black artwork to white so it reads on dark surfaces.
+  const invert: React.CSSProperties = { filter: 'invert(1)' };
+
+  if (showTagline) {
     return (
-      <div
-        className={cn(heightClass, 'aspect-square overflow-hidden', className)}
-        aria-label="TacLink"
-      >
-        <img
-          src={logo}
-          alt="TacLink"
-          className="h-[160%] w-auto object-contain object-top -mt-[2%] invert brightness-0 contrast-100"
-          style={{ filter: 'invert(72%) sepia(83%) saturate(1352%) hue-rotate(360deg) brightness(101%) contrast(95%)' }}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn('flex flex-col items-center', className)}>
       <img
         src={logo}
         alt="TacLink — Find. Book. Train."
-        className={cn(heightClass, 'w-auto object-contain')}
-        style={{ filter: 'invert(1)' }}
+        className={cn('w-auto object-contain', className)}
+        style={{ ...invert, height: dim * 2.4 }}
+      />
+    );
+  }
+
+  // Badge only: clip the lower wordmark by using a fixed-size square viewport
+  // and showing the top of the artwork.
+  return (
+    <div
+      aria-label="TacLink"
+      className={cn('overflow-hidden inline-block', className)}
+      style={{ width: dim, height: dim }}
+    >
+      <img
+        src={logo}
+        alt=""
+        className="block object-contain object-top w-full"
+        style={{ ...invert, height: dim * 1.6 }}
       />
     </div>
   );
