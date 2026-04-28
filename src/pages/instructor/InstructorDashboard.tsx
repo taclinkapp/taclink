@@ -23,16 +23,23 @@ const InstructorDashboard = () => {
     // Revenue per course: bookingFee × booked seats (maxStudents - spotsRemaining)
     const revenueRows = myCourses.map((c) => {
       const seats = Math.max(0, c.maxStudents - c.spotsRemaining);
+      const gross = seats * c.bookingFee;
+      const fee = Math.round(gross * 0.10 * 100) / 100; // 10% TacLink listing fee
+      const net = gross - fee;
       return {
         id: c.id,
         title: c.title,
         seats,
         unit: c.bookingFee,
-        total: seats * c.bookingFee,
+        gross,
+        fee,
+        total: net,
         date: c.date,
       };
     });
     const revenueTotal = revenueRows.reduce((s, r) => s + r.total, 0);
+    const revenueGross = revenueRows.reduce((s, r) => s + r.gross, 0);
+    const revenueFees = revenueRows.reduce((s, r) => s + r.fee, 0);
 
     // Students this month — group roster by their course (rotate across courses for variety)
     const studentRows = mockRoster.map((s, i) => ({
