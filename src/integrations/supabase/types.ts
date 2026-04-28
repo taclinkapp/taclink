@@ -459,6 +459,51 @@ export type Database = {
         }
         Relationships: []
       }
+      training_goals: {
+        Row: {
+          category: string | null
+          completed_at: string | null
+          completed_manually: boolean
+          created_at: string
+          deadline: string | null
+          description: string | null
+          goal_type: Database["public"]["Enums"]["training_goal_type"]
+          id: string
+          student_id: string
+          target_count: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          completed_at?: string | null
+          completed_manually?: boolean
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          goal_type?: Database["public"]["Enums"]["training_goal_type"]
+          id?: string
+          student_id: string
+          target_count?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          completed_at?: string | null
+          completed_manually?: boolean
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          goal_type?: Database["public"]["Enums"]["training_goal_type"]
+          id?: string
+          student_id?: string
+          target_count?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -499,6 +544,11 @@ export type Database = {
       booking_status: "reserved" | "attended" | "cancelled" | "no_show"
       support_message_sender: "user" | "ai" | "admin"
       support_ticket_status: "open" | "awaiting_human" | "resolved" | "closed"
+      training_goal_type:
+        | "course_count"
+        | "category_count"
+        | "specific_category"
+        | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -630,6 +680,12 @@ export const Constants = {
       booking_status: ["reserved", "attended", "cancelled", "no_show"],
       support_message_sender: ["user", "ai", "admin"],
       support_ticket_status: ["open", "awaiting_human", "resolved", "closed"],
+      training_goal_type: [
+        "course_count",
+        "category_count",
+        "specific_category",
+        "custom",
+      ],
     },
   },
 } as const
