@@ -13,24 +13,34 @@ export const StudentTabBar = () => {
   // Hide on certain routes
   if (pathname.includes('/booking-success') || pathname.includes('/checkout')) return null;
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-border">
-      <div className="max-w-md mx-auto grid grid-cols-3">
-        {tabs.map((t) => (
-          <NavLink
-            key={t.to}
-            to={t.to}
-            end={t.end}
-            className={({ isActive }) =>
-              cn(
-                'flex flex-col items-center gap-1 py-3 text-[10px] uppercase tracking-wider font-semibold transition-colors',
-                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-              )
-            }
-          >
-            <t.icon className="h-5 w-5" strokeWidth={2.25} />
-            {t.label}
-          </NavLink>
-        ))}
+    <nav className="fixed bottom-4 inset-x-0 z-40 px-4 pointer-events-none">
+      <div className="max-w-md mx-auto neu rounded-full pointer-events-auto">
+        <div className="grid grid-cols-3 px-2 py-2">
+          {tabs.map((t) => (
+            <NavLink
+              key={t.to}
+              to={t.to}
+              end={t.end}
+              className={({ isActive }) =>
+                cn(
+                  'flex flex-col items-center gap-1 py-2 rounded-full text-[10px] uppercase tracking-wider font-bold transition-all',
+                  isActive
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground',
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <span className={cn('h-9 w-9 rounded-full flex items-center justify-center', isActive ? 'neu-sm text-primary' : '')}>
+                    <t.icon className="h-4 w-4" strokeWidth={2.25} />
+                  </span>
+                  {t.label}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
       </div>
     </nav>
   );
