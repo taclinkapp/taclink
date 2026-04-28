@@ -22,7 +22,7 @@ const MyReviews = () => {
 
   return (
     <MobileShell>
-      <PageHeader title="My Reviews" back onBack={() => nav('/student')} />
+      <PageHeader title="My Reviews" />
       <div className="px-4 py-4 space-y-6 pb-32">
         {isLoading ? (
           <div className="text-center text-sm text-muted-foreground py-12">Loading…</div>
