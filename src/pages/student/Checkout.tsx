@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { computeFees, fmt } from '@/lib/fees';
 import { Link } from 'react-router-dom';
+import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 
 type Course = {
   id: string;
