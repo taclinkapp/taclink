@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
@@ -8,7 +8,39 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, User, Save } from 'lucide-react';
+import { Loader2, User, Save, Camera, Trash2, CheckCircle2, Circle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const PROFILE_BUCKET = 'profile-photos';
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
+const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+type RequirementKey =
+  | 'display_name'
+  | 'photo_url'
+  | 'phone'
+  | 'bio'
+  | 'state'
+  | 'service_city'
+  | 'service_state';
+
+type Requirement = { key: RequirementKey; label: string; check: (f: FormState) => boolean };
+
+const studentRequirements: Requirement[] = [
+  { key: 'display_name', label: 'Display name', check: (f) => f.display_name.trim().length >= 2 },
+  { key: 'photo_url', label: 'Profile photo', check: (f) => !!f.photo_url.trim() },
+  { key: 'state', label: 'Home state', check: (f) => !!f.state.trim() },
+  { key: 'bio', label: 'Short about you', check: (f) => f.bio.trim().length >= 10 },
+];
+
+const instructorRequirements: Requirement[] = [
+  { key: 'display_name', label: 'Display name', check: (f) => f.display_name.trim().length >= 2 },
+  { key: 'photo_url', label: 'Profile photo', check: (f) => !!f.photo_url.trim() },
+  { key: 'phone', label: 'Phone number', check: (f) => f.phone.trim().length >= 7 },
+  { key: 'bio', label: 'Bio (20+ chars)', check: (f) => f.bio.trim().length >= 20 },
+  { key: 'service_city', label: 'Service city', check: (f) => !!f.service_city.trim() },
+  { key: 'service_state', label: 'Service state', check: (f) => !!f.service_state.trim() },
+];
 
 const baseSchema = {
   display_name: z
