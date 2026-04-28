@@ -1,25 +1,32 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Crosshair, GraduationCap, Shield, ShieldCheck, X, Settings2 } from 'lucide-react';
+import { Crosshair, GraduationCap, Shield, ShieldCheck, X, Settings2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 /**
  * DevRoleSwitcher
  * --------------------------------------------------------------------------
- * Floating dev-only panel to jump straight into Student / Instructor / Admin
- * views, skipping splash + onboarding while building the prototype.
+ * DEV-ONLY floating panel to jump between Student / Instructor / Admin
+ * portals using real Supabase sessions, so RLS-protected data loads.
  *
- * - Visible ONLY when `import.meta.env.DEV` is true (stripped from prod builds).
- * - Stores a mock "logged in" user in localStorage so future auth-aware
- *   screens can pick up a role without a real session.
+ * Backed by seeded auth users (see migration 20260428170000_dev_seed_users.sql):
+ *   student@dev.taclink.local
+ *   instructor@dev.taclink.local
+ *   admin@dev.taclink.local
+ *   password: DevPass123!
+ *
+ * Visible ONLY when `import.meta.env.DEV` is true (stripped from prod builds).
+ * Remove before shipping to production.
  */
 
 type Role = 'student' | 'instructor' | 'admin';
 
-const mockUsers: Record<Role, { id: string; name: string; role: Role; email: string }> = {
-  student: { id: 'dev-student', name: 'Dev Student', role: 'student', email: 'student@dev.local' },
-  instructor: { id: 'dev-instructor', name: 'Dev Instructor', role: 'instructor', email: 'instructor@dev.local' },
-  admin: { id: 'dev-admin', name: 'Dev Admin', role: 'admin', email: 'admin@dev.local' },
+const credentials: Record<Role, { email: string; password: string }> = {
+  student: { email: 'student@dev.taclink.local', password: 'DevPass123!' },
+  instructor: { email: 'instructor@dev.taclink.local', password: 'DevPass123!' },
+  admin: { email: 'admin@dev.taclink.local', password: 'DevPass123!' },
 };
 
 const destinations: Record<Role, string> = {
@@ -33,14 +40,38 @@ export const DevRoleSwitcher = () => {
 
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState<Role | null>(null);
 
-  const enter = (role: Role) => {
-    localStorage.setItem('taclink:devUser', JSON.stringify(mockUsers[role]));
-    navigate(destinations[role]);
-    setOpen(false);
+  const enter = async (role: Role) => {
+    if (busy) return;
+    setBusy(role);
+    try {
+      // Sign out any existing session first so role/profile state refreshes cleanly
+      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signInWithPassword(credentials[role]);
+      if (error) {
+        toast.error(`Dev sign-in failed: ${error.message}`);
+        return;
+      }
+      // Keep legacy localStorage shim so messaging fallback still resolves a name
+      localStorage.setItem(
+        'taclink:devUser',
+        JSON.stringify({
+          id: `dev-${role}`,
+          name: `Dev ${role[0].toUpperCase()}${role.slice(1)}`,
+          role,
+          email: credentials[role].email,
+        }),
+      );
+      navigate(destinations[role]);
+      setOpen(false);
+    } finally {
+      setBusy(null);
+    }
   };
 
-  const clear = () => {
+  const clear = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem('taclink:devUser');
     navigate('/');
     setOpen(false);
@@ -64,16 +95,31 @@ export const DevRoleSwitcher = () => {
             </button>
           </div>
 
-          <RoleButton icon={GraduationCap} label="Enter as Student" onClick={() => enter('student')} />
-          <RoleButton icon={Shield} label="Enter as Instructor" onClick={() => enter('instructor')} />
-          <RoleButton icon={ShieldCheck} label="Enter as Admin" onClick={() => enter('admin')} />
+          <RoleButton
+            icon={GraduationCap}
+            label="Enter as Student"
+            loading={busy === 'student'}
+            onClick={() => enter('student')}
+          />
+          <RoleButton
+            icon={Shield}
+            label="Enter as Instructor"
+            loading={busy === 'instructor'}
+            onClick={() => enter('instructor')}
+          />
+          <RoleButton
+            icon={ShieldCheck}
+            label="Enter as Admin"
+            loading={busy === 'admin'}
+            onClick={() => enter('admin')}
+          />
 
           <button
             type="button"
             onClick={clear}
             className="w-full text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground hover:text-destructive py-2"
           >
-            Reset & back to splash
+            Sign out & back to splash
           </button>
         </div>
       ) : (
@@ -96,18 +142,21 @@ export const DevRoleSwitcher = () => {
 const RoleButton = ({
   icon: Icon,
   label,
+  loading,
   onClick,
 }: {
   icon: typeof Crosshair;
   label: string;
+  loading?: boolean;
   onClick: () => void;
 }) => (
   <button
     type="button"
     onClick={onClick}
-    className="w-full neu-sm flex items-center gap-3 px-3 h-11 rounded-xl text-sm font-bold text-foreground hover:text-primary transition-colors"
+    disabled={loading}
+    className="w-full neu-sm flex items-center gap-3 px-3 h-11 rounded-xl text-sm font-bold text-foreground hover:text-primary transition-colors disabled:opacity-60"
   >
-    <Icon className="h-4 w-4 text-primary" />
+    {loading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Icon className="h-4 w-4 text-primary" />}
     {label}
   </button>
 );
