@@ -27,7 +27,7 @@ const InstructorSettings = () => {
       <div className="px-4 py-4 space-y-6">
         <Section title="Account">
           <Row label="Edit Profile" onClick={() => nav('/profile/edit')} />
-          <Row label="Payout Settings (Stripe Connect)" />
+          
           <button onClick={() => nav('/instructor/listing-packs')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
             <span className="text-sm font-medium flex items-center gap-2"><Package className="h-4 w-4 text-primary" />Listing Packs</span>
             <span className="text-xs text-primary font-bold">7 credits</span>
