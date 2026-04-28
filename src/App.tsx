@@ -49,6 +49,8 @@ import { AdminUsers, AdminInstructors } from "./pages/admin/AdminUsers";
 import { AdminCourses, AdminWaitlist, AdminActivity, AdminSettings } from "./pages/admin/AdminCourses";
 import { AdminReports } from "./pages/admin/AdminReports";
 import { AdminSupportTickets } from "./pages/admin/AdminSupportTickets";
+import { AdminConversations } from "./pages/admin/AdminConversations";
+import { AdminConversationDetail } from "./pages/admin/AdminConversationDetail";
 import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -117,6 +119,8 @@ const App = () => (
               <Route path="waitlist" element={<AdminWaitlist />} />
               <Route path="reports" element={<AdminReports />} />
               <Route path="support" element={<AdminSupportTickets />} />
+              <Route path="conversations" element={<AdminConversations />} />
+              <Route path="conversations/:id" element={<AdminConversationDetail />} />
               <Route path="activity" element={<AdminActivity />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
