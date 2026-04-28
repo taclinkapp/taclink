@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Star, Sparkles, Loader2, Pencil, Calendar, ImagePlus, X } from 'lucide-react';
+import { StudentTabBar } from '@/components/StudentTabBar';
 import { useReviewableCourses, type ReviewableBooking } from '@/hooks/useReviewableCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,6 +55,7 @@ const MyReviews = () => {
           onClose={() => setEditing(null)}
         />
       )}
+      <StudentTabBar />
     </MobileShell>
   );
 };
