@@ -42,6 +42,23 @@ const InstructorRoster = () => {
   const [rows, setRows] = useState<RosterRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<typeof filters[number]>('Upcoming');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const updateStatus = async (bookingId: string, next: BookingStatus) => {
+    setUpdatingId(bookingId);
+    const prev = rows;
+    setRows((rs) => rs.map((r) => (r.bookingId === bookingId ? { ...r, status: next } : r)));
+    const patch: Record<string, any> = { status: next };
+    patch.attended_at = next === 'attended' ? new Date().toISOString() : null;
+    const { error } = await supabase.from('bookings').update(patch).eq('id', bookingId);
+    setUpdatingId(null);
+    if (error) {
+      setRows(prev);
+      toast.error('Could not update status', { description: error.message });
+    } else {
+      toast.success(`Marked as ${next.replace('_', ' ')}`);
+    }
+  };
 
   useEffect(() => {
     if (!user?.id) return;
@@ -177,34 +194,79 @@ const InstructorRoster = () => {
               <ul className="divide-y divide-border">
                 {group.rows.map((r) => {
                   const Icon = statusIcon[r.status] ?? Clock;
+                  const busy = updatingId === r.bookingId;
                   return (
-                    <li key={r.bookingId} className="px-4 py-3 flex items-center gap-3">
-                      {r.studentPhoto ? (
-                        <img
-                          src={r.studentPhoto}
-                          alt={r.studentName}
-                          className="h-9 w-9 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                          {r.studentName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{r.studentName}</div>
-                        <div className="text-[11px] text-muted-foreground">
-                          Booked {new Date(r.bookedAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider',
-                          statusStyles[r.status] ?? statusStyles.reserved,
+                    <li key={r.bookingId} className="px-4 py-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        {r.studentPhoto ? (
+                          <img
+                            src={r.studentPhoto}
+                            alt={r.studentName}
+                            className="h-9 w-9 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                            {r.studentName.charAt(0).toUpperCase()}
+                          </div>
                         )}
-                      >
-                        <Icon className="h-3 w-3" />
-                        {r.status.replace('_', ' ')}
-                      </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{r.studentName}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Booked {new Date(r.bookedAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider',
+                            statusStyles[r.status] ?? statusStyles.reserved,
+                          )}
+                        >
+                          <Icon className="h-3 w-3" />
+                          {r.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pl-12">
+                        {r.status !== 'attended' && (
+                          <button
+                            disabled={busy}
+                            onClick={() => updateStatus(r.bookingId, 'attended')}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 text-[11px] font-bold uppercase tracking-wider hover:bg-emerald-500/20 disabled:opacity-50"
+                          >
+                            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                            Attended
+                          </button>
+                        )}
+                        {r.status !== 'no_show' && (
+                          <button
+                            disabled={busy}
+                            onClick={() => updateStatus(r.bookingId, 'no_show')}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-destructive/40 bg-destructive/10 text-destructive text-[11px] font-bold uppercase tracking-wider hover:bg-destructive/20 disabled:opacity-50"
+                          >
+                            <XCircle className="h-3 w-3" />
+                            No-show
+                          </button>
+                        )}
+                        {r.status !== 'cancelled' && (
+                          <button
+                            disabled={busy}
+                            onClick={() => updateStatus(r.bookingId, 'cancelled')}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-border bg-muted text-muted-foreground text-[11px] font-bold uppercase tracking-wider hover:bg-muted/70 disabled:opacity-50"
+                          >
+                            <XCircle className="h-3 w-3" />
+                            Cancel
+                          </button>
+                        )}
+                        {r.status !== 'reserved' && (
+                          <button
+                            disabled={busy}
+                            onClick={() => updateStatus(r.bookingId, 'reserved')}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-border bg-card text-muted-foreground text-[11px] font-bold uppercase tracking-wider hover:bg-muted disabled:opacity-50"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            Reset
+                          </button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
