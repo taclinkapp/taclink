@@ -176,6 +176,8 @@ const InstructorRoster = () => {
       const startMs = r.startsAt ? new Date(r.startsAt).getTime() : 0;
       if (tab === 'Upcoming')
         return r.status === 'reserved' && (!startMs || startMs >= now);
+      if (tab === 'Deposits')
+        return r.status !== 'cancelled' && r.depositStatus === 'awaiting_confirmation';
       if (tab === 'Attended') return r.status === 'attended';
       if (tab === 'Cancelled') return r.status === 'cancelled';
       if (tab === 'No-show') return r.status === 'no_show';
@@ -184,10 +186,11 @@ const InstructorRoster = () => {
   }, [rows, tab, now]);
 
   const counts = useMemo(() => {
-    const c = { Upcoming: 0, Attended: 0, Cancelled: 0, 'No-show': 0, All: rows.length };
+    const c = { Upcoming: 0, Deposits: 0, Attended: 0, Cancelled: 0, 'No-show': 0, All: rows.length };
     rows.forEach((r) => {
       const startMs = r.startsAt ? new Date(r.startsAt).getTime() : 0;
       if (r.status === 'reserved' && (!startMs || startMs >= now)) c.Upcoming++;
+      if (r.status !== 'cancelled' && r.depositStatus === 'awaiting_confirmation') c.Deposits++;
       if (r.status === 'attended') c.Attended++;
       if (r.status === 'cancelled') c.Cancelled++;
       if (r.status === 'no_show') c['No-show']++;
