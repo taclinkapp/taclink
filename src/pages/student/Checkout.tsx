@@ -91,15 +91,37 @@ const Checkout = () => {
     if (!course) return;
     setSubmitting(true);
     try {
-      // 1) Create the booking
+      // 1) Create the booking with fee snapshot
       const { data: booking, error: bErr } = await supabase
         .from('bookings')
-        .insert({ student_id: user.id, course_id: course.id, status: 'reserved' })
+        .insert({
+          student_id: user.id,
+          course_id: course.id,
+          status: 'reserved',
+          course_price_cents: fees.coursePriceCents,
+          platform_fee_cents: fees.platformFeeCents,
+          instructor_deposit_cents: fees.instructorDepositCents,
+          due_in_person_cents: fees.dueInPersonCents,
+          online_total_cents: fees.onlineTotalCents,
+        })
         .select('id')
         .single();
       if (bErr) throw bErr;
 
-      // 2) If a published waiver exists, store the signature. Roll back booking on failure.
+      // 2) Ledger entry for AI insights / instructor reporting
+      await supabase.from('booking_fees').insert({
+        booking_id: booking.id,
+        course_id: course.id,
+        student_id: user.id,
+        instructor_id: course.instructor_id,
+        course_price_cents: fees.coursePriceCents,
+        platform_fee_cents: fees.platformFeeCents,
+        instructor_deposit_cents: fees.instructorDepositCents,
+        due_in_person_cents: fees.dueInPersonCents,
+        online_total_cents: fees.onlineTotalCents,
+      });
+
+      // 3) If a published waiver exists, store the signature. Roll back on failure.
       if (waiver) {
         const { error: sErr } = await supabase.from('waiver_signatures').insert({
           booking_id: booking.id,
@@ -112,7 +134,6 @@ const Checkout = () => {
           user_agent: navigator.userAgent,
         });
         if (sErr) {
-          // Roll back the booking so we never have a booking without the required signature
           await supabase.from('bookings').delete().eq('id', booking.id);
           throw sErr;
         }
