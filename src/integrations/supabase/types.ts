@@ -172,6 +172,54 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_submissions: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          created_at: string
+          id: string
+          message: string
+          page_url: string | null
+          status: string
+          subject: string
+          submitter_email: string | null
+          submitter_name: string | null
+          submitter_role: string | null
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          message: string
+          page_url?: string | null
+          status?: string
+          subject: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+          submitter_role?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          page_url?: string | null
+          status?: string
+          subject?: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+          submitter_role?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       issue_reports: {
         Row: {
           admin_notes: string | null

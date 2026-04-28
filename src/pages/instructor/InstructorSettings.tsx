@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, LogOut, Trash2, Package, Bug, LifeBuoy, MessageSquare } from 'lucide-react';
+import { ChevronRight, LogOut, Trash2, Package, Bug, LifeBuoy, MessageSquare, Sparkles } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
+import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -11,6 +12,7 @@ const InstructorSettings = () => {
   const nav = useNavigate();
   const { signOut } = useAuth();
   const [reportOpen, setReportOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -49,6 +51,10 @@ const InstructorSettings = () => {
             <span className="text-sm font-medium flex items-center gap-2"><Bug className="h-4 w-4 text-primary" />Report an Issue</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
+          <button onClick={() => setFeedbackOpen(true)} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
+            <span className="text-sm font-medium flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" />Send Feedback</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
         </Section>
         <Section title="Legal">
           <Row label="Privacy Policy" />
@@ -64,6 +70,7 @@ const InstructorSettings = () => {
         </div>
       </div>
       <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </MobileShell>
   );
 };
