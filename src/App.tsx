@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "./pages/NotFound.tsx";
+import Notifications from "./pages/Notifications";
 
 import Splash from "./pages/Splash";
 import SignIn from "./pages/auth/SignIn";
@@ -95,6 +96,8 @@ const App = () => (
             <Route path="activity" element={<AdminActivity />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
+
+          <Route path="/notifications" element={<Notifications />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
