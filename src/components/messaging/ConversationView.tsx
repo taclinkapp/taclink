@@ -141,9 +141,30 @@ export const ConversationView = ({ variant }: Props) => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length]);
 
+  const draftDetections = useMemo(() => detectContactInfo(draft), [draft]);
+  const draftBlocked = draftDetections.length > 0;
+
   const handleSend = async () => {
     const body = draft.trim();
     if (!body || !conversation || !user || sending) return;
+
+    if (draftBlocked) {
+      toast.error('Message blocked', {
+        description:
+          'Your message contains contact info. All transactions must go through TacLink.',
+      });
+      logBypassAttempt({
+        userId: user.id,
+        userRole: variant,
+        fieldName: 'message_body',
+        originalContent: body,
+        detections: draftDetections,
+        actionTaken: 'blocked',
+        context: { conversation_id: conversation.id },
+      });
+      return;
+    }
+
     setSending(true);
     setDraft("");
     try {
