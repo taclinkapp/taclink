@@ -114,6 +114,7 @@ const App = () => (
             <Route path="/instructor/messages/:id" element={<Instructor><InstructorConversation /></Instructor>} />
             <Route path="/instructor/credentials" element={<Instructor><InstructorCredentials /></Instructor>} />
             <Route path="/instructor/roster" element={<Instructor><InstructorRoster /></Instructor>} />
+            <Route path="/instructor/reviews" element={<Instructor><InstructorReviews /></Instructor>} />
 
             {/* Admin */}
             <Route path="/admin/login" element={<AdminLogin />} />
