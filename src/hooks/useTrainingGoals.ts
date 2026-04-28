@@ -69,6 +69,12 @@ export const useTrainingGoals = () => {
       isComplete = g.completed_manually;
     }
 
+    // Manual checkbox override — applies to any goal type.
+    if (g.completed_manually) {
+      isComplete = true;
+      current = Math.max(current, g.target_count);
+    }
+
     const percent = Math.min(100, Math.round((current / g.target_count) * 100));
     return { ...g, current, isComplete, percent };
   };
