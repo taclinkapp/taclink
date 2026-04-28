@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, User, Save, Camera, Trash2, CheckCircle2, Circle } from 'lucide-react';
+import { Loader2, User, Save, Camera, Trash2, CheckCircle2, Circle, AlertTriangle, RotateCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const PROFILE_BUCKET = 'profile-photos';
@@ -153,6 +153,10 @@ const EditProfile = () => {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [lastFile, setLastFile] = useState<File | null>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
   const requirements = isInstructor ? instructorRequirements : studentRequirements;
   const completed = useMemo(() => requirements.filter((r) => r.check(form)).length, [requirements, form]);
@@ -161,6 +165,49 @@ const EditProfile = () => {
   const update = (k: keyof FormState, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
     if (errors[k]) setErrors((e) => ({ ...e, [k]: undefined }));
+  };
+
+  const uploadWithProgress = (file: File): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+      if (!user?.id) return reject(new Error('Not signed in'));
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(PROFILE_BUCKET)
+        .createSignedUploadUrl(path);
+      if (signErr || !signed) return reject(new Error(signErr?.message || 'Could not prepare upload'));
+
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
+      xhr.open('PUT', signed.signedUrl, true);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.setRequestHeader('x-upsert', 'false');
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        xhrRef.current = null;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const { data: pub } = supabase.storage.from(PROFILE_BUCKET).getPublicUrl(path);
+          update('photo_url', pub.publicUrl);
+          resolve();
+        } else {
+          reject(new Error(`Upload failed (${xhr.status})`));
+        }
+      };
+      xhr.onerror = () => {
+        xhrRef.current = null;
+        reject(new Error('Network error during upload'));
+      };
+      xhr.onabort = () => {
+        xhrRef.current = null;
+        reject(new Error('Upload cancelled'));
+      };
+      xhr.send(file);
+    });
   };
 
   const handlePhotoFile = async (file: File) => {
@@ -173,25 +220,35 @@ const EditProfile = () => {
       toast.error('Photo must be 5MB or smaller');
       return;
     }
+    setLastFile(file);
+    setUploadError(null);
+    setUploadProgress(0);
     setUploading(true);
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from(PROFILE_BUCKET)
-      .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
-    if (error) {
+    try {
+      await uploadWithProgress(file);
       setUploading(false);
-      toast.error('Could not upload photo', { description: error.message });
-      return;
+      setUploadProgress(100);
+      toast.success('Photo uploaded — remember to save');
+    } catch (err: any) {
+      setUploading(false);
+      setUploadError(err?.message || 'Upload failed');
+      toast.error('Photo upload failed', { description: err?.message });
     }
-    const { data: pub } = supabase.storage.from(PROFILE_BUCKET).getPublicUrl(path);
-    setUploading(false);
-    update('photo_url', pub.publicUrl);
-    toast.success('Photo uploaded — remember to save');
+  };
+
+  const retryUpload = () => {
+    if (lastFile) handlePhotoFile(lastFile);
+  };
+
+  const cancelUpload = () => {
+    xhrRef.current?.abort();
   };
 
   const removePhoto = () => {
     update('photo_url', '');
+    setUploadError(null);
+    setUploadProgress(0);
+    setLastFile(null);
     toast.message('Photo removed — remember to save');
   };
 
@@ -301,7 +358,47 @@ const EditProfile = () => {
                     )}
                     {form.photo_url ? 'Replace photo' : 'Upload photo'}
                   </button>
-                  {form.photo_url && (
+
+                  {uploading && (
+                    <div className="space-y-1.5">
+                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full bg-primary transition-all duration-200"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                        <span>Uploading… {uploadProgress}%</span>
+                        <button
+                          type="button"
+                          onClick={cancelUpload}
+                          className="inline-flex items-center gap-1 text-destructive hover:underline"
+                        >
+                          <X className="h-3 w-3" /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {uploadError && !uploading && (
+                    <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 space-y-2">
+                      <div className="flex items-start gap-1.5 text-[11px] text-destructive">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        <span className="font-bold">{uploadError}</span>
+                      </div>
+                      {lastFile && (
+                        <button
+                          type="button"
+                          onClick={retryUpload}
+                          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-[11px] font-bold uppercase tracking-wider hover:opacity-90"
+                        >
+                          <RotateCw className="h-3 w-3" /> Retry upload
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {form.photo_url && !uploading && (
                     <button
                       type="button"
                       onClick={removePhoto}
