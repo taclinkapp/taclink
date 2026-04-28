@@ -369,6 +369,29 @@ const NewCourse = () => {
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3 ? 'Continue' : 'Publish Course'}
           </Button>
         </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={saveDraftNow}
+            disabled={saving}
+            className="flex-1 h-11 bg-card border-border font-semibold"
+          >
+            <Save className="h-4 w-4 mr-1.5" /> Save Draft
+          </Button>
+          {lastSavedAt && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={clearDraft}
+              disabled={saving}
+              className="h-11 px-3 text-destructive hover:bg-destructive/10 font-semibold"
+              aria-label="Clear draft"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </MobileShell>
   );
