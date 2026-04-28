@@ -1,0 +1,2 @@
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS skill_level text NOT NULL DEFAULT 'all_levels';
+ALTER TABLE public.courses ADD CONSTRAINT courses_skill_level_check CHECK (skill_level IN ('beginner','intermediate','advanced','all_levels'));
