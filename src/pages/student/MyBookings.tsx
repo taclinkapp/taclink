@@ -7,6 +7,7 @@ import { CategoryPill } from '@/components/CategoryPill';
 import { QrCode, Calendar, MapPin, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
+import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 
 const MyBookings = () => {
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -15,7 +16,8 @@ const MyBookings = () => {
   return (
     <MobileShell>
       <PageHeader title="My Bookings" />
-      <div className="px-4 pt-3">
+      <div className="px-4 pt-3 space-y-3">
+        <HowPaymentsWorkCard audience="student" />
         <div className="flex bg-card border border-border rounded-sm p-0.5">
           {(['upcoming', 'past'] as const).map((t) => (
             <button

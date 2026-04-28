@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { computeFees, fmt } from '@/lib/fees';
 import { Link } from 'react-router-dom';
+import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 
 type Course = {
   id: string;
@@ -192,6 +193,8 @@ const Checkout = () => {
             {course.city ? ` · ${course.city}` : ''}{course.state ? `, ${course.state}` : ''}
           </div>
         </div>
+
+        <HowPaymentsWorkCard audience="student" />
 
         {/* Price breakdown — checkout shows full math */}
         <div className="tactical-card p-4">
