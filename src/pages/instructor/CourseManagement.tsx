@@ -24,6 +24,46 @@ const CourseManagement = () => {
   const { data: course, isLoading } = useCourse(id);
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
   const [showReceipt, setShowReceipt] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [autoCheckin, setAutoCheckin] = useState(false);
+  const qc = useQueryClient();
+
+  // Real bookings on this course (used for check-in list + auto check-in pool)
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['course_bookings', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('id, status, student_id, attended_at')
+        .eq('course_id', id as string);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  const markAttended = async (bookingId: string, opts?: { source: 'qr' | 'proximity' }) => {
+    const existing = bookings.find((b: any) => b.id === bookingId);
+    if (!existing) {
+      toast.error('That QR is not for this course.');
+      return;
+    }
+    if (existing.status === 'attended') {
+      toast.info('Already checked in.');
+      return;
+    }
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: 'attended', attended_at: new Date().toISOString() })
+      .eq('id', bookingId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(opts?.source === 'proximity' ? 'Auto check-in (proximity)' : 'Checked in');
+    qc.invalidateQueries({ queryKey: ['course_bookings', id] });
+  };
+
 
   const { data: listingCharge } = useQuery({
     queryKey: ['instructor_charge', id],
