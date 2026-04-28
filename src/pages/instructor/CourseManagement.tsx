@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
-import { mockCourses, mockRoster, mockWaitlist } from '@/lib/mockData';
+import { mockRoster, mockWaitlist } from '@/lib/mockData';
+import { useCourse } from '@/hooks/useCourses';
 import { cn } from '@/lib/utils';
 import { Check, X, Bell, QrCode } from 'lucide-react';
 
@@ -9,8 +10,21 @@ const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
 const CourseManagement = () => {
   const { id } = useParams();
-  const c = mockCourses.find((x) => x.id === id) ?? mockCourses[0];
+  const { data: course, isLoading } = useCourse(id);
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
+
+  if (isLoading || !course) {
+    return (
+      <MobileShell withTabBar={false}>
+        <PageHeader title="Course" back />
+        <div className="px-4 py-12 text-center text-muted-foreground text-sm">
+          {isLoading ? 'Loading…' : 'Course not found.'}
+        </div>
+      </MobileShell>
+    );
+  }
+
+  const c = course;
   const enrolled = c.maxStudents - c.spotsRemaining;
   const checkedIn = mockRoster.filter((s) => s.checkedIn).length;
 
