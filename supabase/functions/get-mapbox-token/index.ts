@@ -1,6 +1,5 @@
-// Returns the Mapbox public token to authenticated browsers.
-// Token is publishable (pk.*) and meant to be exposed; URL restrictions on
-// the Mapbox dashboard are the real security boundary.
+// Returns the Mapbox public token to the browser.
+// Token is publishable (pk.*) — secured via URL restrictions in the Mapbox dashboard.
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -12,10 +11,22 @@ Deno.serve((req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const token = Deno.env.get("MAPBOX_PUBLIC_TOKEN");
+  const token =
+    Deno.env.get("MAPBOX_PUBLIC_TOKEN") ??
+    Deno.env.get("MAPBOX_TOKEN") ??
+    "";
+
   if (!token) {
+    // Log available env keys (names only, no values) to help diagnose
+    const available = Object.keys(Deno.env.toObject()).filter((k) =>
+      k.toUpperCase().includes("MAPBOX"),
+    );
+    console.error("Mapbox token missing. MAPBOX_* keys present:", available);
     return new Response(
-      JSON.stringify({ error: "MAPBOX_PUBLIC_TOKEN not configured" }),
+      JSON.stringify({
+        error: "MAPBOX_PUBLIC_TOKEN not configured",
+        hint: "Secret may not have propagated yet. Redeploy or wait ~30s.",
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
