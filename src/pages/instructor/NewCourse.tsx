@@ -44,7 +44,7 @@ const NewCourse = () => {
   // form state
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
-  const [skillLevel, setSkillLevel] = useState<SkillLevel>('all_levels');
+  const [skillLevel, setSkillLevel] = useState<SkillLevel | ''>('');
   const [description, setDescription] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -141,7 +141,7 @@ const NewCourse = () => {
     localStorage.removeItem(DRAFT_KEY);
     setLastSavedAt(null);
     setDraftStatus('idle');
-    setTitle(''); setCategory(''); setSkillLevel('all_levels'); setDescription('');
+    setTitle(''); setCategory(''); setSkillLevel(''); setDescription('');
     setDate(''); setStartTime(''); setEndTime('');
     setAddress(''); setCity(''); setState('');
     setCapacity(''); setPrice('');
@@ -173,6 +173,7 @@ const NewCourse = () => {
     if (step === 0) {
       if (!title.trim()) return 'Title is required';
       if (!category) return 'Category is required';
+      if (!skillLevel) return 'Please select a skill level before continuing';
       const titleHits = detectContactInfo(title);
       const descHits = detectContactInfo(description);
       if (titleHits.length || descHits.length) {
@@ -192,6 +193,7 @@ const NewCourse = () => {
       if (!price || Number(price) < 5) return 'Price must be at least $5';
     }
     if (step === 3) {
+      if (!skillLevel) return 'Skill level is required — go back to Basics and pick a level';
       if (!feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
     }
     return null;
@@ -227,7 +229,7 @@ const NewCourse = () => {
         title: title.trim(),
         description: description.trim() || undefined,
         category,
-        skill_level: skillLevel,
+        skill_level: skillLevel as SkillLevel,
         price_cents: Math.round(Number(price) * 100),
         duration_minutes: durationMin,
         capacity: Number(capacity),
@@ -342,9 +344,9 @@ const NewCourse = () => {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Skill Level">
+            <Field label="Skill Level *">
               <Select value={skillLevel} onValueChange={(v) => setSkillLevel(v as SkillLevel)}>
-                <SelectTrigger className="bg-card border-border h-11"><SelectValue placeholder="Select level" /></SelectTrigger>
+                <SelectTrigger className={cn('bg-card border-border h-11', !skillLevel && 'border-destructive/60')}><SelectValue placeholder="Select level (required)" /></SelectTrigger>
                 <SelectContent className="bg-card border-border">
                   {(Object.keys(SKILL_LEVEL_LABELS) as SkillLevel[]).map((lv) => (
                     <SelectItem key={lv} value={lv}>{SKILL_LEVEL_LABELS[lv]}</SelectItem>
