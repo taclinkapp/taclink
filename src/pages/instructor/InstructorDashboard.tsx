@@ -27,7 +27,7 @@ const InstructorDashboard = () => {
             to="/instructor/courses/new"
             className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider hover:bg-primary/90 transition"
           >
-            <Plus className="h-4 w-4" /> Create
+            <Plus className="h-4 w-4" /> Create Course
           </Link>
         </div>
 

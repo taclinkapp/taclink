@@ -26,7 +26,7 @@ const StudentSettings = () => {
       <div className="px-4 py-4 space-y-6">
         <Section title="Account">
           <Row label="Edit Profile" onClick={() => nav('/profile/edit')} />
-          <Row label="Payment Methods" />
+          <Row label="Payment Methods" onClick={() => nav('/student/payment-methods')} />
         </Section>
 
         <Section title="Notifications">
