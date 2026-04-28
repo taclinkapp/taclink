@@ -82,6 +82,29 @@ const CourseManagement = () => {
     enabled: !!id,
   });
 
+  // AI proximity engine — watches GPS, smooths noise, fires once near the venue.
+  const target = course?.lat && course?.lng ? { lat: course.lat, lng: course.lng } : null;
+  const proximity = useProximity({
+    target,
+    triggerMeters: PROXIMITY_TRIGGER_METERS,
+    enabled: autoCheckin,
+    onTrigger: () => {
+      // Auto check-in the next reserved booking (demo behavior — instructor-side
+      // can't know which student walked in, so we mark the first reserved seat).
+      const next = bookings.find((b: any) => b.status === 'reserved');
+      if (next) markAttended(next.id, { source: 'proximity' });
+      else toast.info('All students already checked in.');
+      setAutoCheckin(false);
+    },
+  });
+
+  useEffect(() => {
+    if (autoCheckin && target) proximity.start();
+    else proximity.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCheckin, target?.lat, target?.lng]);
+
+
   if (isLoading || !course) {
     return (
       <MobileShell withTabBar={false}>
