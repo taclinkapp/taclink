@@ -65,6 +65,7 @@ const InstructorSettings = () => {
           <Row label="Privacy Policy" onClick={() => nav('/legal/privacy')} />
           <Row label="Terms of Service" onClick={() => nav('/legal/terms')} />
         </Section>
+        <LegalAcceptanceCard />
         <div className="pt-4 space-y-2">
           <button onClick={handleSignOut} className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive font-bold text-sm hover:bg-destructive/10">
             <LogOut className="h-4 w-4" /> Sign Out
