@@ -92,11 +92,9 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
             <div className="flex gap-2">
               <Lock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
               <p>
-                <span className="font-bold">All bookings and communication stay on TacLink.</span>{" "}
-                Course payments are handled directly between you and the instructor
-                outside the app — but the booking itself must be made on TacLink.
-                Sharing phone numbers, emails, or social handles to arrange training
-                off-platform is not allowed.
+                <span className="font-bold">Bookings and messages stay on TacLink.</span>{" "}
+                Payment is handled directly with your instructor off-app, but don't
+                share contact info to arrange training off-platform.
               </p>
             </div>
             <div className="flex gap-2">
