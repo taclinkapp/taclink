@@ -25,6 +25,8 @@ export type Course = {
   prerequisites: string;
   equipment: string;
   status: 'active' | 'draft' | 'full' | 'past';
+  lat: number;
+  lng: number;
 };
 
 export const mockCourses: Course[] = [
