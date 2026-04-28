@@ -44,6 +44,7 @@ const NewCourse = () => {
   // form state
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
+  const [skillLevel, setSkillLevel] = useState<SkillLevel>('all_levels');
   const [description, setDescription] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
