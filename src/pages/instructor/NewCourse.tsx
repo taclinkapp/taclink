@@ -397,9 +397,12 @@ const NewCourse = () => {
   );
 };
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const Field = ({ label, children, action }: { label: string; children: React.ReactNode; action?: React.ReactNode }) => (
   <div>
-    <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
+    <div className="flex items-center justify-between gap-2">
+      <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
+      {action}
+    </div>
     <div className="mt-1.5">{children}</div>
   </div>
 );
