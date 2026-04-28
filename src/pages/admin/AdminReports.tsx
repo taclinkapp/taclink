@@ -123,7 +123,7 @@ export const AdminReports = () => {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((r) => (
-                  <>
+                  <React.Fragment key={r.id}>
                     <tr
                       key={r.id}
                       className="hover:bg-muted/30 cursor-pointer"
