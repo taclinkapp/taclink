@@ -459,6 +459,38 @@ export type Database = {
         }
         Relationships: []
       }
+      training_goal_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          goal_id: string
+          id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          goal_id: string
+          id?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          goal_id?: string
+          id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_goal_events_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "training_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_goals: {
         Row: {
           category: string | null
