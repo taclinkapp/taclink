@@ -82,6 +82,7 @@ const NewCourse = () => {
       const d = JSON.parse(raw);
       if (d.title) setTitle(d.title);
       if (d.category) setCategory(d.category);
+      if (d.skillLevel) setSkillLevel(d.skillLevel);
       if (d.description) setDescription(d.description);
       if (d.date) setDate(d.date);
       if (d.startTime) setStartTime(d.startTime);
