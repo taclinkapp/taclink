@@ -117,6 +117,7 @@ const InstructorSignUp = () => {
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Bio (max 500 chars)</Label>
             <Textarea value={bio} onChange={(e) => setBio(e.target.value)} className="bg-card border-border min-h-24 mt-1.5" placeholder="Tell students about your background and teaching style…" maxLength={500} />
+            <ContactInfoWarning value={bio} className="mt-2" />
           </div>
           <div className="flex items-start gap-3 pt-2">
             <Checkbox id="age" checked={agree} onCheckedChange={(v) => setAgree(!!v)} className="mt-0.5" />
