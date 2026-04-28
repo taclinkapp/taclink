@@ -86,6 +86,9 @@ const MyProgress = () => {
           })()}
         </section>
 
+        {/* Training goals */}
+        <TrainingGoalsSection />
+
         {/* Attended list */}
         <section>
           <div className="flex items-center gap-2 mb-3 px-1">
