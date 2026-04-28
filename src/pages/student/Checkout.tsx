@@ -91,7 +91,14 @@ const Checkout = () => {
     if (!course) return;
     setSubmitting(true);
     try {
-      // 1) Create the booking with fee snapshot
+      // 1) Create the booking with fee snapshot.
+      // NEW: TacLink only charges the $25 platform fee online. The 10% deposit
+      // is owed directly to the instructor (Cash App / Venmo / PayPal / Zelle)
+      // within 24 hours, then balance in person.
+      const onlineNowCents = fees.platformFeeCents; // $25 only
+      const depositToInstructorCents = fees.instructorDepositCents; // 10%, paid direct
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
       const { data: booking, error: bErr } = await supabase
         .from('bookings')
         .insert({
@@ -100,9 +107,12 @@ const Checkout = () => {
           status: 'reserved',
           course_price_cents: fees.coursePriceCents,
           platform_fee_cents: fees.platformFeeCents,
-          instructor_deposit_cents: fees.instructorDepositCents,
+          instructor_deposit_cents: depositToInstructorCents,
           due_in_person_cents: fees.dueInPersonCents,
-          online_total_cents: fees.onlineTotalCents,
+          online_total_cents: onlineNowCents,
+          deposit_status: depositToInstructorCents > 0 ? 'pending_send' : 'not_required',
+          deposit_amount_cents: depositToInstructorCents,
+          deposit_expires_at: depositToInstructorCents > 0 ? expiresAt : null,
         })
         .select('id')
         .single();
@@ -116,9 +126,9 @@ const Checkout = () => {
         instructor_id: course.instructor_id,
         course_price_cents: fees.coursePriceCents,
         platform_fee_cents: fees.platformFeeCents,
-        instructor_deposit_cents: fees.instructorDepositCents,
+        instructor_deposit_cents: depositToInstructorCents,
         due_in_person_cents: fees.dueInPersonCents,
-        online_total_cents: fees.onlineTotalCents,
+        online_total_cents: onlineNowCents,
       });
 
       // 3) If a published waiver exists, store the signature. Roll back on failure.
@@ -188,20 +198,23 @@ const Checkout = () => {
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Price Breakdown</div>
           <div className="space-y-2 text-sm">
             <Row label="Course price" value={fmt(fees.coursePriceCents)} muted />
-            <Row label="Platform fee" value={fmt(fees.platformFeeCents)} />
-            <Row label="Instructor deposit (10%)" value={fmt(fees.instructorDepositCents)} />
+            <Row label="TacLink platform fee" value={fmt(fees.platformFeeCents)} />
             <div className="border-t border-border pt-2 mt-2 flex justify-between">
               <span className="font-bold">Charged today</span>
-              <span className="font-black text-primary text-lg">{fmt(fees.onlineTotalCents)}</span>
+              <span className="font-black text-primary text-lg">{fmt(fees.platformFeeCents)}</span>
             </div>
-            <div className="flex justify-between pt-1">
-              <span className="text-muted-foreground">Due to instructor in person</span>
+            <div className="flex justify-between pt-3 border-t border-dashed border-border mt-2">
+              <span className="text-muted-foreground">Deposit (10%) — sent direct to instructor within 24h</span>
+              <span className="font-semibold">{fmt(fees.instructorDepositCents)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Balance due in person</span>
               <span className="font-semibold">{fmt(fees.dueInPersonCents)}</span>
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
-            Pay <strong className="text-foreground">{fmt(fees.onlineTotalCents)}</strong> online now to reserve your spot. The remaining <strong className="text-foreground">{fmt(fees.dueInPersonCents)}</strong> goes directly to the instructor at the course.
-          </p>
+          <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground leading-relaxed">
+            TacLink only charges the <strong className="text-foreground">{fmt(fees.platformFeeCents)} platform fee</strong> today. After booking, you'll send the <strong className="text-foreground">{fmt(fees.instructorDepositCents)} deposit</strong> directly to your instructor via Cash App, Venmo, PayPal, or Zelle — they get 100% of it. Remaining balance is paid in person.
+          </div>
         </div>
 
         {/* Payment method gate */}
@@ -212,7 +225,7 @@ const Checkout = () => {
               <span className="ml-auto text-[10px] flex items-center gap-1"><Lock className="h-3 w-3" /> Secure</span>
             </div>
             <div className="text-sm flex items-center justify-between">
-              <span>Card on file will be charged {fmt(fees.onlineTotalCents)}</span>
+              <span>Card on file will be charged {fmt(fees.platformFeeCents)}</span>
               <Link to="/student/payment-methods" className="text-xs text-primary font-bold uppercase">Change</Link>
             </div>
           </div>
@@ -224,7 +237,7 @@ const Checkout = () => {
             <Wallet className="h-5 w-5 text-primary shrink-0" />
             <div className="flex-1">
               <div className="text-sm font-bold">Add a payment method to continue</div>
-              <div className="text-xs text-muted-foreground mt-0.5">Required to charge your booking fee.</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Required to charge the platform fee.</div>
             </div>
             <span className="text-xs text-primary font-bold uppercase">Add</span>
           </Link>
@@ -290,7 +303,7 @@ const Checkout = () => {
           className="w-full h-13 bg-primary text-primary-foreground hover:bg-primary/90 font-bold py-4 disabled:opacity-40"
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-          Confirm & Pay {fmt(fees.onlineTotalCents)}
+          Confirm & Pay {fmt(fees.platformFeeCents)}
         </Button>
         {!hasPaymentMethod && (
           <p className="text-[11px] text-center text-muted-foreground">Add a payment method above to enable booking.</p>
