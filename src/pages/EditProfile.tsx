@@ -415,7 +415,13 @@ const EditProfile = () => {
               </div>
             </div>
 
-            <Field label="Display name" error={errors.display_name} required>
+            <Field
+              label="Display name"
+              error={errors.display_name}
+              required
+              rule="At least 2 characters; this is what others see"
+              complete={form.display_name.trim().length >= 2}
+            >
               <Input
                 value={form.display_name}
                 onChange={(e) => update('display_name', e.target.value)}
@@ -424,7 +430,14 @@ const EditProfile = () => {
               />
             </Field>
 
-            <Field label="Phone" error={errors.phone} hint="Used only for booking confirmations">
+            <Field
+              label="Phone"
+              error={errors.phone}
+              required={isInstructor}
+              rule={isInstructor ? '7+ digits so students can confirm bookings' : undefined}
+              complete={isInstructor ? form.phone.trim().length >= 7 : undefined}
+              hint={isInstructor ? undefined : 'Optional. Used only for booking confirmations.'}
+            >
               <Input
                 value={form.phone}
                 onChange={(e) => update('phone', e.target.value)}
@@ -434,7 +447,13 @@ const EditProfile = () => {
               />
             </Field>
 
-            <Field label="Home state" error={errors.state}>
+            <Field
+              label="Home state"
+              error={errors.state}
+              required={!isInstructor}
+              rule={!isInstructor ? 'Any state value (e.g. TX) so instructors see your area' : undefined}
+              complete={!isInstructor ? !!form.state.trim() : undefined}
+            >
               <Input
                 value={form.state}
                 onChange={(e) => update('state', e.target.value)}
@@ -447,11 +466,15 @@ const EditProfile = () => {
               label={isInstructor ? 'Bio' : 'About you'}
               error={errors.bio}
               required={isInstructor}
-              hint={
+              rule={
                 isInstructor
-                  ? 'Background, certifications style, what students should expect (20-1000 chars).'
-                  : 'Optional. Up to 280 characters.'
+                  ? 'At least 20 characters covering background and teaching style'
+                  : 'At least 10 characters about your training goals'
               }
+              complete={
+                isInstructor ? form.bio.trim().length >= 20 : form.bio.trim().length >= 10
+              }
+              hint={isInstructor ? 'Up to 1000 characters.' : 'Up to 280 characters.'}
             >
               <Textarea
                 value={form.bio}
@@ -471,7 +494,13 @@ const EditProfile = () => {
 
             {isInstructor && (
               <>
-                <Field label="Service city" error={errors.service_city} hint="Where you primarily teach">
+                <Field
+                  label="Service city"
+                  error={errors.service_city}
+                  required
+                  rule="The primary city where you teach (e.g. Austin)"
+                  complete={!!form.service_city.trim()}
+                >
                   <Input
                     value={form.service_city}
                     onChange={(e) => update('service_city', e.target.value)}
@@ -479,7 +508,13 @@ const EditProfile = () => {
                     placeholder="Austin"
                   />
                 </Field>
-                <Field label="Service state" error={errors.service_state}>
+                <Field
+                  label="Service state"
+                  error={errors.service_state}
+                  required
+                  rule="State you serve (e.g. TX) — helps students filter"
+                  complete={!!form.service_state.trim()}
+                >
                   <Input
                     value={form.service_state}
                     onChange={(e) => update('service_state', e.target.value)}
