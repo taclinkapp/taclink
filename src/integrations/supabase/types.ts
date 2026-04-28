@@ -161,6 +161,9 @@ export type Database = {
           lat: number | null
           lng: number | null
           location_name: string | null
+          moderation_reason: string | null
+          moderation_severity: string | null
+          moderation_status: string
           price_cents: number
           starts_at: string | null
           state: string | null
@@ -183,6 +186,9 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location_name?: string | null
+          moderation_reason?: string | null
+          moderation_severity?: string | null
+          moderation_status?: string
           price_cents?: number
           starts_at?: string | null
           state?: string | null
@@ -205,6 +211,9 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           location_name?: string | null
+          moderation_reason?: string | null
+          moderation_severity?: string | null
+          moderation_status?: string
           price_cents?: number
           starts_at?: string | null
           state?: string | null
@@ -259,6 +268,72 @@ export type Database = {
           submitter_role?: string | null
           updated_at?: string
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      flagged_content: {
+        Row: {
+          admin_notes: string | null
+          ai_raw: Json | null
+          author_id: string | null
+          author_role: string | null
+          category: string
+          content_id: string | null
+          content_type: string
+          conversation_id: string | null
+          course_id: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          image_url: string | null
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          ai_raw?: Json | null
+          author_id?: string | null
+          author_role?: string | null
+          category: string
+          content_id?: string | null
+          content_type: string
+          conversation_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          ai_raw?: Json | null
+          author_id?: string | null
+          author_role?: string | null
+          category?: string
+          content_id?: string | null
+          content_type?: string
+          conversation_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -318,6 +393,9 @@ export type Database = {
           flag_reason: string | null
           id: string
           is_flagged: boolean
+          moderation_reason: string | null
+          moderation_severity: string | null
+          moderation_status: string
           read_at: string | null
           sender_id: string
           sender_role: string
@@ -329,6 +407,9 @@ export type Database = {
           flag_reason?: string | null
           id?: string
           is_flagged?: boolean
+          moderation_reason?: string | null
+          moderation_severity?: string | null
+          moderation_status?: string
           read_at?: string | null
           sender_id: string
           sender_role: string
@@ -340,6 +421,9 @@ export type Database = {
           flag_reason?: string | null
           id?: string
           is_flagged?: boolean
+          moderation_reason?: string | null
+          moderation_severity?: string | null
+          moderation_status?: string
           read_at?: string | null
           sender_id?: string
           sender_role?: string
