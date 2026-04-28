@@ -181,6 +181,9 @@ const NewCourse = () => {
       if (!capacity || Number(capacity) < 1) return 'Capacity must be at least 1';
       if (!price || Number(price) < 5) return 'Price must be at least $5';
     }
+    if (step === 3) {
+      if (!feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
+    }
     return null;
   };
 
