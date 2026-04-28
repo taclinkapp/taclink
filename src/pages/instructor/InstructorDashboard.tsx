@@ -14,7 +14,7 @@ type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
 
 const InstructorDashboard = () => {
   const [open, setOpen] = useState<StatKey | null>(null);
-
+  const [revenueDrill, setRevenueDrill] = useState<string | null>(null);
   // Pretend "this month" — derive from mocks. Marcus = i1.
   const myCourses = mockCourses; // pretend all are mine for the demo
   const monthLabel = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
