@@ -19,6 +19,7 @@ import CourseDetail from "./pages/student/CourseDetail";
 import Checkout from "./pages/student/Checkout";
 import BookingSuccess from "./pages/student/BookingSuccess";
 import MyBookings from "./pages/student/MyBookings";
+import MyProgress from "./pages/student/MyProgress";
 import BookingDetail from "./pages/student/BookingDetail";
 import LeaveReview from "./pages/student/LeaveReview";
 import StudentProfile from "./pages/student/StudentProfile";
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/student/checkout/:id" element={<Student><Checkout /></Student>} />
             <Route path="/student/booking-success/:id" element={<Student><BookingSuccess /></Student>} />
             <Route path="/student/bookings" element={<Student><MyBookings /></Student>} />
+            <Route path="/student/progress" element={<Student><MyProgress /></Student>} />
             <Route path="/student/booking/:id" element={<Student><BookingDetail /></Student>} />
             <Route path="/student/review/:id" element={<Student><LeaveReview /></Student>} />
             <Route path="/student/profile" element={<Student><StudentProfile /></Student>} />
