@@ -4,26 +4,30 @@ import { MobileShell } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { Input } from '@/components/ui/input';
 import { Search, Map, List, SlidersHorizontal } from 'lucide-react';
-import { CATEGORIES } from '@/lib/mockData';
 import { usePublishedCourses } from '@/hooks/useCourses';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
 import { Logo } from '@/components/Logo';
 import { NotificationsBell } from '@/components/NotificationsBell';
+import { DisciplineBrowser } from '@/components/DisciplineBrowser';
 import { cn } from '@/lib/utils';
 
 const Discover = () => {
   const nav = useNavigate();
   const [view, setView] = useState<'list' | 'map'>('list');
-  const [category, setCategory] = useState<string>('All');
+  const [discipline, setDiscipline] = useState<string>('All');
   const [query, setQuery] = useState('');
   const { data: courses = [], isLoading } = usePublishedCourses();
 
   const filtered = courses.filter((c) => {
-    const matchesCat = category === 'All' || c.category === category;
+    const d = discipline.toLowerCase();
+    const matchesDisc =
+      discipline === 'All' ||
+      c.category?.toLowerCase().includes(d) ||
+      c.title.toLowerCase().includes(d);
     const q = query.toLowerCase();
     const matchesQuery = !q || c.title.toLowerCase().includes(q) || c.instructorName.toLowerCase().includes(q) || c.city.toLowerCase().includes(q);
-    return matchesCat && matchesQuery;
+    return matchesDisc && matchesQuery;
   });
 
   return (
