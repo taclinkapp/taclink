@@ -25,6 +25,7 @@ export type Course = {
   prerequisites: string;
   equipment: string;
   status: 'active' | 'draft' | 'full' | 'past';
+  skillLevel?: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
   lat: number;
   lng: number;
 };
