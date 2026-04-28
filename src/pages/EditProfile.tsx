@@ -358,7 +358,47 @@ const EditProfile = () => {
                     )}
                     {form.photo_url ? 'Replace photo' : 'Upload photo'}
                   </button>
-                  {form.photo_url && (
+
+                  {uploading && (
+                    <div className="space-y-1.5">
+                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full bg-primary transition-all duration-200"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                        <span>Uploading… {uploadProgress}%</span>
+                        <button
+                          type="button"
+                          onClick={cancelUpload}
+                          className="inline-flex items-center gap-1 text-destructive hover:underline"
+                        >
+                          <X className="h-3 w-3" /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {uploadError && !uploading && (
+                    <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 space-y-2">
+                      <div className="flex items-start gap-1.5 text-[11px] text-destructive">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        <span className="font-bold">{uploadError}</span>
+                      </div>
+                      {lastFile && (
+                        <button
+                          type="button"
+                          onClick={retryUpload}
+                          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-[11px] font-bold uppercase tracking-wider hover:opacity-90"
+                        >
+                          <RotateCw className="h-3 w-3" /> Retry upload
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {form.photo_url && !uploading && (
                     <button
                       type="button"
                       onClick={removePhoto}
