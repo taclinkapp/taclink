@@ -1,20 +1,52 @@
-import { Crosshair } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/taclink-logo.png';
 
-export const Logo = ({ size = 'md', showTagline = false }: { size?: 'sm' | 'md' | 'lg' | 'xl'; showTagline?: boolean }) => {
-  const iconSize = { sm: 'h-5 w-5', md: 'h-7 w-7', lg: 'h-10 w-10', xl: 'h-14 w-14' }[size];
-  const textSize = { sm: 'text-base', md: 'text-xl', lg: 'text-3xl', xl: 'text-5xl' }[size];
+/**
+ * Official TacLink mark — hexagonal badge + stencil wordmark + tagline.
+ * The source artwork is black on white; we invert it for our dark theme.
+ *
+ * - `showTagline=false` (default): shows the hex badge only (top portion).
+ * - `showTagline=true`: shows the full lockup with TACLINK + FIND. BOOK. TRAIN.
+ */
+export const Logo = ({
+  size = 'md',
+  showTagline = false,
+  className,
+}: {
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  showTagline?: boolean;
+  className?: string;
+}) => {
+  const dim = { sm: 24, md: 36, lg: 56, xl: 96 }[size];
+
+  // Invert the black artwork to white so it reads on dark surfaces.
+  const invert: React.CSSProperties = { filter: 'invert(1)' };
+
+  if (showTagline) {
+    return (
+      <img
+        src={logo}
+        alt="TacLink — Find. Book. Train."
+        className={cn('w-auto object-contain', className)}
+        style={{ ...invert, height: dim * 2.4 }}
+      />
+    );
+  }
+
+  // Badge only: clip the lower wordmark by using a fixed-size square viewport
+  // and showing the top of the artwork.
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="flex items-center gap-2">
-        <Crosshair className={cn(iconSize, 'text-primary')} strokeWidth={2.5} />
-        <span className={cn(textSize, 'font-black tracking-tight text-foreground')}>
-          Tac<span className="text-primary">Link</span>
-        </span>
-      </div>
-      {showTagline && (
-        <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Find. Book. Train.</p>
-      )}
+    <div
+      aria-label="TacLink"
+      className={cn('overflow-hidden inline-block', className)}
+      style={{ width: dim, height: dim }}
+    >
+      <img
+        src={logo}
+        alt=""
+        className="block object-contain object-top w-full"
+        style={{ ...invert, height: dim * 1.6 }}
+      />
     </div>
   );
 };
