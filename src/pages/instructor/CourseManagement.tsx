@@ -64,7 +64,13 @@ const CourseManagement = () => {
       toast.error(error.message);
       return;
     }
-    toast.success(opts?.source === 'proximity' ? 'Auto check-in (proximity)' : 'Checked in');
+    const label =
+      opts?.source === 'proximity'
+        ? 'Auto check-in confirmed (QR + proximity)'
+        : opts?.source === 'qr-staged'
+          ? 'QR verified — waiting for proximity'
+          : 'Checked in';
+    toast.success(label);
     qc.invalidateQueries({ queryKey: ['course_bookings', id] });
   };
 
