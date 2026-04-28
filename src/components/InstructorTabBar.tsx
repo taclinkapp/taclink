@@ -1,16 +1,17 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, ListChecks, User } from 'lucide-react';
+import { LayoutGrid, ListChecks, MessageSquare, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { to: '/instructor', icon: LayoutGrid, label: 'Dashboard', end: true },
   { to: '/instructor/courses', icon: ListChecks, label: 'Courses' },
+  { to: '/instructor/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/instructor/profile', icon: User, label: 'Profile' },
 ];
 
 export const InstructorTabBar = () => (
   <nav className="fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-border">
-    <div className="max-w-md mx-auto grid grid-cols-3">
+    <div className="max-w-md mx-auto grid grid-cols-4">
       {tabs.map((t) => (
         <NavLink
           key={t.to}

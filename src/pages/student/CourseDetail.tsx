@@ -4,7 +4,8 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { CategoryPill } from '@/components/CategoryPill';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle } from 'lucide-react';
+import { CourseMap } from '@/components/CourseMap';
+import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, MessageSquare } from 'lucide-react';
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -44,7 +45,14 @@ const CourseDetail = () => {
                 <span>· 124 reviews</span>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="bg-card border-border text-xs">View</Button>
+            <Button
+              onClick={() => nav(`/student/messages/${course.instructorId}?courseId=${course.id}`)}
+              variant="outline"
+              size="sm"
+              className="bg-card border-border text-xs gap-1.5"
+            >
+              <MessageSquare className="h-3.5 w-3.5" /> Message
+            </Button>
           </div>
         </div>
 
@@ -88,6 +96,21 @@ const CourseDetail = () => {
             <div>
               <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Equipment Required</div>
               <p className="text-foreground">{course.equipment}</p>
+            </div>
+          </div>
+        </Section>
+
+        <Section title="Location">
+          <div className="tactical-card overflow-hidden">
+            <div className="relative h-44">
+              <CourseMap courses={[course]} className="h-full w-full" interactive={false} zoom={11} />
+            </div>
+            <div className="p-3 flex items-start gap-2">
+              <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="text-xs">
+                <div className="font-semibold text-foreground">{course.address}</div>
+                <div className="text-muted-foreground">{course.city}, {course.state}</div>
+              </div>
             </div>
           </div>
         </Section>

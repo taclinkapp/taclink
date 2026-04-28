@@ -1,10 +1,11 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Compass, CalendarCheck, User } from 'lucide-react';
+import { Compass, CalendarCheck, MessageSquare, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { to: '/student', icon: Compass, label: 'Discover', end: true },
   { to: '/student/bookings', icon: CalendarCheck, label: 'Bookings' },
+  { to: '/student/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/student/profile', icon: User, label: 'Profile' },
 ];
 
@@ -15,7 +16,7 @@ export const StudentTabBar = () => {
   return (
     <nav className="fixed bottom-4 inset-x-0 z-40 px-4 pointer-events-none">
       <div className="max-w-md mx-auto neu rounded-full pointer-events-auto">
-        <div className="grid grid-cols-3 px-2 py-2">
+        <div className="grid grid-cols-4 px-2 py-2">
           {tabs.map((t) => (
             <NavLink
               key={t.to}
