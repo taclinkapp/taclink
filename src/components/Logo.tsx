@@ -19,10 +19,8 @@ export const Logo = ({
 }) => {
   const dim = { sm: 24, md: 36, lg: 56, xl: 96 }[size];
 
-  // The source artwork is white shapes on a black background. Using
-  // `mix-blend-mode: screen` drops the black to transparent against any
-  // dark surface, leaving just the white mark — no boxy background.
-  const blend: React.CSSProperties = { mixBlendMode: 'screen' };
+  // Invert the black artwork to white so it reads on dark surfaces.
+  const invert: React.CSSProperties = { filter: 'invert(1)' };
 
   if (showTagline) {
     return (
@@ -30,7 +28,7 @@ export const Logo = ({
         src={logo}
         alt="TacLink — Find. Book. Train."
         className={cn('w-auto object-contain', className)}
-        style={{ ...blend, height: dim * 2.4 }}
+        style={{ ...invert, height: dim * 2.4 }}
       />
     );
   }
@@ -45,7 +43,7 @@ export const Logo = ({
         src={logo}
         alt=""
         className="block object-contain object-top w-full"
-        style={{ ...blend, height: dim * 1.6 }}
+        style={{ ...invert, height: dim * 1.6 }}
       />
     </div>
   );
