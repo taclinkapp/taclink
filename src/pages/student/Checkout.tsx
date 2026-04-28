@@ -303,7 +303,7 @@ const Checkout = () => {
           className="w-full h-13 bg-primary text-primary-foreground hover:bg-primary/90 font-bold py-4 disabled:opacity-40"
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-          Confirm & Pay {fmt(fees.onlineTotalCents)}
+          Confirm & Pay {fmt(fees.platformFeeCents)}
         </Button>
         {!hasPaymentMethod && (
           <p className="text-[11px] text-center text-muted-foreground">Add a payment method above to enable booking.</p>
