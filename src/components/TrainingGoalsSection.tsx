@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,8 +16,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Target, Plus, Trash2, CheckCircle2, Calendar, Loader2, Flag } from 'lucide-react';
-import { useTrainingGoals, type GoalType, type GoalWithProgress } from '@/hooks/useTrainingGoals';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Target, Plus, Trash2, CheckCircle2, Calendar, Loader2, Flag, Pencil } from 'lucide-react';
+import {
+  useTrainingGoals,
+  type GoalType,
+  type GoalWithProgress,
+  type TrainingGoal,
+} from '@/hooks/useTrainingGoals';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -37,9 +51,20 @@ const PRESETS: Array<{
   { label: 'Attend 10 total courses', title: 'Attend 10 total courses', goal_type: 'course_count', target_count: 10 },
 ];
 
+type GoalFormValues = {
+  title: string;
+  description: string | null;
+  goal_type: GoalType;
+  target_count: number;
+  category: string | null;
+  deadline: string | null;
+};
+
 export const TrainingGoalsSection = () => {
   const { goals, isLoading, createGoal, deleteGoal, updateGoal } = useTrainingGoals();
-  const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<TrainingGoal | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<TrainingGoal | null>(null);
 
   return (
     <section>
@@ -50,27 +75,15 @@ export const TrainingGoalsSection = () => {
             Training Goals
           </h2>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="outline" className="bg-card border-border h-8 gap-1">
-              <Plus className="h-3.5 w-3.5" />
-              <span className="text-xs font-bold uppercase tracking-wider">New</span>
-            </Button>
-          </DialogTrigger>
-          <NewGoalDialog
-            onClose={() => setOpen(false)}
-            onCreate={async (input) => {
-              try {
-                await createGoal.mutateAsync(input);
-                toast.success('Goal added');
-                setOpen(false);
-              } catch (e: any) {
-                toast.error(e?.message ?? 'Failed to create goal');
-              }
-            }}
-            saving={createGoal.isPending}
-          />
-        </Dialog>
+        <Button
+          size="sm"
+          variant="outline"
+          className="bg-card border-border h-8 gap-1"
+          onClick={() => setCreating(true)}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          <span className="text-xs font-bold uppercase tracking-wider">New</span>
+        </Button>
       </div>
 
       {isLoading ? (
@@ -82,7 +95,7 @@ export const TrainingGoalsSection = () => {
             Set a training goal to stay focused — like attending 5 courses this year, or completing a pistol course.
           </p>
           <Button
-            onClick={() => setOpen(true)}
+            onClick={() => setCreating(true)}
             className="bg-primary text-primary-foreground font-bold"
             size="sm"
           >
@@ -95,15 +108,8 @@ export const TrainingGoalsSection = () => {
             <GoalCard
               key={g.id}
               goal={g}
-              onDelete={async () => {
-                if (!confirm('Delete this goal?')) return;
-                try {
-                  await deleteGoal.mutateAsync(g.id);
-                  toast.success('Goal deleted');
-                } catch (e: any) {
-                  toast.error(e?.message ?? 'Failed to delete');
-                }
-              }}
+              onEdit={() => setEditing(g)}
+              onDelete={() => setConfirmDelete(g)}
               onToggleManual={async () => {
                 if (g.goal_type !== 'custom') return;
                 await updateGoal.mutateAsync({
@@ -116,16 +122,90 @@ export const TrainingGoalsSection = () => {
           ))}
         </ul>
       )}
+
+      {/* Create dialog */}
+      <Dialog open={creating} onOpenChange={(o) => !o && setCreating(false)}>
+        <GoalFormDialog
+          mode="create"
+          onClose={() => setCreating(false)}
+          saving={createGoal.isPending}
+          onSubmit={async (input) => {
+            try {
+              await createGoal.mutateAsync(input);
+              toast.success('Goal added');
+              setCreating(false);
+            } catch (e: any) {
+              toast.error(e?.message ?? 'Failed to create goal');
+            }
+          }}
+        />
+      </Dialog>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        {editing && (
+          <GoalFormDialog
+            mode="edit"
+            initial={editing}
+            onClose={() => setEditing(null)}
+            saving={updateGoal.isPending}
+            onSubmit={async (input) => {
+              try {
+                await updateGoal.mutateAsync({ id: editing.id, ...input });
+                toast.success('Goal updated');
+                setEditing(null);
+              } catch (e: any) {
+                toast.error(e?.message ?? 'Failed to update goal');
+              }
+            }}
+          />
+        )}
+      </Dialog>
+
+      {/* Delete confirm */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent className="bg-surface border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete?.title
+                ? `"${confirmDelete.title}" will be permanently removed.`
+                : 'This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-card border-border">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (!confirmDelete) return;
+                try {
+                  await deleteGoal.mutateAsync(confirmDelete.id);
+                  toast.success('Goal deleted');
+                } catch (e: any) {
+                  toast.error(e?.message ?? 'Failed to delete');
+                } finally {
+                  setConfirmDelete(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 };
 
 const GoalCard = ({
   goal,
+  onEdit,
   onDelete,
   onToggleManual,
 }: {
   goal: GoalWithProgress;
+  onEdit: () => void;
   onDelete: () => void;
   onToggleManual: () => void;
 }) => {
@@ -187,40 +267,60 @@ const GoalCard = ({
             </div>
           )}
         </div>
-        <button
-          onClick={onDelete}
-          className="text-muted-foreground hover:text-destructive p-1 -mt-1 -mr-1"
-          aria-label="Delete goal"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex flex-col gap-1 -mt-1 -mr-1">
+          <button
+            onClick={onEdit}
+            className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-card/80 transition-colors"
+            aria-label="Edit goal"
+            title="Edit"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={onDelete}
+            className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-card/80 transition-colors"
+            aria-label="Delete goal"
+            title="Delete"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
     </li>
   );
 };
 
-const NewGoalDialog = ({
+const GoalFormDialog = ({
+  mode,
+  initial,
   onClose,
-  onCreate,
+  onSubmit,
   saving,
 }: {
+  mode: 'create' | 'edit';
+  initial?: TrainingGoal;
   onClose: () => void;
-  onCreate: (input: {
-    title: string;
-    description: string | null;
-    goal_type: GoalType;
-    target_count: number;
-    category: string | null;
-    deadline: string | null;
-  }) => Promise<void>;
+  onSubmit: (values: GoalFormValues) => Promise<void>;
   saving: boolean;
 }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [goalType, setGoalType] = useState<GoalType>('course_count');
-  const [target, setTarget] = useState(5);
-  const [category, setCategory] = useState('');
-  const [deadline, setDeadline] = useState('');
+  const [title, setTitle] = useState(initial?.title ?? '');
+  const [description, setDescription] = useState(initial?.description ?? '');
+  const [goalType, setGoalType] = useState<GoalType>(initial?.goal_type ?? 'course_count');
+  const [target, setTarget] = useState(initial?.target_count ?? 5);
+  const [category, setCategory] = useState(initial?.category ?? '');
+  const [deadline, setDeadline] = useState(initial?.deadline ?? '');
+
+  // Re-sync when the editing target changes
+  useEffect(() => {
+    if (mode === 'edit' && initial) {
+      setTitle(initial.title);
+      setDescription(initial.description ?? '');
+      setGoalType(initial.goal_type);
+      setTarget(initial.target_count);
+      setCategory(initial.category ?? '');
+      setDeadline(initial.deadline ?? '');
+    }
+  }, [initial, mode]);
 
   const applyPreset = (p: typeof PRESETS[number]) => {
     setTitle(p.title);
@@ -238,12 +338,12 @@ const NewGoalDialog = ({
       toast.error('Pick a category');
       return;
     }
-    onCreate({
+    onSubmit({
       title: title.trim(),
-      description: description.trim() || null,
+      description: description?.trim() || null,
       goal_type: goalType,
       target_count: goalType === 'specific_category' ? 1 : Math.max(1, target),
-      category: category.trim() || null,
+      category: category?.trim() || null,
       deadline: deadline || null,
     });
   };
@@ -251,23 +351,27 @@ const NewGoalDialog = ({
   return (
     <DialogContent className="bg-surface border-border max-w-md max-h-[85vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle className="text-base">New Training Goal</DialogTitle>
+        <DialogTitle className="text-base">
+          {mode === 'edit' ? 'Edit Training Goal' : 'New Training Goal'}
+        </DialogTitle>
       </DialogHeader>
       <div className="space-y-4">
-        <div>
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Quick Presets</Label>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {PRESETS.map((p) => (
-              <button
-                key={p.label}
-                onClick={() => applyPreset(p)}
-                className="text-[11px] px-2.5 py-1.5 rounded-full bg-card border border-border hover:border-primary/60 transition-colors"
-              >
-                {p.label}
-              </button>
-            ))}
+        {mode === 'create' && (
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Quick Presets</Label>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => applyPreset(p)}
+                  className="text-[11px] px-2.5 py-1.5 rounded-full bg-card border border-border hover:border-primary/60 transition-colors"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <Label htmlFor="goal-title" className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Title</Label>
@@ -300,7 +404,7 @@ const NewGoalDialog = ({
             <Label htmlFor="goal-category" className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Category</Label>
             <Input
               id="goal-category"
-              value={category}
+              value={category ?? ''}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="e.g. Pistol, Rifle, CCW"
               className="bg-card border-border mt-1"
@@ -327,7 +431,7 @@ const NewGoalDialog = ({
           <Input
             id="goal-deadline"
             type="date"
-            value={deadline}
+            value={deadline ?? ''}
             onChange={(e) => setDeadline(e.target.value)}
             className="bg-card border-border mt-1"
           />
@@ -337,7 +441,7 @@ const NewGoalDialog = ({
           <Label htmlFor="goal-desc" className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Notes (optional)</Label>
           <Textarea
             id="goal-desc"
-            value={description}
+            value={description ?? ''}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Why is this goal important to you?"
             className="bg-card border-border mt-1 min-h-20"
@@ -353,7 +457,7 @@ const NewGoalDialog = ({
             disabled={saving}
             className="flex-1 bg-primary text-primary-foreground font-bold"
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Goal'}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === 'edit' ? 'Save Changes' : 'Create Goal'}
           </Button>
         </div>
       </div>
