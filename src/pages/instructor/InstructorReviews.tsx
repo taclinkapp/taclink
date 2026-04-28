@@ -5,6 +5,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Star, Sparkles, Loader2, MessageSquareReply, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type Review = {
   id: string;
@@ -33,6 +43,11 @@ const InstructorReviews = () => {
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [tones, setTones] = useState<Record<string, Tone>>({});
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  const confirmReview = reviews.find((r) => r.id === confirmId) ?? null;
+  const confirmDraft = confirmId ? (drafts[confirmId] ?? '').trim() : '';
+  const confirmIsUpdate = !!confirmReview?.instructor_reply;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -259,7 +274,14 @@ const InstructorReviews = () => {
                         {draft ? 'Regenerate' : 'AI reply'}
                       </button>
                       <button
-                        onClick={() => postReply(r)}
+                        onClick={() => {
+                          const text = (drafts[r.id] ?? '').trim();
+                          if (!text) {
+                            toast.error('Reply is empty');
+                            return;
+                          }
+                          setConfirmId(r.id);
+                        }}
                         disabled={isSaving || !draft.trim() || draft.trim() === (r.instructor_reply ?? '').trim()}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50"
                       >
