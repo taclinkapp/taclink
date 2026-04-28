@@ -9,7 +9,6 @@ import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 import { FeeInsights } from '@/components/instructor/FeeInsights';
 import { PunchCard } from '@/components/instructor/PunchCard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { fmt } from '@/lib/fees';
 
 type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
 
