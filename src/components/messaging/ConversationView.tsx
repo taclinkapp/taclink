@@ -111,6 +111,7 @@ export const ConversationView = ({ variant }: Props) => {
         .from("messages")
         .select("*")
         .eq("conversation_id", conversation.id)
+        .neq("moderation_status", "flagged")
         .order("created_at", { ascending: true });
       if (error) console.error(error);
       setMessages((data as MessageRow[]) ?? []);
