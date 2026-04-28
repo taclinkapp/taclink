@@ -11,7 +11,7 @@ import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { toast } from 'sonner';
 import { QrScanner } from '@/components/QrScanner';
-import { parseCheckinPayload, PROXIMITY_TRIGGER_METERS } from '@/lib/qrCheckin';
+import { parseCheckinPayload, looksLikeSignedToken, PROXIMITY_TRIGGER_METERS } from '@/lib/qrCheckin';
 import { useProximity } from '@/hooks/useProximity';
 import { Switch } from '@/components/ui/switch';
 
