@@ -60,8 +60,9 @@ const InstructorDashboard = () => {
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </Link>
 
-        {/* AI insights */}
+        {/* Punch card + AI insights */}
         <div className="mt-4 space-y-3">
+          <PunchCard />
           <FeeInsights />
           <InstructorInsights />
         </div>
