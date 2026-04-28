@@ -35,7 +35,7 @@ const statusIcon: Record<string, any> = {
   no_show: XCircle,
 };
 
-const filters = ['Upcoming', 'Attended', 'All'] as const;
+const filters = ['Upcoming', 'Attended', 'Cancelled', 'No-show', 'All'] as const;
 
 const InstructorRoster = () => {
   const { user } = useAuth();
