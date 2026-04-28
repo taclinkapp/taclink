@@ -13,6 +13,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Check, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { detectContactInfo } from '@/lib/contactRedaction';
+import { logBypassAttempt } from '@/lib/bypassLogging';
+import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
 
