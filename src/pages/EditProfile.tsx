@@ -435,4 +435,72 @@ const Field = ({
   </div>
 );
 
+const CompletenessCard = ({
+  percent,
+  requirements,
+  form,
+}: {
+  percent: number;
+  requirements: Requirement[];
+  form: FormState;
+}) => {
+  const tone =
+    percent >= 100
+      ? 'text-emerald-600'
+      : percent >= 60
+        ? 'text-primary'
+        : 'text-amber-600';
+  const barColor =
+    percent >= 100 ? 'bg-emerald-500' : percent >= 60 ? 'bg-primary' : 'bg-amber-500';
+
+  return (
+    <div className="rounded-md border border-border bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-wider font-bold text-muted-foreground">
+            Profile completeness
+          </div>
+          <div className={cn('text-2xl font-black mt-0.5', tone)}>{percent}%</div>
+        </div>
+        {percent >= 100 ? (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/30">
+            <CheckCircle2 className="h-3 w-3" /> Complete
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-bold uppercase tracking-wider border border-border">
+            {requirements.filter((r) => r.check(form)).length}/{requirements.length} done
+          </span>
+        )}
+      </div>
+      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className={cn('h-full transition-all duration-500', barColor)}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <ul className="space-y-1 pt-1">
+        {requirements.map((r) => {
+          const ok = r.check(form);
+          return (
+            <li
+              key={r.key}
+              className={cn(
+                'flex items-center gap-2 text-xs',
+                ok ? 'text-muted-foreground line-through' : 'text-foreground',
+              )}
+            >
+              {ok ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+              ) : (
+                <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              )}
+              {r.label}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
+
 export default EditProfile;
