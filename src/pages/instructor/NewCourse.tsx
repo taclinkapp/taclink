@@ -259,26 +259,37 @@ const NewCourse = () => {
         }).catch(() => {});
       }
 
-      // Listing fee charge — flat 10% of course price, non-refundable, recorded in ledger.
-      // (Real card capture is wired through the platform's payment provider; in this preview
-      // we record the charge as 'charged' since the instructor's card is on file.)
+      // Listing fee charge — flat 10% of course price, non-refundable.
+      // Subscribers can redeem a punch-card credit to waive the fee on this course.
       const priceCents = Math.round(Number(price) * 100);
       const listingFeeCents = computeListingFeeCents(priceCents);
+
+      let redeemedCreditId: string | null = null;
+      if (subActive && availableCredits > 0) {
+        redeemedCreditId = await redeemFreeListingCredit(user.id, created.id);
+      }
+
       await supabase.from('instructor_charges').insert({
         instructor_id: user.id,
         course_id: created.id,
         charge_type: 'listing_fee',
         course_price_cents: priceCents,
         capacity: Number(capacity),
-        amount_cents: listingFeeCents,
-        status: 'charged',
+        amount_cents: redeemedCreditId ? 0 : listingFeeCents,
+        status: redeemedCreditId ? 'waived' : 'charged',
         refundable: false,
-        note: '10% listing fee at publish (non-refundable)',
+        note: redeemedCreditId
+          ? 'Listing fee waived — punch-card free credit redeemed'
+          : '10% listing fee at publish (non-refundable)',
       });
 
       qc.invalidateQueries({ queryKey: ['courses'] });
       localStorage.removeItem(DRAFT_KEY);
-      toast.success('Course published', { description: `Listing fee charged: ${fmt(listingFeeCents)}` });
+      if (redeemedCreditId) {
+        toast.success('Course published', { description: `Free listing credit applied — ${fmt(listingFeeCents)} waived 🎉` });
+      } else {
+        toast.success('Course published', { description: `Listing fee charged: ${fmt(listingFeeCents)}` });
+      }
       nav('/instructor/courses');
     } catch (e: any) {
       toast.error(e?.message ?? 'Failed to create course');
