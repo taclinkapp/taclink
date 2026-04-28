@@ -34,6 +34,11 @@ const InstructorSignUp = () => {
     if (password !== confirm) return toast.error('Passwords do not match');
     if (password.length < 8) return toast.error('Password must be at least 8 characters');
     if (!agree) return toast.error('You must agree to the terms');
+    const bioHits = detectContactInfo(bio);
+    if (bioHits.length) {
+      logBypassAttempt({ userRole: 'instructor', fieldName: 'instructor_bio', originalContent: bio, detections: bioHits, actionTaken: 'blocked' });
+      return toast.error('Remove contact info from your bio before submitting.');
+    }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
