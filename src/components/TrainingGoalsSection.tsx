@@ -112,11 +112,14 @@ export const TrainingGoalsSection = () => {
               onEdit={() => setEditing(g)}
               onDelete={() => setConfirmDelete(g)}
               onToggleManual={async () => {
-                await updateGoal.mutateAsync({
-                  id: g.id,
-                  completed_manually: !g.completed_manually,
-                  completed_at: !g.completed_manually ? new Date().toISOString() : null,
-                });
+                try {
+                  await toggleManualComplete.mutateAsync({
+                    goal: g,
+                    next: !g.completed_manually,
+                  });
+                } catch (e: any) {
+                  toast.error(e?.message ?? 'Failed to update');
+                }
               }}
             />
           ))}
