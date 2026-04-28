@@ -45,6 +45,15 @@ const NewCourse = () => {
     if (step === 0) {
       if (!title.trim()) return 'Title is required';
       if (!category) return 'Category is required';
+      const titleHits = detectContactInfo(title);
+      const descHits = detectContactInfo(description);
+      if (titleHits.length || descHits.length) {
+        if (user) {
+          if (titleHits.length) logBypassAttempt({ userId: user.id, userRole: 'instructor', fieldName: 'course_title', originalContent: title, detections: titleHits, actionTaken: 'blocked' });
+          if (descHits.length) logBypassAttempt({ userId: user.id, userRole: 'instructor', fieldName: 'course_description', originalContent: description, detections: descHits, actionTaken: 'blocked' });
+        }
+        return 'Remove contact info from the title or description before continuing.';
+      }
     }
     if (step === 1) {
       if (!date || !startTime || !endTime) return 'Date and times are required';
@@ -120,6 +129,7 @@ const NewCourse = () => {
             </Field>
             <Field label="Description">
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-card border-border min-h-28" placeholder="Describe your course…" />
+              <ContactInfoWarning value={description} />
             </Field>
           </>
         )}
