@@ -62,7 +62,7 @@ type GoalFormValues = {
 };
 
 export const TrainingGoalsSection = () => {
-  const { goals, isLoading, createGoal, deleteGoal, updateGoal } = useTrainingGoals();
+  const { goals, isLoading, createGoal, deleteGoal, updateGoal, toggleManualComplete } = useTrainingGoals();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<TrainingGoal | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<TrainingGoal | null>(null);
