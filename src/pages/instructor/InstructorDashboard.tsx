@@ -1,20 +1,64 @@
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
-import { mockCourses, mockRoster } from '@/lib/mockData';
-import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck, Plus } from 'lucide-react';
+import { mockCourses, mockRoster, mockReviews } from '@/lib/mockData';
+import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck, Plus, Star } from 'lucide-react';
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 import { FeeInsights } from '@/components/instructor/FeeInsights';
 import { PunchCard } from '@/components/instructor/PunchCard';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { fmt } from '@/lib/fees';
+
+type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
 
 const InstructorDashboard = () => {
-  const stats = [
-    { label: 'Active', value: '4', icon: Calendar },
-    { label: 'Students', value: '47', icon: Users },
-    { label: 'Reviews', value: '3', icon: TrendingUp, accent: true },
-    { label: 'Revenue', value: '$2.8K', icon: DollarSign, primary: true },
+  const [open, setOpen] = useState<StatKey | null>(null);
+
+  // Pretend "this month" — derive from mocks. Marcus = i1.
+  const myCourses = mockCourses; // pretend all are mine for the demo
+  const monthLabel = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const breakdown = useMemo(() => {
+    // Revenue per course: bookingFee × booked seats (maxStudents - spotsRemaining)
+    const revenueRows = myCourses.map((c) => {
+      const seats = Math.max(0, c.maxStudents - c.spotsRemaining);
+      return {
+        id: c.id,
+        title: c.title,
+        seats,
+        unit: c.bookingFee,
+        total: seats * c.bookingFee,
+        date: c.date,
+      };
+    });
+    const revenueTotal = revenueRows.reduce((s, r) => s + r.total, 0);
+
+    // Students this month — group roster by their course (rotate across courses for variety)
+    const studentRows = mockRoster.map((s, i) => ({
+      ...s,
+      course: myCourses[i % myCourses.length],
+    }));
+
+    // Active courses this month
+    const activeRows = myCourses.filter((c) => c.status === 'active');
+
+    // Reviews this month
+    const reviewRows = mockReviews;
+    const avgRating =
+      reviewRows.reduce((s, r) => s + r.rating, 0) / Math.max(1, reviewRows.length);
+
+    return { revenueRows, revenueTotal, studentRows, activeRows, reviewRows, avgRating };
+  }, [myCourses]);
+
+  const stats: Array<{ key: StatKey; label: string; value: string; icon: typeof Calendar; primary?: boolean; accent?: boolean }> = [
+    { key: 'active', label: 'Active', value: String(breakdown.activeRows.length), icon: Calendar },
+    { key: 'students', label: 'Students', value: String(breakdown.studentRows.length), icon: Users },
+    { key: 'reviews', label: 'Reviews', value: String(breakdown.reviewRows.length), icon: TrendingUp, accent: true },
+    { key: 'revenue', label: 'Revenue', value: `$${(breakdown.revenueTotal / 1000).toFixed(1)}K`, icon: DollarSign, primary: true },
   ];
+
   return (
     <MobileShell>
       <PageHeader right={<NotificationsBell className="-mr-2" />} />
@@ -35,11 +79,18 @@ const InstructorDashboard = () => {
 
         <div className="grid grid-cols-2 gap-2 mt-5">
           {stats.map((s) => (
-            <div key={s.label} className="tactical-card p-4">
-              <s.icon className={`h-4 w-4 mb-2 ${s.primary ? 'text-primary' : 'text-muted-foreground'}`} />
+            <button
+              key={s.key}
+              onClick={() => setOpen(s.key)}
+              className="tactical-card p-4 text-left hover:border-primary/50 active:scale-[0.99] transition group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <s.icon className={`h-4 w-4 ${s.primary ? 'text-primary' : 'text-muted-foreground'}`} />
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 group-hover:text-primary transition" />
+              </div>
               <div className={`text-2xl font-black ${s.primary ? 'text-primary' : 'text-foreground'}`}>{s.value}</div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">{s.label} this month</div>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -95,6 +146,145 @@ const InstructorDashboard = () => {
         </Section>
       </div>
       <InstructorTabBar />
+
+      {/* Breakdown sheet */}
+      <Sheet open={open !== null} onOpenChange={(v) => !v && setOpen(null)}>
+        <SheetContent side="bottom" className="bg-background border-border max-h-[85vh] overflow-y-auto">
+          {open === 'revenue' && (
+            <>
+              <SheetHeader className="text-left">
+                <SheetTitle className="text-lg font-black flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-primary" /> Revenue Breakdown
+                </SheetTitle>
+                <SheetDescription className="text-xs">{monthLabel} · ${breakdown.revenueTotal.toLocaleString()} total</SheetDescription>
+              </SheetHeader>
+              <div className="mt-4 space-y-2">
+                {breakdown.revenueRows.map((r) => (
+                  <div key={r.id} className="tactical-card p-3 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm truncate">{r.title}</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">
+                        {r.seats} × ${r.unit} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+                    <div className="text-base font-black text-primary">${r.total.toLocaleString()}</div>
+                  </div>
+                ))}
+                <div className="tactical-card p-3 flex items-center justify-between border-primary/40 bg-primary/5">
+                  <div className="text-xs uppercase tracking-wider font-bold">Total</div>
+                  <div className="text-lg font-black text-primary">${breakdown.revenueTotal.toLocaleString()}</div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {open === 'students' && (
+            <>
+              <SheetHeader className="text-left">
+                <SheetTitle className="text-lg font-black flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" /> Students This Month
+                </SheetTitle>
+                <SheetDescription className="text-xs">{monthLabel} · {breakdown.studentRows.length} students</SheetDescription>
+              </SheetHeader>
+              <div className="mt-4 space-y-2">
+                {breakdown.studentRows.map((s) => (
+                  <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
+                    <img src={s.photo} className="h-10 w-10 rounded-full border border-border" alt="" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm truncate">{s.name}</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        {s.course.title}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-[10px] font-bold uppercase tracking-wider ${s.paymentStatus === 'paid' ? 'text-primary' : 'text-muted-foreground'}`}>
+                        {s.paymentStatus}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {new Date(s.bookedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {open === 'active' && (
+            <>
+              <SheetHeader className="text-left">
+                <SheetTitle className="text-lg font-black flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" /> Active Courses
+                </SheetTitle>
+                <SheetDescription className="text-xs">{monthLabel} · {breakdown.activeRows.length} active</SheetDescription>
+              </SheetHeader>
+              <div className="mt-4 space-y-2">
+                {breakdown.activeRows.map((c) => {
+                  const seats = c.maxStudents - c.spotsRemaining;
+                  const pct = Math.round((seats / c.maxStudents) * 100);
+                  return (
+                    <Link
+                      key={c.id}
+                      to={`/instructor/courses/${c.id}`}
+                      onClick={() => setOpen(null)}
+                      className="tactical-card p-3 flex items-center gap-3 hover:border-primary/40"
+                    >
+                      <div className="h-12 w-1 rounded-sm bg-primary" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm truncate">{c.title}</div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">
+                          {new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {c.city}, {c.state}
+                        </div>
+                        <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-black">{seats}/{c.maxStudents}</div>
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">filled</div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {open === 'reviews' && (
+            <>
+              <SheetHeader className="text-left">
+                <SheetTitle className="text-lg font-black flex items-center gap-2">
+                  <Star className="h-5 w-5 text-primary fill-primary" /> Reviews This Month
+                </SheetTitle>
+                <SheetDescription className="text-xs">
+                  {monthLabel} · {breakdown.reviewRows.length} reviews · {breakdown.avgRating.toFixed(1)} avg
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-4 space-y-2">
+                {breakdown.reviewRows.map((r) => (
+                  <div key={r.id} className="tactical-card p-3">
+                    <div className="flex items-center gap-3">
+                      <img src={r.studentPhoto} className="h-9 w-9 rounded-full border border-border" alt="" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm">{r.studentName}</div>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className={`h-3 w-3 ${i < r.rating ? 'text-primary fill-primary' : 'text-muted-foreground/30'}`} />
+                          ))}
+                          <span className="text-[10px] text-muted-foreground ml-1">{r.date}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {r.comment && (
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">"{r.comment}"</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </MobileShell>
   );
 };
