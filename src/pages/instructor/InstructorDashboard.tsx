@@ -257,26 +257,41 @@ const InstructorDashboard = () => {
 
                 {drillCourse && (
                   <div className="mt-4 space-y-2">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-1">
+                      Attended students ({drillStudents.length})
+                    </div>
                     {drillStudents.length === 0 && (
                       <div className="tactical-card p-4 text-center text-xs text-muted-foreground">
-                        No student bookings recorded for this course yet.
+                        No students have checked in for this course yet.
                       </div>
                     )}
-                    {drillStudents.map((s) => (
-                      <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
-                        <img src={s.photo} className="h-10 w-10 rounded-full border border-border" alt="" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm truncate">{s.name}</div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">
-                            Booked {new Date(s.bookedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {s.paymentStatus}
+                    {drillStudents.map((s) => {
+                      const perNet = Math.round(drillCourse.unit * 0.9 * 100) / 100;
+                      return (
+                        <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
+                          <img src={s.photo} className="h-10 w-10 rounded-full border border-border" alt="" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-sm truncate">{s.name}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">
+                              Checked in · Booked {new Date(s.bookedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {s.paymentStatus}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-black text-primary">${perNet.toLocaleString()}</div>
+                            <div className="text-[10px] text-muted-foreground">${drillCourse.unit} − 10%</div>
                           </div>
                         </div>
-                        <div className="text-sm font-black text-primary">${drillCourse.unit}</div>
+                      );
+                    })}
+                    <div className="tactical-card p-3 border-primary/40 bg-primary/5">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs uppercase tracking-wider font-bold">Course Net</div>
+                        <div className="text-lg font-black text-primary">${drillCourse.total.toLocaleString()}</div>
                       </div>
-                    ))}
-                    <div className="tactical-card p-3 flex items-center justify-between border-primary/40 bg-primary/5">
-                      <div className="text-xs uppercase tracking-wider font-bold">Course Total</div>
-                      <div className="text-lg font-black text-primary">${drillCourse.total.toLocaleString()}</div>
+                      <div className="mt-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider">
+                        <span className="text-muted-foreground">Gross <span className="text-foreground font-bold normal-case">${drillCourse.gross.toLocaleString()}</span></span>
+                        <span className="text-muted-foreground">Listing fee 10% <span className="text-destructive font-bold normal-case">−${drillCourse.fee.toLocaleString()}</span></span>
+                      </div>
                     </div>
                   </div>
                 )}
