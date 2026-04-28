@@ -221,21 +221,36 @@ const InstructorDashboard = () => {
                       <button
                         key={r.id}
                         onClick={() => setRevenueDrill(r.id)}
-                        className="tactical-card p-3 flex items-center gap-3 w-full text-left hover:border-primary/40 transition"
+                        className="tactical-card p-3 w-full text-left hover:border-primary/40 transition"
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm truncate">{r.title}</div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">
-                            {r.seats} × ${r.unit} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-sm truncate">{r.title}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">
+                              {r.seats} × ${r.unit} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </div>
                           </div>
+                          <div className="text-right">
+                            <div className="text-base font-black text-primary">${r.total.toLocaleString()}</div>
+                            <div className="text-[10px] text-muted-foreground">net</div>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <div className="text-base font-black text-primary">${r.total.toLocaleString()}</div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-wider border-t border-border/60 pt-2">
+                          <span className="text-muted-foreground">Gross <span className="text-foreground font-bold normal-case">${r.gross.toLocaleString()}</span></span>
+                          <span className="text-muted-foreground">Listing fee 10% <span className="text-destructive font-bold normal-case">−${r.fee.toLocaleString()}</span></span>
+                        </div>
                       </button>
                     ))}
-                    <div className="tactical-card p-3 flex items-center justify-between border-primary/40 bg-primary/5">
-                      <div className="text-xs uppercase tracking-wider font-bold">Total</div>
-                      <div className="text-lg font-black text-primary">${breakdown.revenueTotal.toLocaleString()}</div>
+                    <div className="tactical-card p-3 border-primary/40 bg-primary/5">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs uppercase tracking-wider font-bold">Net Total</div>
+                        <div className="text-lg font-black text-primary">${breakdown.revenueTotal.toLocaleString()}</div>
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider">
+                        <span className="text-muted-foreground">Gross <span className="text-foreground font-bold normal-case">${breakdown.revenueGross.toLocaleString()}</span></span>
+                        <span className="text-muted-foreground">Listing fees <span className="text-destructive font-bold normal-case">−${breakdown.revenueFees.toLocaleString()}</span></span>
+                      </div>
                     </div>
                   </div>
                 )}
