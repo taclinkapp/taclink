@@ -1,10 +1,11 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Compass, CalendarCheck, MessageSquare, User } from 'lucide-react';
+import { Compass, CalendarCheck, TrendingUp, MessageSquare, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { to: '/student', icon: Compass, label: 'Discover', end: true },
   { to: '/student/bookings', icon: CalendarCheck, label: 'Bookings' },
+  { to: '/student/progress', icon: TrendingUp, label: 'Progress' },
   { to: '/student/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/student/profile', icon: User, label: 'Profile' },
 ];
