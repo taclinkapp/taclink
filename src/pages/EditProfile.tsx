@@ -316,7 +316,7 @@ const EditProfile = () => {
                   </p>
                 </div>
               </div>
-            </Field>
+            </div>
 
             <Field label="Display name" error={errors.display_name} required>
               <Input
