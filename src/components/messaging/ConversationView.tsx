@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,12 @@ import {
   type MessageRow,
 } from "@/lib/messaging";
 import { useIdentity } from "@/hooks/useIdentity";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, ShieldAlert, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { detectContactInfo } from "@/lib/contactRedaction";
+import { logBypassAttempt } from "@/lib/bypassLogging";
+import { ContactInfoWarning } from "@/components/ContactInfoWarning";
+import { toast } from "sonner";
 
 type Props = {
   variant: "student" | "instructor";
@@ -137,9 +141,30 @@ export const ConversationView = ({ variant }: Props) => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length]);
 
+  const draftDetections = useMemo(() => detectContactInfo(draft), [draft]);
+  const draftBlocked = draftDetections.length > 0;
+
   const handleSend = async () => {
     const body = draft.trim();
     if (!body || !conversation || !user || sending) return;
+
+    if (draftBlocked) {
+      toast.error('Message blocked', {
+        description:
+          'Your message contains contact info. All transactions must go through TacLink.',
+      });
+      logBypassAttempt({
+        userId: user.id,
+        userRole: variant,
+        fieldName: 'message_body',
+        originalContent: body,
+        detections: draftDetections,
+        actionTaken: 'blocked',
+        context: { conversation_id: conversation.id },
+      });
+      return;
+    }
+
     setSending(true);
     setDraft("");
     try {
@@ -161,6 +186,15 @@ export const ConversationView = ({ variant }: Props) => {
     <MobileShell withTabBar={false}>
       <div className="flex flex-col h-screen">
         <PageHeader back onBack={() => nav(-1)} title={otherName ?? "Conversation"} />
+        {/* Persistent platform-policy banner */}
+        <div className="px-3 py-2 border-b border-border bg-primary/5 flex items-start gap-2">
+          <Lock className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+          <p className="text-[11px] leading-snug text-foreground/80">
+            <span className="font-bold text-primary">All communication must stay on TacLink.</span>{' '}
+            Sharing contact info or arranging off-platform payments may result in account suspension.
+          </p>
+        </div>
+
         {conversation?.course_title && (
           <div className="px-4 py-2 border-b border-border bg-card/50">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Course</div>
@@ -220,28 +254,43 @@ export const ConversationView = ({ variant }: Props) => {
           })}
         </div>
 
-        <div className="border-t border-border bg-surface px-3 py-3 flex items-center gap-2">
-          <Input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Message…"
-            className="flex-1 bg-card border-border h-11 rounded-full px-4"
-            disabled={!user || !conversation}
-          />
-          <Button
-            onClick={handleSend}
-            disabled={!draft.trim() || sending || !conversation}
-            className="h-11 w-11 rounded-full bg-primary text-primary-foreground p-0 amber-glow"
-            aria-label="Send"
-          >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
+        <div className="border-t border-border bg-surface px-3 pt-2 pb-3">
+          {draftBlocked && (
+            <ContactInfoWarning value={draft} className="mb-2" />
+          )}
+          <div className="flex items-center gap-2">
+            <Input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Message…"
+              className={cn(
+                "flex-1 bg-card border-border h-11 rounded-full px-4",
+                draftBlocked && "border-destructive focus-visible:ring-destructive",
+              )}
+              disabled={!user || !conversation}
+              aria-invalid={draftBlocked}
+            />
+            <Button
+              onClick={handleSend}
+              disabled={!draft.trim() || sending || !conversation || draftBlocked}
+              className="h-11 w-11 rounded-full bg-primary text-primary-foreground p-0 amber-glow"
+              aria-label={draftBlocked ? "Message blocked — remove contact info" : "Send"}
+            >
+              {sending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : draftBlocked ? (
+                <ShieldAlert className="h-4 w-4" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </MobileShell>
