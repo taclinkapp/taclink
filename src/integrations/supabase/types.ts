@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      issue_reports: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          page_url: string
+          reporter_email: string | null
+          reporter_name: string | null
+          reporter_role: string | null
+          severity: string
+          status: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          description: string
+          id?: string
+          page_url: string
+          reporter_email?: string | null
+          reporter_name?: string | null
+          reporter_role?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          page_url?: string
+          reporter_email?: string | null
+          reporter_name?: string | null
+          reporter_role?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
