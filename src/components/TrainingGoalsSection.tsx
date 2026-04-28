@@ -268,27 +268,31 @@ const GoalCard = ({
           )}
 
           {/* Manual completion checkbox — works for any goal type */}
-          <label
-            htmlFor={`goal-complete-${goal.id}`}
-            className="mt-2.5 flex items-center gap-2 cursor-pointer select-none group"
-          >
-            <Checkbox
-              id={`goal-complete-${goal.id}`}
-              checked={goal.completed_manually}
-              onCheckedChange={() => onToggleManual()}
-              className="h-4 w-4"
-            />
-            <span
-              className={cn(
-                'text-[11px] uppercase tracking-wider font-bold transition-colors',
-                goal.completed_manually
-                  ? 'text-primary'
-                  : 'text-muted-foreground group-hover:text-foreground',
-              )}
+          <div className="mt-2.5">
+            <label
+              htmlFor={`goal-complete-${goal.id}`}
+              className="flex items-center gap-2 cursor-pointer select-none group"
             >
-              {goal.completed_manually ? 'Marked complete' : 'Mark complete'}
-            </span>
-          </label>
+              <Checkbox
+                id={`goal-complete-${goal.id}`}
+                checked={goal.completed_manually}
+                onCheckedChange={() => onToggleManual()}
+                className="h-4 w-4"
+              />
+              <span
+                className={cn(
+                  'text-[11px] uppercase tracking-wider font-bold transition-colors',
+                  goal.completed_manually
+                    ? 'text-primary'
+                    : 'text-muted-foreground group-hover:text-foreground',
+                )}
+              >
+                {goal.completed_manually ? 'Marked complete' : 'Mark complete'}
+              </span>
+            </label>
+
+            <GoalHistory goal={goal} />
+          </div>
         </div>
         <div className="flex flex-col gap-1 -mt-1 -mr-1">
           <button
