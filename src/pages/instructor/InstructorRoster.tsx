@@ -3,7 +3,7 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2, FileText } from 'lucide-react';
+import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2, FileText, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CourseWaiverDialog } from '@/components/instructor/CourseWaiverDialog';
@@ -20,6 +20,12 @@ type RosterRow = {
   courseId: string;
   courseTitle: string;
   startsAt: string | null;
+  depositStatus: string;
+  depositAmountCents: number;
+  depositMethod: string | null;
+  depositHandleUsed: string | null;
+  depositSentAt: string | null;
+  depositExpiresAt: string | null;
 };
 
 const statusStyles: Record<string, string> = {
@@ -36,7 +42,21 @@ const statusIcon: Record<string, any> = {
   no_show: XCircle,
 };
 
-const filters = ['Upcoming', 'Attended', 'Cancelled', 'No-show', 'All'] as const;
+const depositStyles: Record<string, string> = {
+  pending_send: 'bg-muted text-muted-foreground border-border',
+  awaiting_confirmation: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+  confirmed: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+  expired: 'bg-destructive/10 text-destructive border-destructive/30',
+};
+
+const depositLabel: Record<string, string> = {
+  pending_send: 'Deposit not sent',
+  awaiting_confirmation: 'Deposit awaiting',
+  confirmed: 'Deposit received',
+  expired: 'Deposit expired',
+};
+
+const filters = ['Upcoming', 'Deposits', 'Attended', 'Cancelled', 'No-show', 'All'] as const;
 
 const InstructorRoster = () => {
   const { user } = useAuth();
@@ -64,6 +84,30 @@ const InstructorRoster = () => {
     }
   };
 
+  const confirmDeposit = async (bookingId: string) => {
+    setUpdatingId(bookingId);
+    const prev = rows;
+    setRows((rs) =>
+      rs.map((r) =>
+        r.bookingId === bookingId ? { ...r, depositStatus: 'confirmed' } : r,
+      ),
+    );
+    const { error } = await supabase
+      .from('bookings')
+      .update({
+        deposit_status: 'confirmed',
+        deposit_confirmed_at: new Date().toISOString(),
+      })
+      .eq('id', bookingId);
+    setUpdatingId(null);
+    if (error) {
+      setRows(prev);
+      toast.error('Could not confirm deposit', { description: error.message });
+    } else {
+      toast.success('Deposit confirmed');
+    }
+  };
+
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
@@ -83,7 +127,7 @@ const InstructorRoster = () => {
       }
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('id, status, booked_at, student_id, course_id')
+        .select('id, status, booked_at, student_id, course_id, deposit_status, deposit_amount_cents, deposit_method, deposit_handle_used, deposit_sent_at, deposit_expires_at')
         .in('course_id', courseIds)
         .order('booked_at', { ascending: false });
       const studentIds = Array.from(new Set((bookings ?? []).map((b) => b.student_id)));
@@ -108,6 +152,12 @@ const InstructorRoster = () => {
           courseId: b.course_id,
           courseTitle: c?.title ?? 'Course',
           startsAt: c?.starts_at ?? null,
+          depositStatus: b.deposit_status ?? 'pending_send',
+          depositAmountCents: b.deposit_amount_cents ?? 0,
+          depositMethod: b.deposit_method ?? null,
+          depositHandleUsed: b.deposit_handle_used ?? null,
+          depositSentAt: b.deposit_sent_at ?? null,
+          depositExpiresAt: b.deposit_expires_at ?? null,
         };
       });
       if (!cancelled) {
@@ -126,6 +176,8 @@ const InstructorRoster = () => {
       const startMs = r.startsAt ? new Date(r.startsAt).getTime() : 0;
       if (tab === 'Upcoming')
         return r.status === 'reserved' && (!startMs || startMs >= now);
+      if (tab === 'Deposits')
+        return r.status !== 'cancelled' && r.depositStatus === 'awaiting_confirmation';
       if (tab === 'Attended') return r.status === 'attended';
       if (tab === 'Cancelled') return r.status === 'cancelled';
       if (tab === 'No-show') return r.status === 'no_show';
@@ -134,10 +186,11 @@ const InstructorRoster = () => {
   }, [rows, tab, now]);
 
   const counts = useMemo(() => {
-    const c = { Upcoming: 0, Attended: 0, Cancelled: 0, 'No-show': 0, All: rows.length };
+    const c = { Upcoming: 0, Deposits: 0, Attended: 0, Cancelled: 0, 'No-show': 0, All: rows.length };
     rows.forEach((r) => {
       const startMs = r.startsAt ? new Date(r.startsAt).getTime() : 0;
       if (r.status === 'reserved' && (!startMs || startMs >= now)) c.Upcoming++;
+      if (r.status !== 'cancelled' && r.depositStatus === 'awaiting_confirmation') c.Deposits++;
       if (r.status === 'attended') c.Attended++;
       if (r.status === 'cancelled') c.Cancelled++;
       if (r.status === 'no_show') c['No-show']++;
@@ -261,6 +314,36 @@ const InstructorRoster = () => {
                           {r.status.replace('_', ' ')}
                         </span>
                       </div>
+                      {r.depositAmountCents > 0 && (
+                        <div className="flex flex-wrap items-center gap-2 pl-12">
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider',
+                              depositStyles[r.depositStatus] ?? depositStyles.pending_send,
+                            )}
+                          >
+                            <DollarSign className="h-3 w-3" />
+                            {depositLabel[r.depositStatus] ?? r.depositStatus}
+                            {' · $'}
+                            {(r.depositAmountCents / 100).toFixed(2)}
+                          </span>
+                          {r.depositMethod && r.depositHandleUsed && (
+                            <span className="text-[10px] text-muted-foreground">
+                              via {r.depositMethod} {r.depositHandleUsed}
+                            </span>
+                          )}
+                          {r.depositStatus !== 'confirmed' && (
+                            <button
+                              disabled={busy}
+                              onClick={() => confirmDeposit(r.bookingId)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 text-[11px] font-bold uppercase tracking-wider hover:bg-emerald-500/20 disabled:opacity-50"
+                            >
+                              {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                              Confirm received
+                            </button>
+                          )}
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-1.5 pl-12">
                         {r.status !== 'attended' && (
                           <button
