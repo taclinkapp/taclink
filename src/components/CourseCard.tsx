@@ -34,9 +34,16 @@ export const CourseCard = ({ course }: { course: Course }) => {
 
         {/* Body */}
         <div className="px-4 pt-3 pb-4">
-          <h3 className="font-stencil text-xl font-bold uppercase leading-tight text-foreground">
-            {course.title}
-          </h3>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-stencil text-xl font-bold uppercase leading-tight text-foreground">
+              {course.title}
+            </h3>
+            {course.skillLevel && (
+              <span className="shrink-0 mt-1 inline-flex items-center px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30">
+                {course.skillLevel === 'all_levels' ? 'All Levels' : course.skillLevel}
+              </span>
+            )}
+          </div>
 
           <div className="mt-2 text-sm text-muted-foreground flex items-center flex-wrap gap-x-1.5 gap-y-1">
             <span>Instructor:</span>
