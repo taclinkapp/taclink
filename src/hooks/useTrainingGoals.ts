@@ -20,10 +20,20 @@ export interface TrainingGoal {
   updated_at: string;
 }
 
+export interface GoalEvent {
+  id: string;
+  goal_id: string;
+  student_id: string;
+  event_type: 'marked_complete' | 'marked_incomplete';
+  created_at: string;
+}
+
 export interface GoalWithProgress extends TrainingGoal {
   current: number;
   isComplete: boolean;
   percent: number;
+  events: GoalEvent[];
+  lastEvent: GoalEvent | null;
 }
 
 export const useTrainingGoals = () => {
