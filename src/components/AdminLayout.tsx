@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Shield, BookOpen, Mail, ScrollText, Settings, LogOut, Bug, LifeBuoy } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 
@@ -8,6 +8,7 @@ const items = [
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/instructors', icon: Shield, label: 'Instructors' },
   { to: '/admin/courses', icon: BookOpen, label: 'Courses' },
+  { to: '/admin/conversations', icon: MessageSquare, label: 'Conversations' },
   { to: '/admin/waitlist', icon: Mail, label: 'Waitlist' },
   { to: '/admin/reports', icon: Bug, label: 'Issue Reports' },
   { to: '/admin/support', icon: LifeBuoy, label: 'Support Tickets' },
