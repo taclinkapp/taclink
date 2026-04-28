@@ -67,9 +67,7 @@ const CourseManagement = () => {
     const label =
       opts?.source === 'proximity'
         ? 'Auto check-in confirmed (QR + proximity)'
-        : opts?.source === 'qr-staged'
-          ? 'QR verified — waiting for proximity'
-          : 'Checked in';
+        : 'Checked in';
     toast.success(label);
     qc.invalidateQueries({ queryKey: ['course_bookings', id] });
   };
