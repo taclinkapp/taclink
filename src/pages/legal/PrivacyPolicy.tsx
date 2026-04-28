@@ -1,4 +1,5 @@
 import { MobileShell, PageHeader } from '@/components/MobileShell';
+import { LegalAccountBanner } from '@/components/legal/LegalAccountBanner';
 
 const SECTIONS = [
   {
@@ -47,6 +48,7 @@ const PrivacyPolicy = () => (
   <MobileShell withTabBar={false}>
     <PageHeader title="Privacy Policy" back />
     <div className="px-4 py-4 space-y-4">
+      <LegalAccountBanner documentName="Privacy Policy" />
       <p className="text-xs text-muted-foreground">Last updated: April 2026</p>
       {SECTIONS.map((s) => (
         <section key={s.title} className="tactical-card p-4">
