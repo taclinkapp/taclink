@@ -42,6 +42,88 @@ const NewCourse = () => {
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
 
+  // ---- Draft autosave (localStorage) ----
+  const DRAFT_KEY = user ? `course-draft:${user.id}` : 'course-draft:anon';
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const hydrated = useRef(false);
+
+  // Hydrate once
+  useEffect(() => {
+    if (hydrated.current) return;
+    hydrated.current = true;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.title) setTitle(d.title);
+      if (d.category) setCategory(d.category);
+      if (d.description) setDescription(d.description);
+      if (d.date) setDate(d.date);
+      if (d.startTime) setStartTime(d.startTime);
+      if (d.endTime) setEndTime(d.endTime);
+      if (d.address) setAddress(d.address);
+      if (d.city) setCity(d.city);
+      if (d.state) setState(d.state);
+      if (d.capacity) setCapacity(d.capacity);
+      if (d.price) setPrice(d.price);
+      if (typeof d.step === 'number') setStep(d.step);
+      if (d.savedAt) setLastSavedAt(new Date(d.savedAt));
+      toast.message('Draft restored', { description: 'Picked up where you left off.' });
+    } catch {
+      // ignore corrupt drafts
+    }
+  }, [DRAFT_KEY]);
+
+  // Debounced autosave on changes
+  useEffect(() => {
+    if (!hydrated.current) return;
+    const hasContent = title || category || description || date || startTime || endTime || address || city || state || capacity || price;
+    if (!hasContent) return;
+    setDraftStatus('saving');
+    const t = setTimeout(() => {
+      try {
+        const savedAt = new Date().toISOString();
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({ title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
+        );
+        setLastSavedAt(new Date(savedAt));
+        setDraftStatus('saved');
+      } catch {
+        setDraftStatus('idle');
+      }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, DRAFT_KEY]);
+
+  const saveDraftNow = () => {
+    try {
+      const savedAt = new Date().toISOString();
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
+      );
+      setLastSavedAt(new Date(savedAt));
+      setDraftStatus('saved');
+      toast.success('Draft saved');
+    } catch {
+      toast.error('Could not save draft');
+    }
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setLastSavedAt(null);
+    setDraftStatus('idle');
+    setTitle(''); setCategory(''); setDescription('');
+    setDate(''); setStartTime(''); setEndTime('');
+    setAddress(''); setCity(''); setState('');
+    setCapacity(''); setPrice('');
+    setStep(0);
+    toast.success('Draft cleared');
+  };
+
   const onPickCover = (file: File | null) => {
     if (!file) {
       setCoverFile(null);
