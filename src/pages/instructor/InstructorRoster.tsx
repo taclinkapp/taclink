@@ -20,6 +20,12 @@ type RosterRow = {
   courseId: string;
   courseTitle: string;
   startsAt: string | null;
+  depositStatus: string;
+  depositAmountCents: number;
+  depositMethod: string | null;
+  depositHandleUsed: string | null;
+  depositSentAt: string | null;
+  depositExpiresAt: string | null;
 };
 
 const statusStyles: Record<string, string> = {
@@ -36,7 +42,21 @@ const statusIcon: Record<string, any> = {
   no_show: XCircle,
 };
 
-const filters = ['Upcoming', 'Attended', 'Cancelled', 'No-show', 'All'] as const;
+const depositStyles: Record<string, string> = {
+  pending_send: 'bg-muted text-muted-foreground border-border',
+  awaiting_confirmation: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+  confirmed: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+  expired: 'bg-destructive/10 text-destructive border-destructive/30',
+};
+
+const depositLabel: Record<string, string> = {
+  pending_send: 'Deposit not sent',
+  awaiting_confirmation: 'Deposit awaiting',
+  confirmed: 'Deposit received',
+  expired: 'Deposit expired',
+};
+
+const filters = ['Upcoming', 'Deposits', 'Attended', 'Cancelled', 'No-show', 'All'] as const;
 
 const InstructorRoster = () => {
   const { user } = useAuth();
