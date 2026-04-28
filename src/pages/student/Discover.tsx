@@ -1,14 +1,17 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { Input } from '@/components/ui/input';
 import { Search, Map, List, SlidersHorizontal } from 'lucide-react';
 import { CATEGORIES, mockCourses } from '@/lib/mockData';
 import { CourseCard } from '@/components/CourseCard';
+import { CourseMap } from '@/components/CourseMap';
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 
 const Discover = () => {
+  const nav = useNavigate();
   const [view, setView] = useState<'list' | 'map'>('list');
   const [category, setCategory] = useState<string>('All');
   const [query, setQuery] = useState('');
@@ -80,29 +83,12 @@ const Discover = () => {
         </div>
       ) : (
         <div className="px-4 py-4">
-          <div className="relative h-[60vh] tactical-card overflow-hidden flex items-center justify-center bg-gradient-to-br from-surface to-card">
-            {/* Map placeholder */}
-            <div className="absolute inset-0 opacity-30" style={{
-              backgroundImage: 'radial-gradient(circle at 20% 30%, hsl(38 92% 50% / 0.3), transparent 30%), radial-gradient(circle at 70% 60%, hsl(38 92% 50% / 0.3), transparent 25%), radial-gradient(circle at 40% 80%, hsl(38 92% 50% / 0.3), transparent 25%)',
-            }} />
-            <div className="absolute inset-0" style={{
-              backgroundImage: 'linear-gradient(hsl(0 0% 16% / 0.4) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 16% / 0.4) 1px, transparent 1px)',
-              backgroundSize: '32px 32px',
-            }} />
-            {filtered.slice(0, 5).map((c, i) => (
-              <div key={c.id} className="absolute" style={{ top: `${20 + i * 12}%`, left: `${15 + i * 15}%` }}>
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary rounded-full blur-md animate-pulse" />
-                  <div className="relative h-7 w-7 rounded-full bg-primary border-2 border-background flex items-center justify-center text-[10px] font-black text-primary-foreground">
-                    ${c.bookingFee}
-                  </div>
-                </div>
-              </div>
-            ))}
-            <div className="relative z-10 text-center">
-              <Map className="h-10 w-10 text-primary mx-auto mb-2" />
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Map view (Google Maps stub)</p>
-            </div>
+          <div className="relative h-[60vh] tactical-card overflow-hidden">
+            <CourseMap
+              courses={filtered}
+              className="h-full w-full"
+              onSelect={(c) => nav(`/student/course/${c.id}`)}
+            />
           </div>
           <div className="mt-4 space-y-3">
             {filtered.slice(0, 2).map((c) => <CourseCard key={c.id} course={c} />)}

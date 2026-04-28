@@ -4,7 +4,8 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { CategoryPill } from '@/components/CategoryPill';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle } from 'lucide-react';
+import { CourseMap } from '@/components/CourseMap';
+import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, MessageSquare } from 'lucide-react';
 
 const CourseDetail = () => {
   const { id } = useParams();
