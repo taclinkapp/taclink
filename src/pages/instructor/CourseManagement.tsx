@@ -16,6 +16,24 @@ const CourseManagement = () => {
   const { id } = useParams();
   const { data: course, isLoading } = useCourse(id);
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
+  const [showReceipt, setShowReceipt] = useState(false);
+
+  const { data: listingCharge } = useQuery({
+    queryKey: ['instructor_charge', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('instructor_charges')
+        .select('*')
+        .eq('course_id', id as string)
+        .eq('charge_type', 'listing_fee')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
 
   if (isLoading || !course) {
     return (
