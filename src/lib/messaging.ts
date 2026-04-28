@@ -62,8 +62,46 @@ type EnsureArgs = {
 };
 
 /**
+ * Booking gate: returns true if the student has at least one confirmed
+ * (reserved or attended) booking on a course owned by the instructor.
+ * This is enforced before allowing a new conversation to be opened so
+ * users cannot freely message each other off the back of a bypass attempt.
+ */
+export const hasConfirmedBookingBetween = async (
+  studentId: string,
+  instructorId: string,
+): Promise<boolean> => {
+  // Fetch instructor's course ids first, then check bookings.
+  const { data: courses, error: courseErr } = await supabase
+    .from("courses")
+    .select("id")
+    .eq("instructor_id", instructorId);
+  if (courseErr) throw courseErr;
+  const ids = (courses ?? []).map((c) => c.id);
+  if (ids.length === 0) return false;
+
+  const { data: bookings, error: bookErr } = await supabase
+    .from("bookings")
+    .select("id, status")
+    .eq("student_id", studentId)
+    .in("course_id", ids)
+    .in("status", ["reserved", "attended"])
+    .limit(1);
+  if (bookErr) throw bookErr;
+  return (bookings?.length ?? 0) > 0;
+};
+
+export class BookingGateError extends Error {
+  constructor() {
+    super("A confirmed booking is required before you can message this user.");
+    this.name = "BookingGateError";
+  }
+}
+
+/**
  * Find an existing conversation between this student↔instructor (optionally
- * tied to a course) or create one.
+ * tied to a course) or create one. Enforces the booking gate on creation —
+ * existing conversations remain accessible so prior history isn't lost.
  */
 export const ensureConversation = async (args: EnsureArgs): Promise<ConversationRow> => {
   const { studentId, instructorId, courseId = null } = args;
@@ -80,6 +118,10 @@ export const ensureConversation = async (args: EnsureArgs): Promise<Conversation
   const { data: existing, error: findErr } = await query.maybeSingle();
   if (findErr) throw findErr;
   if (existing) return existing as ConversationRow;
+
+  // Booking gate: only allow new threads when a confirmed booking exists.
+  const allowed = await hasConfirmedBookingBetween(studentId, instructorId);
+  if (!allowed) throw new BookingGateError();
 
   const { data: created, error: insertErr } = await supabase
     .from("conversations")

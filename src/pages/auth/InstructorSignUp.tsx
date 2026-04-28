@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { US_STATES } from '@/lib/mockData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { detectContactInfo } from '@/lib/contactRedaction';
+import { logBypassAttempt } from '@/lib/bypassLogging';
+import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
@@ -31,6 +34,11 @@ const InstructorSignUp = () => {
     if (password !== confirm) return toast.error('Passwords do not match');
     if (password.length < 8) return toast.error('Password must be at least 8 characters');
     if (!agree) return toast.error('You must agree to the terms');
+    const bioHits = detectContactInfo(bio);
+    if (bioHits.length) {
+      logBypassAttempt({ userRole: 'instructor', fieldName: 'instructor_bio', originalContent: bio, detections: bioHits, actionTaken: 'blocked' });
+      return toast.error('Remove contact info from your bio before submitting.');
+    }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -109,6 +117,7 @@ const InstructorSignUp = () => {
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Bio (max 500 chars)</Label>
             <Textarea value={bio} onChange={(e) => setBio(e.target.value)} className="bg-card border-border min-h-24 mt-1.5" placeholder="Tell students about your background and teaching style…" maxLength={500} />
+            <ContactInfoWarning value={bio} className="mt-2" />
           </div>
           <div className="flex items-start gap-3 pt-2">
             <Checkbox id="age" checked={agree} onCheckedChange={(v) => setAgree(!!v)} className="mt-0.5" />

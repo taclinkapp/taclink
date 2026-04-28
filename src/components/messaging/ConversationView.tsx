@@ -8,6 +8,7 @@ import { mockCourses } from "@/lib/mockData";
 import {
   ensureConversation,
   sendMessage,
+  BookingGateError,
   type ConversationRow,
   type MessageRow,
 } from "@/lib/messaging";
@@ -41,6 +42,7 @@ export const ConversationView = ({ variant }: Props) => {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [gateBlocked, setGateBlocked] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Resolve / create conversation
@@ -88,7 +90,11 @@ export const ConversationView = ({ variant }: Props) => {
           setConversation(conv);
         }
       } catch (e) {
-        console.error("Failed to load conversation", e);
+        if (e instanceof BookingGateError) {
+          setGateBlocked(true);
+        } else {
+          console.error("Failed to load conversation", e);
+        }
       } finally {
         setLoading(false);
       }
@@ -181,6 +187,27 @@ export const ConversationView = ({ variant }: Props) => {
     variant === "student" ? conversation?.instructor_name : conversation?.student_name;
   const otherPhoto =
     variant === "student" ? conversation?.instructor_photo : conversation?.student_photo;
+
+  if (gateBlocked) {
+    return (
+      <MobileShell withTabBar={false}>
+        <div className="flex flex-col h-screen">
+          <PageHeader back onBack={() => nav(-1)} title="Messaging locked" />
+          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Lock className="h-7 w-7 text-primary" />
+            </div>
+            <h2 className="text-lg font-bold">Booking required to message</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
+              To keep TacLink safe and prevent off-platform bypass, direct messaging
+              between students and instructors unlocks once a booking is confirmed.
+            </p>
+            <Button onClick={() => nav(-1)} className="mt-2">Go back</Button>
+          </div>
+        </div>
+      </MobileShell>
+    );
+  }
 
   return (
     <MobileShell withTabBar={false}>
