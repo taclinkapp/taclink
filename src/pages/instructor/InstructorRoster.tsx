@@ -44,6 +44,7 @@ const InstructorRoster = () => {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<typeof filters[number]>('Upcoming');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [waiverCourseId, setWaiverCourseId] = useState<string | null>(null);
 
   const updateStatus = async (bookingId: string, next: BookingStatus) => {
     setUpdatingId(bookingId);
