@@ -23,16 +23,23 @@ const InstructorDashboard = () => {
     // Revenue per course: bookingFee × booked seats (maxStudents - spotsRemaining)
     const revenueRows = myCourses.map((c) => {
       const seats = Math.max(0, c.maxStudents - c.spotsRemaining);
+      const gross = seats * c.bookingFee;
+      const fee = Math.round(gross * 0.10 * 100) / 100; // 10% TacLink listing fee
+      const net = gross - fee;
       return {
         id: c.id,
         title: c.title,
         seats,
         unit: c.bookingFee,
-        total: seats * c.bookingFee,
+        gross,
+        fee,
+        total: net,
         date: c.date,
       };
     });
     const revenueTotal = revenueRows.reduce((s, r) => s + r.total, 0);
+    const revenueGross = revenueRows.reduce((s, r) => s + r.gross, 0);
+    const revenueFees = revenueRows.reduce((s, r) => s + r.fee, 0);
 
     // Students this month — group roster by their course (rotate across courses for variety)
     const studentRows = mockRoster.map((s, i) => ({
@@ -48,7 +55,7 @@ const InstructorDashboard = () => {
     const avgRating =
       reviewRows.reduce((s, r) => s + r.rating, 0) / Math.max(1, reviewRows.length);
 
-    return { revenueRows, revenueTotal, studentRows, activeRows, reviewRows, avgRating };
+    return { revenueRows, revenueTotal, revenueGross, revenueFees, studentRows, activeRows, reviewRows, avgRating };
   }, [myCourses]);
 
   const stats: Array<{ key: StatKey; label: string; value: string; icon: typeof Calendar; primary?: boolean; accent?: boolean }> = [
@@ -151,15 +158,17 @@ const InstructorDashboard = () => {
         <SheetContent side="bottom" className="bg-background border-border max-h-[85vh] overflow-y-auto">
           {open === 'revenue' && (() => {
             const drillCourse = revenueDrill ? breakdown.revenueRows.find((r) => r.id === revenueDrill) : null;
-            const drillStudents = revenueDrill ? breakdown.studentRows.filter((s) => s.course.id === revenueDrill) : [];
+            const drillStudents = revenueDrill
+              ? breakdown.studentRows.filter((s) => s.course.id === revenueDrill && s.checkedIn)
+              : [];
 
             const handlePrint = () => window.print();
             const handleDownload = () => {
-              const rows = [['Course', 'Date', 'Seats', 'Booking Fee', 'Total']];
+              const rows = [['Course', 'Date', 'Seats', 'Booking Fee', 'Gross', 'Listing Fee (10%)', 'Net']];
               breakdown.revenueRows.forEach((r) => {
-                rows.push([r.title, new Date(r.date).toLocaleDateString(), String(r.seats), `$${r.unit}`, `$${r.total}`]);
+                rows.push([r.title, new Date(r.date).toLocaleDateString(), String(r.seats), `$${r.unit}`, `$${r.gross}`, `-$${r.fee}`, `$${r.total}`]);
               });
-              rows.push(['', '', '', 'TOTAL', `$${breakdown.revenueTotal}`]);
+              rows.push(['', '', '', '', `$${breakdown.revenueGross}`, `-$${breakdown.revenueFees}`, `$${breakdown.revenueTotal}`]);
               const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
               const blob = new Blob([csv], { type: 'text/csv' });
               const url = URL.createObjectURL(blob);
@@ -189,8 +198,8 @@ const InstructorDashboard = () => {
                       </SheetTitle>
                       <SheetDescription className="text-xs">
                         {drillCourse
-                          ? `${new Date(drillCourse.date).toLocaleDateString()} · ${drillCourse.seats} × $${drillCourse.unit} = $${drillCourse.total.toLocaleString()}`
-                          : `${monthLabel} · $${breakdown.revenueTotal.toLocaleString()} total`}
+                          ? `${new Date(drillCourse.date).toLocaleDateString()} · ${drillStudents.length} attended · Net $${drillCourse.total.toLocaleString()}`
+                          : `${monthLabel} · Gross $${breakdown.revenueGross.toLocaleString()} − Fees $${breakdown.revenueFees.toLocaleString()} = Net $${breakdown.revenueTotal.toLocaleString()}`}
                       </SheetDescription>
                     </div>
                     {!drillCourse && (
@@ -212,47 +221,77 @@ const InstructorDashboard = () => {
                       <button
                         key={r.id}
                         onClick={() => setRevenueDrill(r.id)}
-                        className="tactical-card p-3 flex items-center gap-3 w-full text-left hover:border-primary/40 transition"
+                        className="tactical-card p-3 w-full text-left hover:border-primary/40 transition"
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm truncate">{r.title}</div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">
-                            {r.seats} × ${r.unit} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-sm truncate">{r.title}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">
+                              {r.seats} × ${r.unit} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </div>
                           </div>
+                          <div className="text-right">
+                            <div className="text-base font-black text-primary">${r.total.toLocaleString()}</div>
+                            <div className="text-[10px] text-muted-foreground">net</div>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <div className="text-base font-black text-primary">${r.total.toLocaleString()}</div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-wider border-t border-border/60 pt-2">
+                          <span className="text-muted-foreground">Gross <span className="text-foreground font-bold normal-case">${r.gross.toLocaleString()}</span></span>
+                          <span className="text-muted-foreground">Listing fee 10% <span className="text-destructive font-bold normal-case">−${r.fee.toLocaleString()}</span></span>
+                        </div>
                       </button>
                     ))}
-                    <div className="tactical-card p-3 flex items-center justify-between border-primary/40 bg-primary/5">
-                      <div className="text-xs uppercase tracking-wider font-bold">Total</div>
-                      <div className="text-lg font-black text-primary">${breakdown.revenueTotal.toLocaleString()}</div>
+                    <div className="tactical-card p-3 border-primary/40 bg-primary/5">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs uppercase tracking-wider font-bold">Net Total</div>
+                        <div className="text-lg font-black text-primary">${breakdown.revenueTotal.toLocaleString()}</div>
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider">
+                        <span className="text-muted-foreground">Gross <span className="text-foreground font-bold normal-case">${breakdown.revenueGross.toLocaleString()}</span></span>
+                        <span className="text-muted-foreground">Listing fees <span className="text-destructive font-bold normal-case">−${breakdown.revenueFees.toLocaleString()}</span></span>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {drillCourse && (
                   <div className="mt-4 space-y-2">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-1">
+                      Attended students ({drillStudents.length})
+                    </div>
                     {drillStudents.length === 0 && (
                       <div className="tactical-card p-4 text-center text-xs text-muted-foreground">
-                        No student bookings recorded for this course yet.
+                        No students have checked in for this course yet.
                       </div>
                     )}
-                    {drillStudents.map((s) => (
-                      <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
-                        <img src={s.photo} className="h-10 w-10 rounded-full border border-border" alt="" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm truncate">{s.name}</div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">
-                            Booked {new Date(s.bookedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {s.paymentStatus}
+                    {drillStudents.map((s) => {
+                      const perNet = Math.round(drillCourse.unit * 0.9 * 100) / 100;
+                      return (
+                        <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
+                          <img src={s.photo} className="h-10 w-10 rounded-full border border-border" alt="" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-sm truncate">{s.name}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">
+                              Checked in · Booked {new Date(s.bookedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {s.paymentStatus}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-black text-primary">${perNet.toLocaleString()}</div>
+                            <div className="text-[10px] text-muted-foreground">${drillCourse.unit} − 10%</div>
                           </div>
                         </div>
-                        <div className="text-sm font-black text-primary">${drillCourse.unit}</div>
+                      );
+                    })}
+                    <div className="tactical-card p-3 border-primary/40 bg-primary/5">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs uppercase tracking-wider font-bold">Course Net</div>
+                        <div className="text-lg font-black text-primary">${drillCourse.total.toLocaleString()}</div>
                       </div>
-                    ))}
-                    <div className="tactical-card p-3 flex items-center justify-between border-primary/40 bg-primary/5">
-                      <div className="text-xs uppercase tracking-wider font-bold">Course Total</div>
-                      <div className="text-lg font-black text-primary">${drillCourse.total.toLocaleString()}</div>
+                      <div className="mt-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider">
+                        <span className="text-muted-foreground">Gross <span className="text-foreground font-bold normal-case">${drillCourse.gross.toLocaleString()}</span></span>
+                        <span className="text-muted-foreground">Listing fee 10% <span className="text-destructive font-bold normal-case">−${drillCourse.fee.toLocaleString()}</span></span>
+                      </div>
                     </div>
                   </div>
                 )}
