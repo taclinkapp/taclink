@@ -6,7 +6,7 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Plus, Lock, Trash2, AlertCircle, Loader2 } from 'lucide-react';
+import { CreditCard, Plus, Lock, Trash2, AlertCircle, Loader2, Pencil, X, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Card = {
@@ -119,6 +119,13 @@ const PaymentMethods = () => {
   const [name, setName] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Edit-row state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editExp, setEditExp] = useState('');
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [editSaving, setEditSaving] = useState(false);
+
   const digitsOnly = number.replace(/\D/g, '');
   const brand = useMemo<Brand>(() => detectBrand(digitsOnly), [digitsOnly]);
 
@@ -198,6 +205,49 @@ const PaymentMethods = () => {
     toast.success('Payment method removed');
   };
 
+  const startEdit = (c: Card) => {
+    setEditingId(c.id);
+    setEditName(c.cardholder_name);
+    setEditExp(`${String(c.exp_month).padStart(2, '0')}/${String(c.exp_year).padStart(2, '0')}`);
+    setEditErrors({});
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditErrors({});
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    const fieldErrors: Record<string, string> = {};
+    const trimmedName = editName.trim();
+    if (trimmedName.length < 2 || trimmedName.length > 80) {
+      fieldErrors.name = 'Cardholder name must be 2–80 characters';
+    } else if (!/^[A-Za-zÀ-ÿ'’.\- ]+$/.test(trimmedName)) {
+      fieldErrors.name = 'Use letters, spaces, hyphens, apostrophes only';
+    }
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(editExp)) {
+      fieldErrors.exp = 'Expiry must be MM/YY';
+    } else {
+      const [mm, yy] = editExp.split('/').map(Number);
+      if (!expNotInPast(mm, yy)) fieldErrors.exp = 'Card is expired';
+    }
+    if (Object.keys(fieldErrors).length) {
+      setEditErrors(fieldErrors);
+      return;
+    }
+    const [mm, yy] = editExp.split('/').map(Number);
+    setEditSaving(true);
+    const { error } = await supabase
+      .from('payment_methods')
+      .update({ cardholder_name: trimmedName, exp_month: mm, exp_year: yy })
+      .eq('id', id);
+    setEditSaving(false);
+    if (error) { toast.error(error.message); return; }
+    setCards((prev) => prev.map((c) => c.id === id ? { ...c, cardholder_name: trimmedName, exp_month: mm, exp_year: yy } : c));
+    toast.success('Payment method updated');
+    cancelEdit();
+  };
+
   const onNumberChange = (v: string) => {
     const newDigits = v.replace(/\D/g, '');
     const newBrand = detectBrand(newDigits);
@@ -223,7 +273,46 @@ const PaymentMethods = () => {
               </div>
             )}
 
-            {cards.map((c) => (
+            {cards.map((c) => editingId === c.id ? (
+              <div key={c.id} className="tactical-card p-4 space-y-3 border-primary/40">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  <div className="text-sm font-bold">{c.brand} •••• {c.last4}</div>
+                  <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">Editing</span>
+                </div>
+                <Field label="Cardholder name" error={editErrors.name}>
+                  <Input
+                    value={editName}
+                    onChange={(e) => { setEditName(e.target.value); if (editErrors.name) setEditErrors((x) => ({ ...x, name: '' })); }}
+                    placeholder="Name on card"
+                    maxLength={80}
+                    autoComplete="cc-name"
+                    className="bg-background border-border h-11"
+                  />
+                </Field>
+                <Field label="Expiry" error={editErrors.exp}>
+                  <Input
+                    value={editExp}
+                    onChange={(e) => { setEditExp(formatExp(e.target.value)); if (editErrors.exp) setEditErrors((x) => ({ ...x, exp: '' })); }}
+                    placeholder="MM/YY"
+                    inputMode="numeric"
+                    autoComplete="cc-exp"
+                    maxLength={5}
+                    className="bg-background border-border h-11 font-mono"
+                  />
+                </Field>
+                <p className="text-[10px] text-muted-foreground italic">Card brand and last 4 digits cannot be changed. To use a different card, remove this one and add a new one.</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={cancelEdit} disabled={editSaving} className="flex-1">
+                    <X className="h-3.5 w-3.5 mr-1" /> Cancel
+                  </Button>
+                  <Button onClick={() => handleSaveEdit(c.id)} disabled={editSaving} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
+                    {editSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+                    Save
+                  </Button>
+                </div>
+              </div>
+            ) : (
               <div key={c.id} className="tactical-card p-4 flex items-center gap-3">
                 <div className="h-10 w-14 rounded-md bg-primary/10 border border-primary/30 flex items-center justify-center">
                   <CreditCard className="h-4 w-4 text-primary" />
@@ -234,6 +323,9 @@ const PaymentMethods = () => {
                     {c.cardholder_name} · Exp {String(c.exp_month).padStart(2, '0')}/{String(c.exp_year).padStart(2, '0')}
                   </div>
                 </div>
+                <button onClick={() => startEdit(c)} className="text-muted-foreground hover:text-primary p-2" aria-label="Edit">
+                  <Pencil className="h-4 w-4" />
+                </button>
                 <button onClick={() => handleRemove(c.id)} className="text-muted-foreground hover:text-destructive p-2" aria-label="Remove">
                   <Trash2 className="h-4 w-4" />
                 </button>
