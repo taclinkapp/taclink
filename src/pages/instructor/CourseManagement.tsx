@@ -4,7 +4,8 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { mockRoster, mockWaitlist } from '@/lib/mockData';
 import { useCourse } from '@/hooks/useCourses';
 import { cn } from '@/lib/utils';
-import { Check, X, Bell, QrCode } from 'lucide-react';
+import { Check, X, Bell, QrCode, AlertTriangle } from 'lucide-react';
+import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
@@ -32,6 +33,24 @@ const CourseManagement = () => {
     <MobileShell withTabBar={false}>
       <PageHeader title={c.title} back />
       <div className="px-4 pt-3">
+        {/* Non-refundable listing fee disclosure */}
+        <div className="tactical-card border-primary/40 bg-primary/10 p-3 mb-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[11px] uppercase tracking-wider font-bold">Listing Fee Paid</div>
+                <div className="text-sm font-black text-primary">
+                  {fmt(computeListingFeeCents(Math.round((c.bookingFee ?? 0) * 100)))}
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                {Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price was charged when this course was published.{' '}
+                <strong className="text-destructive">Non-refundable</strong> — not returned for cancellations, edits, unpublish, or zero bookings.
+              </p>
+            </div>
+          </div>
+        </div>
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
             { label: 'Enrolled', value: enrolled },
