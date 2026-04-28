@@ -278,9 +278,15 @@ const PaymentMethods = () => {
 
   const startEdit = (c: Card) => {
     setEditingId(c.id);
-    setEditName(c.cardholder_name);
-    setEditExp(`${String(c.exp_month).padStart(2, '0')}/${String(c.exp_year).padStart(2, '0')}`);
     setEditErrors({});
+    if (c.method_type === 'card') {
+      setEditName(c.cardholder_name ?? '');
+      setEditExp(`${String(c.exp_month ?? 0).padStart(2, '0')}/${String(c.exp_year ?? 0).padStart(2, '0')}`);
+      setEditHandle('');
+    } else {
+      setEditHandle(c.handle ?? '');
+      setEditName(''); setEditExp('');
+    }
   };
 
   const cancelEdit = () => {
@@ -289,7 +295,27 @@ const PaymentMethods = () => {
   };
 
   const handleSaveEdit = async (id: string) => {
+    const card = cards.find((c) => c.id === id);
+    if (!card) return;
     const fieldErrors: Record<string, string> = {};
+
+    if (card.method_type !== 'card') {
+      const meta = ALT_META[card.method_type as AltType];
+      const v = editHandle.trim();
+      const err = meta.validate(v);
+      if (err) { setEditErrors({ handle: err }); return; }
+      const dup = cards.some((c) => c.id !== id && c.method_type === card.method_type && (c.handle ?? '').toLowerCase() === v.toLowerCase());
+      if (dup) { setEditErrors({ handle: `That ${meta.label} account is already saved` }); return; }
+      setEditSaving(true);
+      const { error } = await supabase.from('payment_methods').update({ handle: v }).eq('id', id);
+      setEditSaving(false);
+      if (error) { toast.error(error.message); return; }
+      setCards((prev) => prev.map((c) => c.id === id ? { ...c, handle: v } : c));
+      toast.success('Payment method updated');
+      cancelEdit();
+      return;
+    }
+
     const trimmedName = editName.trim();
     if (trimmedName.length < 2 || trimmedName.length > 80) {
       fieldErrors.name = 'Cardholder name must be 2–80 characters';
