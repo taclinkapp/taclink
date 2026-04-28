@@ -379,6 +379,86 @@ export type Database = {
           },
         ]
       }
+      support_ticket_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          sender: Database["public"]["Enums"]["support_message_sender"]
+          sender_user_id: string | null
+          ticket_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          sender: Database["public"]["Enums"]["support_message_sender"]
+          sender_user_id?: string | null
+          ticket_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          sender?: Database["public"]["Enums"]["support_message_sender"]
+          sender_user_id?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          contact_email: string | null
+          created_at: string
+          id: string
+          initial_message: string
+          last_message_at: string
+          needs_human: boolean
+          page_url: string | null
+          status: Database["public"]["Enums"]["support_ticket_status"]
+          subject: string
+          updated_at: string
+          user_id: string
+          user_role: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          initial_message: string
+          last_message_at?: string
+          needs_human?: boolean
+          page_url?: string | null
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          subject: string
+          updated_at?: string
+          user_id: string
+          user_role?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          initial_message?: string
+          last_message_at?: string
+          needs_human?: boolean
+          page_url?: string | null
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          subject?: string
+          updated_at?: string
+          user_id?: string
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -417,6 +497,8 @@ export type Database = {
     Enums: {
       app_role: "student" | "instructor" | "admin"
       booking_status: "reserved" | "attended" | "cancelled" | "no_show"
+      support_message_sender: "user" | "ai" | "admin"
+      support_ticket_status: "open" | "awaiting_human" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -546,6 +628,8 @@ export const Constants = {
     Enums: {
       app_role: ["student", "instructor", "admin"],
       booking_status: ["reserved", "attended", "cancelled", "no_show"],
+      support_message_sender: ["user", "ai", "admin"],
+      support_ticket_status: ["open", "awaiting_human", "resolved", "closed"],
     },
   },
 } as const
