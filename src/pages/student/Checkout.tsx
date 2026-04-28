@@ -194,6 +194,8 @@ const Checkout = () => {
           </div>
         </div>
 
+        <HowPaymentsWorkCard audience="student" />
+
         {/* Price breakdown — checkout shows full math */}
         <div className="tactical-card p-4">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Price Breakdown</div>
