@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CreditCard, Lock, AlertTriangle, FileText, Loader2, ShieldCheck } from 'lucide-react';
+import { CreditCard, Lock, AlertTriangle, FileText, Loader2, ShieldCheck, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
+import { computeFees, fmt } from '@/lib/fees';
+import { Link } from 'react-router-dom';
 
 type Course = {
   id: string;
