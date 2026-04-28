@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCircle2 } from 'lucide-react';
 import { fmt } from '@/lib/fees';
+import { QRCodeSVG } from 'qrcode.react';
+import { buildCheckinPayload } from '@/lib/qrCheckin';
 
 type BookingRow = {
   id: string;
