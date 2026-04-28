@@ -252,11 +252,11 @@ const NewCourse = () => {
         }).catch(() => {});
       }
 
-      // Listing fee charge — 10% of price × capacity, non-refundable, recorded in ledger.
+      // Listing fee charge — flat 10% of course price, non-refundable, recorded in ledger.
       // (Real card capture is wired through the platform's payment provider; in this preview
       // we record the charge as 'charged' since the instructor's card is on file.)
       const priceCents = Math.round(Number(price) * 100);
-      const listingFeeCents = computeListingFeeCents(priceCents, Number(capacity));
+      const listingFeeCents = computeListingFeeCents(priceCents);
       await supabase.from('instructor_charges').insert({
         instructor_id: user.id,
         course_id: created.id,
