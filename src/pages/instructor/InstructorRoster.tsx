@@ -127,7 +127,15 @@ const InstructorRoster = () => {
       setRows(prev);
       toast.error('Deposit state changed — refresh and try again');
     } else {
-      toast.success('Deposit confirmed — booking locked in');
+      // Notify the student so their booking detail screen unlocks the QR.
+      await supabase.from('notifications').insert({
+        recipient_id: target.studentId,
+        type: 'deposit_confirmed',
+        title: 'Deposit confirmed',
+        body: `Your deposit for ${target.courseTitle} was received. Your seat is locked in.`,
+        link: `/student/booking/${bookingId}`,
+      });
+      toast.success('Deposit confirmed — student notified');
     }
   };
 
