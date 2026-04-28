@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { US_STATES } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { createCourse, uploadCoursePhoto } from '@/lib/courses';
+import { createCourse, uploadCoursePhoto, SKILL_LEVEL_LABELS, type SkillLevel } from '@/lib/courses';
 import { supabase } from '@/integrations/supabase/client';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { redeemFreeListingCredit, fetchPunchCardState } from '@/lib/punchCard';
