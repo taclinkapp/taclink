@@ -66,6 +66,13 @@ export type Database = {
           course_id: string
           course_price_cents: number
           created_at: string
+          deposit_amount_cents: number
+          deposit_confirmed_at: string | null
+          deposit_expires_at: string | null
+          deposit_handle_used: string | null
+          deposit_method: string | null
+          deposit_sent_at: string | null
+          deposit_status: string
           due_in_person_cents: number
           id: string
           in_person_paid_at: string | null
@@ -82,6 +89,13 @@ export type Database = {
           course_id: string
           course_price_cents?: number
           created_at?: string
+          deposit_amount_cents?: number
+          deposit_confirmed_at?: string | null
+          deposit_expires_at?: string | null
+          deposit_handle_used?: string | null
+          deposit_method?: string | null
+          deposit_sent_at?: string | null
+          deposit_status?: string
           due_in_person_cents?: number
           id?: string
           in_person_paid_at?: string | null
@@ -98,6 +112,13 @@ export type Database = {
           course_id?: string
           course_price_cents?: number
           created_at?: string
+          deposit_amount_cents?: number
+          deposit_confirmed_at?: string | null
+          deposit_expires_at?: string | null
+          deposit_handle_used?: string | null
+          deposit_method?: string | null
+          deposit_sent_at?: string | null
+          deposit_status?: string
           due_in_person_cents?: number
           id?: string
           in_person_paid_at?: string | null
@@ -580,6 +601,36 @@ export type Database = {
           redeemed_at?: string | null
           redeemed_course_id?: string | null
           source?: string
+        }
+        Relationships: []
+      }
+      instructor_payout_methods: {
+        Row: {
+          created_at: string
+          handle: string
+          id: string
+          instructor_id: string
+          is_preferred: boolean
+          method_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          handle: string
+          id?: string
+          instructor_id: string
+          is_preferred?: boolean
+          method_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          handle?: string
+          id?: string
+          instructor_id?: string
+          is_preferred?: boolean
+          method_type?: string
+          updated_at?: string
         }
         Relationships: []
       }
