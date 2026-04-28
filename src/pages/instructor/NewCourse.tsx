@@ -108,7 +108,7 @@ const NewCourse = () => {
           return;
         }
       }
-      await createCourse(user.id, {
+      const created = await createCourse(user.id, {
         title: title.trim(),
         description: description.trim() || undefined,
         category,
@@ -123,6 +123,28 @@ const NewCourse = () => {
         cover_image_url: coverUrl,
         status: 'published',
       });
+
+      // AI moderation — flag explicit content in title/description or cover photo.
+      const { moderateContent } = await import('@/lib/moderation');
+      moderateContent({
+        contentType: 'course_text',
+        contentId: created.id,
+        courseId: created.id,
+        text: `${title}\n\n${description}`,
+        authorId: user.id,
+        authorRole: 'instructor',
+      }).catch(() => {});
+      if (coverUrl) {
+        moderateContent({
+          contentType: 'course_image',
+          contentId: created.id,
+          courseId: created.id,
+          imageUrl: coverUrl,
+          authorId: user.id,
+          authorRole: 'instructor',
+        }).catch(() => {});
+      }
+
       qc.invalidateQueries({ queryKey: ['courses'] });
       toast.success('Course published');
       nav('/instructor/courses');
