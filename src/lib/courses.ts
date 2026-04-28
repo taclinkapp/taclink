@@ -145,6 +145,7 @@ export type NewCourseInput = {
   state?: string;
   starts_at?: string; // ISO
   ends_at?: string; // ISO
+  cover_image_url?: string;
   status: "draft" | "published";
 };
 
@@ -159,4 +160,27 @@ export const createCourse = async (
     .single();
   if (error) throw error;
   return data as DbCourse;
+};
+
+/**
+ * Upload a course cover photo to the public `course-photos` bucket.
+ * Files live under `<instructorId>/<filename>` so RLS limits writes to the
+ * owning instructor while reads remain public.
+ */
+export const uploadCoursePhoto = async (
+  instructorId: string,
+  file: File,
+): Promise<string> => {
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const path = `${instructorId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from("course-photos")
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+  if (error) throw error;
+  const { data } = supabase.storage.from("course-photos").getPublicUrl(path);
+  return data.publicUrl;
 };
