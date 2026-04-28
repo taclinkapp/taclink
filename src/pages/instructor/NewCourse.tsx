@@ -10,6 +10,8 @@ import { US_STATES } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { createCourse, uploadCoursePhoto } from '@/lib/courses';
+import { supabase } from '@/integrations/supabase/client';
+import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2 } from 'lucide-react';
