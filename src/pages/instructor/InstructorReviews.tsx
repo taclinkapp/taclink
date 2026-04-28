@@ -5,6 +5,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Star, Sparkles, Loader2, MessageSquareReply, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type Review = {
   id: string;
@@ -33,6 +43,11 @@ const InstructorReviews = () => {
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [tones, setTones] = useState<Record<string, Tone>>({});
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  const confirmReview = reviews.find((r) => r.id === confirmId) ?? null;
+  const confirmDraft = confirmId ? (drafts[confirmId] ?? '').trim() : '';
+  const confirmIsUpdate = !!confirmReview?.instructor_reply;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -259,7 +274,14 @@ const InstructorReviews = () => {
                         {draft ? 'Regenerate' : 'AI reply'}
                       </button>
                       <button
-                        onClick={() => postReply(r)}
+                        onClick={() => {
+                          const text = (drafts[r.id] ?? '').trim();
+                          if (!text) {
+                            toast.error('Reply is empty');
+                            return;
+                          }
+                          setConfirmId(r.id);
+                        }}
                         disabled={isSaving || !draft.trim() || draft.trim() === (r.instructor_reply ?? '').trim()}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50"
                       >
@@ -285,6 +307,58 @@ const InstructorReviews = () => {
           </ul>
         )}
       </div>
+
+      <AlertDialog open={!!confirmId} onOpenChange={(o) => !o && setConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmIsUpdate ? 'Update your reply?' : 'Post this reply?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmIsUpdate
+                ? 'This will replace your previous reply on this review.'
+                : 'Your reply will be visible publicly under this review.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {confirmReview && (
+            <div className="space-y-3">
+              <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                  Replying to {confirmReview.studentName} · {confirmReview.rating}★
+                </div>
+                {confirmReview.comment && (
+                  <p className="text-xs text-muted-foreground line-clamp-3">
+                    “{confirmReview.comment}”
+                  </p>
+                )}
+              </div>
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-primary mb-1">
+                  Your reply
+                </div>
+                <p className="text-sm whitespace-pre-wrap">{confirmDraft}</p>
+              </div>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!savingId}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!!savingId || !confirmReview}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!confirmReview) return;
+                await postReply(confirmReview);
+                setConfirmId(null);
+              }}
+            >
+              {savingId ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+              ) : null}
+              {confirmIsUpdate ? 'Update reply' : 'Post reply'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 };
