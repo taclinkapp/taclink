@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { mockCourses, mockRoster } from '@/lib/mockData';
-import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck, Plus } from 'lucide-react';
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 
@@ -19,10 +19,16 @@ const InstructorDashboard = () => {
       <div className="px-4 pt-2">
         <div className="flex items-center gap-3">
           <img src="https://i.pravatar.cc/150?img=12" className="h-12 w-12 rounded-full border-2 border-primary" alt="" />
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground">Good morning,</p>
-            <h1 className="text-xl font-black">Marcus Reyes</h1>
+            <h1 className="text-xl font-black truncate">Marcus Reyes</h1>
           </div>
+          <Link
+            to="/instructor/courses/new"
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider hover:bg-primary/90 transition"
+          >
+            <Plus className="h-4 w-4" /> Create
+          </Link>
         </div>
 
         <div className="grid grid-cols-2 gap-2 mt-5">
