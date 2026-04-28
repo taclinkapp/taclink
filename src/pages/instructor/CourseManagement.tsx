@@ -4,7 +4,8 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { mockRoster, mockWaitlist } from '@/lib/mockData';
 import { useCourse } from '@/hooks/useCourses';
 import { cn } from '@/lib/utils';
-import { Check, X, Bell, QrCode } from 'lucide-react';
+import { Check, X, Bell, QrCode, AlertTriangle } from 'lucide-react';
+import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
