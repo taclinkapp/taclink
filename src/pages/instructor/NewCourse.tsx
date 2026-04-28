@@ -261,7 +261,16 @@ const NewCourse = () => {
       <div className="px-4 py-5 space-y-4">
         {step === 0 && (
           <>
-            <Field label="Course Title">
+            <Field
+              label="Course Title"
+              action={
+                <AISuggestButton
+                  field="title"
+                  context={{ category, description }}
+                  onApply={setTitle}
+                />
+              }
+            >
               <Input value={title} onChange={(e) => setTitle(e.target.value)} className="bg-card border-border h-11" placeholder="e.g. Defensive Pistol Fundamentals" />
             </Field>
             <Field label="Category">
@@ -272,7 +281,17 @@ const NewCourse = () => {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Description">
+            <Field
+              label="Description"
+              action={
+                <AISuggestButton
+                  field="description"
+                  context={{ title, category, description }}
+                  onApply={setDescription}
+                  label="AI write"
+                />
+              }
+            >
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-card border-border min-h-28" placeholder="Describe your course…" />
               <ContactInfoWarning value={description} />
             </Field>
