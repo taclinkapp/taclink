@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2, FileText, DollarSign } from 'lucide-react';
+import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2, FileText, DollarSign, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CourseWaiverDialog } from '@/components/instructor/CourseWaiverDialog';
@@ -127,7 +128,15 @@ const InstructorRoster = () => {
       setRows(prev);
       toast.error('Deposit state changed — refresh and try again');
     } else {
-      toast.success('Deposit confirmed — booking locked in');
+      // Notify the student so their booking detail screen unlocks the QR.
+      await supabase.from('notifications').insert({
+        recipient_id: target.studentId,
+        type: 'deposit_confirmed',
+        title: 'Deposit confirmed',
+        body: `Your deposit for ${target.courseTitle} was received. Your seat is locked in.`,
+        link: `/student/booking/${bookingId}`,
+      });
+      toast.success('Deposit confirmed — student notified');
     }
   };
 
@@ -260,11 +269,43 @@ const InstructorRoster = () => {
 
   const totalStudents = filtered.length;
 
+  const stuckCount = useMemo(
+    () =>
+      rows.filter(
+        (r) =>
+          r.depositStatus === 'awaiting_confirmation' &&
+          r.depositExpiresAt &&
+          new Date(r.depositExpiresAt).getTime() < now,
+      ).length,
+    [rows, now],
+  );
+
   return (
     <MobileShell>
       <PageHeader title="Roster" />
       <div className="px-4 pt-3 pb-24 space-y-4">
         <HowPaymentsWorkCard audience="instructor" />
+        {stuckCount > 0 && (
+          <Link
+            to="/instructor/deposit-review"
+            className="block rounded-md border border-amber-500/40 bg-amber-500/5 p-3 hover:bg-amber-500/10"
+          >
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0" />
+              <div className="flex-1">
+                <div className="text-sm font-bold text-foreground">
+                  {stuckCount} stuck deposit{stuckCount === 1 ? '' : 's'} need review
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Past 24-hour window — confirm or reject manually.
+                </div>
+              </div>
+              <span className="text-[10px] uppercase tracking-wider text-amber-600 font-bold">
+                Review →
+              </span>
+            </div>
+          </Link>
+        )}
         <div className="rounded-md border border-border bg-card p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-md bg-primary/10 text-primary flex items-center justify-center">
             <Users className="h-5 w-5" />
