@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { StudentTabBar } from "@/components/StudentTabBar";
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentUser, type ConversationRow } from "@/lib/messaging";
+import { type ConversationRow } from "@/lib/messaging";
+import { useIdentity } from "@/hooks/useIdentity";
 import { MessageSquare, ChevronRight } from "lucide-react";
 
 const formatWhen = (iso: string) => {
@@ -25,7 +26,7 @@ type Props = {
 };
 
 export const Inbox = ({ variant, basePath, TabBar }: Props) => {
-  const user = getCurrentUser();
+  const user = useIdentity();
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [loading, setLoading] = useState(true);
 
