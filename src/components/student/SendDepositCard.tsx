@@ -285,14 +285,17 @@ const PickedHandlePanel = ({
   handle,
   amountCents,
   note,
+  depositStatus,
 }: {
   handle: PayoutHandle;
   amountCents: number;
   note: string;
+  depositStatus: DepositStatus;
 }) => {
   const meta = PAYOUT_META[handle.method_type];
   const display = meta.normalizeForDisplay(handle.handle);
   const link = meta.deepLink(handle.handle, amountCents, note);
+  const locked = depositStatus !== "pending_send";
 
   const copy = async () => {
     try {
@@ -300,6 +303,22 @@ const PickedHandlePanel = ({
       toast.success(`${meta.label} handle copied`);
     } catch {
       toast.error("Could not copy to clipboard");
+    }
+  };
+
+  // Guard against double-pay: if the deposit has already been marked sent /
+  // confirmed / expired, intercept the deep link click before the payment app
+  // opens so the student can't submit again.
+  const guard = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (locked) {
+      e.preventDefault();
+      const msg =
+        depositStatus === "awaiting_confirmation"
+          ? "You already marked this deposit as sent. Wait for the instructor to confirm."
+          : depositStatus === "confirmed"
+            ? "Deposit already confirmed — no further payment needed."
+            : "This deposit window has expired.";
+      toast.error(msg);
     }
   };
 
@@ -322,12 +341,20 @@ const PickedHandlePanel = ({
       </div>
       {link ? (
         <a
-          href={link}
+          href={locked ? undefined : link}
+          onClick={guard}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full inline-flex items-center justify-center gap-1.5 h-10 rounded-md border border-primary/40 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/20"
+          aria-disabled={locked}
+          className={cn(
+            "w-full inline-flex items-center justify-center gap-1.5 h-10 rounded-md border text-xs font-bold uppercase tracking-wider",
+            locked
+              ? "border-border bg-muted text-muted-foreground cursor-not-allowed"
+              : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20",
+          )}
         >
-          <ExternalLink className="h-3.5 w-3.5" /> Open {meta.label} with amount prefilled
+          <ExternalLink className="h-3.5 w-3.5" />
+          {locked ? "Payment locked" : `Open ${meta.label} with amount prefilled`}
         </a>
       ) : (
         <p className="text-[11px] text-muted-foreground">
