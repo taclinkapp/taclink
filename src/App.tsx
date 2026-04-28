@@ -19,6 +19,7 @@ import CourseDetail from "./pages/student/CourseDetail";
 import Checkout from "./pages/student/Checkout";
 import BookingSuccess from "./pages/student/BookingSuccess";
 import MyBookings from "./pages/student/MyBookings";
+import MyProgress from "./pages/student/MyProgress";
 import BookingDetail from "./pages/student/BookingDetail";
 import LeaveReview from "./pages/student/LeaveReview";
 import StudentProfile from "./pages/student/StudentProfile";
