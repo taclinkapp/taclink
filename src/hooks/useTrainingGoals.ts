@@ -54,7 +54,21 @@ export const useTrainingGoals = () => {
     },
   });
 
+  const eventsQuery = useQuery({
+    queryKey: ['training-goal-events', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('training_goal_events')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as GoalEvent[];
+    },
+  });
+
   const attended = bookings.filter((b) => b.status === 'attended');
+  const allEvents = eventsQuery.data ?? [];
 
   const compute = (g: TrainingGoal): GoalWithProgress => {
     let current = 0;
@@ -79,14 +93,14 @@ export const useTrainingGoals = () => {
       isComplete = g.completed_manually;
     }
 
-    // Manual checkbox override — applies to any goal type.
     if (g.completed_manually) {
       isComplete = true;
       current = Math.max(current, g.target_count);
     }
 
     const percent = Math.min(100, Math.round((current / g.target_count) * 100));
-    return { ...g, current, isComplete, percent };
+    const events = allEvents.filter((e) => e.goal_id === g.id);
+    return { ...g, current, isComplete, percent, events, lastEvent: events[0] ?? null };
   };
 
   const goals: GoalWithProgress[] = (goalsQuery.data ?? []).map(compute);
@@ -119,5 +133,36 @@ export const useTrainingGoals = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['training-goals'] }),
   });
 
-  return { goals, isLoading: goalsQuery.isLoading, createGoal, updateGoal, deleteGoal };
+  const toggleManualComplete = useMutation({
+    mutationFn: async ({ goal, next }: { goal: TrainingGoal; next: boolean }) => {
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('training_goals')
+        .update({
+          completed_manually: next,
+          completed_at: next ? new Date().toISOString() : null,
+        })
+        .eq('id', goal.id);
+      if (error) throw error;
+      const { error: evtError } = await (supabase as any).from('training_goal_events').insert({
+        goal_id: goal.id,
+        student_id: user.id,
+        event_type: next ? 'marked_complete' : 'marked_incomplete',
+      });
+      if (evtError) throw evtError;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['training-goals'] });
+      qc.invalidateQueries({ queryKey: ['training-goal-events'] });
+    },
+  });
+
+  return {
+    goals,
+    isLoading: goalsQuery.isLoading,
+    createGoal,
+    updateGoal,
+    deleteGoal,
+    toggleManualComplete,
+  };
 };
