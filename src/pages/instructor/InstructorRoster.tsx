@@ -35,7 +35,7 @@ const statusIcon: Record<string, any> = {
   no_show: XCircle,
 };
 
-const filters = ['Upcoming', 'Attended', 'All'] as const;
+const filters = ['Upcoming', 'Attended', 'Cancelled', 'No-show', 'All'] as const;
 
 const InstructorRoster = () => {
   const { user } = useAuth();
@@ -125,9 +125,23 @@ const InstructorRoster = () => {
       if (tab === 'Upcoming')
         return r.status === 'reserved' && (!startMs || startMs >= now);
       if (tab === 'Attended') return r.status === 'attended';
+      if (tab === 'Cancelled') return r.status === 'cancelled';
+      if (tab === 'No-show') return r.status === 'no_show';
       return true;
     });
   }, [rows, tab, now]);
+
+  const counts = useMemo(() => {
+    const c = { Upcoming: 0, Attended: 0, Cancelled: 0, 'No-show': 0, All: rows.length };
+    rows.forEach((r) => {
+      const startMs = r.startsAt ? new Date(r.startsAt).getTime() : 0;
+      if (r.status === 'reserved' && (!startMs || startMs >= now)) c.Upcoming++;
+      if (r.status === 'attended') c.Attended++;
+      if (r.status === 'cancelled') c.Cancelled++;
+      if (r.status === 'no_show') c['No-show']++;
+    });
+    return c as Record<typeof filters[number], number>;
+  }, [rows, now]);
 
   const grouped = useMemo(() => {
     const m = new Map<string, { title: string; startsAt: string | null; rows: RosterRow[] }>();
@@ -157,17 +171,27 @@ const InstructorRoster = () => {
           </div>
         </div>
 
-        <div className="flex bg-card border border-border rounded-sm p-0.5">
+        <div className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-none">
           {filters.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                'flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-colors rounded-sm',
-                tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground',
+                'shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold uppercase tracking-wider transition-colors',
+                tab === t
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-muted-foreground border-border hover:text-foreground',
               )}
             >
               {t}
+              <span
+                className={cn(
+                  'inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px]',
+                  tab === t ? 'bg-primary-foreground/20' : 'bg-muted',
+                )}
+              >
+                {counts[t]}
+              </span>
             </button>
           ))}
         </div>
