@@ -149,6 +149,7 @@ const PayoutMethods = () => {
     <MobileShell withTabBar={false}>
       <PageHeader title="Deposit Payouts" back />
       <div className="px-4 py-4 space-y-4">
+        <HowPaymentsWorkCard audience="instructor" />
         <div className="tactical-card p-4 border-primary/30 bg-primary/5">
           <div className="text-xs uppercase tracking-wider text-primary font-bold mb-1">
             Where students send your 10% deposit
