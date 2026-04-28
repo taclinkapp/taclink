@@ -6,6 +6,7 @@ import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck, Plu
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 import { FeeInsights } from '@/components/instructor/FeeInsights';
+import { PunchCard } from '@/components/instructor/PunchCard';
 
 const InstructorDashboard = () => {
   const stats = [
