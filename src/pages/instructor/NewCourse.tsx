@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
-import { createCourse } from '@/lib/courses';
+import { createCourse, uploadCoursePhoto } from '@/lib/courses';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { Check, MapPin, Loader2 } from 'lucide-react';
+import { Check, MapPin, Loader2, ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
@@ -30,6 +30,9 @@ const NewCourse = () => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -38,6 +41,24 @@ const NewCourse = () => {
   const [state, setState] = useState('');
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
+
+  const onPickCover = (file: File | null) => {
+    if (!file) {
+      setCoverFile(null);
+      setCoverPreview(null);
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please choose an image file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image must be 10MB or smaller');
+      return;
+    }
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
 
   const back = () => (step > 0 ? setStep(step - 1) : nav(-1 as any));
 
@@ -77,6 +98,16 @@ const NewCourse = () => {
     const endsAt = new Date(`${date}T${endTime}:00`);
     const durationMin = Math.max(0, Math.round((endsAt.getTime() - startsAt.getTime()) / 60000));
     try {
+      let coverUrl: string | undefined;
+      if (coverFile) {
+        try {
+          coverUrl = await uploadCoursePhoto(user.id, coverFile);
+        } catch (uploadErr: any) {
+          toast.error(uploadErr?.message ?? 'Cover photo upload failed');
+          setSaving(false);
+          return;
+        }
+      }
       await createCourse(user.id, {
         title: title.trim(),
         description: description.trim() || undefined,
@@ -89,6 +120,7 @@ const NewCourse = () => {
         state,
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
+        cover_image_url: coverUrl,
         status: 'published',
       });
       qc.invalidateQueries({ queryKey: ['courses'] });
@@ -130,6 +162,45 @@ const NewCourse = () => {
             <Field label="Description">
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-card border-border min-h-28" placeholder="Describe your course…" />
               <ContactInfoWarning value={description} />
+            </Field>
+            <Field label="Cover Photo">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onPickCover(e.target.files?.[0] ?? null)}
+              />
+              {coverPreview ? (
+                <div className="relative rounded-xl overflow-hidden border border-border">
+                  <img src={coverPreview} alt="Cover preview" className="w-full h-44 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => onPickCover(null)}
+                    className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground transition"
+                    aria-label="Remove cover photo"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-2 right-2 px-3 h-8 rounded-md bg-background/80 backdrop-blur text-xs font-bold hover:bg-primary hover:text-primary-foreground transition"
+                  >
+                    Replace
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-32 rounded-xl border-2 border-dashed border-border bg-card hover:border-primary hover:text-primary transition flex flex-col items-center justify-center gap-1.5 text-muted-foreground"
+                >
+                  <ImagePlus className="h-6 w-6" />
+                  <span className="text-xs font-bold uppercase tracking-wider">Add cover photo</span>
+                  <span className="text-[10px] text-muted-foreground/80">Shown as the course header for students</span>
+                </button>
+              )}
             </Field>
           </>
         )}
