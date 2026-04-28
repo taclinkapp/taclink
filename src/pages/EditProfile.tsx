@@ -151,9 +151,48 @@ const EditProfile = () => {
     };
   }, [user?.id]);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const requirements = isInstructor ? instructorRequirements : studentRequirements;
+  const completed = useMemo(() => requirements.filter((r) => r.check(form)).length, [requirements, form]);
+  const completeness = Math.round((completed / requirements.length) * 100);
+
   const update = (k: keyof FormState, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
     if (errors[k]) setErrors((e) => ({ ...e, [k]: undefined }));
+  };
+
+  const handlePhotoFile = async (file: File) => {
+    if (!user?.id) return;
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      toast.error('Photo must be JPG, PNG, or WEBP');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      toast.error('Photo must be 5MB or smaller');
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from(PROFILE_BUCKET)
+      .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+    if (error) {
+      setUploading(false);
+      toast.error('Could not upload photo', { description: error.message });
+      return;
+    }
+    const { data: pub } = supabase.storage.from(PROFILE_BUCKET).getPublicUrl(path);
+    setUploading(false);
+    update('photo_url', pub.publicUrl);
+    toast.success('Photo uploaded — remember to save');
+  };
+
+  const removePhoto = () => {
+    update('photo_url', '');
+    toast.message('Photo removed — remember to save');
   };
 
   const submit = async () => {
