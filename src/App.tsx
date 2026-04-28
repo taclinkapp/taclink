@@ -45,6 +45,7 @@ import { AdminCourses, AdminWaitlist, AdminActivity, AdminSettings } from "./pag
 import { AdminReports } from "./pages/admin/AdminReports";
 import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
 import { ReportIssueButton } from "./components/ReportIssueButton";
+import { AIAssistantMount } from "./components/AIAssistantMount";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +117,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <AIAssistantMount />
           <ReportIssueButton />
           <DevRoleSwitcher />
         </AuthProvider>
