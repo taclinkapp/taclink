@@ -141,7 +141,7 @@ const NewCourse = () => {
     localStorage.removeItem(DRAFT_KEY);
     setLastSavedAt(null);
     setDraftStatus('idle');
-    setTitle(''); setCategory(''); setDescription('');
+    setTitle(''); setCategory(''); setSkillLevel('all_levels'); setDescription('');
     setDate(''); setStartTime(''); setEndTime('');
     setAddress(''); setCity(''); setState('');
     setCapacity(''); setPrice('');
