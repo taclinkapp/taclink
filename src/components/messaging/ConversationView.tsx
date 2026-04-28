@@ -254,28 +254,43 @@ export const ConversationView = ({ variant }: Props) => {
           })}
         </div>
 
-        <div className="border-t border-border bg-surface px-3 py-3 flex items-center gap-2">
-          <Input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Message…"
-            className="flex-1 bg-card border-border h-11 rounded-full px-4"
-            disabled={!user || !conversation}
-          />
-          <Button
-            onClick={handleSend}
-            disabled={!draft.trim() || sending || !conversation}
-            className="h-11 w-11 rounded-full bg-primary text-primary-foreground p-0 amber-glow"
-            aria-label="Send"
-          >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
+        <div className="border-t border-border bg-surface px-3 pt-2 pb-3">
+          {draftBlocked && (
+            <ContactInfoWarning value={draft} className="mb-2" />
+          )}
+          <div className="flex items-center gap-2">
+            <Input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Message…"
+              className={cn(
+                "flex-1 bg-card border-border h-11 rounded-full px-4",
+                draftBlocked && "border-destructive focus-visible:ring-destructive",
+              )}
+              disabled={!user || !conversation}
+              aria-invalid={draftBlocked}
+            />
+            <Button
+              onClick={handleSend}
+              disabled={!draft.trim() || sending || !conversation || draftBlocked}
+              className="h-11 w-11 rounded-full bg-primary text-primary-foreground p-0 amber-glow"
+              aria-label={draftBlocked ? "Message blocked — remove contact info" : "Send"}
+            >
+              {sending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : draftBlocked ? (
+                <ShieldAlert className="h-4 w-4" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </MobileShell>
