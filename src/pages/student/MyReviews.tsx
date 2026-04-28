@@ -55,6 +55,7 @@ const MyReviews = () => {
           onClose={() => setEditing(null)}
         />
       )}
+      <StudentTabBar />
     </MobileShell>
   );
 };
