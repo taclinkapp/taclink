@@ -41,7 +41,7 @@ const Splash = () => {
           className="w-full h-14 border-border bg-card hover:bg-muted font-bold text-base"
           onClick={() => nav('/auth/instructor-signup')}
         >
-          <Shield className="mr-1" /> I'm an Instructor
+          <Shield className="mr-1" /> Reserve as Instructor
         </Button>
         <p className="text-center text-sm text-muted-foreground pt-3">
           Already have an account?{' '}
