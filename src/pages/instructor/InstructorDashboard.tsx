@@ -158,15 +158,17 @@ const InstructorDashboard = () => {
         <SheetContent side="bottom" className="bg-background border-border max-h-[85vh] overflow-y-auto">
           {open === 'revenue' && (() => {
             const drillCourse = revenueDrill ? breakdown.revenueRows.find((r) => r.id === revenueDrill) : null;
-            const drillStudents = revenueDrill ? breakdown.studentRows.filter((s) => s.course.id === revenueDrill) : [];
+            const drillStudents = revenueDrill
+              ? breakdown.studentRows.filter((s) => s.course.id === revenueDrill && s.checkedIn)
+              : [];
 
             const handlePrint = () => window.print();
             const handleDownload = () => {
-              const rows = [['Course', 'Date', 'Seats', 'Booking Fee', 'Total']];
+              const rows = [['Course', 'Date', 'Seats', 'Booking Fee', 'Gross', 'Listing Fee (10%)', 'Net']];
               breakdown.revenueRows.forEach((r) => {
-                rows.push([r.title, new Date(r.date).toLocaleDateString(), String(r.seats), `$${r.unit}`, `$${r.total}`]);
+                rows.push([r.title, new Date(r.date).toLocaleDateString(), String(r.seats), `$${r.unit}`, `$${r.gross}`, `-$${r.fee}`, `$${r.total}`]);
               });
-              rows.push(['', '', '', 'TOTAL', `$${breakdown.revenueTotal}`]);
+              rows.push(['', '', '', '', `$${breakdown.revenueGross}`, `-$${breakdown.revenueFees}`, `$${breakdown.revenueTotal}`]);
               const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
               const blob = new Blob([csv], { type: 'text/csv' });
               const url = URL.createObjectURL(blob);
