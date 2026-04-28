@@ -54,22 +54,17 @@ const Discover = () => {
             />
           </div>
         </div>
-        <div className="px-4 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
-          {CATEGORIES.map((c) => (
+        <DisciplineBrowser selected={discipline} onSelect={setDiscipline} />
+        {discipline !== 'All' && (
+          <div className="px-4 pb-3">
             <button
-              key={c}
-              onClick={() => setCategory(c)}
-              className={cn(
-                'px-3 h-8 rounded-sm text-xs font-bold uppercase tracking-wider whitespace-nowrap transition border',
-                category === c
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card text-muted-foreground border-border hover:text-foreground',
-              )}
+              onClick={() => setDiscipline('All')}
+              className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary"
             >
-              {c}
+              ✕ Clear filter
             </button>
-          ))}
-        </div>
+          </div>
+        )}
         <div className="px-4 pb-3 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">{filtered.length} course{filtered.length === 1 ? '' : 's'} nearby</span>
           <div className="flex bg-card border border-border rounded-sm">
