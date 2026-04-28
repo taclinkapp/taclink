@@ -267,12 +267,26 @@ Tone: honest, helpful to future students. Output only the review text — no pre
         <div className="space-y-4">
           <div className="text-xs text-muted-foreground">{booking.course.title}</div>
 
-          <div className="flex justify-center gap-1.5">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button key={n} onClick={() => setRating(n)} className="p-1 hover:scale-110 transition-transform">
-                <Star className={cn('h-9 w-9', n <= rating ? 'fill-primary text-primary' : 'text-border')} />
-              </button>
-            ))}
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="flex justify-center gap-1.5">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => !r && setRating(n)}
+                  disabled={!!r}
+                  aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                  className={cn(
+                    'p-1 transition-transform',
+                    r ? 'cursor-not-allowed' : 'hover:scale-110',
+                  )}
+                >
+                  <Star className={cn('h-9 w-9', n <= rating ? 'fill-primary text-primary' : 'text-border')} />
+                </button>
+              ))}
+            </div>
+            {r && (
+              <p className="text-[11px] text-muted-foreground">Rating is locked once submitted. You can still edit your comment and photo.</p>
+            )}
           </div>
 
           <div className="relative">
