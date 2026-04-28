@@ -228,8 +228,12 @@ const EditProfile = () => {
       return;
     }
     await refreshProfile();
-    toast.success('Profile updated');
-    nav(isInstructor ? '/instructor/profile' : '/student/profile');
+    const pct = Math.round(
+      (requirements.filter((r) => r.check(parsed.data as any as FormState)).length /
+        requirements.length) *
+        100,
+    );
+    toast.success(`Profile saved · ${pct}% complete`);
   };
 
   return (
