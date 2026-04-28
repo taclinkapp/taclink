@@ -128,11 +128,35 @@ const ReviewDialog = ({ booking, onClose }: { booking: ReviewableBooking; onClos
   const r = booking.existingReview;
   const [rating, setRating] = useState(r?.rating ?? 0);
   const [comment, setComment] = useState(r?.comment ?? '');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(r?.photo_url ?? null);
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [liked, setLiked] = useState('');
   const [improve, setImprove] = useState('');
+
+  const handleFile = async (file: File) => {
+    if (!user) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image file'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${user.id}/${booking.course.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('review-photos')
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from('review-photos').getPublicUrl(path);
+      setPhotoUrl(data.publicUrl);
+      toast.success('Photo added');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const generateWithAI = async () => {
     if (rating === 0) { toast.error('Pick a rating first'); return; }
@@ -209,7 +233,7 @@ Tone: honest, helpful to future students. Output only the review text — no pre
       if (r) {
         const { error } = await supabase
           .from('reviews')
-          .update({ rating, comment: comment.trim() || null })
+          .update({ rating, comment: comment.trim() || null, photo_url: photoUrl })
           .eq('id', r.id);
         if (error) throw error;
         toast.success('Review updated');
@@ -220,6 +244,7 @@ Tone: honest, helpful to future students. Output only the review text — no pre
           student_id: user.id,
           rating,
           comment: comment.trim() || null,
+          photo_url: photoUrl,
         });
         if (error) throw error;
         toast.success('Review submitted');
@@ -258,6 +283,38 @@ Tone: honest, helpful to future students. Output only the review text — no pre
               className="bg-card border-border min-h-32 pr-3"
             />
           </div>
+
+          {photoUrl ? (
+            <div className="relative">
+              <img src={photoUrl} alt="Review" className="w-full max-h-56 object-cover rounded-lg border border-border" />
+              <button
+                type="button"
+                onClick={() => setPhotoUrl(null)}
+                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border border-border"
+                aria-label="Remove photo"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <label className={cn(
+              'flex items-center justify-center gap-2 w-full rounded-md border border-dashed border-border bg-card py-3 text-sm font-semibold cursor-pointer hover:bg-card/70 transition-colors',
+              uploading && 'opacity-60 pointer-events-none'
+            )}>
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+              {uploading ? 'Uploading…' : 'Add a photo'}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFile(f);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+          )}
 
           <Button
             onClick={() => setAiOpen(true)}
