@@ -1,14 +1,86 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { mockBookings } from '@/lib/mockData';
+import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, AlertTriangle, Star } from 'lucide-react';
+import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2 } from 'lucide-react';
+import { fmt } from '@/lib/fees';
+
+type BookingRow = {
+  id: string;
+  status: string;
+  course_price_cents: number;
+  platform_fee_cents: number;
+  instructor_deposit_cents: number;
+  due_in_person_cents: number;
+  online_total_cents: number;
+  in_person_paid_at: string | null;
+  course_id: string;
+};
+
+type CourseRow = {
+  id: string;
+  title: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+};
 
 const BookingDetail = () => {
   const { id } = useParams();
   const nav = useNavigate();
-  const booking = mockBookings.find((b) => b.id === id) ?? mockBookings[0];
-  const c = booking.course;
+  const [loading, setLoading] = useState(true);
+  const [b, setB] = useState<BookingRow | null>(null);
+  const [c, setC] = useState<CourseRow | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      setLoading(true);
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('id, status, course_price_cents, platform_fee_cents, instructor_deposit_cents, due_in_person_cents, online_total_cents, in_person_paid_at, course_id')
+        .eq('id', id)
+        .maybeSingle();
+      if (booking) {
+        setB(booking as BookingRow);
+        const { data: course } = await supabase
+          .from('courses')
+          .select('id, title, starts_at, ends_at, address, city, state')
+          .eq('id', booking.course_id)
+          .maybeSingle();
+        setC((course as CourseRow) ?? null);
+      }
+      setLoading(false);
+    })();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <MobileShell withTabBar={false}>
+        <PageHeader title="Booking Detail" back />
+        <div className="px-4 py-12 text-center text-muted-foreground text-sm">
+          <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Loading…
+        </div>
+      </MobileShell>
+    );
+  }
+
+  if (!b || !c) {
+    return (
+      <MobileShell withTabBar={false}>
+        <PageHeader title="Booking Detail" back />
+        <div className="px-4 py-12 text-center text-muted-foreground text-sm">Booking not found.</div>
+      </MobileShell>
+    );
+  }
+
+  const upcoming = b.status === 'reserved';
+  const attended = b.status === 'attended';
+  const dueInPerson = b.due_in_person_cents > 0 && !b.in_person_paid_at;
+
   return (
     <MobileShell withTabBar={false}>
       <PageHeader title="Booking Detail" back />
@@ -16,13 +88,47 @@ const BookingDetail = () => {
         <div className="tactical-card p-4">
           <h2 className="font-bold mb-3">{c.title}</h2>
           <div className="space-y-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5 text-primary" />{new Date(c.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
-            <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-primary" />{c.startTime} – {c.endTime}</div>
-            <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-primary" />{c.address}, {c.city}, {c.state}</div>
+            {c.starts_at && (
+              <>
+                <div className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5 text-primary" />{new Date(c.starts_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+                <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-primary" />{new Date(c.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{c.ends_at ? ` – ${new Date(c.ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}</div>
+              </>
+            )}
+            {(c.address || c.city) && (
+              <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-primary" />{[c.address, c.city, c.state].filter(Boolean).join(', ')}</div>
+            )}
           </div>
         </div>
 
-        {booking.status === 'upcoming' && (
+        {/* Payment summary */}
+        <div className="tactical-card p-4">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+            <Wallet className="h-3.5 w-3.5" /> Payment
+          </div>
+          <div className="space-y-1.5 text-sm">
+            <Row label="Course price" value={fmt(b.course_price_cents)} muted />
+            <Row label="Platform fee" value={fmt(b.platform_fee_cents)} muted />
+            <Row label="Instructor deposit" value={fmt(b.instructor_deposit_cents)} muted />
+            <div className="border-t border-border pt-2 flex justify-between">
+              <span>Charged online</span>
+              <span className="font-bold">{fmt(b.online_total_cents)}</span>
+            </div>
+            {dueInPerson && (
+              <div className="mt-3 rounded-md border border-primary/40 bg-primary/10 p-3 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-primary font-bold">Due in person</div>
+                  <div className="text-xs text-muted-foreground">Pay the instructor at the course</div>
+                </div>
+                <div className="text-lg font-black text-primary">{fmt(b.due_in_person_cents)}</div>
+              </div>
+            )}
+            {b.in_person_paid_at && (
+              <div className="mt-3 text-xs text-muted-foreground">In-person balance marked paid {new Date(b.in_person_paid_at).toLocaleDateString()}.</div>
+            )}
+          </div>
+        </div>
+
+        {upcoming && (
           <div className="tactical-card p-5 text-center">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">Check-In QR</div>
             <div className="mx-auto h-56 w-56 bg-white p-3 rounded-sm">
@@ -42,8 +148,8 @@ const BookingDetail = () => {
           </div>
         </div>
 
-        {booking.status === 'past' && !booking.reviewed && (
-          <Button onClick={() => nav(`/student/review/${booking.id}`)} className="w-full h-12 bg-primary text-primary-foreground font-bold">
+        {attended && (
+          <Button onClick={() => nav(`/student/review/${b.id}`)} className="w-full h-12 bg-primary text-primary-foreground font-bold">
             <Star className="mr-2" /> Leave a Review
           </Button>
         )}
@@ -51,5 +157,12 @@ const BookingDetail = () => {
     </MobileShell>
   );
 };
+
+const Row = ({ label, value, muted }: { label: string; value: string; muted?: boolean }) => (
+  <div className="flex justify-between">
+    <span className={muted ? 'text-muted-foreground' : ''}>{label}</span>
+    <span className={muted ? 'text-muted-foreground' : 'font-semibold'}>{value}</span>
+  </div>
+);
 
 export default BookingDetail;
