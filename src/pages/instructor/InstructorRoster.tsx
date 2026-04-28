@@ -215,6 +215,7 @@ const InstructorRoster = () => {
     <MobileShell>
       <PageHeader title="Roster" />
       <div className="px-4 pt-3 pb-24 space-y-4">
+        <HowPaymentsWorkCard audience="instructor" />
         <div className="rounded-md border border-border bg-card p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-md bg-primary/10 text-primary flex items-center justify-center">
             <Users className="h-5 w-5" />
