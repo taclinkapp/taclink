@@ -754,35 +754,41 @@ export type Database = {
       }
       payment_methods: {
         Row: {
-          brand: string
-          cardholder_name: string
+          brand: string | null
+          cardholder_name: string | null
           created_at: string
-          exp_month: number
-          exp_year: number
+          exp_month: number | null
+          exp_year: number | null
+          handle: string | null
           id: string
-          last4: string
+          last4: string | null
+          method_type: string
           updated_at: string
           user_id: string
         }
         Insert: {
-          brand: string
-          cardholder_name: string
+          brand?: string | null
+          cardholder_name?: string | null
           created_at?: string
-          exp_month: number
-          exp_year: number
+          exp_month?: number | null
+          exp_year?: number | null
+          handle?: string | null
           id?: string
-          last4: string
+          last4?: string | null
+          method_type?: string
           updated_at?: string
           user_id: string
         }
         Update: {
-          brand?: string
-          cardholder_name?: string
+          brand?: string | null
+          cardholder_name?: string | null
           created_at?: string
-          exp_month?: number
-          exp_year?: number
+          exp_month?: number | null
+          exp_year?: number | null
+          handle?: string | null
           id?: string
-          last4?: string
+          last4?: string | null
+          method_type?: string
           updated_at?: string
           user_id?: string
         }
