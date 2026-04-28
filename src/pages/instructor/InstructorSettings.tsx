@@ -85,8 +85,8 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
     <div className="tactical-card divide-y divide-border">{children}</div>
   </div>
 );
-const Row = ({ label }: { label: string }) => (
-  <button className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
+const Row = ({ label, onClick }: { label: string; onClick?: () => void }) => (
+  <button onClick={onClick} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
     <span className="text-sm font-medium">{label}</span>
     <ChevronRight className="h-4 w-4 text-muted-foreground" />
   </button>
