@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { ChevronRight, LogOut, Trash2, Package, Bug, LifeBuoy, MessageSquare, Sparkles, Star } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
+import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
