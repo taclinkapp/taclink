@@ -434,15 +434,16 @@ const CourseManagement = () => {
               return;
             }
             if (autoCheckin) {
-              // Stage — proximity must confirm before committing.
-              setPending({ bookingId: parsed.bookingId, scannedAt: Date.now() });
               const inRange =
                 proximity.reading && proximity.reading.smoothedM <= PROXIMITY_TRIGGER_METERS;
               if (inRange) {
+                // Both factors satisfied right now — commit.
                 markAttended(parsed.bookingId, { source: 'proximity' });
                 setPending(null);
               } else {
-                markAttended(parsed.bookingId, { source: 'qr-staged' });
+                // Stage and wait for proximity. NO DB write yet.
+                setPending({ bookingId: parsed.bookingId, scannedAt: Date.now() });
+                toast.info('QR verified — waiting for proximity to confirm.');
               }
             } else {
               markAttended(parsed.bookingId, { source: 'qr' });
