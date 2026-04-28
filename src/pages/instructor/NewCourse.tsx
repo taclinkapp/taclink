@@ -443,11 +443,11 @@ const NewCourse = () => {
               <div className="flex items-center justify-between mb-1">
                 <div className="text-xs uppercase tracking-wider font-bold">Listing Fee (10%)</div>
                 <div className="text-xl font-black text-primary">
-                  {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100), Number(capacity || 0)))}
+                  {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}
                 </div>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Charged to your card on file when you publish. Calculated as <strong className="text-foreground">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0} × {capacity || 0} seats</strong>. <strong className="text-foreground">Non-refundable.</strong>
+                Charged to your card on file when you publish. Calculated as <strong className="text-foreground">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0}</strong>. <strong className="text-foreground">Non-refundable.</strong>
               </p>
             </div>
             <div className="tactical-card border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs">
