@@ -442,17 +442,41 @@ const NewCourse = () => {
                 <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
               </div>
             </div>
-            {/* Listing fee preview */}
-            <div className="tactical-card border-primary/40 bg-primary/10 p-4">
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-xs uppercase tracking-wider font-bold">Listing Fee (10%)</div>
-                <div className="text-xl font-black text-primary">
+            {/* Listing fee preview — non-refundable disclosure */}
+            <div className="tactical-card border-primary/40 bg-primary/10 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs uppercase tracking-wider font-bold">Instructor Booking Fee</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price · charged at publish</div>
+                </div>
+                <div className="text-2xl font-black text-primary">
                   {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}
                 </div>
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Charged to your card on file when you publish. Calculated as <strong className="text-foreground">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0}</strong>. <strong className="text-foreground">Non-refundable.</strong>
-              </p>
+              <div className="border-t border-primary/20 pt-3 space-y-2 text-[11px] leading-relaxed text-muted-foreground">
+                <p>
+                  When you tap <strong className="text-foreground">Publish</strong>, your card on file will be charged
+                  <strong className="text-foreground"> {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> ({Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0}).
+                </p>
+                <p className="text-destructive font-bold uppercase tracking-wider text-[10px]">
+                  ⚠ This fee is non-refundable.
+                </p>
+                <p>
+                  It will <strong className="text-foreground">not</strong> be returned if you cancel, edit, unpublish, or
+                  delete this course, or if no students book. It is the cost of listing your course on the platform.
+                </p>
+              </div>
+              <label className="flex items-start gap-2 pt-2 border-t border-primary/20 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={feeAck}
+                  onChange={(e) => setFeeAck(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-primary shrink-0"
+                />
+                <span className="text-[11px] leading-relaxed">
+                  I understand the <strong>{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> listing fee is <strong className="text-destructive">non-refundable</strong> and will be charged immediately when I publish.
+                </span>
+              </label>
             </div>
             <div className="tactical-card border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs">
               <Check className="h-4 w-4 text-primary shrink-0" />
