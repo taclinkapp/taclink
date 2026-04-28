@@ -312,6 +312,13 @@ const InstructorRoster = () => {
         )}
       </div>
       <InstructorTabBar />
+      {waiverCourseId && (
+        <CourseWaiverDialog
+          open={!!waiverCourseId}
+          onOpenChange={(o) => !o && setWaiverCourseId(null)}
+          courseId={waiverCourseId}
+        />
+      )}
     </MobileShell>
   );
 };
