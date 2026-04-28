@@ -547,6 +547,63 @@ export type Database = {
         }
         Relationships: []
       }
+      instructor_credits: {
+        Row: {
+          credit_type: string
+          earned_at: string
+          id: string
+          instructor_id: string
+          note: string | null
+          redeemed_at: string | null
+          redeemed_course_id: string | null
+          source: string
+        }
+        Insert: {
+          credit_type?: string
+          earned_at?: string
+          id?: string
+          instructor_id: string
+          note?: string | null
+          redeemed_at?: string | null
+          redeemed_course_id?: string | null
+          source?: string
+        }
+        Update: {
+          credit_type?: string
+          earned_at?: string
+          id?: string
+          instructor_id?: string
+          note?: string | null
+          redeemed_at?: string | null
+          redeemed_course_id?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
+      instructor_punches: {
+        Row: {
+          booking_id: string
+          course_id: string
+          earned_at: string
+          id: string
+          instructor_id: string
+        }
+        Insert: {
+          booking_id: string
+          course_id: string
+          earned_at?: string
+          id?: string
+          instructor_id: string
+        }
+        Update: {
+          booking_id?: string
+          course_id?: string
+          earned_at?: string
+          id?: string
+          instructor_id?: string
+        }
+        Relationships: []
+      }
       issue_reports: {
         Row: {
           admin_notes: string | null

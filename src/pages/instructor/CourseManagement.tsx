@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { mockRoster, mockWaitlist } from '@/lib/mockData';
 import { useCourse } from '@/hooks/useCourses';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy } from 'lucide-react';
+import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock } from 'lucide-react';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { toast } from 'sonner';
 
@@ -14,6 +15,8 @@ const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
 const CourseManagement = () => {
   const { id } = useParams();
+  const { profile } = useAuth();
+  const isSubscribed = profile?.subscription_status === 'active';
   const { data: course, isLoading } = useCourse(id);
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
   const [showReceipt, setShowReceipt] = useState(false);
@@ -158,70 +161,92 @@ const CourseManagement = () => {
       </div>
 
       <div className="px-4 py-4 space-y-2">
-        {tab === 'Roster' && mockRoster.map((s) => (
-          <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
-            <img src={s.photo} className="h-10 w-10 rounded-full border border-border" alt="" />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate">{s.name}</div>
-              <div className="text-[10px] uppercase tracking-wider mt-0.5">
-                <span className={s.paymentStatus === 'paid' ? 'text-success' : 'text-primary'}>{s.paymentStatus}</span>
-              </div>
+        {(tab === 'Roster' || tab === 'Check-In') && !isSubscribed ? (
+          <div className="tactical-card border-primary/40 bg-primary/5 p-6 text-center space-y-3">
+            <div className="mx-auto h-12 w-12 rounded-full bg-primary/15 flex items-center justify-center">
+              <Lock className="h-6 w-6 text-primary" />
             </div>
-            <div className="flex gap-1.5">
-              <button className={cn('h-9 w-9 rounded-md flex items-center justify-center border', s.checkedIn ? 'bg-success/15 border-success/30 text-success' : 'bg-card border-border text-muted-foreground hover:border-primary hover:text-primary')}>
-                <Check className="h-4 w-4" />
-              </button>
-              <button className="h-9 w-9 rounded-md bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive">
-                <X className="h-4 w-4" />
-              </button>
+            <div>
+              <div className="text-sm font-bold">{tab} is a Pro feature</div>
+              <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed max-w-xs mx-auto">
+                Manage your students, track attendance, and run check-ins with the Pro subscription.
+              </p>
             </div>
+            <Link
+              to="/instructor/subscription"
+              className="inline-block text-[11px] font-bold uppercase tracking-wider text-primary hover:underline"
+            >
+              Upgrade to Pro →
+            </Link>
           </div>
-        ))}
-
-        {tab === 'Waitlist' && (
+        ) : (
           <>
-            <button className="w-full h-11 rounded-md bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 mb-2">
-              <Bell className="h-4 w-4" /> Notify Waitlist
-            </button>
-            {mockWaitlist.map((w) => (
-              <div key={w.id} className="tactical-card p-3 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-black text-sm">#{w.position}</div>
-                <div className="flex-1">
-                  <div className="text-sm font-semibold">{w.name}</div>
-                  <div className="text-[10px] text-muted-foreground">Joined {w.joinedAt}</div>
+            {tab === 'Roster' && mockRoster.map((s) => (
+              <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
+                <img src={s.photo} className="h-10 w-10 rounded-full border border-border" alt="" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold truncate">{s.name}</div>
+                  <div className="text-[10px] uppercase tracking-wider mt-0.5">
+                    <span className={s.paymentStatus === 'paid' ? 'text-success' : 'text-primary'}>{s.paymentStatus}</span>
+                  </div>
+                </div>
+                <div className="flex gap-1.5">
+                  <button className={cn('h-9 w-9 rounded-md flex items-center justify-center border', s.checkedIn ? 'bg-success/15 border-success/30 text-success' : 'bg-card border-border text-muted-foreground hover:border-primary hover:text-primary')}>
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button className="h-9 w-9 rounded-md bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive">
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             ))}
-          </>
-        )}
 
-        {tab === 'Check-In' && (
-          <div>
-            <div className="tactical-card p-5 text-center">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center justify-center gap-1">
-                <QrCode className="h-3 w-3" /> Display this QR for students to scan
-              </div>
-              <div className="mx-auto h-56 w-56 bg-white p-3 rounded-sm mt-3">
-                <div className="h-full w-full" style={{
-                  backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)',
-                  backgroundSize: '14px 14px',
-                  backgroundPosition: '0 0, 0 7px, 7px -7px, -7px 0',
-                }} />
-              </div>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">Live Check-Ins</h3>
-              <div className="space-y-2">
-                {mockRoster.filter((s) => s.checkedIn).map((s) => (
-                  <div key={s.id} className="tactical-card p-3 flex items-center gap-3 border-success/20 bg-success/5">
-                    <img src={s.photo} className="h-9 w-9 rounded-full" alt="" />
-                    <div className="flex-1 text-sm font-semibold">{s.name}</div>
-                    <Check className="h-4 w-4 text-success" />
+            {tab === 'Waitlist' && (
+              <>
+                <button className="w-full h-11 rounded-md bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 mb-2">
+                  <Bell className="h-4 w-4" /> Notify Waitlist
+                </button>
+                {mockWaitlist.map((w) => (
+                  <div key={w.id} className="tactical-card p-3 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-black text-sm">#{w.position}</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold">{w.name}</div>
+                      <div className="text-[10px] text-muted-foreground">Joined {w.joinedAt}</div>
+                    </div>
                   </div>
                 ))}
+              </>
+            )}
+
+            {tab === 'Check-In' && (
+              <div>
+                <div className="tactical-card p-5 text-center">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center justify-center gap-1">
+                    <QrCode className="h-3 w-3" /> Display this QR for students to scan
+                  </div>
+                  <div className="mx-auto h-56 w-56 bg-white p-3 rounded-sm mt-3">
+                    <div className="h-full w-full" style={{
+                      backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)',
+                      backgroundSize: '14px 14px',
+                      backgroundPosition: '0 0, 0 7px, 7px -7px, -7px 0',
+                    }} />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">Live Check-Ins</h3>
+                  <div className="space-y-2">
+                    {mockRoster.filter((s) => s.checkedIn).map((s) => (
+                      <div key={s.id} className="tactical-card p-3 flex items-center gap-3 border-success/20 bg-success/5">
+                        <img src={s.photo} className="h-9 w-9 rounded-full" alt="" />
+                        <div className="flex-1 text-sm font-semibold">{s.name}</div>
+                        <Check className="h-4 w-4 text-success" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </div>
     </MobileShell>

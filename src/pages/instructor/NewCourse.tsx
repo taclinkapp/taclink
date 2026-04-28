@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { createCourse, uploadCoursePhoto } from '@/lib/courses';
 import { supabase } from '@/integrations/supabase/client';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
+import { redeemFreeListingCredit, fetchPunchCardState } from '@/lib/punchCard';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2 } from 'lucide-react';
@@ -56,6 +57,13 @@ const NewCourse = () => {
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
   const [feeAck, setFeeAck] = useState(false);
+  const [availableCredits, setAvailableCredits] = useState(0);
+
+  useEffect(() => {
+    if (!user || !subActive) return;
+    fetchPunchCardState(user.id).then((s) => setAvailableCredits(s.unredeemedCredits)).catch(() => {});
+  }, [user, subActive]);
+
 
   // ---- Draft autosave (localStorage) ----
   const DRAFT_KEY = user ? `course-draft:${user.id}` : 'course-draft:anon';
@@ -193,13 +201,8 @@ const NewCourse = () => {
     if (step < 3) { setStep(step + 1); return; }
     if (!user) { toast.error('You must be signed in'); return; }
     if (!hasPM) {
-      toast.error('Add a payment method before publishing', { description: 'Required to pay the monthly platform fee.' });
+      toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
       nav('/instructor/payment-methods');
-      return;
-    }
-    if (!subActive) {
-      toast.error('Activate your instructor subscription to publish', { description: '$4.99 / month.' });
-      nav('/instructor/subscription');
       return;
     }
 
@@ -256,26 +259,37 @@ const NewCourse = () => {
         }).catch(() => {});
       }
 
-      // Listing fee charge — flat 10% of course price, non-refundable, recorded in ledger.
-      // (Real card capture is wired through the platform's payment provider; in this preview
-      // we record the charge as 'charged' since the instructor's card is on file.)
+      // Listing fee charge — flat 10% of course price, non-refundable.
+      // Subscribers can redeem a punch-card credit to waive the fee on this course.
       const priceCents = Math.round(Number(price) * 100);
       const listingFeeCents = computeListingFeeCents(priceCents);
+
+      let redeemedCreditId: string | null = null;
+      if (subActive && availableCredits > 0) {
+        redeemedCreditId = await redeemFreeListingCredit(user.id, created.id);
+      }
+
       await supabase.from('instructor_charges').insert({
         instructor_id: user.id,
         course_id: created.id,
         charge_type: 'listing_fee',
         course_price_cents: priceCents,
         capacity: Number(capacity),
-        amount_cents: listingFeeCents,
-        status: 'charged',
+        amount_cents: redeemedCreditId ? 0 : listingFeeCents,
+        status: redeemedCreditId ? 'waived' : 'charged',
         refundable: false,
-        note: '10% listing fee at publish (non-refundable)',
+        note: redeemedCreditId
+          ? 'Listing fee waived — punch-card free credit redeemed'
+          : '10% listing fee at publish (non-refundable)',
       });
 
       qc.invalidateQueries({ queryKey: ['courses'] });
       localStorage.removeItem(DRAFT_KEY);
-      toast.success('Course published', { description: `Listing fee charged: ${fmt(listingFeeCents)}` });
+      if (redeemedCreditId) {
+        toast.success('Course published', { description: `Free listing credit applied — ${fmt(listingFeeCents)} waived 🎉` });
+      } else {
+        toast.success('Course published', { description: `Listing fee charged: ${fmt(listingFeeCents)}` });
+      }
       nav('/instructor/courses');
     } catch (e: any) {
       toast.error(e?.message ?? 'Failed to create course');
@@ -442,15 +456,33 @@ const NewCourse = () => {
                 <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
               </div>
             </div>
+            {/* Free credit banner — auto-applied if available */}
+            {availableCredits > 0 && (
+              <div className="tactical-card border-success/40 bg-success/10 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">🎉</div>
+                  <div className="flex-1">
+                    <div className="text-xs uppercase tracking-wider font-bold text-success">Free Listing Credit</div>
+                    <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                      Your punch card credit will be auto-applied — <strong className="text-foreground">no listing fee</strong> for this course.
+                      You'll have <strong>{availableCredits - 1}</strong> credit{availableCredits - 1 === 1 ? '' : 's'} left after publishing.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Listing fee preview — non-refundable disclosure */}
-            <div className="tactical-card border-primary/40 bg-primary/10 p-4 space-y-3">
+            <div className={cn(
+              "tactical-card border-primary/40 bg-primary/10 p-4 space-y-3",
+              availableCredits > 0 && "opacity-50"
+            )}>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs uppercase tracking-wider font-bold">Instructor Booking Fee</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price · charged at publish</div>
                 </div>
                 <div className="text-2xl font-black text-primary">
-                  {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}
+                  {availableCredits > 0 ? <span className="line-through text-muted-foreground">{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</span> : fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}
                 </div>
               </div>
               <div className="border-t border-primary/20 pt-3 space-y-2 text-[11px] leading-relaxed text-muted-foreground">
@@ -474,7 +506,7 @@ const NewCourse = () => {
                   className="mt-0.5 h-4 w-4 accent-primary shrink-0"
                 />
                 <span className="text-[11px] leading-relaxed">
-                  I understand the <strong>{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> listing fee is <strong className="text-destructive">non-refundable</strong> and will be charged immediately when I publish.
+                  I understand the <strong>{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> listing fee is <strong className="text-destructive">non-refundable</strong> and will be charged immediately when I publish{availableCredits > 0 ? ' (waived this time by your free credit)' : ''}.
                 </span>
               </label>
             </div>
@@ -482,15 +514,10 @@ const NewCourse = () => {
               <Check className="h-4 w-4 text-primary shrink-0" />
               <span className="text-muted-foreground">Publishing makes this course visible to students immediately.</span>
             </div>
-            {(!hasPM || !subActive) && (
+            {!hasPM && (
               <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
                 <div className="font-bold text-destructive">Required to publish:</div>
-                {!hasPM && (
-                  <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
-                )}
-                {!subActive && (
-                  <Link to="/instructor/subscription" className="block text-primary underline">Activate $4.99/mo subscription →</Link>
-                )}
+                <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
               </div>
             )}
           </>
@@ -501,7 +528,9 @@ const NewCourse = () => {
           <Button onClick={next} disabled={saving || (step === 3 && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3
               ? 'Continue'
-              : `Publish · Pay ${fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}`}
+              : availableCredits > 0
+                ? 'Publish · FREE 🎉'
+                : `Publish · Pay ${fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}`}
           </Button>
         </div>
         <div className="flex gap-2">

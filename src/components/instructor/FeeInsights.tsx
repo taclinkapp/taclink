@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Loader2, Wallet } from "lucide-react";
+import { Sparkles, Loader2, Wallet, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { fmt } from "@/lib/fees";
 
 type Insight = {
@@ -18,6 +20,8 @@ type Insight = {
 };
 
 export const FeeInsights = () => {
+  const { profile } = useAuth();
+  const isSubscribed = profile?.subscription_status === "active";
   const [data, setData] = useState<Insight | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -36,7 +40,30 @@ export const FeeInsights = () => {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (isSubscribed) load(); }, [isSubscribed]);
+
+  if (!isSubscribed) {
+    return (
+      <div className="tactical-card border-primary/30 bg-primary/5 p-4">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
+            <Lock className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-bold flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" /> AI Payout Insights
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+              30-day earnings analysis & forecast. Available with Pro subscription.
+            </p>
+            <Link to="/instructor/subscription" className="inline-block mt-2 text-[11px] font-bold uppercase tracking-wider text-primary hover:underline">
+              Upgrade to unlock →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="tactical-card border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-4">
