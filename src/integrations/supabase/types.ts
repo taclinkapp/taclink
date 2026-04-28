@@ -342,6 +342,7 @@ export type Database = {
           created_at: string
           id: string
           instructor_id: string
+          photo_url: string | null
           rating: number
           student_id: string
           updated_at: string
@@ -352,6 +353,7 @@ export type Database = {
           created_at?: string
           id?: string
           instructor_id: string
+          photo_url?: string | null
           rating: number
           student_id: string
           updated_at?: string
@@ -362,6 +364,7 @@ export type Database = {
           created_at?: string
           id?: string
           instructor_id?: string
+          photo_url?: string | null
           rating?: number
           student_id?: string
           updated_at?: string
