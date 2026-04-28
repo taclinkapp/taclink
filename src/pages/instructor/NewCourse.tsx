@@ -342,6 +342,16 @@ const NewCourse = () => {
                 </SelectContent>
               </Select>
             </Field>
+            <Field label="Skill Level">
+              <Select value={skillLevel} onValueChange={(v) => setSkillLevel(v as SkillLevel)}>
+                <SelectTrigger className="bg-card border-border h-11"><SelectValue placeholder="Select level" /></SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {(Object.keys(SKILL_LEVEL_LABELS) as SkillLevel[]).map((lv) => (
+                    <SelectItem key={lv} value={lv}>{SKILL_LEVEL_LABELS[lv]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
             <Field
               label="Description"
               action={
