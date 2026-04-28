@@ -55,8 +55,48 @@ export type Database = {
           },
         ]
       }
+      bypass_attempts: {
+        Row: {
+          action_taken: string
+          context: Json | null
+          created_at: string
+          detected_pattern: string
+          field_name: string
+          id: string
+          original_content: string
+          redacted_content: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action_taken: string
+          context?: Json | null
+          created_at?: string
+          detected_pattern: string
+          field_name: string
+          id?: string
+          original_content: string
+          redacted_content?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action_taken?: string
+          context?: Json | null
+          created_at?: string
+          detected_pattern?: string
+          field_name?: string
+          id?: string
+          original_content?: string
+          redacted_content?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
+          booking_id: string | null
           course_id: string | null
           course_title: string | null
           created_at: string
@@ -72,6 +112,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          booking_id?: string | null
           course_id?: string | null
           course_title?: string | null
           created_at?: string
@@ -87,6 +128,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          booking_id?: string | null
           course_id?: string | null
           course_title?: string | null
           created_at?: string
@@ -273,7 +315,9 @@ export type Database = {
           body: string
           conversation_id: string
           created_at: string
+          flag_reason: string | null
           id: string
+          is_flagged: boolean
           read_at: string | null
           sender_id: string
           sender_role: string
@@ -282,7 +326,9 @@ export type Database = {
           body: string
           conversation_id: string
           created_at?: string
+          flag_reason?: string | null
           id?: string
+          is_flagged?: boolean
           read_at?: string | null
           sender_id: string
           sender_role: string
@@ -291,7 +337,9 @@ export type Database = {
           body?: string
           conversation_id?: string
           created_at?: string
+          flag_reason?: string | null
           id?: string
+          is_flagged?: boolean
           read_at?: string | null
           sender_id?: string
           sender_role?: string
@@ -349,6 +397,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      policy_acknowledgments: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hint: string | null
+          policy_version: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hint?: string | null
+          policy_version?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hint?: string | null
+          policy_version?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
