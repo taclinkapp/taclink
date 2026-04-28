@@ -147,7 +147,7 @@ const InstructorDashboard = () => {
       <InstructorTabBar />
 
       {/* Breakdown sheet */}
-      <Sheet open={open !== null} onOpenChange={(v) => !v && setOpen(null)}>
+      <Sheet open={open !== null} onOpenChange={(v) => { if (!v) { setOpen(null); setRevenueDrill(null); } }}>
         <SheetContent side="bottom" className="bg-background border-border max-h-[85vh] overflow-y-auto">
           {open === 'revenue' && (() => {
             const drillCourse = revenueDrill ? breakdown.revenueRows.find((r) => r.id === revenueDrill) : null;
