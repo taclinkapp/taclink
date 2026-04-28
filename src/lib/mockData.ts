@@ -9,6 +9,7 @@ export type Course = {
   instructorPhoto: string;
   instructorVerified: boolean;
   instructorRating: number;
+  heroImage: string;
   city: string;
   state: string;
   address: string;
