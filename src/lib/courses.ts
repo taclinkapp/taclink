@@ -20,8 +20,17 @@ export type DbCourse = {
   ends_at: string | null;
   cover_image_url: string | null;
   status: string;
+  skill_level?: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+export const SKILL_LEVEL_LABELS: Record<SkillLevel, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+  all_levels: 'All Levels',
 };
 
 const PLACEHOLDER_IMG =
