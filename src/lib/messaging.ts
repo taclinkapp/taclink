@@ -119,6 +119,10 @@ export const ensureConversation = async (args: EnsureArgs): Promise<Conversation
   if (findErr) throw findErr;
   if (existing) return existing as ConversationRow;
 
+  // Booking gate: only allow new threads when a confirmed booking exists.
+  const allowed = await hasConfirmedBookingBetween(studentId, instructorId);
+  if (!allowed) throw new BookingGateError();
+
   const { data: created, error: insertErr } = await supabase
     .from("conversations")
     .insert({
