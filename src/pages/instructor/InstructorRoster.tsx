@@ -208,10 +208,12 @@ const InstructorRoster = () => {
         };
       });
       if (!cancelled) {
-        setRows(result);
-        setLoading(false);
+        const reconciled = await expireOverdue(result);
+        if (!cancelled) {
+          setRows(reconciled);
+          setLoading(false);
+        }
       }
-    })();
     return () => {
       cancelled = true;
     };
