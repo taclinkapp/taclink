@@ -145,6 +145,45 @@ export type Database = {
         }
         Relationships: []
       }
+      course_waivers: {
+        Row: {
+          ai_generated: boolean
+          ai_model: string | null
+          content: string
+          course_id: string
+          created_at: string
+          id: string
+          published: boolean
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          ai_generated?: boolean
+          ai_model?: string | null
+          content: string
+          course_id: string
+          created_at?: string
+          id?: string
+          published?: boolean
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          ai_generated?: boolean
+          ai_model?: string | null
+          content?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          published?: boolean
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           address: string | null
@@ -841,6 +880,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      waiver_signatures: {
+        Row: {
+          booking_id: string
+          course_id: string
+          created_at: string
+          id: string
+          ip_hint: string | null
+          signed_at: string
+          signed_full_name: string
+          student_id: string
+          user_agent: string | null
+          waiver_content_snapshot: string
+          waiver_id: string
+          waiver_version: number
+        }
+        Insert: {
+          booking_id: string
+          course_id: string
+          created_at?: string
+          id?: string
+          ip_hint?: string | null
+          signed_at?: string
+          signed_full_name: string
+          student_id: string
+          user_agent?: string | null
+          waiver_content_snapshot: string
+          waiver_id: string
+          waiver_version: number
+        }
+        Update: {
+          booking_id?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          ip_hint?: string | null
+          signed_at?: string
+          signed_full_name?: string
+          student_id?: string
+          user_agent?: string | null
+          waiver_content_snapshot?: string
+          waiver_id?: string
+          waiver_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waiver_signatures_waiver_id_fkey"
+            columns: ["waiver_id"]
+            isOneToOne: false
+            referencedRelation: "course_waivers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
