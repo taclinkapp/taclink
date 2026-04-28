@@ -34,6 +34,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { AdminUsers, AdminInstructors } from "./pages/admin/AdminUsers";
 import { AdminCourses, AdminWaitlist, AdminActivity, AdminSettings } from "./pages/admin/AdminCourses";
+import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <DevRoleSwitcher />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
