@@ -12,10 +12,20 @@ import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
 import { cn } from '@/lib/utils';
 
+type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+const LEVEL_OPTIONS: { value: LevelFilter; label: string }[] = [
+  { value: 'all', label: 'Any Level' },
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' },
+  { value: 'all_levels', label: 'All Levels' },
+];
+
 const Discover = () => {
   const nav = useNavigate();
   const [view, setView] = useState<'list' | 'map'>('list');
   const [discipline, setDiscipline] = useState<string>('All');
+  const [level, setLevel] = useState<LevelFilter>('all');
   const [query, setQuery] = useState('');
   const { data: courses = [], isLoading } = usePublishedCourses();
 
@@ -27,7 +37,8 @@ const Discover = () => {
       c.title.toLowerCase().includes(d);
     const q = query.toLowerCase();
     const matchesQuery = !q || c.title.toLowerCase().includes(q) || c.instructorName.toLowerCase().includes(q) || c.city.toLowerCase().includes(q);
-    return matchesDisc && matchesQuery;
+    const matchesLevel = level === 'all' || c.skillLevel === level;
+    return matchesDisc && matchesQuery && matchesLevel;
   });
 
   return (
@@ -55,13 +66,29 @@ const Discover = () => {
           </div>
         </div>
         <DisciplineBrowser selected={discipline} onSelect={setDiscipline} />
-        {discipline !== 'All' && (
+        <div className="px-4 pb-3 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+          {LEVEL_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setLevel(opt.value)}
+              className={cn(
+                'shrink-0 px-3 h-7 rounded-full text-[11px] font-bold uppercase tracking-wider border transition',
+                level === opt.value
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-muted-foreground border-border hover:text-primary hover:border-primary/40',
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {(discipline !== 'All' || level !== 'all') && (
           <div className="px-4 pb-3">
             <button
-              onClick={() => setDiscipline('All')}
+              onClick={() => { setDiscipline('All'); setLevel('all'); }}
               className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary"
             >
-              ✕ Clear filter
+              ✕ Clear filters
             </button>
           </div>
         )}
