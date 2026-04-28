@@ -7,21 +7,91 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES } from '@/lib/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { createCourse } from '@/lib/courses';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { Check, MapPin } from 'lucide-react';
+import { Check, MapPin, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
 
 const NewCourse = () => {
   const nav = useNavigate();
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const [step, setStep] = useState(0);
-  const next = () => (step < 3 ? setStep(step + 1) : nav('/instructor/courses'));
+  const [saving, setSaving] = useState(false);
+
+  // form state
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [capacity, setCapacity] = useState('');
+  const [price, setPrice] = useState('');
+
   const back = () => (step > 0 ? setStep(step - 1) : nav(-1 as any));
+
+  const validate = (): string | null => {
+    if (step === 0) {
+      if (!title.trim()) return 'Title is required';
+      if (!category) return 'Category is required';
+    }
+    if (step === 1) {
+      if (!date || !startTime || !endTime) return 'Date and times are required';
+      if (!city || !state) return 'City and state are required';
+    }
+    if (step === 2) {
+      if (!capacity || Number(capacity) < 1) return 'Capacity must be at least 1';
+      if (!price || Number(price) < 5) return 'Price must be at least $5';
+    }
+    return null;
+  };
+
+  const next = async () => {
+    const err = validate();
+    if (err) { toast.error(err); return; }
+    if (step < 3) { setStep(step + 1); return; }
+    if (!user) { toast.error('You must be signed in'); return; }
+
+    setSaving(true);
+    const startsAt = new Date(`${date}T${startTime}:00`);
+    const endsAt = new Date(`${date}T${endTime}:00`);
+    const durationMin = Math.max(0, Math.round((endsAt.getTime() - startsAt.getTime()) / 60000));
+    try {
+      await createCourse(user.id, {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        category,
+        price_cents: Math.round(Number(price) * 100),
+        duration_minutes: durationMin,
+        capacity: Number(capacity),
+        address: address || undefined,
+        city,
+        state,
+        starts_at: startsAt.toISOString(),
+        ends_at: endsAt.toISOString(),
+        status: 'published',
+      });
+      qc.invalidateQueries({ queryKey: ['courses'] });
+      toast.success('Course published');
+      nav('/instructor/courses');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Failed to create course');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <MobileShell withTabBar={false}>
       <PageHeader title="New Course" back onBack={back} />
-      {/* Stepper */}
       <div className="px-4 pt-3">
         <div className="flex items-center gap-1.5">
           {STEPS.map((_, i) => (
@@ -34,72 +104,73 @@ const NewCourse = () => {
       <div className="px-4 py-5 space-y-4">
         {step === 0 && (
           <>
-            <Field label="Course Title"><Input className="bg-card border-border h-11" placeholder="e.g. Defensive Pistol Fundamentals" /></Field>
+            <Field label="Course Title">
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} className="bg-card border-border h-11" placeholder="e.g. Defensive Pistol Fundamentals" />
+            </Field>
             <Field label="Category">
-              <Select>
+              <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="bg-card border-border h-11"><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent className="bg-card border-border">
                   {['Pistol', 'Rifle', 'Shotgun', 'Combatives', 'Medical', 'Other'].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Description"><Textarea className="bg-card border-border min-h-28" placeholder="Describe your course…" /></Field>
-            <Field label="What students will learn (one per line)"><Textarea className="bg-card border-border min-h-28" placeholder="Draw stroke from concealment&#10;Sight alignment under stress&#10;…" /></Field>
+            <Field label="Description">
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-card border-border min-h-28" placeholder="Describe your course…" />
+            </Field>
           </>
         )}
         {step === 1 && (
           <>
-            <Field label="Date"><Input type="date" className="bg-card border-border h-11" /></Field>
+            <Field label="Date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-card border-border h-11" /></Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Start Time"><Input type="time" className="bg-card border-border h-11" /></Field>
-              <Field label="End Time"><Input type="time" className="bg-card border-border h-11" /></Field>
+              <Field label="Start Time"><Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="bg-card border-border h-11" /></Field>
+              <Field label="End Time"><Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="bg-card border-border h-11" /></Field>
             </div>
-            <Field label="Address"><Input className="bg-card border-border h-11" placeholder="Street address" /></Field>
+            <Field label="Address"><Input value={address} onChange={(e) => setAddress(e.target.value)} className="bg-card border-border h-11" placeholder="Street address" /></Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="City"><Input className="bg-card border-border h-11" /></Field>
+              <Field label="City"><Input value={city} onChange={(e) => setCity(e.target.value)} className="bg-card border-border h-11" /></Field>
               <Field label="State">
-                <Select><SelectTrigger className="bg-card border-border h-11"><SelectValue placeholder="State" /></SelectTrigger>
+                <Select value={state} onValueChange={setState}>
+                  <SelectTrigger className="bg-card border-border h-11"><SelectValue placeholder="State" /></SelectTrigger>
                   <SelectContent className="bg-card border-border max-h-64">{US_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
               </Field>
             </div>
-            <Field label="Zip"><Input className="bg-card border-border h-11" /></Field>
             <div className="tactical-card h-32 flex items-center justify-center">
-              <div className="text-center text-muted-foreground text-xs"><MapPin className="h-6 w-6 text-primary mx-auto mb-1" />Map preview (Google Maps stub)</div>
+              <div className="text-center text-muted-foreground text-xs"><MapPin className="h-6 w-6 text-primary mx-auto mb-1" />Map preview (coming soon)</div>
             </div>
           </>
         )}
         {step === 2 && (
           <>
-            <Field label="Max Students"><Input type="number" className="bg-card border-border h-11" placeholder="12" /></Field>
-            <Field label="Booking Fee per Student (USD, min $5)"><Input type="number" className="bg-card border-border h-11" placeholder="185" /></Field>
-            <Field label="Prerequisites (optional)"><Textarea className="bg-card border-border min-h-20" /></Field>
-            <Field label="Equipment Required (optional)"><Textarea className="bg-card border-border min-h-20" /></Field>
+            <Field label="Max Students"><Input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)} className="bg-card border-border h-11" placeholder="12" /></Field>
+            <Field label="Booking Fee per Student (USD, min $5)"><Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-card border-border h-11" placeholder="185" /></Field>
           </>
         )}
         {step === 3 && (
           <>
             <div className="tactical-card p-5 space-y-3">
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Summary</div>
-              <h2 className="font-bold text-lg">Defensive Pistol Fundamentals</h2>
+              <h2 className="font-bold text-lg">{title || 'Untitled course'}</h2>
               <div className="text-xs text-muted-foreground space-y-1">
-                <div>Category: Pistol</div>
-                <div>Date: May 12, 2026 · 9:00 – 15:00</div>
-                <div>Location: 4500 Range Rd, Austin TX</div>
-                <div>Capacity: 12 students · $185 each</div>
+                <div>Category: {category || '—'}</div>
+                <div>Date: {date || '—'} · {startTime || '—'} – {endTime || '—'}</div>
+                <div>Location: {[address, city, state].filter(Boolean).join(', ') || '—'}</div>
+                <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
               </div>
             </div>
             <div className="tactical-card border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs">
               <Check className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-muted-foreground">This will use <span className="text-foreground font-bold">1 course credit</span>. You have <span className="text-primary font-bold">7 credits remaining.</span></span>
+              <span className="text-muted-foreground">Publishing makes this course visible to students immediately.</span>
             </div>
           </>
         )}
 
         <div className="flex gap-2 pt-4">
-          {step > 0 && <Button variant="outline" onClick={back} className="flex-1 h-12 bg-card border-border font-semibold">Back</Button>}
-          <Button onClick={next} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
-            {step < 3 ? 'Continue' : 'Publish Course'}
+          {step > 0 && <Button variant="outline" onClick={back} disabled={saving} className="flex-1 h-12 bg-card border-border font-semibold">Back</Button>}
+          <Button onClick={next} disabled={saving} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3 ? 'Continue' : 'Publish Course'}
           </Button>
         </div>
       </div>
