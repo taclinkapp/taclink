@@ -218,20 +218,17 @@ const GoalCard = ({
       )}
     >
       <div className="flex items-start gap-3">
-        <button
-          onClick={onToggleManual}
-          disabled={goal.goal_type !== 'custom'}
+        <div
           className={cn(
             'mt-0.5 h-7 w-7 rounded-full flex items-center justify-center border flex-shrink-0',
             goal.isComplete
               ? 'bg-primary/20 border-primary text-primary'
               : 'border-border text-muted-foreground',
-            goal.goal_type === 'custom' && 'cursor-pointer hover:border-primary',
           )}
-          aria-label={goal.isComplete ? 'Completed' : 'In progress'}
+          aria-hidden="true"
         >
           {goal.isComplete ? <CheckCircle2 className="h-4 w-4" /> : <Target className="h-3.5 w-3.5" />}
-        </button>
+        </div>
         <div className="flex-1 min-w-0">
           <div className={cn('font-bold text-sm', goal.isComplete && 'text-primary')}>
             {goal.title}
@@ -266,6 +263,29 @@ const GoalCard = ({
               </div>
             </div>
           )}
+
+          {/* Manual completion checkbox — works for any goal type */}
+          <label
+            htmlFor={`goal-complete-${goal.id}`}
+            className="mt-2.5 flex items-center gap-2 cursor-pointer select-none group"
+          >
+            <Checkbox
+              id={`goal-complete-${goal.id}`}
+              checked={goal.completed_manually}
+              onCheckedChange={() => onToggleManual()}
+              className="h-4 w-4"
+            />
+            <span
+              className={cn(
+                'text-[11px] uppercase tracking-wider font-bold transition-colors',
+                goal.completed_manually
+                  ? 'text-primary'
+                  : 'text-muted-foreground group-hover:text-foreground',
+              )}
+            >
+              {goal.completed_manually ? 'Marked complete' : 'Mark complete'}
+            </span>
+          </label>
         </div>
         <div className="flex flex-col gap-1 -mt-1 -mr-1">
           <button
