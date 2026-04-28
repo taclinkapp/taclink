@@ -17,7 +17,7 @@ export const StudentTabBar = () => {
   return (
     <nav className="fixed bottom-4 inset-x-0 z-40 px-4 pointer-events-none">
       <div className="max-w-md mx-auto neu rounded-full pointer-events-auto">
-        <div className="grid grid-cols-4 px-2 py-2">
+        <div className="grid grid-cols-5 px-2 py-2">
           {tabs.map((t) => (
             <NavLink
               key={t.to}
