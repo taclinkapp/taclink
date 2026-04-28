@@ -163,6 +163,45 @@ const NewCourse = () => {
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-card border-border min-h-28" placeholder="Describe your course…" />
               <ContactInfoWarning value={description} />
             </Field>
+            <Field label="Cover Photo">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onPickCover(e.target.files?.[0] ?? null)}
+              />
+              {coverPreview ? (
+                <div className="relative rounded-xl overflow-hidden border border-border">
+                  <img src={coverPreview} alt="Cover preview" className="w-full h-44 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => onPickCover(null)}
+                    className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground transition"
+                    aria-label="Remove cover photo"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-2 right-2 px-3 h-8 rounded-md bg-background/80 backdrop-blur text-xs font-bold hover:bg-primary hover:text-primary-foreground transition"
+                  >
+                    Replace
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-32 rounded-xl border-2 border-dashed border-border bg-card hover:border-primary hover:text-primary transition flex flex-col items-center justify-center gap-1.5 text-muted-foreground"
+                >
+                  <ImagePlus className="h-6 w-6" />
+                  <span className="text-xs font-bold uppercase tracking-wider">Add cover photo</span>
+                  <span className="text-[10px] text-muted-foreground/80">Shown as the course header for students</span>
+                </button>
+              )}
+            </Field>
           </>
         )}
         {step === 1 && (
