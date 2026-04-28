@@ -4,7 +4,14 @@
 
 export const PLATFORM_FEE_CENTS = 2500; // $25 fixed
 export const INSTRUCTOR_COMMISSION_PCT = 0.10; // 10%
+export const INSTRUCTOR_LISTING_FEE_PCT = 0.10; // 10% of price × capacity, charged at publish, non-refundable
 export const INSTRUCTOR_SUBSCRIPTION_CENTS = 499; // $4.99/mo (tracked only)
+
+export const computeListingFeeCents = (priceCents: number, capacity: number): number => {
+  const p = Math.max(0, Math.round(priceCents));
+  const c = Math.max(0, Math.round(capacity));
+  return Math.round(p * c * INSTRUCTOR_LISTING_FEE_PCT);
+};
 
 export type FeeBreakdown = {
   coursePriceCents: number;
