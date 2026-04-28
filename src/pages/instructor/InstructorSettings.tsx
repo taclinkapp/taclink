@@ -27,6 +27,10 @@ const InstructorSettings = () => {
       <div className="px-4 py-4 space-y-6">
         <Section title="Account">
           <Row label="Edit Profile" onClick={() => nav('/profile/edit')} />
+          <button onClick={() => nav('/instructor/payouts')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
+            <span className="text-sm font-medium flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" />Deposit Payouts</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
           <button onClick={() => nav('/instructor/reviews')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
             <span className="text-sm font-medium flex items-center gap-2"><Star className="h-4 w-4 text-primary" />View My Reviews</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
