@@ -62,6 +62,75 @@ export type Database = {
         }
         Relationships: []
       }
+      courses: {
+        Row: {
+          address: string | null
+          capacity: number | null
+          category: string | null
+          city: string | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          ends_at: string | null
+          id: string
+          instructor_id: string
+          lat: number | null
+          lng: number | null
+          location_name: string | null
+          price_cents: number
+          starts_at: string | null
+          state: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          capacity?: number | null
+          category?: string | null
+          city?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          ends_at?: string | null
+          id?: string
+          instructor_id: string
+          lat?: number | null
+          lng?: number | null
+          location_name?: string | null
+          price_cents?: number
+          starts_at?: string | null
+          state?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          capacity?: number | null
+          category?: string | null
+          city?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          ends_at?: string | null
+          id?: string
+          instructor_id?: string
+          lat?: number | null
+          lng?: number | null
+          location_name?: string | null
+          price_cents?: number
+          starts_at?: string | null
+          state?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       issue_reports: {
         Row: {
           admin_notes: string | null
