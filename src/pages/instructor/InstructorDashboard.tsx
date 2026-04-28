@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { mockCourses, mockRoster } from '@/lib/mockData';
-import { Bell, TrendingUp, Users, DollarSign, Calendar, ChevronRight, Sparkles } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Sparkles } from 'lucide-react';
+import { NotificationsBell } from '@/components/NotificationsBell';
 
 const InstructorDashboard = () => {
   const stats = [
@@ -13,14 +14,7 @@ const InstructorDashboard = () => {
   ];
   return (
     <MobileShell>
-      <PageHeader
-        right={
-          <button className="text-muted-foreground hover:text-primary p-2 -mr-2 relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
-          </button>
-        }
-      />
+      <PageHeader right={<NotificationsBell className="-mr-2" />} />
       <div className="px-4 pt-2">
         <div className="flex items-center gap-3">
           <img src="https://i.pravatar.cc/150?img=12" className="h-12 w-12 rounded-full border-2 border-primary" alt="" />

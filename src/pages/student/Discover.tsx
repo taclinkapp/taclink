@@ -8,6 +8,7 @@ import { CATEGORIES, mockCourses } from '@/lib/mockData';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
 import { Logo } from '@/components/Logo';
+import { NotificationsBell } from '@/components/NotificationsBell';
 import { cn } from '@/lib/utils';
 
 const Discover = () => {
@@ -33,9 +34,8 @@ const Discover = () => {
           <h1 className="font-stencil text-xl font-bold uppercase tracking-[0.12em] text-center text-foreground">
             Discover Courses
           </h1>
-          <button className="h-9 w-9 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary" aria-label="Filters">
-            <SlidersHorizontal className="h-4 w-4" />
-          </button>
+          <NotificationsBell className="h-9 w-9 rounded-full bg-card border border-border text-muted-foreground hover:text-primary" />
+
         </div>
         <div className="px-4 pb-3">
           <div className="relative neu-inset">
