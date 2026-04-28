@@ -36,6 +36,29 @@ const BookingDetail = () => {
   const [loading, setLoading] = useState(true);
   const [b, setB] = useState<BookingRow | null>(null);
   const [c, setC] = useState<CourseRow | null>(null);
+  const [signedToken, setSignedToken] = useState<string | null>(null);
+  const [tokenExpiresAt, setTokenExpiresAt] = useState<number | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [tokenLoading, setTokenLoading] = useState(false);
+
+  const fetchSignedToken = async (bookingId: string) => {
+    setTokenLoading(true);
+    setTokenError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('sign-checkin-qr', {
+        body: { bookingId },
+      });
+      if (error) throw error;
+      if (!data?.token) throw new Error('No token returned');
+      setSignedToken(data.token);
+      setTokenExpiresAt(data.expiresAt ?? null);
+    } catch (e: any) {
+      setTokenError(e?.message ?? 'Could not load secure QR');
+      setSignedToken(null);
+    } finally {
+      setTokenLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -54,10 +77,21 @@ const BookingDetail = () => {
           .eq('id', booking.course_id)
           .maybeSingle();
         setC((course as CourseRow) ?? null);
+        if ((booking as BookingRow).status === 'reserved') {
+          fetchSignedToken((booking as BookingRow).id);
+        }
       }
       setLoading(false);
     })();
   }, [id]);
+
+  // Auto-refresh the signed QR a minute before it expires.
+  useEffect(() => {
+    if (!b || !tokenExpiresAt) return;
+    const ms = Math.max(10_000, tokenExpiresAt - Date.now() - 60_000);
+    const t = setTimeout(() => fetchSignedToken(b.id), ms);
+    return () => clearTimeout(t);
+  }, [b, tokenExpiresAt]);
 
   if (loading) {
     return (
