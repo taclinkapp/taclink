@@ -66,13 +66,29 @@ const Discover = () => {
           </div>
         </div>
         <DisciplineBrowser selected={discipline} onSelect={setDiscipline} />
-        {discipline !== 'All' && (
+        <div className="px-4 pb-3 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+          {LEVEL_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setLevel(opt.value)}
+              className={cn(
+                'shrink-0 px-3 h-7 rounded-full text-[11px] font-bold uppercase tracking-wider border transition',
+                level === opt.value
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-muted-foreground border-border hover:text-primary hover:border-primary/40',
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {(discipline !== 'All' || level !== 'all') && (
           <div className="px-4 pb-3">
             <button
-              onClick={() => setDiscipline('All')}
+              onClick={() => { setDiscipline('All'); setLevel('all'); }}
               className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary"
             >
-              ✕ Clear filter
+              ✕ Clear filters
             </button>
           </div>
         )}
