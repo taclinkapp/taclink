@@ -32,6 +32,7 @@ type CourseRow = {
   address: string | null;
   city: string | null;
   state: string | null;
+  instructor_id: string;
 };
 
 const BookingDetail = () => {
@@ -64,30 +65,44 @@ const BookingDetail = () => {
     }
   };
 
-  useEffect(() => {
+  const reload = async () => {
     if (!id) return;
-    (async () => {
-      setLoading(true);
-      const { data: booking } = await supabase
-        .from('bookings')
-        .select('id, status, course_price_cents, platform_fee_cents, instructor_deposit_cents, due_in_person_cents, online_total_cents, in_person_paid_at, course_id')
-        .eq('id', id)
-        .maybeSingle();
-      if (booking) {
-        setB(booking as BookingRow);
-        const { data: course } = await supabase
-          .from('courses')
-          .select('id, title, starts_at, ends_at, address, city, state')
-          .eq('id', booking.course_id)
-          .maybeSingle();
-        setC((course as CourseRow) ?? null);
-        if ((booking as BookingRow).status === 'reserved') {
-          fetchSignedToken((booking as BookingRow).id);
-        }
+    setLoading(true);
+    const { data: booking } = await supabase
+      .from('bookings')
+      .select('id, status, course_price_cents, platform_fee_cents, instructor_deposit_cents, due_in_person_cents, online_total_cents, in_person_paid_at, course_id, deposit_status, deposit_amount_cents, deposit_expires_at')
+      .eq('id', id)
+      .maybeSingle();
+    if (booking) {
+      // Lazy auto-expire: if window passed without confirmation, mark expired + cancel.
+      const row = booking as BookingRow;
+      if (
+        row.deposit_status === 'pending_send' &&
+        row.deposit_expires_at &&
+        new Date(row.deposit_expires_at).getTime() < Date.now()
+      ) {
+        await supabase
+          .from('bookings')
+          .update({ deposit_status: 'expired', status: 'cancelled' })
+          .eq('id', row.id);
+        row.deposit_status = 'expired';
+        row.status = 'cancelled';
       }
-      setLoading(false);
-    })();
-  }, [id]);
+      setB(row);
+      const { data: course } = await supabase
+        .from('courses')
+        .select('id, title, starts_at, ends_at, address, city, state, instructor_id')
+        .eq('id', row.course_id)
+        .maybeSingle();
+      setC((course as CourseRow) ?? null);
+      if (row.status === 'reserved' && row.deposit_status === 'confirmed') {
+        fetchSignedToken(row.id);
+      }
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { reload(); /* eslint-disable-next-line */ }, [id]);
 
   // Auto-refresh the signed QR a minute before it expires.
   useEffect(() => {
