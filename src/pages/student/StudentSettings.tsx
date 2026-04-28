@@ -15,7 +15,7 @@ const StudentSettings = () => {
   const handleSignOut = async () => {
     await signOut();
     toast.success('Signed out');
-    nav('/auth/signin', { replace: true });
+    nav('/', { replace: true });
   };
 
   return (
