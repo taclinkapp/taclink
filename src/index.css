@@ -93,6 +93,20 @@
   .gradient-amber {
     background: var(--gradient-amber);
   }
+  .font-stencil {
+    font-family: 'Stardos Stencil', 'Inter', sans-serif;
+    letter-spacing: 0.04em;
+  }
+  /* Pill button used across screens, mirrors iOS reference */
+  .btn-pill {
+    @apply w-full h-11 rounded-full bg-background text-foreground text-xs font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2 border border-border;
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.04), 0 2px 8px hsl(0 0% 0% / 0.5);
+  }
+  .btn-pill-primary {
+    @apply w-full h-11 rounded-full text-primary-foreground text-xs font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2;
+    background: var(--gradient-amber);
+    box-shadow: 0 4px 16px hsl(38 92% 50% / 0.35);
+  }
 }
 
 /* Hide scrollbar utility for filter chips */

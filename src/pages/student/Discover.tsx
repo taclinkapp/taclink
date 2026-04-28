@@ -23,9 +23,14 @@ const Discover = () => {
   return (
     <MobileShell>
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
-        <div className="px-4 pt-4 pb-3 flex items-center justify-between">
-          <Logo size="md" />
-          <button className="h-9 w-9 rounded-md bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary">
+        <div className="px-4 pt-4 pb-3 grid grid-cols-[auto_1fr_auto] items-center gap-3">
+          <button className="h-9 w-9 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary" aria-label="Compass">
+            <Logo size="sm" />
+          </button>
+          <h1 className="font-stencil text-xl font-bold uppercase tracking-[0.12em] text-center text-foreground">
+            Discover Courses
+          </h1>
+          <button className="h-9 w-9 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary" aria-label="Filters">
             <SlidersHorizontal className="h-4 w-4" />
           </button>
         </div>
