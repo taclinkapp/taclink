@@ -214,6 +214,7 @@ const InstructorRoster = () => {
           setLoading(false);
         }
       }
+    })();
     return () => {
       cancelled = true;
     };
