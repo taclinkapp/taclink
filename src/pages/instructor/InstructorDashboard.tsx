@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { mockCourses, mockRoster, mockReviews } from '@/lib/mockData';
-import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck, Plus, Star } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck, Plus, Star, Printer, Download, ArrowLeft } from 'lucide-react';
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 import { FeeInsights } from '@/components/instructor/FeeInsights';
