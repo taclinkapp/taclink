@@ -12,10 +12,20 @@ import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
 import { cn } from '@/lib/utils';
 
+type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+const LEVEL_OPTIONS: { value: LevelFilter; label: string }[] = [
+  { value: 'all', label: 'Any Level' },
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' },
+  { value: 'all_levels', label: 'All Levels' },
+];
+
 const Discover = () => {
   const nav = useNavigate();
   const [view, setView] = useState<'list' | 'map'>('list');
   const [discipline, setDiscipline] = useState<string>('All');
+  const [level, setLevel] = useState<LevelFilter>('all');
   const [query, setQuery] = useState('');
   const { data: courses = [], isLoading } = usePublishedCourses();
 
@@ -27,7 +37,8 @@ const Discover = () => {
       c.title.toLowerCase().includes(d);
     const q = query.toLowerCase();
     const matchesQuery = !q || c.title.toLowerCase().includes(q) || c.instructorName.toLowerCase().includes(q) || c.city.toLowerCase().includes(q);
-    return matchesDisc && matchesQuery;
+    const matchesLevel = level === 'all' || c.skillLevel === level;
+    return matchesDisc && matchesQuery && matchesLevel;
   });
 
   return (
