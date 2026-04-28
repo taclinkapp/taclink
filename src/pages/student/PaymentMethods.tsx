@@ -370,133 +370,204 @@ const PaymentMethods = () => {
               </div>
             )}
 
-            {cards.map((c) => editingId === c.id ? (
-              <div key={c.id} className="tactical-card p-4 space-y-3 border-primary/40">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-primary" />
-                  <div className="text-sm font-bold">{c.brand} •••• {c.last4}</div>
-                  <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">Editing</span>
-                </div>
-                <Field label="Cardholder name" error={editErrors.name}>
-                  <Input
-                    value={editName}
-                    onChange={(e) => { setEditName(e.target.value); if (editErrors.name) setEditErrors((x) => ({ ...x, name: '' })); }}
-                    placeholder="Name on card"
-                    maxLength={80}
-                    autoComplete="cc-name"
-                    className="bg-background border-border h-11"
-                  />
-                </Field>
-                <Field label="Expiry" error={editErrors.exp}>
-                  <Input
-                    value={editExp}
-                    onChange={(e) => { setEditExp(formatExp(e.target.value)); if (editErrors.exp) setEditErrors((x) => ({ ...x, exp: '' })); }}
-                    placeholder="MM/YY"
-                    inputMode="numeric"
-                    autoComplete="cc-exp"
-                    maxLength={5}
-                    className="bg-background border-border h-11 font-mono"
-                  />
-                </Field>
-                <p className="text-[10px] text-muted-foreground italic">Card brand and last 4 digits cannot be changed. To use a different card, remove this one and add a new one.</p>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={cancelEdit} disabled={editSaving} className="flex-1">
-                    <X className="h-3.5 w-3.5 mr-1" /> Cancel
-                  </Button>
-                  <Button onClick={() => handleSaveEdit(c.id)} disabled={editSaving} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
-                    {editSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}
-                    Save
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div key={c.id} className="tactical-card p-4 flex items-center gap-3">
-                <div className="h-10 w-14 rounded-md bg-primary/10 border border-primary/30 flex items-center justify-center">
-                  <CreditCard className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold">{c.brand} •••• {c.last4}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {c.cardholder_name} · Exp {String(c.exp_month).padStart(2, '0')}/{String(c.exp_year).padStart(2, '0')}
+            {cards.map((c) => {
+              const isCard = c.method_type === 'card';
+              const altMeta = !isCard ? ALT_META[c.method_type as AltType] : null;
+              const Icon = altMeta?.icon ?? CreditCard;
+              if (editingId === c.id) {
+                return (
+                  <div key={c.id} className="tactical-card p-4 space-y-3 border-primary/40">
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-primary" />
+                      <div className="text-sm font-bold">
+                        {isCard ? `${c.brand} •••• ${c.last4}` : altMeta!.label}
+                      </div>
+                      <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">Editing</span>
+                    </div>
+
+                    {isCard ? (
+                      <>
+                        <Field label="Cardholder name" error={editErrors.name}>
+                          <Input
+                            value={editName}
+                            onChange={(e) => { setEditName(e.target.value); if (editErrors.name) setEditErrors((x) => ({ ...x, name: '' })); }}
+                            placeholder="Name on card"
+                            maxLength={80}
+                            autoComplete="cc-name"
+                            className="bg-background border-border h-11"
+                          />
+                        </Field>
+                        <Field label="Expiry" error={editErrors.exp}>
+                          <Input
+                            value={editExp}
+                            onChange={(e) => { setEditExp(formatExp(e.target.value)); if (editErrors.exp) setEditErrors((x) => ({ ...x, exp: '' })); }}
+                            placeholder="MM/YY"
+                            inputMode="numeric"
+                            autoComplete="cc-exp"
+                            maxLength={5}
+                            className="bg-background border-border h-11 font-mono"
+                          />
+                        </Field>
+                        <p className="text-[10px] text-muted-foreground italic">Card brand and last 4 digits cannot be changed. To use a different card, remove this one and add a new one.</p>
+                      </>
+                    ) : (
+                      <Field label={altMeta!.hint} error={editErrors.handle}>
+                        <Input
+                          value={editHandle}
+                          onChange={(e) => { setEditHandle(e.target.value); if (editErrors.handle) setEditErrors((x) => ({ ...x, handle: '' })); }}
+                          placeholder={altMeta!.placeholder}
+                          maxLength={120}
+                          className="bg-background border-border h-11"
+                        />
+                      </Field>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={cancelEdit} disabled={editSaving} className="flex-1">
+                        <X className="h-3.5 w-3.5 mr-1" /> Cancel
+                      </Button>
+                      <Button onClick={() => handleSaveEdit(c.id)} disabled={editSaving} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
+                        {editSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+                        Save
+                      </Button>
+                    </div>
                   </div>
+                );
+              }
+
+              return (
+                <div key={c.id} className="tactical-card p-4 flex items-center gap-3">
+                  <div className="h-10 w-14 rounded-md bg-primary/10 border border-primary/30 flex items-center justify-center">
+                    <Icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold truncate">
+                      {isCard ? `${c.brand} •••• ${c.last4}` : `${altMeta!.label} · ${c.handle}`}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {isCard
+                        ? `${c.cardholder_name} · Exp ${String(c.exp_month).padStart(2, '0')}/${String(c.exp_year).padStart(2, '0')}`
+                        : 'Alternate payment method'}
+                    </div>
+                  </div>
+                  <button onClick={() => startEdit(c)} className="text-muted-foreground hover:text-primary p-2" aria-label="Edit">
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => handleRemove(c.id)} className="text-muted-foreground hover:text-destructive p-2" aria-label="Remove">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-                <button onClick={() => startEdit(c)} className="text-muted-foreground hover:text-primary p-2" aria-label="Edit">
-                  <Pencil className="h-4 w-4" />
-                </button>
-                <button onClick={() => handleRemove(c.id)} className="text-muted-foreground hover:text-destructive p-2" aria-label="Remove">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+              );
+            })}
 
             {adding ? (
               <div className="tactical-card p-4 space-y-3">
                 <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  <Lock className="h-3 w-3" /> Add Card
-                  {brand !== 'Card' && (
+                  <Lock className="h-3 w-3" /> Add Payment Method
+                  {addType === 'card' && brand !== 'Card' && (
                     <span className="ml-auto text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30">{brand}</span>
                   )}
                 </div>
 
-                <Field label="Cardholder name" error={errors.name}>
-                  <Input
-                    value={name}
-                    onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((x) => ({ ...x, name: '' })); }}
-                    placeholder="Name on card"
-                    maxLength={80}
-                    autoComplete="cc-name"
-                    className="bg-background border-border h-11"
-                  />
-                </Field>
-
-                <Field label="Card number" error={errors.number}>
-                  <Input
-                    value={number}
-                    onChange={(e) => onNumberChange(e.target.value)}
-                    placeholder={brand === 'Amex' ? '3782 822463 10005' : '4242 4242 4242 4242'}
-                    inputMode="numeric"
-                    autoComplete="cc-number"
-                    className="bg-background border-border h-11 font-mono tracking-wider"
-                  />
-                </Field>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Expiry" error={errors.exp}>
-                    <Input
-                      value={exp}
-                      onChange={(e) => { setExp(formatExp(e.target.value)); if (errors.exp) setErrors((x) => ({ ...x, exp: '' })); }}
-                      placeholder="MM/YY"
-                      inputMode="numeric"
-                      autoComplete="cc-exp"
-                      maxLength={5}
-                      className="bg-background border-border h-11 font-mono"
-                    />
-                  </Field>
-                  <Field label={`CVC (${brandCvcLength(brand)} digits)`} error={errors.cvc}>
-                    <Input
-                      value={cvc}
-                      onChange={(e) => {
-                        const d = e.target.value.replace(/\D/g, '').slice(0, brandCvcLength(brand));
-                        setCvc(d);
-                        if (errors.cvc) setErrors((x) => ({ ...x, cvc: '' }));
-                      }}
-                      placeholder={brand === 'Amex' ? '1234' : '123'}
-                      inputMode="numeric"
-                      autoComplete="cc-csc"
-                      maxLength={4}
-                      className="bg-background border-border h-11 font-mono"
-                    />
-                  </Field>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Method</Label>
+                  <div className="mt-1 grid grid-cols-5 gap-1.5">
+                    {(['card', 'cashapp', 'venmo', 'paypal', 'zelle'] as MethodType[]).map((t) => {
+                      const active = addType === t;
+                      const Icon = t === 'card' ? CreditCard : ALT_META[t as AltType].icon;
+                      const label = t === 'card' ? 'Card' : ALT_META[t as AltType].label.split(' ')[0];
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => { setAddType(t); setErrors({}); }}
+                          className={`h-14 rounded-md border text-[10px] font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-1 transition ${active ? 'bg-primary/15 border-primary text-primary' : 'bg-background border-border text-muted-foreground hover:border-primary/40'}`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+
+                {addType === 'card' ? (
+                  <>
+                    <Field label="Cardholder name" error={errors.name}>
+                      <Input
+                        value={name}
+                        onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((x) => ({ ...x, name: '' })); }}
+                        placeholder="Name on card"
+                        maxLength={80}
+                        autoComplete="cc-name"
+                        className="bg-background border-border h-11"
+                      />
+                    </Field>
+
+                    <Field label="Card number" error={errors.number}>
+                      <Input
+                        value={number}
+                        onChange={(e) => onNumberChange(e.target.value)}
+                        placeholder={brand === 'Amex' ? '3782 822463 10005' : '4242 4242 4242 4242'}
+                        inputMode="numeric"
+                        autoComplete="cc-number"
+                        className="bg-background border-border h-11 font-mono tracking-wider"
+                      />
+                    </Field>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Expiry" error={errors.exp}>
+                        <Input
+                          value={exp}
+                          onChange={(e) => { setExp(formatExp(e.target.value)); if (errors.exp) setErrors((x) => ({ ...x, exp: '' })); }}
+                          placeholder="MM/YY"
+                          inputMode="numeric"
+                          autoComplete="cc-exp"
+                          maxLength={5}
+                          className="bg-background border-border h-11 font-mono"
+                        />
+                      </Field>
+                      <Field label={`CVC (${brandCvcLength(brand)} digits)`} error={errors.cvc}>
+                        <Input
+                          value={cvc}
+                          onChange={(e) => {
+                            const d = e.target.value.replace(/\D/g, '').slice(0, brandCvcLength(brand));
+                            setCvc(d);
+                            if (errors.cvc) setErrors((x) => ({ ...x, cvc: '' }));
+                          }}
+                          placeholder={brand === 'Amex' ? '1234' : '123'}
+                          inputMode="numeric"
+                          autoComplete="cc-csc"
+                          maxLength={4}
+                          className="bg-background border-border h-11 font-mono"
+                        />
+                      </Field>
+                    </div>
+                  </>
+                ) : (
+                  <Field label={ALT_META[addType as AltType].hint} error={errors.handle}>
+                    <Input
+                      value={altHandle}
+                      onChange={(e) => { setAltHandle(e.target.value); if (errors.handle) setErrors((x) => ({ ...x, handle: '' })); }}
+                      placeholder={ALT_META[addType as AltType].placeholder}
+                      maxLength={120}
+                      className="bg-background border-border h-11"
+                    />
+                  </Field>
+                )}
 
                 <div className="flex gap-2 pt-1">
                   <Button variant="outline" onClick={reset} disabled={saving} className="flex-1">Cancel</Button>
                   <Button onClick={handleAdd} disabled={saving} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                    Save Card
+                    Save
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground italic">Cards are saved to your account. Real charges are processed securely at checkout.</p>
+                <p className="text-[10px] text-muted-foreground italic">
+                  {addType === 'card'
+                    ? 'Cards are saved to your account. Real charges are processed securely at checkout.'
+                    : `Your ${ALT_META[addType as AltType].label} info is saved as a payout/contact reference. Off-platform transfers happen between you and the instructor.`}
+                </p>
               </div>
             ) : (
               <Button onClick={() => setAdding(true)} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
