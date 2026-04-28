@@ -20,6 +20,8 @@ import BookingDetail from "./pages/student/BookingDetail";
 import LeaveReview from "./pages/student/LeaveReview";
 import StudentProfile from "./pages/student/StudentProfile";
 import StudentSettings from "./pages/student/StudentSettings";
+import StudentMessages from "./pages/student/StudentMessages";
+import StudentConversation from "./pages/student/StudentConversation";
 
 import InstructorDashboard from "./pages/instructor/InstructorDashboard";
 import MyCourses from "./pages/instructor/MyCourses";
@@ -28,6 +30,8 @@ import CourseManagement from "./pages/instructor/CourseManagement";
 import InstructorProfile from "./pages/instructor/InstructorProfile";
 import InstructorSettings from "./pages/instructor/InstructorSettings";
 import ListingPacks from "./pages/instructor/ListingPacks";
+import InstructorMessages from "./pages/instructor/InstructorMessages";
+import InstructorConversation from "./pages/instructor/InstructorConversation";
 
 import { AdminLayout } from "./components/AdminLayout";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -65,6 +69,8 @@ const App = () => (
           <Route path="/student/review/:id" element={<LeaveReview />} />
           <Route path="/student/profile" element={<StudentProfile />} />
           <Route path="/student/settings" element={<StudentSettings />} />
+          <Route path="/student/messages" element={<StudentMessages />} />
+          <Route path="/student/messages/:id" element={<StudentConversation />} />
 
           {/* Instructor */}
           <Route path="/instructor" element={<InstructorDashboard />} />
@@ -74,6 +80,8 @@ const App = () => (
           <Route path="/instructor/profile" element={<InstructorProfile />} />
           <Route path="/instructor/settings" element={<InstructorSettings />} />
           <Route path="/instructor/listing-packs" element={<ListingPacks />} />
+          <Route path="/instructor/messages" element={<InstructorMessages />} />
+          <Route path="/instructor/messages/:id" element={<InstructorConversation />} />
 
           {/* Admin */}
           <Route path="/admin/login" element={<AdminLogin />} />
