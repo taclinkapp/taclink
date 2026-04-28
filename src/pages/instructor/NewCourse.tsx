@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
 import { ContactInfoWarning } from '@/components/ContactInfoWarning';
+import { AISuggestButton } from '@/components/instructor/AISuggestButton';
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
 
