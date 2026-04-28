@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Target, Plus, Trash2, CheckCircle2, Calendar, Loader2, Flag, Pencil } from 'lucide-react';
+import { Target, Plus, Trash2, CheckCircle2, Calendar, Loader2, Flag, Pencil, History, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   useTrainingGoals,
@@ -62,7 +62,7 @@ type GoalFormValues = {
 };
 
 export const TrainingGoalsSection = () => {
-  const { goals, isLoading, createGoal, deleteGoal, updateGoal } = useTrainingGoals();
+  const { goals, isLoading, createGoal, deleteGoal, updateGoal, toggleManualComplete } = useTrainingGoals();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<TrainingGoal | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<TrainingGoal | null>(null);
@@ -112,11 +112,14 @@ export const TrainingGoalsSection = () => {
               onEdit={() => setEditing(g)}
               onDelete={() => setConfirmDelete(g)}
               onToggleManual={async () => {
-                await updateGoal.mutateAsync({
-                  id: g.id,
-                  completed_manually: !g.completed_manually,
-                  completed_at: !g.completed_manually ? new Date().toISOString() : null,
-                });
+                try {
+                  await toggleManualComplete.mutateAsync({
+                    goal: g,
+                    next: !g.completed_manually,
+                  });
+                } catch (e: any) {
+                  toast.error(e?.message ?? 'Failed to update');
+                }
               }}
             />
           ))}
@@ -265,27 +268,31 @@ const GoalCard = ({
           )}
 
           {/* Manual completion checkbox — works for any goal type */}
-          <label
-            htmlFor={`goal-complete-${goal.id}`}
-            className="mt-2.5 flex items-center gap-2 cursor-pointer select-none group"
-          >
-            <Checkbox
-              id={`goal-complete-${goal.id}`}
-              checked={goal.completed_manually}
-              onCheckedChange={() => onToggleManual()}
-              className="h-4 w-4"
-            />
-            <span
-              className={cn(
-                'text-[11px] uppercase tracking-wider font-bold transition-colors',
-                goal.completed_manually
-                  ? 'text-primary'
-                  : 'text-muted-foreground group-hover:text-foreground',
-              )}
+          <div className="mt-2.5">
+            <label
+              htmlFor={`goal-complete-${goal.id}`}
+              className="flex items-center gap-2 cursor-pointer select-none group"
             >
-              {goal.completed_manually ? 'Marked complete' : 'Mark complete'}
-            </span>
-          </label>
+              <Checkbox
+                id={`goal-complete-${goal.id}`}
+                checked={goal.completed_manually}
+                onCheckedChange={() => onToggleManual()}
+                className="h-4 w-4"
+              />
+              <span
+                className={cn(
+                  'text-[11px] uppercase tracking-wider font-bold transition-colors',
+                  goal.completed_manually
+                    ? 'text-primary'
+                    : 'text-muted-foreground group-hover:text-foreground',
+                )}
+              >
+                {goal.completed_manually ? 'Marked complete' : 'Mark complete'}
+              </span>
+            </label>
+
+            <GoalHistory goal={goal} />
+          </div>
         </div>
         <div className="flex flex-col gap-1 -mt-1 -mr-1">
           <button
@@ -307,6 +314,86 @@ const GoalCard = ({
         </div>
       </div>
     </li>
+  );
+};
+
+const formatRelative = (iso: string) => {
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  const min = Math.round(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.round(hr / 24);
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString();
+};
+
+const formatFull = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+const GoalHistory = ({ goal }: { goal: GoalWithProgress }) => {
+  const [open, setOpen] = useState(false);
+  const last = goal.lastEvent;
+  const hasHistory = goal.events.length > 0;
+
+  if (!hasHistory && !goal.completed_at) return null;
+
+  const lastLabel = last
+    ? last.event_type === 'marked_complete'
+      ? 'Marked complete'
+      : 'Marked incomplete'
+    : 'Updated';
+  const lastTime = last?.created_at ?? goal.completed_at ?? goal.updated_at;
+
+  return (
+    <div className="mt-1.5">
+      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+        <span>
+          {lastLabel}{' '}
+          <span title={formatFull(lastTime)} className="text-foreground/70">
+            {formatRelative(lastTime)}
+          </span>
+        </span>
+        {hasHistory && goal.events.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="ml-1 inline-flex items-center gap-0.5 hover:text-primary transition-colors"
+            aria-expanded={open}
+          >
+            <History className="h-3 w-3" />
+            <span>History</span>
+            <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180')} />
+          </button>
+        )}
+      </div>
+      {open && goal.events.length > 1 && (
+        <ul className="mt-1.5 pl-2 border-l border-border/60 space-y-0.5">
+          {goal.events.map((e) => (
+            <li key={e.id} className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+              <span
+                className={cn(
+                  'h-1.5 w-1.5 rounded-full flex-shrink-0',
+                  e.event_type === 'marked_complete' ? 'bg-primary' : 'bg-muted-foreground/50',
+                )}
+              />
+              <span className="text-foreground/80">
+                {e.event_type === 'marked_complete' ? 'Complete' : 'Incomplete'}
+              </span>
+              <span title={formatFull(e.created_at)}>· {formatRelative(e.created_at)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 };
 
