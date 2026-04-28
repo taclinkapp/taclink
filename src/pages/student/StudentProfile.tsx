@@ -4,6 +4,7 @@ import { StudentTabBar } from '@/components/StudentTabBar';
 import { mockBookings, mockCourses } from '@/lib/mockData';
 import { Settings, ChevronRight } from 'lucide-react';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 
 const StudentProfile = () => {
   const nav = useNavigate();
