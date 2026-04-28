@@ -337,6 +337,69 @@ export type Database = {
         }
         Relationships: []
       }
+      instructor_credentials: {
+        Row: {
+          admin_notes: string | null
+          ai_confidence: number | null
+          ai_expires_on: string | null
+          ai_holder_name: string | null
+          ai_issuer: string | null
+          ai_raw: Json | null
+          ai_reasons: string | null
+          created_at: string
+          credential_type: string
+          display_name: string | null
+          file_mime: string | null
+          file_path: string
+          id: string
+          instructor_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          ai_confidence?: number | null
+          ai_expires_on?: string | null
+          ai_holder_name?: string | null
+          ai_issuer?: string | null
+          ai_raw?: Json | null
+          ai_reasons?: string | null
+          created_at?: string
+          credential_type: string
+          display_name?: string | null
+          file_mime?: string | null
+          file_path: string
+          id?: string
+          instructor_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          ai_confidence?: number | null
+          ai_expires_on?: string | null
+          ai_holder_name?: string | null
+          ai_issuer?: string | null
+          ai_raw?: Json | null
+          ai_reasons?: string | null
+          created_at?: string
+          credential_type?: string
+          display_name?: string | null
+          file_mime?: string | null
+          file_path?: string
+          id?: string
+          instructor_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       issue_reports: {
         Row: {
           admin_notes: string | null
@@ -517,6 +580,9 @@ export type Database = {
           id: string
           phone: string | null
           photo_url: string | null
+          service_categories: string[] | null
+          service_city: string | null
+          service_state: string | null
           state: string | null
           updated_at: string
         }
@@ -527,6 +593,9 @@ export type Database = {
           id: string
           phone?: string | null
           photo_url?: string | null
+          service_categories?: string[] | null
+          service_city?: string | null
+          service_state?: string | null
           state?: string | null
           updated_at?: string
         }
@@ -537,6 +606,9 @@ export type Database = {
           id?: string
           phone?: string | null
           photo_url?: string | null
+          service_categories?: string[] | null
+          service_city?: string | null
+          service_state?: string | null
           state?: string | null
           updated_at?: string
         }
