@@ -186,6 +186,15 @@ export const ConversationView = ({ variant }: Props) => {
     <MobileShell withTabBar={false}>
       <div className="flex flex-col h-screen">
         <PageHeader back onBack={() => nav(-1)} title={otherName ?? "Conversation"} />
+        {/* Persistent platform-policy banner */}
+        <div className="px-3 py-2 border-b border-border bg-primary/5 flex items-start gap-2">
+          <Lock className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+          <p className="text-[11px] leading-snug text-foreground/80">
+            <span className="font-bold text-primary">All communication must stay on TacLink.</span>{' '}
+            Sharing contact info or arranging off-platform payments may result in account suspension.
+          </p>
+        </div>
+
         {conversation?.course_title && (
           <div className="px-4 py-2 border-b border-border bg-card/50">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Course</div>
