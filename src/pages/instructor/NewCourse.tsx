@@ -463,7 +463,7 @@ const NewCourse = () => {
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Summary</div>
               <h2 className="font-bold text-lg">{title || 'Untitled course'}</h2>
               <div className="text-xs text-muted-foreground space-y-1">
-                <div>Category: {category || '—'}</div>
+                <div>Category: {category || '—'} · Level: {SKILL_LEVEL_LABELS[skillLevel]}</div>
                 <div>Date: {date || '—'} · {startTime || '—'} – {endTime || '—'}</div>
                 <div>Location: {[address, city, state].filter(Boolean).join(', ') || '—'}</div>
                 <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
