@@ -3,6 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { StudentTabBar } from "@/components/StudentTabBar";
 import { Logo } from "@/components/Logo";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import { TrainingGoalsSection } from "@/components/TrainingGoalsSection";
 import { useMyProgress } from "@/hooks/useMyProgress";
 import { Award, Calendar, MapPin, Target, TrendingUp, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
