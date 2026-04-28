@@ -48,8 +48,10 @@ const InstructorRoster = () => {
     setUpdatingId(bookingId);
     const prev = rows;
     setRows((rs) => rs.map((r) => (r.bookingId === bookingId ? { ...r, status: next } : r)));
-    const patch: Record<string, any> = { status: next };
-    patch.attended_at = next === 'attended' ? new Date().toISOString() : null;
+    const patch = {
+      status: next,
+      attended_at: next === 'attended' ? new Date().toISOString() : null,
+    };
     const { error } = await supabase.from('bookings').update(patch).eq('id', bookingId);
     setUpdatingId(null);
     if (error) {
