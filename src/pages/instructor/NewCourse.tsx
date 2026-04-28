@@ -227,6 +227,7 @@ const NewCourse = () => {
         title: title.trim(),
         description: description.trim() || undefined,
         category,
+        skill_level: skillLevel,
         price_cents: Math.round(Number(price) * 100),
         duration_minutes: durationMin,
         capacity: Number(capacity),
