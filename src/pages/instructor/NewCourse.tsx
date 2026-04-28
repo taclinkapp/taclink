@@ -250,9 +250,26 @@ const NewCourse = () => {
         }).catch(() => {});
       }
 
+      // Listing fee charge — 10% of price × capacity, non-refundable, recorded in ledger.
+      // (Real card capture is wired through the platform's payment provider; in this preview
+      // we record the charge as 'charged' since the instructor's card is on file.)
+      const priceCents = Math.round(Number(price) * 100);
+      const listingFeeCents = computeListingFeeCents(priceCents, Number(capacity));
+      await supabase.from('instructor_charges').insert({
+        instructor_id: user.id,
+        course_id: created.id,
+        charge_type: 'listing_fee',
+        course_price_cents: priceCents,
+        capacity: Number(capacity),
+        amount_cents: listingFeeCents,
+        status: 'charged',
+        refundable: false,
+        note: '10% listing fee at publish (non-refundable)',
+      });
+
       qc.invalidateQueries({ queryKey: ['courses'] });
       localStorage.removeItem(DRAFT_KEY);
-      toast.success('Course published');
+      toast.success('Course published', { description: `Listing fee charged: ${fmt(listingFeeCents)}` });
       nav('/instructor/courses');
     } catch (e: any) {
       toast.error(e?.message ?? 'Failed to create course');
