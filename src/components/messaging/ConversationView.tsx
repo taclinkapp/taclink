@@ -8,6 +8,7 @@ import { mockCourses } from "@/lib/mockData";
 import {
   ensureConversation,
   sendMessage,
+  BookingGateError,
   type ConversationRow,
   type MessageRow,
 } from "@/lib/messaging";
@@ -41,6 +42,7 @@ export const ConversationView = ({ variant }: Props) => {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [gateBlocked, setGateBlocked] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Resolve / create conversation
@@ -88,7 +90,11 @@ export const ConversationView = ({ variant }: Props) => {
           setConversation(conv);
         }
       } catch (e) {
-        console.error("Failed to load conversation", e);
+        if (e instanceof BookingGateError) {
+          setGateBlocked(true);
+        } else {
+          console.error("Failed to load conversation", e);
+        }
       } finally {
         setLoading(false);
       }
