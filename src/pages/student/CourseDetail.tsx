@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { mockCourses, mockReviews } from '@/lib/mockData';
+import { mockReviews } from '@/lib/mockData';
+import { useCourse } from '@/hooks/useCourses';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { CategoryPill } from '@/components/CategoryPill';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
@@ -10,7 +11,26 @@ import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, MessageSq
 const CourseDetail = () => {
   const { id } = useParams();
   const nav = useNavigate();
-  const course = mockCourses.find((c) => c.id === id) ?? mockCourses[0];
+  const { data: course, isLoading } = useCourse(id);
+
+  if (isLoading) {
+    return (
+      <MobileShell withTabBar={false}>
+        <PageHeader back />
+        <div className="px-4 py-12 text-center text-muted-foreground text-sm">Loading…</div>
+      </MobileShell>
+    );
+  }
+
+  if (!course) {
+    return (
+      <MobileShell withTabBar={false}>
+        <PageHeader back />
+        <div className="px-4 py-12 text-center text-muted-foreground text-sm">Course not found.</div>
+      </MobileShell>
+    );
+  }
+
   const isFull = course.spotsRemaining === 0;
 
   return (
