@@ -166,13 +166,36 @@ const BookingDetail = () => {
 
         {upcoming && (
           <div className="tactical-card p-5 text-center">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">Check-In QR</div>
-            <div className="mx-auto bg-white p-4 rounded-sm w-fit">
-              <QRCodeSVG value={buildCheckinPayload(b.id)} size={208} level="M" includeMargin={false} />
+            <div className="flex items-center justify-center gap-1.5 mb-3">
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Signed Check-In QR</div>
+            </div>
+            <div className="mx-auto bg-white p-4 rounded-sm w-fit relative">
+              {tokenLoading && !signedToken ? (
+                <div className="h-[208px] w-[208px] flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : signedToken ? (
+                <QRCodeSVG value={signedToken} size={208} level="M" includeMargin={false} />
+              ) : (
+                <div className="h-[208px] w-[208px] flex flex-col items-center justify-center text-xs text-destructive p-4 text-center">
+                  <AlertTriangle className="h-5 w-5 mb-2" />
+                  {tokenError ?? 'Could not load secure QR'}
+                </div>
+              )}
             </div>
             <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed">
-              Show this to your instructor at the course. They'll scan it to mark you attended.
+              Cryptographically signed — bound to this booking and today's date. Cannot be forged, shared, or used on the wrong day.
             </p>
+            <button
+              type="button"
+              onClick={() => fetchSignedToken(b.id)}
+              disabled={tokenLoading}
+              className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-primary hover:underline disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${tokenLoading ? 'animate-spin' : ''}`} />
+              {tokenLoading ? 'Refreshing' : 'Refresh QR'}
+            </button>
           </div>
         )}
 
