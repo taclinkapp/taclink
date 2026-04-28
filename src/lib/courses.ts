@@ -86,7 +86,6 @@ export const fetchPublishedCourses = async (): Promise<Course[]> => {
     .from("courses")
     .select("*")
     .eq("status", "published")
-    .neq("moderation_status", "flagged")
     .order("starts_at", { ascending: true });
   if (error) throw error;
   const list = (rows ?? []) as DbCourse[];
