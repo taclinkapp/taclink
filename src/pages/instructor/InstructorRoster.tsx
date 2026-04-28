@@ -127,7 +127,7 @@ const InstructorRoster = () => {
       }
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('id, status, booked_at, student_id, course_id')
+        .select('id, status, booked_at, student_id, course_id, deposit_status, deposit_amount_cents, deposit_method, deposit_handle_used, deposit_sent_at, deposit_expires_at')
         .in('course_id', courseIds)
         .order('booked_at', { ascending: false });
       const studentIds = Array.from(new Set((bookings ?? []).map((b) => b.student_id)));
@@ -152,6 +152,12 @@ const InstructorRoster = () => {
           courseId: b.course_id,
           courseTitle: c?.title ?? 'Course',
           startsAt: c?.starts_at ?? null,
+          depositStatus: b.deposit_status ?? 'pending_send',
+          depositAmountCents: b.deposit_amount_cents ?? 0,
+          depositMethod: b.deposit_method ?? null,
+          depositHandleUsed: b.deposit_handle_used ?? null,
+          depositSentAt: b.deposit_sent_at ?? null,
+          depositExpiresAt: b.deposit_expires_at ?? null,
         };
       });
       if (!cancelled) {
