@@ -314,6 +314,36 @@ const InstructorRoster = () => {
                           {r.status.replace('_', ' ')}
                         </span>
                       </div>
+                      {r.depositAmountCents > 0 && (
+                        <div className="flex flex-wrap items-center gap-2 pl-12">
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider',
+                              depositStyles[r.depositStatus] ?? depositStyles.pending_send,
+                            )}
+                          >
+                            <DollarSign className="h-3 w-3" />
+                            {depositLabel[r.depositStatus] ?? r.depositStatus}
+                            {' · $'}
+                            {(r.depositAmountCents / 100).toFixed(2)}
+                          </span>
+                          {r.depositMethod && r.depositHandleUsed && (
+                            <span className="text-[10px] text-muted-foreground">
+                              via {r.depositMethod} {r.depositHandleUsed}
+                            </span>
+                          )}
+                          {r.depositStatus !== 'confirmed' && (
+                            <button
+                              disabled={busy}
+                              onClick={() => confirmDeposit(r.bookingId)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 text-[11px] font-bold uppercase tracking-wider hover:bg-emerald-500/20 disabled:opacity-50"
+                            >
+                              {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                              Confirm received
+                            </button>
+                          )}
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-1.5 pl-12">
                         {r.status !== 'attended' && (
                           <button
