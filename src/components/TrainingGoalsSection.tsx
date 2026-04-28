@@ -111,7 +111,6 @@ export const TrainingGoalsSection = () => {
               onEdit={() => setEditing(g)}
               onDelete={() => setConfirmDelete(g)}
               onToggleManual={async () => {
-                if (g.goal_type !== 'custom') return;
                 await updateGoal.mutateAsync({
                   id: g.id,
                   completed_manually: !g.completed_manually,
