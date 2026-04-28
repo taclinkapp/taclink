@@ -153,6 +153,8 @@ const PaymentMethods = () => {
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [addType, setAddType] = useState<MethodType>('card');
+  const [altHandle, setAltHandle] = useState('');
   const [saving, setSaving] = useState(false);
   const [number, setNumber] = useState('');
   const [exp, setExp] = useState('');
@@ -164,18 +166,20 @@ const PaymentMethods = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editExp, setEditExp] = useState('');
+  const [editHandle, setEditHandle] = useState('');
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [editSaving, setEditSaving] = useState(false);
 
   const digitsOnly = number.replace(/\D/g, '');
   const brand = useMemo<Brand>(() => detectBrand(digitsOnly), [digitsOnly]);
+  const cardsOnly = useMemo(() => cards.filter((c) => c.method_type === 'card') as (Card & { brand: string; last4: string })[], [cards]);
 
   const reload = async () => {
     if (!user) { setCards([]); setLoading(false); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from('payment_methods')
-      .select('id, brand, last4, exp_month, exp_year, cardholder_name')
+      .select('id, method_type, brand, last4, exp_month, exp_year, cardholder_name, handle')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     if (error) toast.error(error.message);
@@ -187,6 +191,7 @@ const PaymentMethods = () => {
 
   const reset = () => {
     setNumber(''); setExp(''); setCvc(''); setName('');
+    setAltHandle(''); setAddType('card');
     setErrors({}); setAdding(false);
   };
 
