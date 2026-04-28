@@ -153,6 +153,10 @@ const EditProfile = () => {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [lastFile, setLastFile] = useState<File | null>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
   const requirements = isInstructor ? instructorRequirements : studentRequirements;
   const completed = useMemo(() => requirements.filter((r) => r.check(form)).length, [requirements, form]);
@@ -161,6 +165,49 @@ const EditProfile = () => {
   const update = (k: keyof FormState, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
     if (errors[k]) setErrors((e) => ({ ...e, [k]: undefined }));
+  };
+
+  const uploadWithProgress = (file: File): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+      if (!user?.id) return reject(new Error('Not signed in'));
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(PROFILE_BUCKET)
+        .createSignedUploadURL(path);
+      if (signErr || !signed) return reject(new Error(signErr?.message || 'Could not prepare upload'));
+
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
+      xhr.open('PUT', signed.signedUrl, true);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.setRequestHeader('x-upsert', 'false');
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        xhrRef.current = null;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const { data: pub } = supabase.storage.from(PROFILE_BUCKET).getPublicUrl(path);
+          update('photo_url', pub.publicUrl);
+          resolve();
+        } else {
+          reject(new Error(`Upload failed (${xhr.status})`));
+        }
+      };
+      xhr.onerror = () => {
+        xhrRef.current = null;
+        reject(new Error('Network error during upload'));
+      };
+      xhr.onabort = () => {
+        xhrRef.current = null;
+        reject(new Error('Upload cancelled'));
+      };
+      xhr.send(file);
+    });
   };
 
   const handlePhotoFile = async (file: File) => {
@@ -173,25 +220,35 @@ const EditProfile = () => {
       toast.error('Photo must be 5MB or smaller');
       return;
     }
+    setLastFile(file);
+    setUploadError(null);
+    setUploadProgress(0);
     setUploading(true);
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from(PROFILE_BUCKET)
-      .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
-    if (error) {
+    try {
+      await uploadWithProgress(file);
       setUploading(false);
-      toast.error('Could not upload photo', { description: error.message });
-      return;
+      setUploadProgress(100);
+      toast.success('Photo uploaded — remember to save');
+    } catch (err: any) {
+      setUploading(false);
+      setUploadError(err?.message || 'Upload failed');
+      toast.error('Photo upload failed', { description: err?.message });
     }
-    const { data: pub } = supabase.storage.from(PROFILE_BUCKET).getPublicUrl(path);
-    setUploading(false);
-    update('photo_url', pub.publicUrl);
-    toast.success('Photo uploaded — remember to save');
+  };
+
+  const retryUpload = () => {
+    if (lastFile) handlePhotoFile(lastFile);
+  };
+
+  const cancelUpload = () => {
+    xhrRef.current?.abort();
   };
 
   const removePhoto = () => {
     update('photo_url', '');
+    setUploadError(null);
+    setUploadProgress(0);
+    setLastFile(null);
     toast.message('Photo removed — remember to save');
   };
 
