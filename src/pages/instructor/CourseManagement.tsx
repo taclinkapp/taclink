@@ -424,7 +424,29 @@ const CourseManagement = () => {
               toast.error('Not a valid TacLink check-in QR.');
               return;
             }
-            markAttended(parsed.bookingId, { source: 'qr' });
+            const match = bookings.find((b: any) => b.id === parsed.bookingId);
+            if (!match) {
+              toast.error('That QR is not for this course.');
+              return;
+            }
+            if (match.status === 'attended') {
+              toast.info('Already checked in.');
+              return;
+            }
+            if (autoCheckin) {
+              // Stage — proximity must confirm before committing.
+              setPending({ bookingId: parsed.bookingId, scannedAt: Date.now() });
+              const inRange =
+                proximity.reading && proximity.reading.smoothedM <= PROXIMITY_TRIGGER_METERS;
+              if (inRange) {
+                markAttended(parsed.bookingId, { source: 'proximity' });
+                setPending(null);
+              } else {
+                markAttended(parsed.bookingId, { source: 'qr-staged' });
+              }
+            } else {
+              markAttended(parsed.bookingId, { source: 'qr' });
+            }
           }}
           onClose={() => setScannerOpen(false)}
         />
