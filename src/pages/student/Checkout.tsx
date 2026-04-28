@@ -183,35 +183,52 @@ const Checkout = () => {
           </div>
         </div>
 
-        {/* Price */}
+        {/* Price breakdown — checkout shows full math */}
         <div className="tactical-card p-4">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Price Breakdown</div>
           <div className="space-y-2 text-sm">
-            <Row label="Booking fee" value={priceLabel} />
-            <Row label="Service fee" value="$0.00" muted />
+            <Row label="Course price" value={fmt(fees.coursePriceCents)} muted />
+            <Row label="Platform fee" value={fmt(fees.platformFeeCents)} />
+            <Row label="Instructor deposit (10%)" value={fmt(fees.instructorDepositCents)} />
             <div className="border-t border-border pt-2 mt-2 flex justify-between">
-              <span className="font-bold">Total</span>
-              <span className="font-black text-primary text-lg">{priceLabel}</span>
+              <span className="font-bold">Charged today</span>
+              <span className="font-black text-primary text-lg">{fmt(fees.onlineTotalCents)}</span>
+            </div>
+            <div className="flex justify-between pt-1">
+              <span className="text-muted-foreground">Due to instructor in person</span>
+              <span className="font-semibold">{fmt(fees.dueInPersonCents)}</span>
             </div>
           </div>
+          <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+            Pay <strong className="text-foreground">{fmt(fees.onlineTotalCents)}</strong> online now to reserve your spot. The remaining <strong className="text-foreground">{fmt(fees.dueInPersonCents)}</strong> goes directly to the instructor at the course.
+          </p>
         </div>
 
-        {/* Payment */}
-        <div className="tactical-card p-4">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-            <CreditCard className="h-3.5 w-3.5" /> Payment Method <span className="ml-auto text-[10px] flex items-center gap-1"><Lock className="h-3 w-3" /> Stripe</span>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs text-muted-foreground">Card number</Label>
-              <Input placeholder="4242 4242 4242 4242" className="bg-background border-border h-11 mt-1" />
+        {/* Payment method gate */}
+        {hasPaymentMethod ? (
+          <div className="tactical-card p-4">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">
+              <CreditCard className="h-3.5 w-3.5" /> Payment Method
+              <span className="ml-auto text-[10px] flex items-center gap-1"><Lock className="h-3 w-3" /> Secure</span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-xs text-muted-foreground">Expiry</Label><Input placeholder="MM / YY" className="bg-background border-border h-11 mt-1" /></div>
-              <div><Label className="text-xs text-muted-foreground">CVC</Label><Input placeholder="123" className="bg-background border-border h-11 mt-1" /></div>
+            <div className="text-sm flex items-center justify-between">
+              <span>Card on file will be charged {fmt(fees.onlineTotalCents)}</span>
+              <Link to="/student/payment-methods" className="text-xs text-primary font-bold uppercase">Change</Link>
             </div>
           </div>
-        </div>
+        ) : (
+          <Link
+            to="/student/payment-methods"
+            className="tactical-card border-primary/40 bg-primary/5 p-4 flex items-center gap-3 hover:border-primary transition"
+          >
+            <Wallet className="h-5 w-5 text-primary shrink-0" />
+            <div className="flex-1">
+              <div className="text-sm font-bold">Add a payment method to continue</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Required to charge your booking fee.</div>
+            </div>
+            <span className="text-xs text-primary font-bold uppercase">Add</span>
+          </Link>
+        )}
 
         {/* Risk acknowledgement (always shown) */}
         <div className="tactical-card p-4 border-primary/30 bg-primary/5">
