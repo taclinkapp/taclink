@@ -5,6 +5,7 @@ import { mockCourses, mockRoster } from '@/lib/mockData';
 import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck, Plus } from 'lucide-react';
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { InstructorInsights } from '@/components/instructor/InstructorInsights';
+import { FeeInsights } from '@/components/instructor/FeeInsights';
 
 const InstructorDashboard = () => {
   const stats = [
@@ -59,7 +60,8 @@ const InstructorDashboard = () => {
         </Link>
 
         {/* AI insights */}
-        <div className="mt-4">
+        <div className="mt-4 space-y-3">
+          <FeeInsights />
           <InstructorInsights />
         </div>
 
