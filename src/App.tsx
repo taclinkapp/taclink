@@ -24,6 +24,7 @@ import MyBookings from "./pages/student/MyBookings";
 import MyProgress from "./pages/student/MyProgress";
 import BookingDetail from "./pages/student/BookingDetail";
 import LeaveReview from "./pages/student/LeaveReview";
+import MyReviews from "./pages/student/MyReviews";
 import StudentProfile from "./pages/student/StudentProfile";
 import StudentSettings from "./pages/student/StudentSettings";
 import StudentMessages from "./pages/student/StudentMessages";
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="/student/progress" element={<Student><MyProgress /></Student>} />
             <Route path="/student/booking/:id" element={<Student><BookingDetail /></Student>} />
             <Route path="/student/review/:id" element={<Student><LeaveReview /></Student>} />
+            <Route path="/student/reviews" element={<Student><MyReviews /></Student>} />
             <Route path="/student/profile" element={<Student><StudentProfile /></Student>} />
             <Route path="/student/settings" element={<Student><StudentSettings /></Student>} />
             <Route path="/student/messages" element={<Student><StudentMessages /></Student>} />
