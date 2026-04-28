@@ -471,7 +471,9 @@ const NewCourse = () => {
         <div className="flex gap-2 pt-4">
           {step > 0 && <Button variant="outline" onClick={back} disabled={saving} className="flex-1 h-12 bg-card border-border font-semibold">Back</Button>}
           <Button onClick={next} disabled={saving} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3 ? 'Continue' : 'Publish Course'}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3
+              ? 'Continue'
+              : `Publish · Pay ${fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100), Number(capacity || 0)))}`}
           </Button>
         </div>
         <div className="flex gap-2">
