@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { Settings, Star, MapPin, Award } from 'lucide-react';
+import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { mockReviews, mockCourses } from '@/lib/mockData';
 
