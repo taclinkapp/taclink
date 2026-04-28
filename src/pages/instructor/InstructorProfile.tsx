@@ -22,7 +22,7 @@ const InstructorProfile = () => {
         }} />
       </div>
       <div className="px-4 -mt-12 relative">
-        <img src="https://i.pravatar.cc/200?img=12" className="h-24 w-24 rounded-full border-4 border-background object-cover" alt="" />
+        <WatermarkedAvatar src="https://i.pravatar.cc/200?img=12" size={96} className="border-4 border-background" alt="Marcus Reyes" />
         <div className="flex items-center gap-1.5 mt-3">
           <h2 className="text-xl font-black">Marcus Reyes</h2>
           <VerifiedBadge className="h-5 w-5" />
