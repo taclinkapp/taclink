@@ -124,26 +124,8 @@ const NewCourse = () => {
         status: 'published',
       });
 
-      // AI moderation — flag explicit content in title/description or cover photo.
-      const { moderateContent } = await import('@/lib/moderation');
-      moderateContent({
-        contentType: 'course_text',
-        contentId: created.id,
-        courseId: created.id,
-        text: `${title}\n\n${description}`,
-        authorId: user.id,
-        authorRole: 'instructor',
-      }).catch(() => {});
-      if (coverUrl) {
-        moderateContent({
-          contentType: 'course_image',
-          contentId: created.id,
-          courseId: created.id,
-          imageUrl: coverUrl,
-          authorId: user.id,
-          authorRole: 'instructor',
-        }).catch(() => {});
-      }
+      // (AI moderation now only monitors student↔instructor messages for
+      // off-platform communication attempts — course content is not scanned.)
 
       qc.invalidateQueries({ queryKey: ['courses'] });
       toast.success('Course published');
