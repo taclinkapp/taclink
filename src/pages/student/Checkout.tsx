@@ -91,7 +91,14 @@ const Checkout = () => {
     if (!course) return;
     setSubmitting(true);
     try {
-      // 1) Create the booking with fee snapshot
+      // 1) Create the booking with fee snapshot.
+      // NEW: TacLink only charges the $25 platform fee online. The 10% deposit
+      // is owed directly to the instructor (Cash App / Venmo / PayPal / Zelle)
+      // within 24 hours, then balance in person.
+      const onlineNowCents = fees.platformFeeCents; // $25 only
+      const depositToInstructorCents = fees.instructorDepositCents; // 10%, paid direct
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
       const { data: booking, error: bErr } = await supabase
         .from('bookings')
         .insert({
@@ -100,9 +107,12 @@ const Checkout = () => {
           status: 'reserved',
           course_price_cents: fees.coursePriceCents,
           platform_fee_cents: fees.platformFeeCents,
-          instructor_deposit_cents: fees.instructorDepositCents,
+          instructor_deposit_cents: depositToInstructorCents,
           due_in_person_cents: fees.dueInPersonCents,
-          online_total_cents: fees.onlineTotalCents,
+          online_total_cents: onlineNowCents,
+          deposit_status: depositToInstructorCents > 0 ? 'pending_send' : 'not_required',
+          deposit_amount_cents: depositToInstructorCents,
+          deposit_expires_at: depositToInstructorCents > 0 ? expiresAt : null,
         })
         .select('id')
         .single();
@@ -116,9 +126,9 @@ const Checkout = () => {
         instructor_id: course.instructor_id,
         course_price_cents: fees.coursePriceCents,
         platform_fee_cents: fees.platformFeeCents,
-        instructor_deposit_cents: fees.instructorDepositCents,
+        instructor_deposit_cents: depositToInstructorCents,
         due_in_person_cents: fees.dueInPersonCents,
-        online_total_cents: fees.onlineTotalCents,
+        online_total_cents: onlineNowCents,
       });
 
       // 3) If a published waiver exists, store the signature. Roll back on failure.
