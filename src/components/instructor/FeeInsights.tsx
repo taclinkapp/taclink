@@ -20,6 +20,8 @@ type Insight = {
 };
 
 export const FeeInsights = () => {
+  const { profile } = useAuth();
+  const isSubscribed = profile?.subscription_status === "active";
   const [data, setData] = useState<Insight | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
