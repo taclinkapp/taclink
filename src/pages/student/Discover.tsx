@@ -4,7 +4,8 @@ import { MobileShell } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { Input } from '@/components/ui/input';
 import { Search, Map, List, SlidersHorizontal } from 'lucide-react';
-import { CATEGORIES, mockCourses } from '@/lib/mockData';
+import { CATEGORIES } from '@/lib/mockData';
+import { usePublishedCourses } from '@/hooks/useCourses';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
 import { Logo } from '@/components/Logo';
@@ -16,8 +17,9 @@ const Discover = () => {
   const [view, setView] = useState<'list' | 'map'>('list');
   const [category, setCategory] = useState<string>('All');
   const [query, setQuery] = useState('');
+  const { data: courses = [], isLoading } = usePublishedCourses();
 
-  const filtered = mockCourses.filter((c) => {
+  const filtered = courses.filter((c) => {
     const matchesCat = category === 'All' || c.category === category;
     const q = query.toLowerCase();
     const matchesQuery = !q || c.title.toLowerCase().includes(q) || c.instructorName.toLowerCase().includes(q) || c.city.toLowerCase().includes(q);
@@ -79,7 +81,13 @@ const Discover = () => {
 
       {view === 'list' ? (
         <div className="px-4 py-4 space-y-3">
-          {filtered.map((c) => <CourseCard key={c.id} course={c} />)}
+          {isLoading ? (
+            <div className="text-center text-muted-foreground text-sm py-12">Loading…</div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center text-muted-foreground text-sm py-12">No courses available yet.</div>
+          ) : (
+            filtered.map((c) => <CourseCard key={c.id} course={c} />)
+          )}
         </div>
       ) : (
         <div className="px-4 py-4">
