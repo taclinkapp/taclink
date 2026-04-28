@@ -229,6 +229,7 @@ const NewCourse = () => {
       }
 
       qc.invalidateQueries({ queryKey: ['courses'] });
+      localStorage.removeItem(DRAFT_KEY);
       toast.success('Course published');
       nav('/instructor/courses');
     } catch (e: any) {
