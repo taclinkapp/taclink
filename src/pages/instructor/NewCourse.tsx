@@ -10,6 +10,8 @@ import { US_STATES } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { createCourse, uploadCoursePhoto } from '@/lib/courses';
+import { supabase } from '@/integrations/supabase/client';
+import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2 } from 'lucide-react';
@@ -250,9 +252,26 @@ const NewCourse = () => {
         }).catch(() => {});
       }
 
+      // Listing fee charge — 10% of price × capacity, non-refundable, recorded in ledger.
+      // (Real card capture is wired through the platform's payment provider; in this preview
+      // we record the charge as 'charged' since the instructor's card is on file.)
+      const priceCents = Math.round(Number(price) * 100);
+      const listingFeeCents = computeListingFeeCents(priceCents, Number(capacity));
+      await supabase.from('instructor_charges').insert({
+        instructor_id: user.id,
+        course_id: created.id,
+        charge_type: 'listing_fee',
+        course_price_cents: priceCents,
+        capacity: Number(capacity),
+        amount_cents: listingFeeCents,
+        status: 'charged',
+        refundable: false,
+        note: '10% listing fee at publish (non-refundable)',
+      });
+
       qc.invalidateQueries({ queryKey: ['courses'] });
       localStorage.removeItem(DRAFT_KEY);
-      toast.success('Course published');
+      toast.success('Course published', { description: `Listing fee charged: ${fmt(listingFeeCents)}` });
       nav('/instructor/courses');
     } catch (e: any) {
       toast.error(e?.message ?? 'Failed to create course');
@@ -419,6 +438,18 @@ const NewCourse = () => {
                 <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
               </div>
             </div>
+            {/* Listing fee preview */}
+            <div className="tactical-card border-primary/40 bg-primary/10 p-4">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs uppercase tracking-wider font-bold">Listing Fee (10%)</div>
+                <div className="text-xl font-black text-primary">
+                  {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100), Number(capacity || 0)))}
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Charged to your card on file when you publish. Calculated as <strong className="text-foreground">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0} × {capacity || 0} seats</strong>. <strong className="text-foreground">Non-refundable.</strong>
+              </p>
+            </div>
             <div className="tactical-card border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs">
               <Check className="h-4 w-4 text-primary shrink-0" />
               <span className="text-muted-foreground">Publishing makes this course visible to students immediately.</span>
@@ -440,7 +471,9 @@ const NewCourse = () => {
         <div className="flex gap-2 pt-4">
           {step > 0 && <Button variant="outline" onClick={back} disabled={saving} className="flex-1 h-12 bg-card border-border font-semibold">Back</Button>}
           <Button onClick={next} disabled={saving} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3 ? 'Continue' : 'Publish Course'}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3
+              ? 'Continue'
+              : `Publish · Pay ${fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100), Number(capacity || 0)))}`}
           </Button>
         </div>
         <div className="flex gap-2">

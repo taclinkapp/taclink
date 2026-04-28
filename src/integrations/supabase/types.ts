@@ -439,6 +439,51 @@ export type Database = {
         }
         Relationships: []
       }
+      instructor_charges: {
+        Row: {
+          amount_cents: number
+          capacity: number
+          charge_type: string
+          course_id: string
+          course_price_cents: number
+          created_at: string
+          currency: string
+          id: string
+          instructor_id: string
+          note: string | null
+          refundable: boolean
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          capacity: number
+          charge_type?: string
+          course_id: string
+          course_price_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          instructor_id: string
+          note?: string | null
+          refundable?: boolean
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          capacity?: number
+          charge_type?: string
+          course_id?: string
+          course_price_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          instructor_id?: string
+          note?: string | null
+          refundable?: boolean
+          status?: string
+        }
+        Relationships: []
+      }
       instructor_credentials: {
         Row: {
           admin_notes: string | null
