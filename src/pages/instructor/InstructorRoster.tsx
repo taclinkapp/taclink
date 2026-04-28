@@ -7,6 +7,7 @@ import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2, 
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CourseWaiverDialog } from '@/components/instructor/CourseWaiverDialog';
+import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 
 type BookingStatus = 'reserved' | 'attended' | 'cancelled' | 'no_show';
 
