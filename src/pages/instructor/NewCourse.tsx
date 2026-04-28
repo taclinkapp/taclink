@@ -16,8 +16,17 @@ import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
 import { ContactInfoWarning } from '@/components/ContactInfoWarning';
+import { AISuggestButton } from '@/components/instructor/AISuggestButton';
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
+
+const durationMinutesFromTimes = (date: string, start: string, end: string): number | undefined => {
+  if (!date || !start || !end) return undefined;
+  const s = new Date(`${date}T${start}:00`);
+  const e = new Date(`${date}T${end}:00`);
+  const diff = Math.round((e.getTime() - s.getTime()) / 60000);
+  return diff > 0 ? diff : undefined;
+};
 
 const NewCourse = () => {
   const nav = useNavigate();
@@ -260,7 +269,16 @@ const NewCourse = () => {
       <div className="px-4 py-5 space-y-4">
         {step === 0 && (
           <>
-            <Field label="Course Title">
+            <Field
+              label="Course Title"
+              action={
+                <AISuggestButton
+                  field="title"
+                  context={{ category, description }}
+                  onApply={setTitle}
+                />
+              }
+            >
               <Input value={title} onChange={(e) => setTitle(e.target.value)} className="bg-card border-border h-11" placeholder="e.g. Defensive Pistol Fundamentals" />
             </Field>
             <Field label="Category">
@@ -271,7 +289,17 @@ const NewCourse = () => {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Description">
+            <Field
+              label="Description"
+              action={
+                <AISuggestButton
+                  field="description"
+                  context={{ title, category, description }}
+                  onApply={setDescription}
+                  label="AI write"
+                />
+              }
+            >
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-card border-border min-h-28" placeholder="Describe your course…" />
               <ContactInfoWarning value={description} />
             </Field>
@@ -340,8 +368,30 @@ const NewCourse = () => {
         )}
         {step === 2 && (
           <>
-            <Field label="Max Students"><Input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)} className="bg-card border-border h-11" placeholder="12" /></Field>
-            <Field label="Booking Fee per Student (USD, min $5)"><Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-card border-border h-11" placeholder="185" /></Field>
+            <Field
+              label="Max Students"
+              action={
+                <AISuggestButton
+                  field="capacity"
+                  context={{ title, category, description, duration_minutes: durationMinutesFromTimes(date, startTime, endTime) }}
+                  onApply={(v) => setCapacity(v.replace(/[^0-9]/g, ''))}
+                />
+              }
+            >
+              <Input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)} className="bg-card border-border h-11" placeholder="12" />
+            </Field>
+            <Field
+              label="Booking Fee per Student (USD, min $5)"
+              action={
+                <AISuggestButton
+                  field="price"
+                  context={{ title, category, description, duration_minutes: durationMinutesFromTimes(date, startTime, endTime), city, state, capacity }}
+                  onApply={(v) => setPrice(v.replace(/[^0-9]/g, ''))}
+                />
+              }
+            >
+              <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-card border-border h-11" placeholder="185" />
+            </Field>
           </>
         )}
         {step === 3 && (
@@ -397,9 +447,12 @@ const NewCourse = () => {
   );
 };
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const Field = ({ label, children, action }: { label: string; children: React.ReactNode; action?: React.ReactNode }) => (
   <div>
-    <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
+    <div className="flex items-center justify-between gap-2">
+      <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
+      {action}
+    </div>
     <div className="mt-1.5">{children}</div>
   </div>
 );

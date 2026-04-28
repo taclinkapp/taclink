@@ -3,9 +3,10 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2 } from 'lucide-react';
+import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { CourseWaiverDialog } from '@/components/instructor/CourseWaiverDialog';
 
 type BookingStatus = 'reserved' | 'attended' | 'cancelled' | 'no_show';
 
@@ -43,6 +44,7 @@ const InstructorRoster = () => {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<typeof filters[number]>('Upcoming');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [waiverCourseId, setWaiverCourseId] = useState<string | null>(null);
 
   const updateStatus = async (bookingId: string, next: BookingStatus) => {
     setUpdatingId(bookingId);
@@ -205,17 +207,25 @@ const InstructorRoster = () => {
         ) : (
           grouped.map(([courseId, group]) => (
             <div key={courseId} className="rounded-md border border-border bg-card overflow-hidden">
-              <div className="px-4 py-3 border-b border-border bg-muted/30">
-                <div className="font-semibold text-sm truncate">{group.title}</div>
-                {group.startsAt && (
-                  <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <CalendarDays className="h-3 w-3" />
-                    {new Date(group.startsAt).toLocaleString()}
+              <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm truncate">{group.title}</div>
+                  {group.startsAt && (
+                    <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <CalendarDays className="h-3 w-3" />
+                      {new Date(group.startsAt).toLocaleString()}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    {group.rows.length} student{group.rows.length === 1 ? '' : 's'}
                   </div>
-                )}
-                <div className="text-[11px] text-muted-foreground mt-0.5">
-                  {group.rows.length} student{group.rows.length === 1 ? '' : 's'}
                 </div>
+                <button
+                  onClick={() => setWaiverCourseId(courseId)}
+                  className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-primary/30 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider hover:bg-primary/20"
+                >
+                  <FileText className="h-3 w-3" /> Waiver
+                </button>
               </div>
               <ul className="divide-y divide-border">
                 {group.rows.map((r) => {
@@ -302,6 +312,13 @@ const InstructorRoster = () => {
         )}
       </div>
       <InstructorTabBar />
+      {waiverCourseId && (
+        <CourseWaiverDialog
+          open={!!waiverCourseId}
+          onOpenChange={(o) => !o && setWaiverCourseId(null)}
+          courseId={waiverCourseId}
+        />
+      )}
     </MobileShell>
   );
 };
