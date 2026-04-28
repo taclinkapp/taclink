@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
@@ -8,7 +8,39 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, User, Save } from 'lucide-react';
+import { Loader2, User, Save, Camera, Trash2, CheckCircle2, Circle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const PROFILE_BUCKET = 'profile-photos';
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
+const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+type RequirementKey =
+  | 'display_name'
+  | 'photo_url'
+  | 'phone'
+  | 'bio'
+  | 'state'
+  | 'service_city'
+  | 'service_state';
+
+type Requirement = { key: RequirementKey; label: string; check: (f: FormState) => boolean };
+
+const studentRequirements: Requirement[] = [
+  { key: 'display_name', label: 'Display name', check: (f) => f.display_name.trim().length >= 2 },
+  { key: 'photo_url', label: 'Profile photo', check: (f) => !!f.photo_url.trim() },
+  { key: 'state', label: 'Home state', check: (f) => !!f.state.trim() },
+  { key: 'bio', label: 'Short about you', check: (f) => f.bio.trim().length >= 10 },
+];
+
+const instructorRequirements: Requirement[] = [
+  { key: 'display_name', label: 'Display name', check: (f) => f.display_name.trim().length >= 2 },
+  { key: 'photo_url', label: 'Profile photo', check: (f) => !!f.photo_url.trim() },
+  { key: 'phone', label: 'Phone number', check: (f) => f.phone.trim().length >= 7 },
+  { key: 'bio', label: 'Bio (20+ chars)', check: (f) => f.bio.trim().length >= 20 },
+  { key: 'service_city', label: 'Service city', check: (f) => !!f.service_city.trim() },
+  { key: 'service_state', label: 'Service state', check: (f) => !!f.service_state.trim() },
+];
 
 const baseSchema = {
   display_name: z
@@ -119,9 +151,48 @@ const EditProfile = () => {
     };
   }, [user?.id]);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const requirements = isInstructor ? instructorRequirements : studentRequirements;
+  const completed = useMemo(() => requirements.filter((r) => r.check(form)).length, [requirements, form]);
+  const completeness = Math.round((completed / requirements.length) * 100);
+
   const update = (k: keyof FormState, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
     if (errors[k]) setErrors((e) => ({ ...e, [k]: undefined }));
+  };
+
+  const handlePhotoFile = async (file: File) => {
+    if (!user?.id) return;
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      toast.error('Photo must be JPG, PNG, or WEBP');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      toast.error('Photo must be 5MB or smaller');
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from(PROFILE_BUCKET)
+      .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+    if (error) {
+      setUploading(false);
+      toast.error('Could not upload photo', { description: error.message });
+      return;
+    }
+    const { data: pub } = supabase.storage.from(PROFILE_BUCKET).getPublicUrl(path);
+    setUploading(false);
+    update('photo_url', pub.publicUrl);
+    toast.success('Photo uploaded — remember to save');
+  };
+
+  const removePhoto = () => {
+    update('photo_url', '');
+    toast.message('Photo removed — remember to save');
   };
 
   const submit = async () => {
@@ -157,8 +228,12 @@ const EditProfile = () => {
       return;
     }
     await refreshProfile();
-    toast.success('Profile updated');
-    nav(isInstructor ? '/instructor/profile' : '/student/profile');
+    const pct = Math.round(
+      (requirements.filter((r) => r.check(parsed.data as any as FormState)).length /
+        requirements.length) *
+        100,
+    );
+    toast.success(`Profile saved · ${pct}% complete`);
   };
 
   return (
@@ -187,22 +262,68 @@ const EditProfile = () => {
           </div>
         ) : (
           <div className="space-y-4">
+            <CompletenessCard percent={completeness} requirements={requirements} form={form} />
+
+            <div className="rounded-md border border-border bg-card p-4">
+              <Label className="text-xs uppercase tracking-wider font-bold text-muted-foreground">
+                Profile photo
+              </Label>
+              <div className="mt-3 flex items-center gap-4">
+                <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-primary/40 bg-muted flex items-center justify-center shrink-0">
+                  {form.photo_url ? (
+                    <img src={form.photo_url} alt="Profile" className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handlePhotoFile(f);
+                      e.target.value = '';
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-primary/40 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/20 disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5" />
+                    )}
+                    {form.photo_url ? 'Replace photo' : 'Upload photo'}
+                  </button>
+                  {form.photo_url && (
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border text-muted-foreground text-xs font-bold uppercase tracking-wider hover:bg-muted"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Remove
+                    </button>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    JPG, PNG or WEBP · max 5MB
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <Field label="Display name" error={errors.display_name} required>
               <Input
                 value={form.display_name}
                 onChange={(e) => update('display_name', e.target.value)}
                 maxLength={80}
                 placeholder="Your name"
-              />
-            </Field>
-
-            <Field label="Photo URL" error={errors.photo_url} hint="Direct link to a square image (optional)">
-              <Input
-                value={form.photo_url}
-                onChange={(e) => update('photo_url', e.target.value)}
-                maxLength={500}
-                placeholder="https://…"
-                inputMode="url"
               />
             </Field>
 
@@ -313,5 +434,73 @@ const Field = ({
     ) : null}
   </div>
 );
+
+const CompletenessCard = ({
+  percent,
+  requirements,
+  form,
+}: {
+  percent: number;
+  requirements: Requirement[];
+  form: FormState;
+}) => {
+  const tone =
+    percent >= 100
+      ? 'text-emerald-600'
+      : percent >= 60
+        ? 'text-primary'
+        : 'text-amber-600';
+  const barColor =
+    percent >= 100 ? 'bg-emerald-500' : percent >= 60 ? 'bg-primary' : 'bg-amber-500';
+
+  return (
+    <div className="rounded-md border border-border bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-wider font-bold text-muted-foreground">
+            Profile completeness
+          </div>
+          <div className={cn('text-2xl font-black mt-0.5', tone)}>{percent}%</div>
+        </div>
+        {percent >= 100 ? (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/30">
+            <CheckCircle2 className="h-3 w-3" /> Complete
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-bold uppercase tracking-wider border border-border">
+            {requirements.filter((r) => r.check(form)).length}/{requirements.length} done
+          </span>
+        )}
+      </div>
+      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className={cn('h-full transition-all duration-500', barColor)}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <ul className="space-y-1 pt-1">
+        {requirements.map((r) => {
+          const ok = r.check(form);
+          return (
+            <li
+              key={r.key}
+              className={cn(
+                'flex items-center gap-2 text-xs',
+                ok ? 'text-muted-foreground line-through' : 'text-foreground',
+              )}
+            >
+              {ok ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+              ) : (
+                <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              )}
+              {r.label}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
 
 export default EditProfile;
