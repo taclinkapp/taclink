@@ -59,6 +59,13 @@ type EnsureArgs = {
   instructorPhoto?: string;
   courseId?: string | null;
   courseTitle?: string | null;
+  /**
+   * Admin override — when true, the booking gate is skipped so admins can
+   * open or create conversations for moderation/support without needing a
+   * confirmed booking between the parties. Never set this from a regular
+   * student or instructor flow.
+   */
+  bypassBookingGate?: boolean;
 };
 
 /**
@@ -120,8 +127,11 @@ export const ensureConversation = async (args: EnsureArgs): Promise<Conversation
   if (existing) return existing as ConversationRow;
 
   // Booking gate: only allow new threads when a confirmed booking exists.
-  const allowed = await hasConfirmedBookingBetween(studentId, instructorId);
-  if (!allowed) throw new BookingGateError();
+  // Admins may bypass via explicit opt-in for moderation purposes.
+  if (!args.bypassBookingGate) {
+    const allowed = await hasConfirmedBookingBetween(studentId, instructorId);
+    if (!allowed) throw new BookingGateError();
+  }
 
   const { data: created, error: insertErr } = await supabase
     .from("conversations")
