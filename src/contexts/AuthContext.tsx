@@ -11,6 +11,8 @@ export type Profile = {
   phone: string | null;
   state: string | null;
   bio: string | null;
+  payment_method_added?: boolean | null;
+  subscription_status?: string | null;
 };
 
 type AuthCtx = {

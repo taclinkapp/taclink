@@ -46,6 +46,7 @@ import InstructorConversation from "./pages/instructor/InstructorConversation";
 import InstructorCredentials from "./pages/instructor/InstructorCredentials";
 import InstructorRoster from "./pages/instructor/InstructorRoster";
 import InstructorReviews from "./pages/instructor/InstructorReviews";
+import InstructorSubscription from "./pages/instructor/InstructorSubscription";
 
 import { AdminLayout } from "./components/AdminLayout";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -118,6 +119,8 @@ const App = () => (
             <Route path="/instructor/credentials" element={<Instructor><InstructorCredentials /></Instructor>} />
             <Route path="/instructor/roster" element={<Instructor><InstructorRoster /></Instructor>} />
             <Route path="/instructor/reviews" element={<Instructor><InstructorReviews /></Instructor>} />
+            <Route path="/instructor/payment-methods" element={<Instructor><PaymentMethods /></Instructor>} />
+            <Route path="/instructor/subscription" element={<Instructor><InstructorSubscription /></Instructor>} />
 
             {/* Admin */}
             <Route path="/admin/login" element={<AdminLogin />} />

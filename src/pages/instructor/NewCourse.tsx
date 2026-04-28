@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import { createCourse, uploadCoursePhoto } from '@/lib/courses';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -30,7 +31,9 @@ const durationMinutesFromTimes = (date: string, start: string, end: string): num
 
 const NewCourse = () => {
   const nav = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const hasPM = !!profile?.payment_method_added;
+  const subActive = profile?.subscription_status === 'active';
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -183,6 +186,16 @@ const NewCourse = () => {
     if (err) { toast.error(err); return; }
     if (step < 3) { setStep(step + 1); return; }
     if (!user) { toast.error('You must be signed in'); return; }
+    if (!hasPM) {
+      toast.error('Add a payment method before publishing', { description: 'Required to pay the monthly platform fee.' });
+      nav('/instructor/payment-methods');
+      return;
+    }
+    if (!subActive) {
+      toast.error('Activate your instructor subscription to publish', { description: '$4.99 / month.' });
+      nav('/instructor/subscription');
+      return;
+    }
 
     setSaving(true);
     const startsAt = new Date(`${date}T${startTime}:00`);
@@ -410,6 +423,17 @@ const NewCourse = () => {
               <Check className="h-4 w-4 text-primary shrink-0" />
               <span className="text-muted-foreground">Publishing makes this course visible to students immediately.</span>
             </div>
+            {(!hasPM || !subActive) && (
+              <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
+                <div className="font-bold text-destructive">Required to publish:</div>
+                {!hasPM && (
+                  <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
+                )}
+                {!subActive && (
+                  <Link to="/instructor/subscription" className="block text-primary underline">Activate $4.99/mo subscription →</Link>
+                )}
+              </div>
+            )}
           </>
         )}
 

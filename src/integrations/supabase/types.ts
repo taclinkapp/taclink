@@ -14,13 +14,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_fees: {
+        Row: {
+          booking_id: string
+          course_id: string
+          course_price_cents: number
+          created_at: string
+          currency: string
+          due_in_person_cents: number
+          id: string
+          instructor_deposit_cents: number
+          instructor_id: string
+          online_total_cents: number
+          platform_fee_cents: number
+          student_id: string
+        }
+        Insert: {
+          booking_id: string
+          course_id: string
+          course_price_cents: number
+          created_at?: string
+          currency?: string
+          due_in_person_cents: number
+          id?: string
+          instructor_deposit_cents: number
+          instructor_id: string
+          online_total_cents: number
+          platform_fee_cents: number
+          student_id: string
+        }
+        Update: {
+          booking_id?: string
+          course_id?: string
+          course_price_cents?: number
+          created_at?: string
+          currency?: string
+          due_in_person_cents?: number
+          id?: string
+          instructor_deposit_cents?: number
+          instructor_id?: string
+          online_total_cents?: number
+          platform_fee_cents?: number
+          student_id?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           attended_at: string | null
           booked_at: string
           course_id: string
+          course_price_cents: number
           created_at: string
+          due_in_person_cents: number
           id: string
+          in_person_paid_at: string | null
+          instructor_deposit_cents: number
+          online_total_cents: number
+          platform_fee_cents: number
           status: Database["public"]["Enums"]["booking_status"]
           student_id: string
           updated_at: string
@@ -29,8 +80,14 @@ export type Database = {
           attended_at?: string | null
           booked_at?: string
           course_id: string
+          course_price_cents?: number
           created_at?: string
+          due_in_person_cents?: number
           id?: string
+          in_person_paid_at?: string | null
+          instructor_deposit_cents?: number
+          online_total_cents?: number
+          platform_fee_cents?: number
           status?: Database["public"]["Enums"]["booking_status"]
           student_id: string
           updated_at?: string
@@ -39,8 +96,14 @@ export type Database = {
           attended_at?: string | null
           booked_at?: string
           course_id?: string
+          course_price_cents?: number
           created_at?: string
+          due_in_person_cents?: number
           id?: string
+          in_person_paid_at?: string | null
+          instructor_deposit_cents?: number
+          online_total_cents?: number
+          platform_fee_cents?: number
           status?: Database["public"]["Enums"]["booking_status"]
           student_id?: string
           updated_at?: string
@@ -653,12 +716,15 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          payment_method_added: boolean
           phone: string | null
           photo_url: string | null
           service_categories: string[] | null
           service_city: string | null
           service_state: string | null
           state: string | null
+          subscription_status: string
+          subscription_updated_at: string | null
           updated_at: string
         }
         Insert: {
@@ -666,12 +732,15 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          payment_method_added?: boolean
           phone?: string | null
           photo_url?: string | null
           service_categories?: string[] | null
           service_city?: string | null
           service_state?: string | null
           state?: string | null
+          subscription_status?: string
+          subscription_updated_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -679,12 +748,15 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          payment_method_added?: boolean
           phone?: string | null
           photo_url?: string | null
           service_categories?: string[] | null
           service_city?: string | null
           service_state?: string | null
           state?: string | null
+          subscription_status?: string
+          subscription_updated_at?: string | null
           updated_at?: string
         }
         Relationships: []
