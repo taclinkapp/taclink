@@ -17,6 +17,7 @@ export type ReviewableBooking = {
     id: string;
     rating: number;
     comment: string | null;
+    photo_url: string | null;
     created_at: string;
   } | null;
 };
@@ -43,7 +44,7 @@ export const useReviewableCourses = () => {
       const courseIds = rows.map((r) => r.course.id);
       const { data: reviews, error: rErr } = await supabase
         .from("reviews")
-        .select("id, course_id, rating, comment, created_at")
+        .select("id, course_id, rating, comment, photo_url, created_at")
         .eq("student_id", user!.id)
         .in("course_id", courseIds);
       if (rErr) throw rErr;

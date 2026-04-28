@@ -5,7 +5,7 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Star, Sparkles, Loader2, Pencil, Calendar } from 'lucide-react';
+import { Star, Sparkles, Loader2, Pencil, Calendar, ImagePlus, X } from 'lucide-react';
 import { useReviewableCourses, type ReviewableBooking } from '@/hooks/useReviewableCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -111,6 +111,13 @@ const ReviewCard = ({ booking, onAction }: { booking: ReviewableBooking; onActio
         </Button>
       </div>
       {r?.comment && <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{r.comment}</p>}
+      {r?.photo_url && (
+        <img
+          src={r.photo_url}
+          alt="Review attachment"
+          className="mt-2 rounded-lg w-full max-h-48 object-cover border border-border"
+        />
+      )}
     </div>
   );
 };
