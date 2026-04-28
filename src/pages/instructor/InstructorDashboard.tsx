@@ -149,33 +149,116 @@ const InstructorDashboard = () => {
       {/* Breakdown sheet */}
       <Sheet open={open !== null} onOpenChange={(v) => !v && setOpen(null)}>
         <SheetContent side="bottom" className="bg-background border-border max-h-[85vh] overflow-y-auto">
-          {open === 'revenue' && (
-            <>
-              <SheetHeader className="text-left">
-                <SheetTitle className="text-lg font-black flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-primary" /> Revenue Breakdown
-                </SheetTitle>
-                <SheetDescription className="text-xs">{monthLabel} · ${breakdown.revenueTotal.toLocaleString()} total</SheetDescription>
-              </SheetHeader>
-              <div className="mt-4 space-y-2">
-                {breakdown.revenueRows.map((r) => (
-                  <div key={r.id} className="tactical-card p-3 flex items-center gap-3">
+          {open === 'revenue' && (() => {
+            const drillCourse = revenueDrill ? breakdown.revenueRows.find((r) => r.id === revenueDrill) : null;
+            const drillStudents = revenueDrill ? breakdown.studentRows.filter((s) => s.course.id === revenueDrill) : [];
+
+            const handlePrint = () => window.print();
+            const handleDownload = () => {
+              const rows = [['Course', 'Date', 'Seats', 'Booking Fee', 'Total']];
+              breakdown.revenueRows.forEach((r) => {
+                rows.push([r.title, new Date(r.date).toLocaleDateString(), String(r.seats), `$${r.unit}`, `$${r.total}`]);
+              });
+              rows.push(['', '', '', 'TOTAL', `$${breakdown.revenueTotal}`]);
+              const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `revenue-${monthLabel.replace(/\s/g, '-').toLowerCase()}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            };
+
+            return (
+              <>
+                <SheetHeader className="text-left print:block">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm truncate">{r.title}</div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">
-                        {r.seats} × ${r.unit} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </div>
+                      <SheetTitle className="text-lg font-black flex items-center gap-2">
+                        {drillCourse ? (
+                          <>
+                            <button onClick={() => setRevenueDrill(null)} className="p-1 -ml-1 rounded hover:bg-muted print:hidden" aria-label="Back">
+                              <ArrowLeft className="h-4 w-4" />
+                            </button>
+                            <DollarSign className="h-5 w-5 text-primary" /> {drillCourse.title}
+                          </>
+                        ) : (
+                          <><DollarSign className="h-5 w-5 text-primary" /> Revenue Breakdown</>
+                        )}
+                      </SheetTitle>
+                      <SheetDescription className="text-xs">
+                        {drillCourse
+                          ? `${new Date(drillCourse.date).toLocaleDateString()} · ${drillCourse.seats} × $${drillCourse.unit} = $${drillCourse.total.toLocaleString()}`
+                          : `${monthLabel} · $${breakdown.revenueTotal.toLocaleString()} total`}
+                      </SheetDescription>
                     </div>
-                    <div className="text-base font-black text-primary">${r.total.toLocaleString()}</div>
+                    {!drillCourse && (
+                      <div className="flex items-center gap-1 print:hidden">
+                        <button onClick={handlePrint} className="p-2 rounded-md border border-border hover:border-primary/50 transition" aria-label="Print">
+                          <Printer className="h-4 w-4" />
+                        </button>
+                        <button onClick={handleDownload} className="p-2 rounded-md border border-border hover:border-primary/50 transition" aria-label="Download CSV">
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ))}
-                <div className="tactical-card p-3 flex items-center justify-between border-primary/40 bg-primary/5">
-                  <div className="text-xs uppercase tracking-wider font-bold">Total</div>
-                  <div className="text-lg font-black text-primary">${breakdown.revenueTotal.toLocaleString()}</div>
-                </div>
-              </div>
-            </>
-          )}
+                </SheetHeader>
+
+                {!drillCourse && (
+                  <div className="mt-4 space-y-2">
+                    {breakdown.revenueRows.map((r) => (
+                      <button
+                        key={r.id}
+                        onClick={() => setRevenueDrill(r.id)}
+                        className="tactical-card p-3 flex items-center gap-3 w-full text-left hover:border-primary/40 transition"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm truncate">{r.title}</div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            {r.seats} × ${r.unit} · {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </div>
+                        </div>
+                        <div className="text-base font-black text-primary">${r.total.toLocaleString()}</div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    ))}
+                    <div className="tactical-card p-3 flex items-center justify-between border-primary/40 bg-primary/5">
+                      <div className="text-xs uppercase tracking-wider font-bold">Total</div>
+                      <div className="text-lg font-black text-primary">${breakdown.revenueTotal.toLocaleString()}</div>
+                    </div>
+                  </div>
+                )}
+
+                {drillCourse && (
+                  <div className="mt-4 space-y-2">
+                    {drillStudents.length === 0 && (
+                      <div className="tactical-card p-4 text-center text-xs text-muted-foreground">
+                        No student bookings recorded for this course yet.
+                      </div>
+                    )}
+                    {drillStudents.map((s) => (
+                      <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
+                        <img src={s.photo} className="h-10 w-10 rounded-full border border-border" alt="" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm truncate">{s.name}</div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            Booked {new Date(s.bookedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {s.paymentStatus}
+                          </div>
+                        </div>
+                        <div className="text-sm font-black text-primary">${drillCourse.unit}</div>
+                      </div>
+                    ))}
+                    <div className="tactical-card p-3 flex items-center justify-between border-primary/40 bg-primary/5">
+                      <div className="text-xs uppercase tracking-wider font-bold">Course Total</div>
+                      <div className="text-lg font-black text-primary">${drillCourse.total.toLocaleString()}</div>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           {open === 'students' && (
             <>
