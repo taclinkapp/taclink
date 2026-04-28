@@ -162,12 +162,12 @@ const BookingDetail = () => {
           </div>
           <div className="space-y-1.5 text-sm">
             <Row label="Course price" value={fmt(b.course_price_cents)} muted />
-            <Row label="Platform fee" value={fmt(b.platform_fee_cents)} muted />
-            <Row label="Instructor deposit" value={fmt(b.instructor_deposit_cents)} muted />
+            <Row label="TacLink platform fee" value={fmt(b.platform_fee_cents)} muted />
             <div className="border-t border-border pt-2 flex justify-between">
               <span>Charged online</span>
               <span className="font-bold">{fmt(b.online_total_cents)}</span>
             </div>
+            <Row label="Deposit (10%) — direct to instructor" value={fmt(b.deposit_amount_cents)} muted />
             {dueInPerson && (
               <div className="mt-3 rounded-md border border-primary/40 bg-primary/10 p-3 flex items-center justify-between">
                 <div>
@@ -183,7 +183,20 @@ const BookingDetail = () => {
           </div>
         </div>
 
-        {upcoming && (
+        {/* Direct-handoff deposit flow */}
+        {b.deposit_amount_cents > 0 && b.deposit_status !== 'not_required' && (
+          <SendDepositCard
+            bookingId={b.id}
+            instructorId={c.instructor_id}
+            courseTitle={c.title}
+            depositCents={b.deposit_amount_cents}
+            depositStatus={b.deposit_status}
+            expiresAt={b.deposit_expires_at}
+            onChanged={reload}
+          />
+        )}
+
+        {upcoming && b.deposit_status === 'confirmed' && (
           <div className="tactical-card p-5 text-center">
             <div className="flex items-center justify-center gap-1.5 mb-3">
               <ShieldCheck className="h-3.5 w-3.5 text-primary" />
