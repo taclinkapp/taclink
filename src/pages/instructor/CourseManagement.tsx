@@ -46,7 +46,7 @@ const CourseManagement = () => {
     enabled: !!id,
   });
 
-  const markAttended = async (bookingId: string, opts?: { source: 'qr' | 'proximity' }) => {
+  const markAttended = async (bookingId: string, opts?: { source: 'qr' | 'qr-staged' | 'proximity' }) => {
     const existing = bookings.find((b: any) => b.id === bookingId);
     if (!existing) {
       toast.error('That QR is not for this course.');
