@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { mockRoster, mockWaitlist } from '@/lib/mockData';
 import { useCourse } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock } from 'lucide-react';
+import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock, Camera, Sparkles, MapPin, Loader2 } from 'lucide-react';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { toast } from 'sonner';
+import { QrScanner } from '@/components/QrScanner';
+import { parseCheckinPayload, PROXIMITY_TRIGGER_METERS, distanceMeters } from '@/lib/qrCheckin';
+import { useProximity } from '@/hooks/useProximity';
+import { Switch } from '@/components/ui/switch';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
