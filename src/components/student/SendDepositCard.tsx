@@ -263,6 +263,7 @@ export const SendDepositCard = ({
           handle={pickedHandle}
           amountCents={depositCents}
           note={note}
+          depositStatus={depositStatus}
         />
       )}
 
