@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { mockCourses, mockRoster } from '@/lib/mockData';
-import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Sparkles } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck } from 'lucide-react';
 import { NotificationsBell } from '@/components/NotificationsBell';
+import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 
 const InstructorDashboard = () => {
   const stats = [
@@ -34,21 +35,26 @@ const InstructorDashboard = () => {
           ))}
         </div>
 
-        {/* Demand banner */}
-        <div className="mt-4 tactical-card border-primary/30 bg-gradient-to-br from-primary/15 to-transparent p-4">
-          <div className="flex items-start gap-3">
-            <div className="h-9 w-9 rounded-md bg-primary/20 flex items-center justify-center shrink-0">
-              <Sparkles className="h-4 w-4 text-primary" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold leading-snug">
-                <span className="text-primary font-black">47 students</span> in TX are looking for Pistol courses this week.
-              </p>
-              <Link to="/instructor/courses/new" className="inline-flex items-center gap-1 text-xs font-bold text-primary mt-2 uppercase tracking-wider">
-                Post a Course <ChevronRight className="h-3 w-3" />
-              </Link>
-            </div>
+        {/* Credentials shortcut */}
+        <Link
+          to="/instructor/credentials"
+          className="mt-4 tactical-card border-primary/30 bg-gradient-to-br from-primary/15 to-transparent p-4 flex items-center gap-3 hover:border-primary/60 transition"
+        >
+          <div className="h-9 w-9 rounded-md bg-primary/20 flex items-center justify-center shrink-0">
+            <ShieldCheck className="h-4 w-4 text-primary" />
           </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold leading-snug">Credentials</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Upload certifications — AI verifies authenticity
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+
+        {/* AI insights */}
+        <div className="mt-4">
+          <InstructorInsights />
         </div>
 
         <Section title="Upcoming Courses">
