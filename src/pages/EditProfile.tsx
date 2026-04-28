@@ -262,22 +262,68 @@ const EditProfile = () => {
           </div>
         ) : (
           <div className="space-y-4">
+            <CompletenessCard percent={completeness} requirements={requirements} form={form} />
+
+            <div className="rounded-md border border-border bg-card p-4">
+              <Label className="text-xs uppercase tracking-wider font-bold text-muted-foreground">
+                Profile photo
+              </Label>
+              <div className="mt-3 flex items-center gap-4">
+                <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-primary/40 bg-muted flex items-center justify-center shrink-0">
+                  {form.photo_url ? (
+                    <img src={form.photo_url} alt="Profile" className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handlePhotoFile(f);
+                      e.target.value = '';
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-primary/40 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/20 disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5" />
+                    )}
+                    {form.photo_url ? 'Replace photo' : 'Upload photo'}
+                  </button>
+                  {form.photo_url && (
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border text-muted-foreground text-xs font-bold uppercase tracking-wider hover:bg-muted"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Remove
+                    </button>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    JPG, PNG or WEBP · max 5MB
+                  </p>
+                </div>
+              </div>
+            </Field>
+
             <Field label="Display name" error={errors.display_name} required>
               <Input
                 value={form.display_name}
                 onChange={(e) => update('display_name', e.target.value)}
                 maxLength={80}
                 placeholder="Your name"
-              />
-            </Field>
-
-            <Field label="Photo URL" error={errors.photo_url} hint="Direct link to a square image (optional)">
-              <Input
-                value={form.photo_url}
-                onChange={(e) => update('photo_url', e.target.value)}
-                maxLength={500}
-                placeholder="https://…"
-                inputMode="url"
               />
             </Field>
 
