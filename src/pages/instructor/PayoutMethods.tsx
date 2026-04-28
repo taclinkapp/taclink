@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { HowPaymentsWorkCard } from "@/components/HowPaymentsWorkCard";
 import {
   PAYOUT_META,
   type PayoutHandle,
