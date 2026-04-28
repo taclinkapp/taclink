@@ -24,6 +24,7 @@ import MyBookings from "./pages/student/MyBookings";
 import MyProgress from "./pages/student/MyProgress";
 import BookingDetail from "./pages/student/BookingDetail";
 import LeaveReview from "./pages/student/LeaveReview";
+import MyReviews from "./pages/student/MyReviews";
 import StudentProfile from "./pages/student/StudentProfile";
 import StudentSettings from "./pages/student/StudentSettings";
 import StudentMessages from "./pages/student/StudentMessages";
