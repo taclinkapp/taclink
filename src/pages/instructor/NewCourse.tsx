@@ -124,8 +124,27 @@ const NewCourse = () => {
         status: 'published',
       });
 
-      // (AI moderation now only monitors student↔instructor messages for
-      // off-platform communication attempts — course content is not scanned.)
+      // AI moderation — scan course text + cover photo for contact info or
+      // off-platform communication attempts (phone, email, social handles, URLs).
+      const { moderateContent } = await import('@/lib/moderation');
+      moderateContent({
+        contentType: 'course_text',
+        contentId: created.id,
+        courseId: created.id,
+        text: `${title}\n\n${description}`,
+        authorId: user.id,
+        authorRole: 'instructor',
+      }).catch(() => {});
+      if (coverUrl) {
+        moderateContent({
+          contentType: 'course_image',
+          contentId: created.id,
+          courseId: created.id,
+          imageUrl: coverUrl,
+          authorId: user.id,
+          authorRole: 'instructor',
+        }).catch(() => {});
+      }
 
       qc.invalidateQueries({ queryKey: ['courses'] });
       toast.success('Course published');
