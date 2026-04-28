@@ -54,24 +54,90 @@ const CourseManagement = () => {
     <MobileShell withTabBar={false}>
       <PageHeader title={c.title} back />
       <div className="px-4 pt-3">
-        {/* Non-refundable listing fee disclosure */}
-        <div className="tactical-card border-primary/40 bg-primary/10 p-3 mb-3">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[11px] uppercase tracking-wider font-bold">Listing Fee Paid</div>
-                <div className="text-sm font-black text-primary">
-                  {fmt(computeListingFeeCents(Math.round((c.bookingFee ?? 0) * 100)))}
+        {/* Non-refundable listing fee disclosure + receipt */}
+        {(() => {
+          const feeCents = listingCharge?.amount_cents ?? computeListingFeeCents(Math.round((c.bookingFee ?? 0) * 100));
+          const priceCents = listingCharge?.course_price_cents ?? Math.round((c.bookingFee ?? 0) * 100);
+          const ref = listingCharge?.id ? `LF-${listingCharge.id.slice(0, 8).toUpperCase()}` : null;
+          const chargedAt = listingCharge?.created_at ? new Date(listingCharge.created_at) : null;
+          const copyRef = () => {
+            if (!ref) return;
+            navigator.clipboard.writeText(ref).then(() => toast.success('Reference copied'));
+          };
+          return (
+            <div className="tactical-card border-primary/40 bg-primary/10 p-3 mb-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] uppercase tracking-wider font-bold">Listing Fee Paid</div>
+                    <div className="text-sm font-black text-primary">{fmt(feeCents)}</div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                    {Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price was charged when this course was published.{' '}
+                    <strong className="text-destructive">Non-refundable</strong> — not returned for cancellations, edits, unpublish, or zero bookings.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowReceipt((v) => !v)}
+                    className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-primary hover:underline"
+                  >
+                    <Receipt className="h-3 w-3" />
+                    {showReceipt ? 'Hide receipt' : 'View receipt'}
+                    <ChevronDown className={cn('h-3 w-3 transition-transform', showReceipt && 'rotate-180')} />
+                  </button>
+                  {showReceipt && (
+                    <div className="mt-2 rounded-sm border border-primary/30 bg-background/60 p-2.5 text-[11px] space-y-1.5">
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Reference</span>
+                        {ref ? (
+                          <button onClick={copyRef} className="font-mono text-foreground inline-flex items-center gap-1 hover:text-primary">
+                            {ref} <Copy className="h-3 w-3" />
+                          </button>
+                        ) : (
+                          <span className="text-muted-foreground italic">unavailable</span>
+                        )}
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Charged on</span>
+                        <span className="text-foreground">
+                          {chargedAt ? chargedAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Course price</span>
+                        <span className="text-foreground">{fmt(priceCents)}</span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Rate</span>
+                        <span className="text-foreground">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}%</span>
+                      </div>
+                      <div className="flex justify-between gap-2 border-t border-primary/20 pt-1.5">
+                        <span className="font-bold uppercase tracking-wider text-[10px]">Total charged</span>
+                        <span className="font-black text-primary">{fmt(feeCents)}</span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Status</span>
+                        <span className="text-success font-semibold uppercase tracking-wider text-[10px]">
+                          {listingCharge?.status ?? 'charged'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Refundable</span>
+                        <span className="text-destructive font-semibold uppercase tracking-wider text-[10px]">No</span>
+                      </div>
+                      {listingCharge?.note && (
+                        <div className="text-[10px] text-muted-foreground italic pt-1 border-t border-primary/20">
+                          {listingCharge.note}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-              <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
-                {Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price was charged when this course was published.{' '}
-                <strong className="text-destructive">Non-refundable</strong> — not returned for cancellations, edits, unpublish, or zero bookings.
-              </p>
             </div>
-          </div>
-        </div>
+          );
+        })()}
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
             { label: 'Enrolled', value: enrolled },
