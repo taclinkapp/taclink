@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react';
 import { fmt } from '@/lib/fees';
 import { QRCodeSVG } from 'qrcode.react';
-import { buildCheckinPayload } from '@/lib/qrCheckin';
+import { SendDepositCard } from '@/components/student/SendDepositCard';
+import type { DepositStatus } from '@/lib/payouts';
 
 type BookingRow = {
   id: string;
@@ -18,6 +19,9 @@ type BookingRow = {
   online_total_cents: number;
   in_person_paid_at: string | null;
   course_id: string;
+  deposit_status: DepositStatus;
+  deposit_amount_cents: number;
+  deposit_expires_at: string | null;
 };
 
 type CourseRow = {
