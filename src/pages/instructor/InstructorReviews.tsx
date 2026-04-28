@@ -307,6 +307,58 @@ const InstructorReviews = () => {
           </ul>
         )}
       </div>
+
+      <AlertDialog open={!!confirmId} onOpenChange={(o) => !o && setConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmIsUpdate ? 'Update your reply?' : 'Post this reply?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmIsUpdate
+                ? 'This will replace your previous reply on this review.'
+                : 'Your reply will be visible publicly under this review.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {confirmReview && (
+            <div className="space-y-3">
+              <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                  Replying to {confirmReview.studentName} · {confirmReview.rating}★
+                </div>
+                {confirmReview.comment && (
+                  <p className="text-xs text-muted-foreground line-clamp-3">
+                    “{confirmReview.comment}”
+                  </p>
+                )}
+              </div>
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-primary mb-1">
+                  Your reply
+                </div>
+                <p className="text-sm whitespace-pre-wrap">{confirmDraft}</p>
+              </div>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!savingId}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!!savingId || !confirmReview}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!confirmReview) return;
+                await postReply(confirmReview);
+                setConfirmId(null);
+              }}
+            >
+              {savingId ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+              ) : null}
+              {confirmIsUpdate ? 'Update reply' : 'Post reply'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 };
