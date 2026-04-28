@@ -55,6 +55,7 @@ const NewCourse = () => {
   const [state, setState] = useState('');
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
+  const [feeAck, setFeeAck] = useState(false);
 
   // ---- Draft autosave (localStorage) ----
   const DRAFT_KEY = user ? `course-draft:${user.id}` : 'course-draft:anon';
