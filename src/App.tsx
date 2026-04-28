@@ -43,6 +43,7 @@ import InstructorMessages from "./pages/instructor/InstructorMessages";
 import InstructorConversation from "./pages/instructor/InstructorConversation";
 import InstructorCredentials from "./pages/instructor/InstructorCredentials";
 import InstructorRoster from "./pages/instructor/InstructorRoster";
+import InstructorReviews from "./pages/instructor/InstructorReviews";
 
 import { AdminLayout } from "./components/AdminLayout";
 import AdminLogin from "./pages/admin/AdminLogin";

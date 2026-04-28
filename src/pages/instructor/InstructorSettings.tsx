@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, LogOut, Trash2, Package, Bug, LifeBuoy, MessageSquare, Sparkles } from 'lucide-react';
+import { ChevronRight, LogOut, Trash2, Package, Bug, LifeBuoy, MessageSquare, Sparkles, Star } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +30,10 @@ const InstructorSettings = () => {
           <button onClick={() => nav('/instructor/listing-packs')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
             <span className="text-sm font-medium flex items-center gap-2"><Package className="h-4 w-4 text-primary" />Listing Packs</span>
             <span className="text-xs text-primary font-bold">7 credits</span>
+          </button>
+          <button onClick={() => nav('/instructor/reviews')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
+            <span className="text-sm font-medium flex items-center gap-2"><Star className="h-4 w-4 text-primary" />View My Reviews</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
         </Section>
         <Section title="Notifications">
