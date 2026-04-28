@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import { createCourse, uploadCoursePhoto } from '@/lib/courses';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -30,7 +31,9 @@ const durationMinutesFromTimes = (date: string, start: string, end: string): num
 
 const NewCourse = () => {
   const nav = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const hasPM = !!profile?.payment_method_added;
+  const subActive = profile?.subscription_status === 'active';
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
