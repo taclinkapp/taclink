@@ -6,7 +6,7 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Plus, Lock, Trash2, AlertCircle, Loader2 } from 'lucide-react';
+import { CreditCard, Plus, Lock, Trash2, AlertCircle, Loader2, Pencil, X, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Card = {
@@ -119,6 +119,13 @@ const PaymentMethods = () => {
   const [name, setName] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Edit-row state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editExp, setEditExp] = useState('');
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [editSaving, setEditSaving] = useState(false);
+
   const digitsOnly = number.replace(/\D/g, '');
   const brand = useMemo<Brand>(() => detectBrand(digitsOnly), [digitsOnly]);
 
@@ -196,6 +203,49 @@ const PaymentMethods = () => {
       return;
     }
     toast.success('Payment method removed');
+  };
+
+  const startEdit = (c: Card) => {
+    setEditingId(c.id);
+    setEditName(c.cardholder_name);
+    setEditExp(`${String(c.exp_month).padStart(2, '0')}/${String(c.exp_year).padStart(2, '0')}`);
+    setEditErrors({});
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditErrors({});
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    const fieldErrors: Record<string, string> = {};
+    const trimmedName = editName.trim();
+    if (trimmedName.length < 2 || trimmedName.length > 80) {
+      fieldErrors.name = 'Cardholder name must be 2–80 characters';
+    } else if (!/^[A-Za-zÀ-ÿ'’.\- ]+$/.test(trimmedName)) {
+      fieldErrors.name = 'Use letters, spaces, hyphens, apostrophes only';
+    }
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(editExp)) {
+      fieldErrors.exp = 'Expiry must be MM/YY';
+    } else {
+      const [mm, yy] = editExp.split('/').map(Number);
+      if (!expNotInPast(mm, yy)) fieldErrors.exp = 'Card is expired';
+    }
+    if (Object.keys(fieldErrors).length) {
+      setEditErrors(fieldErrors);
+      return;
+    }
+    const [mm, yy] = editExp.split('/').map(Number);
+    setEditSaving(true);
+    const { error } = await supabase
+      .from('payment_methods')
+      .update({ cardholder_name: trimmedName, exp_month: mm, exp_year: yy })
+      .eq('id', id);
+    setEditSaving(false);
+    if (error) { toast.error(error.message); return; }
+    setCards((prev) => prev.map((c) => c.id === id ? { ...c, cardholder_name: trimmedName, exp_month: mm, exp_year: yy } : c));
+    toast.success('Payment method updated');
+    cancelEdit();
   };
 
   const onNumberChange = (v: string) => {
