@@ -9,6 +9,8 @@ import NotFound from "./pages/NotFound.tsx";
 import Notifications from "./pages/Notifications";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import HelpCenter from "./pages/support/HelpCenter";
+import ContactSupport from "./pages/support/ContactSupport";
 
 import Splash from "./pages/Splash";
 import SignIn from "./pages/auth/SignIn";
@@ -46,6 +48,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import { AdminUsers, AdminInstructors } from "./pages/admin/AdminUsers";
 import { AdminCourses, AdminWaitlist, AdminActivity, AdminSettings } from "./pages/admin/AdminCourses";
 import { AdminReports } from "./pages/admin/AdminReports";
+import { AdminSupportTickets } from "./pages/admin/AdminSupportTickets";
 import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -113,6 +116,7 @@ const App = () => (
               <Route path="courses" element={<AdminCourses />} />
               <Route path="waitlist" element={<AdminWaitlist />} />
               <Route path="reports" element={<AdminReports />} />
+              <Route path="support" element={<AdminSupportTickets />} />
               <Route path="activity" element={<AdminActivity />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
@@ -120,6 +124,8 @@ const App = () => (
             <Route path="/notifications" element={<Authed><Notifications /></Authed>} />
             <Route path="/legal/terms" element={<TermsOfService />} />
             <Route path="/legal/privacy" element={<PrivacyPolicy />} />
+            <Route path="/support" element={<Authed><HelpCenter /></Authed>} />
+            <Route path="/support/contact" element={<Authed><ContactSupport /></Authed>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
