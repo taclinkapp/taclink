@@ -7,15 +7,22 @@ export type DevUser = {
   email: string;
 };
 
+/**
+ * Returns the currently signed-in user as a lightweight identity object,
+ * compatible with the legacy DevUser shape used across the messaging UI.
+ * Falls back to the legacy localStorage dev user if no real session exists
+ * (used by the in-DEV role switcher only).
+ */
 export const getCurrentUser = (): DevUser | null => {
   try {
     const raw = localStorage.getItem("taclink:devUser");
-    if (!raw) return null;
-    return JSON.parse(raw) as DevUser;
+    if (raw) return JSON.parse(raw) as DevUser;
   } catch {
-    return null;
+    /* ignore */
   }
+  return null;
 };
+
 
 export type ConversationRow = {
   id: string;
