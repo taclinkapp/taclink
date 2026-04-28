@@ -2,64 +2,110 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TacLink design system — dark tactical, amber gold accents */
+/* Karla — body face from the user's UI packet */
+@font-face {
+  font-family: 'Karla';
+  src: url('/fonts/Karla-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Karla';
+  src: url('/fonts/Karla-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Karla';
+  src: url('/fonts/Karla-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Karla';
+  src: url('/fonts/Karla-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* TacLink design system — dark neumorphic, tactical amber accents */
 
 @layer base {
   :root {
-    /* Dark tactical palette (forced dark mode only) */
-    --background: 0 0% 4%;          /* #0a0a0a */
-    --foreground: 0 0% 100%;        /* #ffffff */
+    /*
+     * Slightly lifted near-black so neumorphic shadows can read.
+     * Pure black kills the highlight/shadow effect.
+     */
+    --background: 222 11% 14%;        /* #1f2229 */
+    --foreground: 0 0% 100%;
 
-    --surface: 0 0% 8%;             /* #141414 */
-    --card: 0 0% 10%;               /* #1a1a1a */
+    --surface: 222 11% 14%;
+    --card: 222 11% 16%;              /* same family, used as raised surface */
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 10%;
+    --popover: 222 11% 16%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 38 92% 50%;          /* #f59e0b amber */
+    --primary: 38 92% 50%;            /* amber accent kept */
     --primary-foreground: 0 0% 4%;
     --primary-glow: 43 96% 56%;
 
-    --secondary: 0 0% 16%;
+    --secondary: 222 11% 20%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 14%;
-    --muted-foreground: 220 9% 64%; /* #9ca3af */
+    --muted: 222 11% 18%;
+    --muted-foreground: 220 9% 64%;
 
     --accent: 38 92% 50%;
     --accent-foreground: 0 0% 4%;
 
-    --destructive: 0 84% 60%;       /* #ef4444 */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;         /* #22c55e */
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --border: 0 0% 16%;             /* #2a2a2a */
-    --input: 0 0% 14%;
+    --border: 222 11% 22%;
+    --input: 222 11% 16%;
     --ring: 38 92% 50%;
 
-    --radius: 0.375rem;
+    --radius: 1rem;                   /* softer, for neumorphism */
 
-    --sidebar-background: 0 0% 6%;
+    --sidebar-background: 222 11% 12%;
     --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 38 92% 50%;
     --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent: 222 11% 18%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 16%;
+    --sidebar-border: 222 11% 22%;
     --sidebar-ring: 38 92% 50%;
 
+    /* Neumorphic shadow tokens (paired light + dark) */
+    --neu-light: hsl(222 11% 22% / 0.9);
+    --neu-dark: hsl(222 20% 5% / 0.85);
+    --shadow-neu:
+      8px 8px 18px var(--neu-dark),
+      -6px -6px 16px var(--neu-light);
+    --shadow-neu-sm:
+      4px 4px 10px var(--neu-dark),
+      -3px -3px 8px var(--neu-light);
+    --shadow-neu-inset:
+      inset 4px 4px 8px var(--neu-dark),
+      inset -3px -3px 6px var(--neu-light);
+    --shadow-neu-pressed:
+      inset 6px 6px 12px var(--neu-dark),
+      inset -4px -4px 10px var(--neu-light);
+
     --gradient-amber: linear-gradient(135deg, hsl(38 92% 50%), hsl(43 96% 56%));
-    --gradient-dark: linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 4%));
-    --shadow-tactical: 0 8px 24px -8px hsl(0 0% 0% / 0.6), 0 0 0 1px hsl(0 0% 16%);
-    --shadow-amber: 0 8px 24px -8px hsl(38 92% 50% / 0.4);
+    --shadow-amber: 0 10px 24px -8px hsl(38 92% 50% / 0.45);
   }
 
   .dark {
-    /* same as root — dark only */
-    --background: 0 0% 4%;
+    --background: 222 11% 14%;
     --foreground: 0 0% 100%;
   }
 }
@@ -73,8 +119,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-family: 'Karla', 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4, h5, h6 {
@@ -83,30 +128,62 @@
 }
 
 @layer components {
+  /* Raised surface — the workhorse neumorphic card */
+  .neu {
+    background: hsl(var(--background));
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-neu);
+  }
+  .neu-sm {
+    background: hsl(var(--background));
+    border-radius: calc(var(--radius) - 0.25rem);
+    box-shadow: var(--shadow-neu-sm);
+  }
+  /* Recessed surface — for inputs, sliders, progress tracks */
+  .neu-inset {
+    background: hsl(var(--background));
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-neu-inset);
+  }
+  /* Press state for any pillowed button */
+  .neu-pressable {
+    transition: box-shadow 120ms ease, transform 120ms ease;
+  }
+  .neu-pressable:active {
+    box-shadow: var(--shadow-neu-pressed);
+  }
+
+  /* Backwards-compatible alias used across existing pages */
   .tactical-card {
-    @apply bg-card border border-border rounded-md;
-    box-shadow: var(--shadow-tactical);
+    background: hsl(var(--background));
+    border: 0;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-neu);
   }
-  .amber-glow {
-    box-shadow: var(--shadow-amber);
-  }
-  .gradient-amber {
-    background: var(--gradient-amber);
-  }
+  .amber-glow { box-shadow: var(--shadow-amber); }
+  .gradient-amber { background: var(--gradient-amber); }
+
   .font-stencil {
-    font-family: 'Stardos Stencil', 'Inter', sans-serif;
+    font-family: 'Stardos Stencil', 'Karla', sans-serif;
     letter-spacing: 0.04em;
   }
-  /* Pill button used across screens, mirrors iOS reference */
+
+  /* Pill buttons — neumorphic */
   .btn-pill {
-    @apply w-full h-11 rounded-full bg-background text-foreground text-xs font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2 border border-border;
-    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.04), 0 2px 8px hsl(0 0% 0% / 0.5);
+    @apply w-full h-12 rounded-full text-foreground text-xs font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2;
+    background: hsl(var(--background));
+    box-shadow: var(--shadow-neu-sm);
+    transition: box-shadow 120ms ease;
   }
+  .btn-pill:active { box-shadow: var(--shadow-neu-pressed); }
+
   .btn-pill-primary {
-    @apply w-full h-11 rounded-full text-primary-foreground text-xs font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2;
+    @apply w-full h-12 rounded-full text-primary-foreground text-xs font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2;
     background: var(--gradient-amber);
-    box-shadow: 0 4px 16px hsl(38 92% 50% / 0.35);
+    box-shadow: var(--shadow-amber), var(--shadow-neu-sm);
+    transition: box-shadow 120ms ease, transform 120ms ease;
   }
+  .btn-pill-primary:active { transform: translateY(1px); }
 }
 
 /* Hide scrollbar utility for filter chips */
