@@ -1,18 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Plus, Lock, Trash2, AlertCircle } from 'lucide-react';
+import { CreditCard, Plus, Lock, Trash2, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Card = { id: string; brand: string; last4: string; exp: string; name: string };
-
-const STORAGE_KEY = 'student-payment-methods';
-
-const loadCards = (): Card[] => {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]'); } catch { return []; }
+type Card = {
+  id: string;
+  brand: string;
+  last4: string;
+  exp_month: number;
+  exp_year: number;
+  cardholder_name: string;
 };
 
 type Brand = 'Visa' | 'Mastercard' | 'Amex' | 'Discover' | 'Card';
@@ -35,7 +38,6 @@ const brandLengths: Record<Brand, number[]> = {
 
 const brandCvcLength = (brand: Brand) => (brand === 'Amex' ? 4 : 3);
 
-// Luhn checksum
 const luhnValid = (digits: string): boolean => {
   let sum = 0;
   let alt = false;
@@ -64,10 +66,9 @@ const formatExp = (raw: string): string => {
 
 const expNotInPast = (mm: number, yy: number): boolean => {
   if (mm < 1 || mm > 12) return false;
-  const now = new Date();
   const fullYear = 2000 + yy;
   const endOfMonth = new Date(fullYear, mm, 0, 23, 59, 59);
-  return endOfMonth.getTime() >= now.getTime();
+  return endOfMonth.getTime() >= Date.now();
 };
 
 const buildSchema = (brand: Brand, existing: Card[]) =>
@@ -101,14 +102,17 @@ const buildSchema = (brand: Brand, existing: Card[]) =>
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['number'],
-        message: `${brand} ending in ${last4} is already saved on this device`,
+        message: `${brand} ending in ${last4} is already saved on your account`,
       });
     }
   });
 
 const PaymentMethods = () => {
-  const [cards, setCards] = useState<Card[]>(loadCards);
+  const { user } = useAuth();
+  const [cards, setCards] = useState<Card[]>([]);
+  const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [number, setNumber] = useState('');
   const [exp, setExp] = useState('');
   const [cvc, setCvc] = useState('');
@@ -118,17 +122,28 @@ const PaymentMethods = () => {
   const digitsOnly = number.replace(/\D/g, '');
   const brand = useMemo<Brand>(() => detectBrand(digitsOnly), [digitsOnly]);
 
+  const reload = async () => {
+    if (!user) { setCards([]); setLoading(false); return; }
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('payment_methods')
+      .select('id, brand, last4, exp_month, exp_year, cardholder_name')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (error) toast.error(error.message);
+    setCards((data as Card[]) ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { reload(); /* eslint-disable-next-line */ }, [user?.id]);
+
   const reset = () => {
     setNumber(''); setExp(''); setCvc(''); setName('');
     setErrors({}); setAdding(false);
   };
 
-  const persist = (next: Card[]) => {
-    setCards(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  };
-
-  const handleAdd = () => {
+  const handleAdd = async () => {
+    if (!user) { toast.error('Please sign in'); return; }
     const schema = buildSchema(brand, cards);
     const parsed = schema.safeParse({ name, number, exp, cvc });
     if (!parsed.success) {
@@ -143,20 +158,43 @@ const PaymentMethods = () => {
     }
     const data = parsed.data;
     const last4 = data.number.slice(-4);
-    const card: Card = {
-      id: crypto.randomUUID(),
+    const [mm, yy] = data.exp.split('/').map(Number);
+
+    setSaving(true);
+    const { error } = await supabase.from('payment_methods').insert({
+      user_id: user.id,
       brand,
       last4,
-      exp: data.exp,
-      name: data.name,
-    };
-    persist([...cards, card]);
+      exp_month: mm,
+      exp_year: yy,
+      cardholder_name: data.name,
+    });
+    setSaving(false);
+
+    if (error) {
+      // Postgres unique-violation code
+      if ((error as any).code === '23505') {
+        setErrors({ number: `${brand} ending in ${last4} is already saved on your account` });
+        toast.error('Duplicate card — already saved on your account');
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
     toast.success('Payment method added');
     reset();
+    reload();
   };
 
-  const handleRemove = (id: string) => {
-    persist(cards.filter((c) => c.id !== id));
+  const handleRemove = async (id: string) => {
+    const prev = cards;
+    setCards(prev.filter((c) => c.id !== id));
+    const { error } = await supabase.from('payment_methods').delete().eq('id', id);
+    if (error) {
+      setCards(prev);
+      toast.error(error.message);
+      return;
+    }
     toast.success('Payment method removed');
   };
 
@@ -171,99 +209,112 @@ const PaymentMethods = () => {
     <MobileShell withTabBar={false}>
       <PageHeader title="Payment Methods" back />
       <div className="px-4 py-4 space-y-4">
-        {cards.length === 0 && !adding && (
-          <div className="tactical-card p-6 text-center">
-            <CreditCard className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground mb-1">No payment methods yet.</p>
-            <p className="text-xs text-muted-foreground/80">Add one to speed up checkout.</p>
-          </div>
-        )}
-
-        {cards.map((c) => (
-          <div key={c.id} className="tactical-card p-4 flex items-center gap-3">
-            <div className="h-10 w-14 rounded-md bg-primary/10 border border-primary/30 flex items-center justify-center">
-              <CreditCard className="h-4 w-4 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold">{c.brand} •••• {c.last4}</div>
-              <div className="text-[11px] text-muted-foreground">{c.name} · Exp {c.exp}</div>
-            </div>
-            <button onClick={() => handleRemove(c.id)} className="text-muted-foreground hover:text-destructive p-2" aria-label="Remove">
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
-
-        {adding ? (
-          <div className="tactical-card p-4 space-y-3">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Lock className="h-3 w-3" /> Add Card
-              {brand !== 'Card' && (
-                <span className="ml-auto text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30">{brand}</span>
-              )}
-            </div>
-
-            <Field label="Cardholder name" error={errors.name}>
-              <Input
-                value={name}
-                onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((x) => ({ ...x, name: '' })); }}
-                placeholder="Name on card"
-                maxLength={80}
-                autoComplete="cc-name"
-                className="bg-background border-border h-11"
-              />
-            </Field>
-
-            <Field label="Card number" error={errors.number}>
-              <Input
-                value={number}
-                onChange={(e) => onNumberChange(e.target.value)}
-                placeholder={brand === 'Amex' ? '3782 822463 10005' : '4242 4242 4242 4242'}
-                inputMode="numeric"
-                autoComplete="cc-number"
-                className="bg-background border-border h-11 font-mono tracking-wider"
-              />
-            </Field>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Expiry" error={errors.exp}>
-                <Input
-                  value={exp}
-                  onChange={(e) => { setExp(formatExp(e.target.value)); if (errors.exp) setErrors((x) => ({ ...x, exp: '' })); }}
-                  placeholder="MM/YY"
-                  inputMode="numeric"
-                  autoComplete="cc-exp"
-                  maxLength={5}
-                  className="bg-background border-border h-11 font-mono"
-                />
-              </Field>
-              <Field label={`CVC (${brandCvcLength(brand)} digits)`} error={errors.cvc}>
-                <Input
-                  value={cvc}
-                  onChange={(e) => {
-                    const d = e.target.value.replace(/\D/g, '').slice(0, brandCvcLength(brand));
-                    setCvc(d);
-                    if (errors.cvc) setErrors((x) => ({ ...x, cvc: '' }));
-                  }}
-                  placeholder={brand === 'Amex' ? '1234' : '123'}
-                  inputMode="numeric"
-                  autoComplete="cc-csc"
-                  maxLength={4}
-                  className="bg-background border-border h-11 font-mono"
-                />
-              </Field>
-            </div>
-
-            <div className="flex gap-2 pt-1">
-              <Button variant="outline" onClick={reset} className="flex-1">Cancel</Button>
-              <Button onClick={handleAdd} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">Save Card</Button>
-            </div>
-            <p className="text-[10px] text-muted-foreground italic">Cards are stored locally on this device for demo. Real charges are processed securely at checkout.</p>
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground text-sm">
+            <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Loading…
           </div>
         ) : (
-          <Button onClick={() => setAdding(true)} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
-            <Plus className="h-4 w-4 mr-1" /> Add Payment Method
-          </Button>
+          <>
+            {cards.length === 0 && !adding && (
+              <div className="tactical-card p-6 text-center">
+                <CreditCard className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-1">No payment methods yet.</p>
+                <p className="text-xs text-muted-foreground/80">Add one to speed up checkout.</p>
+              </div>
+            )}
+
+            {cards.map((c) => (
+              <div key={c.id} className="tactical-card p-4 flex items-center gap-3">
+                <div className="h-10 w-14 rounded-md bg-primary/10 border border-primary/30 flex items-center justify-center">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold">{c.brand} •••• {c.last4}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {c.cardholder_name} · Exp {String(c.exp_month).padStart(2, '0')}/{String(c.exp_year).padStart(2, '0')}
+                  </div>
+                </div>
+                <button onClick={() => handleRemove(c.id)} className="text-muted-foreground hover:text-destructive p-2" aria-label="Remove">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+
+            {adding ? (
+              <div className="tactical-card p-4 space-y-3">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <Lock className="h-3 w-3" /> Add Card
+                  {brand !== 'Card' && (
+                    <span className="ml-auto text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30">{brand}</span>
+                  )}
+                </div>
+
+                <Field label="Cardholder name" error={errors.name}>
+                  <Input
+                    value={name}
+                    onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((x) => ({ ...x, name: '' })); }}
+                    placeholder="Name on card"
+                    maxLength={80}
+                    autoComplete="cc-name"
+                    className="bg-background border-border h-11"
+                  />
+                </Field>
+
+                <Field label="Card number" error={errors.number}>
+                  <Input
+                    value={number}
+                    onChange={(e) => onNumberChange(e.target.value)}
+                    placeholder={brand === 'Amex' ? '3782 822463 10005' : '4242 4242 4242 4242'}
+                    inputMode="numeric"
+                    autoComplete="cc-number"
+                    className="bg-background border-border h-11 font-mono tracking-wider"
+                  />
+                </Field>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Expiry" error={errors.exp}>
+                    <Input
+                      value={exp}
+                      onChange={(e) => { setExp(formatExp(e.target.value)); if (errors.exp) setErrors((x) => ({ ...x, exp: '' })); }}
+                      placeholder="MM/YY"
+                      inputMode="numeric"
+                      autoComplete="cc-exp"
+                      maxLength={5}
+                      className="bg-background border-border h-11 font-mono"
+                    />
+                  </Field>
+                  <Field label={`CVC (${brandCvcLength(brand)} digits)`} error={errors.cvc}>
+                    <Input
+                      value={cvc}
+                      onChange={(e) => {
+                        const d = e.target.value.replace(/\D/g, '').slice(0, brandCvcLength(brand));
+                        setCvc(d);
+                        if (errors.cvc) setErrors((x) => ({ ...x, cvc: '' }));
+                      }}
+                      placeholder={brand === 'Amex' ? '1234' : '123'}
+                      inputMode="numeric"
+                      autoComplete="cc-csc"
+                      maxLength={4}
+                      className="bg-background border-border h-11 font-mono"
+                    />
+                  </Field>
+                </div>
+
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" onClick={reset} disabled={saving} className="flex-1">Cancel</Button>
+                  <Button onClick={handleAdd} disabled={saving} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                    Save Card
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground italic">Cards are saved to your account. Real charges are processed securely at checkout.</p>
+              </div>
+            ) : (
+              <Button onClick={() => setAdding(true)} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
+                <Plus className="h-4 w-4 mr-1" /> Add Payment Method
+              </Button>
+            )}
+          </>
         )}
       </div>
     </MobileShell>
