@@ -14,7 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Karla', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        stencil: ['"Stardos Stencil"', 'Karla', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
