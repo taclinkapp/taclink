@@ -20,6 +20,14 @@ import { AISuggestButton } from '@/components/instructor/AISuggestButton';
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
 
+const durationMinutesFromTimes = (date: string, start: string, end: string): number | undefined => {
+  if (!date || !start || !end) return undefined;
+  const s = new Date(`${date}T${start}:00`);
+  const e = new Date(`${date}T${end}:00`);
+  const diff = Math.round((e.getTime() - s.getTime()) / 60000);
+  return diff > 0 ? diff : undefined;
+};
+
 const NewCourse = () => {
   const nav = useNavigate();
   const { user } = useAuth();
