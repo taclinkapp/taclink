@@ -510,25 +510,49 @@ const Field = ({
   error,
   hint,
   required,
+  rule,
+  complete,
   children,
 }: {
   label: string;
   error?: string;
   hint?: string;
   required?: boolean;
+  rule?: string;
+  complete?: boolean;
   children: React.ReactNode;
 }) => (
   <div className="space-y-1.5">
-    <Label className="text-xs uppercase tracking-wider font-bold text-muted-foreground">
-      {label}
-      {required && <span className="text-destructive ml-1">*</span>}
-    </Label>
+    <div className="flex items-center justify-between gap-2">
+      <Label className="text-xs uppercase tracking-wider font-bold text-muted-foreground">
+        {label}
+        {required && <span className="text-destructive ml-1">*</span>}
+      </Label>
+      {rule !== undefined && (
+        complete ? (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+            <CheckCircle2 className="h-3 w-3" /> Complete
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Circle className="h-3 w-3" /> Needed
+          </span>
+        )
+      )}
+    </div>
     {children}
     {error ? (
       <p className="text-[11px] text-destructive">{error}</p>
-    ) : hint ? (
-      <p className="text-[11px] text-muted-foreground">{hint}</p>
-    ) : null}
+    ) : (
+      <>
+        {rule && (
+          <p className={cn('text-[11px]', complete ? 'text-emerald-600' : 'text-primary')}>
+            ✓ Counts as complete: {rule}
+          </p>
+        )}
+        {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+      </>
+    )}
   </div>
 );
 
