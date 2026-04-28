@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { mockRoster, mockWaitlist } from '@/lib/mockData';
 import { useCourse } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock } from 'lucide-react';
+import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock, Camera, Sparkles, MapPin, Loader2 } from 'lucide-react';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { toast } from 'sonner';
+import { QrScanner } from '@/components/QrScanner';
+import { parseCheckinPayload, PROXIMITY_TRIGGER_METERS } from '@/lib/qrCheckin';
+import { useProximity } from '@/hooks/useProximity';
+import { Switch } from '@/components/ui/switch';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
@@ -20,6 +24,46 @@ const CourseManagement = () => {
   const { data: course, isLoading } = useCourse(id);
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
   const [showReceipt, setShowReceipt] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [autoCheckin, setAutoCheckin] = useState(false);
+  const qc = useQueryClient();
+
+  // Real bookings on this course (used for check-in list + auto check-in pool)
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['course_bookings', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('id, status, student_id, attended_at')
+        .eq('course_id', id as string);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  const markAttended = async (bookingId: string, opts?: { source: 'qr' | 'proximity' }) => {
+    const existing = bookings.find((b: any) => b.id === bookingId);
+    if (!existing) {
+      toast.error('That QR is not for this course.');
+      return;
+    }
+    if (existing.status === 'attended') {
+      toast.info('Already checked in.');
+      return;
+    }
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: 'attended', attended_at: new Date().toISOString() })
+      .eq('id', bookingId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(opts?.source === 'proximity' ? 'Auto check-in (proximity)' : 'Checked in');
+    qc.invalidateQueries({ queryKey: ['course_bookings', id] });
+  };
+
 
   const { data: listingCharge } = useQuery({
     queryKey: ['instructor_charge', id],
@@ -38,6 +82,29 @@ const CourseManagement = () => {
     enabled: !!id,
   });
 
+  // AI proximity engine — watches GPS, smooths noise, fires once near the venue.
+  const target = course?.lat && course?.lng ? { lat: course.lat, lng: course.lng } : null;
+  const proximity = useProximity({
+    target,
+    triggerMeters: PROXIMITY_TRIGGER_METERS,
+    enabled: autoCheckin,
+    onTrigger: () => {
+      // Auto check-in the next reserved booking (demo behavior — instructor-side
+      // can't know which student walked in, so we mark the first reserved seat).
+      const next = bookings.find((b: any) => b.status === 'reserved');
+      if (next) markAttended(next.id, { source: 'proximity' });
+      else toast.info('All students already checked in.');
+      setAutoCheckin(false);
+    },
+  });
+
+  useEffect(() => {
+    if (autoCheckin && target) proximity.start();
+    else proximity.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCheckin, target?.lat, target?.lng]);
+
+
   if (isLoading || !course) {
     return (
       <MobileShell withTabBar={false}>
@@ -51,7 +118,8 @@ const CourseManagement = () => {
 
   const c = course;
   const enrolled = c.maxStudents - c.spotsRemaining;
-  const checkedIn = mockRoster.filter((s) => s.checkedIn).length;
+  const attendedBookings = bookings.filter((b: any) => b.status === 'attended');
+  const checkedIn = attendedBookings.length;
 
   return (
     <MobileShell withTabBar={false}>
@@ -219,36 +287,120 @@ const CourseManagement = () => {
             )}
 
             {tab === 'Check-In' && (
-              <div>
-                <div className="tactical-card p-5 text-center">
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center justify-center gap-1">
-                    <QrCode className="h-3 w-3" /> Display this QR for students to scan
+              <div className="space-y-3">
+                {/* Scan QR */}
+                <div className="tactical-card p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center">
+                      <QrCode className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold">Scan student QR</div>
+                      <div className="text-[11px] text-muted-foreground">Each student shows their booking QR.</div>
+                    </div>
                   </div>
-                  <div className="mx-auto h-56 w-56 bg-white p-3 rounded-sm mt-3">
-                    <div className="h-full w-full" style={{
-                      backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)',
-                      backgroundSize: '14px 14px',
-                      backgroundPosition: '0 0, 0 7px, 7px -7px, -7px 0',
-                    }} />
-                  </div>
+                  <button
+                    onClick={() => setScannerOpen(true)}
+                    className="mt-3 w-full h-11 rounded-md bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2"
+                  >
+                    <Camera className="h-4 w-4" /> Open Scanner
+                  </button>
                 </div>
-                <div className="mt-4">
-                  <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">Live Check-Ins</h3>
-                  <div className="space-y-2">
-                    {mockRoster.filter((s) => s.checkedIn).map((s) => (
-                      <div key={s.id} className="tactical-card p-3 flex items-center gap-3 border-success/20 bg-success/5">
-                        <img src={s.photo} className="h-9 w-9 rounded-full" alt="" />
-                        <div className="flex-1 text-sm font-semibold">{s.name}</div>
-                        <Check className="h-4 w-4 text-success" />
+
+                {/* AI auto check-in */}
+                <div className="tactical-card p-4 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-md bg-primary/20 flex items-center justify-center">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold flex items-center gap-2">
+                        AI Auto Check-In
+                        <span className="text-[9px] uppercase tracking-wider bg-primary/20 text-primary px-1.5 py-0.5 rounded">Beta</span>
                       </div>
-                    ))}
+                      <div className="text-[11px] text-muted-foreground">
+                        Triggers within ~10 ft of the venue. Uses smoothed GPS + accuracy filter.
+                      </div>
+                    </div>
+                    <Switch
+                      checked={autoCheckin}
+                      disabled={!target}
+                      onCheckedChange={(v) => {
+                        if (!target) {
+                          toast.error('This course has no venue coordinates set.');
+                          return;
+                        }
+                        setAutoCheckin(v);
+                      }}
+                    />
                   </div>
+                  {autoCheckin && (
+                    <div className="mt-3 rounded-md bg-card border border-border p-3 text-[11px] text-muted-foreground space-y-1">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-primary" />
+                        {proximity.error ? (
+                          <span className="text-destructive">{proximity.error}</span>
+                        ) : !proximity.reading ? (
+                          <span className="flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" /> Locking GPS…</span>
+                        ) : (
+                          <span>
+                            Distance: <span className="text-foreground font-bold">{proximity.reading.smoothedM.toFixed(1)} m</span>
+                            {' · '}±{proximity.reading.accuracyM.toFixed(0)} m
+                          </span>
+                        )}
+                      </div>
+                      <div>Trigger at ≤ {PROXIMITY_TRIGGER_METERS} m (~10 ft).</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Live check-ins (real bookings) */}
+                <div>
+                  <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2 mt-4">
+                    Checked In ({attendedBookings.length}/{bookings.length})
+                  </h3>
+                  {attendedBookings.length === 0 ? (
+                    <div className="tactical-card p-4 text-center text-xs text-muted-foreground">
+                      No check-ins yet. Scan a QR or enable auto check-in.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {attendedBookings.map((b: any) => (
+                        <div key={b.id} className="tactical-card p-3 flex items-center gap-3 border-success/20 bg-success/5">
+                          <div className="h-9 w-9 rounded-full bg-success/15 border border-success/30 flex items-center justify-center">
+                            <Check className="h-4 w-4 text-success" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold truncate">Booking {b.id.slice(0, 8).toUpperCase()}</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {b.attended_at ? new Date(b.attended_at).toLocaleTimeString() : 'just now'}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </>
         )}
       </div>
+
+      {scannerOpen && (
+        <QrScanner
+          onDecode={(text) => {
+            setScannerOpen(false);
+            const parsed = parseCheckinPayload(text);
+            if (!parsed) {
+              toast.error('Not a valid TacLink check-in QR.');
+              return;
+            }
+            markAttended(parsed.bookingId, { source: 'qr' });
+          }}
+          onClose={() => setScannerOpen(false)}
+        />
+      )}
     </MobileShell>
   );
 };
