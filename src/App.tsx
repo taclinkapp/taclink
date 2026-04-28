@@ -41,6 +41,7 @@ import CourseManagement from "./pages/instructor/CourseManagement";
 import InstructorProfile from "./pages/instructor/InstructorProfile";
 import InstructorSettings from "./pages/instructor/InstructorSettings";
 import ListingPacks from "./pages/instructor/ListingPacks";
+import PayoutMethods from "./pages/instructor/PayoutMethods";
 import InstructorMessages from "./pages/instructor/InstructorMessages";
 import InstructorConversation from "./pages/instructor/InstructorConversation";
 import InstructorCredentials from "./pages/instructor/InstructorCredentials";
@@ -120,6 +121,7 @@ const App = () => (
             <Route path="/instructor/roster" element={<Instructor><InstructorRoster /></Instructor>} />
             <Route path="/instructor/reviews" element={<Instructor><InstructorReviews /></Instructor>} />
             <Route path="/instructor/payment-methods" element={<Instructor><PaymentMethods /></Instructor>} />
+            <Route path="/instructor/payouts" element={<Instructor><PayoutMethods /></Instructor>} />
             <Route path="/instructor/subscription" element={<Instructor><InstructorSubscription /></Instructor>} />
 
             {/* Admin */}
