@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2, FileText, DollarSign } from 'lucide-react';
+import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2, FileText, DollarSign, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CourseWaiverDialog } from '@/components/instructor/CourseWaiverDialog';
