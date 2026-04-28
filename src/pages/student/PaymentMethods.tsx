@@ -197,7 +197,32 @@ const PaymentMethods = () => {
 
   const handleAdd = async () => {
     if (!user) { toast.error('Please sign in'); return; }
-    const schema = buildSchema(brand, cards);
+
+    if (addType !== 'card') {
+      const meta = ALT_META[addType];
+      const handleVal = altHandle.trim();
+      const err = meta.validate(handleVal);
+      if (err) { setErrors({ handle: err }); toast.error(err); return; }
+      const dup = cards.some((c) => c.method_type === addType && (c.handle ?? '').toLowerCase() === handleVal.toLowerCase());
+      if (dup) {
+        const msg = `That ${meta.label} account is already saved`;
+        setErrors({ handle: msg }); toast.error(msg); return;
+      }
+      setSaving(true);
+      const { error } = await supabase.from('payment_methods').insert({
+        user_id: user.id,
+        method_type: addType,
+        handle: handleVal,
+      });
+      setSaving(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success(`${meta.label} added`);
+      reset();
+      reload();
+      return;
+    }
+
+    const schema = buildSchema(brand, cardsOnly);
     const parsed = schema.safeParse({ name, number, exp, cvc });
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
@@ -216,6 +241,7 @@ const PaymentMethods = () => {
     setSaving(true);
     const { error } = await supabase.from('payment_methods').insert({
       user_id: user.id,
+      method_type: 'card',
       brand,
       last4,
       exp_month: mm,
@@ -225,7 +251,6 @@ const PaymentMethods = () => {
     setSaving(false);
 
     if (error) {
-      // Postgres unique-violation code
       if ((error as any).code === '23505') {
         setErrors({ number: `${brand} ending in ${last4} is already saved on your account` });
         toast.error('Duplicate card — already saved on your account');
