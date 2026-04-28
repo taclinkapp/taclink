@@ -57,6 +57,13 @@ const NewCourse = () => {
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
   const [feeAck, setFeeAck] = useState(false);
+  const [availableCredits, setAvailableCredits] = useState(0);
+
+  useEffect(() => {
+    if (!user || !subActive) return;
+    fetchPunchCardState(user.id).then((s) => setAvailableCredits(s.unredeemedCredits)).catch(() => {});
+  }, [user, subActive]);
+
 
   // ---- Draft autosave (localStorage) ----
   const DRAFT_KEY = user ? `course-draft:${user.id}` : 'course-draft:anon';
