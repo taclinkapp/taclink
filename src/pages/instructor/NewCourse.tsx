@@ -528,7 +528,9 @@ const NewCourse = () => {
           <Button onClick={next} disabled={saving || (step === 3 && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3
               ? 'Continue'
-              : `Publish · Pay ${fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}`}
+              : availableCredits > 0
+                ? 'Publish · FREE 🎉'
+                : `Publish · Pay ${fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}`}
           </Button>
         </div>
         <div className="flex gap-2">
