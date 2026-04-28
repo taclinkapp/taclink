@@ -151,26 +151,42 @@ export const SendDepositCard = ({
 
   if (depositStatus === "awaiting_confirmation") {
     return (
-      <div className="tactical-card p-4 border-amber-500/40 bg-amber-500/5">
+      <div className="tactical-card p-4 border-amber-500/40 bg-amber-500/5 space-y-3">
         <div className="flex items-start gap-2">
           <Clock className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground leading-relaxed flex-1">
             <strong className="text-foreground">Waiting on instructor confirmation.</strong> You marked the {fmt(depositCents)} deposit as sent. Your seat is held — you'll be fully confirmed once the instructor verifies receipt.
           </div>
         </div>
+        <Button
+          disabled
+          variant="outline"
+          className="w-full h-10 text-xs font-bold opacity-70 cursor-not-allowed"
+        >
+          <Check className="h-3.5 w-3.5 mr-1.5" />
+          You marked this paid · awaiting instructor
+        </Button>
       </div>
     );
   }
 
   if (depositStatus === "confirmed") {
     return (
-      <div className="tactical-card p-4 border-emerald-500/40 bg-emerald-500/5">
+      <div className="tactical-card p-4 border-emerald-500/40 bg-emerald-500/5 space-y-3">
         <div className="flex items-start gap-2">
           <Check className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground leading-relaxed">
             <strong className="text-emerald-600">Deposit confirmed.</strong> Your seat is locked in. The remaining balance is due in person at the course.
           </div>
         </div>
+        <Button
+          disabled
+          variant="outline"
+          className="w-full h-10 text-xs font-bold opacity-70 cursor-not-allowed border-emerald-500/40 text-emerald-600"
+        >
+          <Check className="h-3.5 w-3.5 mr-1.5" />
+          Deposit received · locked in
+        </Button>
       </div>
     );
   }
