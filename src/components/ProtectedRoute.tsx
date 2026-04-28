@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth, AppRole, homeForRole } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { PolicyAcknowledgmentGate } from "@/components/PolicyAcknowledgmentGate";
 
 type Props = {
   children: ReactNode;
@@ -28,5 +29,10 @@ export const ProtectedRoute = ({ children, requireRole }: Props) => {
     return <Navigate to={homeForRole(primaryRole)} replace />;
   }
 
-  return <>{children}</>;
+  // Admins skip the acknowledgment gate so moderation tooling stays accessible.
+  if (requireRole === "admin" || roles.includes("admin")) {
+    return <>{children}</>;
+  }
+
+  return <PolicyAcknowledgmentGate>{children}</PolicyAcknowledgmentGate>;
 };
