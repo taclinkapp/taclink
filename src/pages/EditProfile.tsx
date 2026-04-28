@@ -175,7 +175,7 @@ const EditProfile = () => {
 
       const { data: signed, error: signErr } = await supabase.storage
         .from(PROFILE_BUCKET)
-        .createSignedUploadURL(path);
+        .createSignedUploadUrl(path);
       if (signErr || !signed) return reject(new Error(signErr?.message || 'Could not prepare upload'));
 
       const xhr = new XMLHttpRequest();
