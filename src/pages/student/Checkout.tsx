@@ -80,13 +80,11 @@ const Checkout = () => {
     if (profile?.display_name && !signedName) setSignedName(profile.display_name);
   }, [profile?.display_name]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const priceLabel = useMemo(() => {
-    const cents = course?.price_cents ?? 0;
-    return `$${(cents / 100).toFixed(2)}`;
-  }, [course]);
+  const fees = useMemo(() => computeFees(course?.price_cents ?? 0), [course]);
+  const hasPaymentMethod = !!profile?.payment_method_added;
 
   const waiverReady = !waiver || (agreeWaiver && signedName.trim().length >= 3);
-  const canSubmit = !!user && !!course && agreeRisk && waiverReady && !submitting;
+  const canSubmit = !!user && !!course && agreeRisk && waiverReady && hasPaymentMethod && !submitting;
 
   const handleConfirm = async () => {
     if (!user) { toast.error('Please sign in to book'); return; }
