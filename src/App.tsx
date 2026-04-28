@@ -122,7 +122,6 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <AIAssistantMount />
-          <ReportIssueButton />
           <DevRoleSwitcher />
         </AuthProvider>
       </BrowserRouter>
