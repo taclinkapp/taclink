@@ -78,7 +78,7 @@ export const DevRoleSwitcher = () => {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] font-sans">
+    <div className="fixed bottom-4 left-4 z-[100] font-sans">
       {open ? (
         <div className="neu w-64 p-3 space-y-2">
           <div className="flex items-center justify-between px-1 pb-1">
