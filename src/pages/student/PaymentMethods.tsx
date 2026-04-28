@@ -6,16 +6,57 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Plus, Lock, Trash2, AlertCircle, Loader2, Pencil, X, Save } from 'lucide-react';
+import { CreditCard, Plus, Lock, Trash2, AlertCircle, Loader2, Pencil, X, Save, Smartphone, Mail, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
+
+type AltType = 'cashapp' | 'venmo' | 'paypal' | 'zelle';
+type MethodType = 'card' | AltType;
 
 type Card = {
   id: string;
-  brand: string;
-  last4: string;
-  exp_month: number;
-  exp_year: number;
-  cardholder_name: string;
+  method_type: MethodType;
+  brand: string | null;
+  last4: string | null;
+  exp_month: number | null;
+  exp_year: number | null;
+  cardholder_name: string | null;
+  handle: string | null;
+};
+
+const ALT_META: Record<AltType, { label: string; placeholder: string; icon: typeof Smartphone; hint: string; validate: (v: string) => string | null }> = {
+  cashapp: {
+    label: 'Cash App',
+    placeholder: '$cashtag',
+    icon: DollarSign,
+    hint: 'Your $cashtag (e.g. $jane)',
+    validate: (v) => /^\$?[A-Za-z][A-Za-z0-9_]{0,19}$/.test(v.trim()) ? null : 'Enter a valid $cashtag (letters/numbers/underscore)',
+  },
+  venmo: {
+    label: 'Venmo',
+    placeholder: '@username',
+    icon: Smartphone,
+    hint: 'Your Venmo username',
+    validate: (v) => /^@?[A-Za-z0-9_-]{5,30}$/.test(v.trim()) ? null : 'Enter a valid Venmo username (5–30 chars)',
+  },
+  paypal: {
+    label: 'PayPal',
+    placeholder: 'you@email.com',
+    icon: Mail,
+    hint: 'Email tied to your PayPal account',
+    validate: (v) => z.string().email().safeParse(v.trim()).success ? null : 'Enter a valid PayPal email',
+  },
+  zelle: {
+    label: 'Zelle',
+    placeholder: 'email or phone',
+    icon: Mail,
+    hint: 'Email or phone enrolled with Zelle',
+    validate: (v) => {
+      const t = v.trim();
+      if (z.string().email().safeParse(t).success) return null;
+      if (/^\+?[0-9 ()-]{7,20}$/.test(t)) return null;
+      return 'Enter a valid email or phone';
+    },
+  },
 };
 
 type Brand = 'Visa' | 'Mastercard' | 'Amex' | 'Discover' | 'Card';
