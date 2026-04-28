@@ -11,7 +11,7 @@ import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { toast } from 'sonner';
 import { QrScanner } from '@/components/QrScanner';
-import { parseCheckinPayload, PROXIMITY_TRIGGER_METERS } from '@/lib/qrCheckin';
+import { parseCheckinPayload, looksLikeSignedToken, PROXIMITY_TRIGGER_METERS } from '@/lib/qrCheckin';
 import { useProximity } from '@/hooks/useProximity';
 import { Switch } from '@/components/ui/switch';
 
@@ -438,14 +438,40 @@ const CourseManagement = () => {
 
       {scannerOpen && (
         <QrScanner
-          onDecode={(text) => {
+          onDecode={async (text) => {
             setScannerOpen(false);
-            const parsed = parseCheckinPayload(text);
-            if (!parsed) {
-              toast.error('Not a valid TacLink check-in QR.');
-              return;
+
+            // Resolve the booking ID — signed tokens go through server verification,
+            // legacy v1 tokens are still parsed but with a warning.
+            let resolvedBookingId: string | null = null;
+
+            if (looksLikeSignedToken(text)) {
+              try {
+                const { data, error } = await supabase.functions.invoke('verify-checkin-qr', {
+                  body: { token: text, courseId: id },
+                });
+                if (error) throw error;
+                if (!data?.ok) {
+                  toast.error(data?.reason ?? 'QR verification failed.');
+                  return;
+                }
+                resolvedBookingId = data.bookingId;
+              } catch (e: any) {
+                toast.error(e?.message ?? 'Could not verify QR.');
+                return;
+              }
+            } else {
+              const parsed = parseCheckinPayload(text);
+              if (!parsed) {
+                toast.error('Not a valid TacLink check-in QR.');
+                return;
+              }
+              toast.warning('Unsigned QR detected — ask the student to refresh their booking page.');
+              resolvedBookingId = parsed.bookingId;
             }
-            const match = bookings.find((b: any) => b.id === parsed.bookingId);
+
+            if (!resolvedBookingId) return;
+            const match = bookings.find((b: any) => b.id === resolvedBookingId);
             if (!match) {
               toast.error('That QR is not for this course.');
               return;
@@ -458,16 +484,14 @@ const CourseManagement = () => {
               const inRange =
                 proximity.reading && proximity.reading.smoothedM <= PROXIMITY_TRIGGER_METERS;
               if (inRange) {
-                // Both factors satisfied right now — commit.
-                markAttended(parsed.bookingId, { source: 'proximity' });
+                markAttended(resolvedBookingId, { source: 'proximity' });
                 setPending(null);
               } else {
-                // Stage and wait for proximity. NO DB write yet.
-                setPending({ bookingId: parsed.bookingId, scannedAt: Date.now() });
+                setPending({ bookingId: resolvedBookingId, scannedAt: Date.now() });
                 toast.info('QR verified — waiting for proximity to confirm.');
               }
             } else {
-              markAttended(parsed.bookingId, { source: 'qr' });
+              markAttended(resolvedBookingId, { source: 'qr' });
             }
           }}
           onClose={() => setScannerOpen(false)}

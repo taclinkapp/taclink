@@ -13,6 +13,8 @@ export type Profile = {
   bio: string | null;
   payment_method_added?: boolean | null;
   subscription_status?: string | null;
+  account_status?: 'active' | 'warned' | 'suspended' | string | null;
+  strike_points?: number | null;
 };
 
 type AuthCtx = {

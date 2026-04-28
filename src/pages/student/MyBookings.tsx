@@ -6,6 +6,7 @@ import { mockBookings } from '@/lib/mockData';
 import { CategoryPill } from '@/components/CategoryPill';
 import { QrCode, Calendar, MapPin, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 
 const MyBookings = () => {
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -36,7 +37,7 @@ const MyBookings = () => {
         ) : list.map((b) => (
           <Link key={b.id} to={`/student/booking/${b.id}`} className="block tactical-card p-4 hover:border-primary/40 transition">
             <div className="flex items-start gap-3">
-              <img src={b.course.instructorPhoto} className="h-12 w-12 rounded-full border border-border" alt="" />
+              <WatermarkedAvatar src={b.course.instructorPhoto} size={48} className="border border-border" alt={b.course.instructorName} />
               <div className="flex-1 min-w-0">
                 <CategoryPill category={b.course.category} className="mb-1.5" />
                 <h3 className="font-bold leading-tight truncate">{b.course.title}</h3>

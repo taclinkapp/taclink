@@ -4,6 +4,7 @@ import { StudentTabBar } from '@/components/StudentTabBar';
 import { mockBookings, mockCourses } from '@/lib/mockData';
 import { Settings, ChevronRight } from 'lucide-react';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 
 const StudentProfile = () => {
   const nav = useNavigate();
@@ -57,7 +58,7 @@ const StudentProfile = () => {
         <Section title="Saved Instructors">
           {mockCourses.slice(0, 2).map((c) => (
             <div key={c.id} className="tactical-card p-3 flex items-center gap-3">
-              <img src={c.instructorPhoto} className="h-10 w-10 rounded-full border border-border" alt="" />
+              <WatermarkedAvatar src={c.instructorPhoto} size={40} className="border border-border" alt={c.instructorName} />
               <div className="flex-1">
                 <div className="flex items-center gap-1 text-sm font-semibold">{c.instructorName} {c.instructorVerified && <VerifiedBadge />}</div>
                 <div className="text-xs text-muted-foreground">{c.city}, {c.state}</div>
