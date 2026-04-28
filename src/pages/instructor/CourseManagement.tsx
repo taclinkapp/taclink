@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { mockRoster, mockWaitlist } from '@/lib/mockData';
 import { useCourse } from '@/hooks/useCourses';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy } from 'lucide-react';
+import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock } from 'lucide-react';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { toast } from 'sonner';
 
