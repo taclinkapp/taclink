@@ -83,5 +83,13 @@ export const useNotifications = () => {
     await supabase.from("notifications").update({ read_at: now }).eq("id", id);
   }, []);
 
-  return { items, loading, unreadCount, markAllRead, markRead, reload: load };
+  const setReadState = useCallback(async (ids: string[], read: boolean) => {
+    if (ids.length === 0) return;
+    const value = read ? new Date().toISOString() : null;
+    setItems((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, read_at: value } : n)));
+    await supabase.from("notifications").update({ read_at: value }).in("id", ids);
+  }, []);
+
+  return { items, loading, unreadCount, markAllRead, markRead, setReadState, reload: load };
 };
+
