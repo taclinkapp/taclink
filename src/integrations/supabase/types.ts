@@ -932,6 +932,51 @@ export type Database = {
         }
         Relationships: []
       }
+      refunds: {
+        Row: {
+          amount_cents: number
+          booking_id: string
+          created_at: string
+          external_reference: string | null
+          id: string
+          issued_by: string
+          notes: string | null
+          reason: string
+          refund_type: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          booking_id: string
+          created_at?: string
+          external_reference?: string | null
+          id?: string
+          issued_by: string
+          notes?: string | null
+          reason: string
+          refund_type: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          booking_id?: string
+          created_at?: string
+          external_reference?: string | null
+          id?: string
+          issued_by?: string
+          notes?: string | null
+          reason?: string
+          refund_type?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           comment: string | null

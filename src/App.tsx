@@ -60,6 +60,7 @@ import { AdminSupportTickets } from "./pages/admin/AdminSupportTickets";
 import { AdminConversations } from "./pages/admin/AdminConversations";
 import { AdminConversationDetail } from "./pages/admin/AdminConversationDetail";
 import AdminModeration from "./pages/admin/AdminModeration";
+import AdminRefunds from "./pages/admin/AdminRefunds";
 import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -139,6 +140,8 @@ const App = () => (
               <Route path="conversations" element={<AdminConversations />} />
               <Route path="conversations/:id" element={<AdminConversationDetail />} />
               <Route path="moderation" element={<AdminModeration />} />
+              <Route path="deposit-review" element={<DepositReview />} />
+              <Route path="refunds" element={<AdminRefunds />} />
               <Route path="activity" element={<AdminActivity />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
