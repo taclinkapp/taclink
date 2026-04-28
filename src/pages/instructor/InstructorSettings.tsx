@@ -4,10 +4,20 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Switch } from '@/components/ui/switch';
 import { ChevronRight, LogOut, Trash2, Package, Bug } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const InstructorSettings = () => {
   const nav = useNavigate();
+  const { signOut } = useAuth();
   const [reportOpen, setReportOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Signed out');
+    nav('/auth/signin', { replace: true });
+  };
+
   return (
     <MobileShell withTabBar={false}>
       <PageHeader title="Settings" back />
@@ -37,7 +47,7 @@ const InstructorSettings = () => {
           <Row label="Terms of Service" />
         </Section>
         <div className="pt-4 space-y-2">
-          <button onClick={() => nav('/')} className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive font-bold text-sm hover:bg-destructive/10">
+          <button onClick={handleSignOut} className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive font-bold text-sm hover:bg-destructive/10">
             <LogOut className="h-4 w-4" /> Sign Out
           </button>
           <button className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive/70 font-semibold text-xs hover:bg-destructive/10">
