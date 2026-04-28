@@ -26,6 +26,10 @@ const CourseManagement = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [autoCheckin, setAutoCheckin] = useState(false);
+  // Two-factor auto check-in: a scanned QR stages a pending booking that
+  // proximity must then confirm in-range before the row is marked attended.
+  const [pending, setPending] = useState<{ bookingId: string; scannedAt: number } | null>(null);
+  const PENDING_TTL_MS = 60_000;
   const qc = useQueryClient();
 
   // Real bookings on this course (used for check-in list + auto check-in pool)
@@ -60,7 +64,11 @@ const CourseManagement = () => {
       toast.error(error.message);
       return;
     }
-    toast.success(opts?.source === 'proximity' ? 'Auto check-in (proximity)' : 'Checked in');
+    const label =
+      opts?.source === 'proximity'
+        ? 'Auto check-in confirmed (QR + proximity)'
+        : 'Checked in';
+    toast.success(label);
     qc.invalidateQueries({ queryKey: ['course_bookings', id] });
   };
 
@@ -89,12 +97,30 @@ const CourseManagement = () => {
     triggerMeters: PROXIMITY_TRIGGER_METERS,
     enabled: autoCheckin,
     onTrigger: () => {
-      // Auto check-in the next reserved booking (demo behavior — instructor-side
-      // can't know which student walked in, so we mark the first reserved seat).
-      const next = bookings.find((b: any) => b.status === 'reserved');
-      if (next) markAttended(next.id, { source: 'proximity' });
-      else toast.info('All students already checked in.');
-      setAutoCheckin(false);
+      // Two-factor: only commit the booking that was scanned, and only if
+      // the scan is still fresh and the booking belongs to this course.
+      if (!pending) {
+        toast.info('In range — scan a student QR to confirm check-in.');
+        return;
+      }
+      if (Date.now() - pending.scannedAt > PENDING_TTL_MS) {
+        toast.error('Scan expired. Re-scan the student QR.');
+        setPending(null);
+        return;
+      }
+      const match = bookings.find((b: any) => b.id === pending.bookingId);
+      if (!match) {
+        toast.error('Scanned QR is not for this course.');
+        setPending(null);
+        return;
+      }
+      if (match.status === 'attended') {
+        toast.info('That student is already checked in.');
+        setPending(null);
+        return;
+      }
+      markAttended(pending.bookingId, { source: 'proximity' });
+      setPending(null);
     },
   });
 
@@ -349,7 +375,30 @@ const CourseManagement = () => {
                           </span>
                         )}
                       </div>
-                      <div>Trigger at ≤ {PROXIMITY_TRIGGER_METERS} m (~10 ft).</div>
+                      <div>Trigger at ≤ {PROXIMITY_TRIGGER_METERS} m (~10 ft) — only after a QR scan.</div>
+                    </div>
+                  )}
+
+                  {pending && (
+                    <div className="mt-3 rounded-md border border-primary/40 bg-primary/10 p-3 flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-primary/20 flex items-center justify-center shrink-0">
+                        <QrCode className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-[11px]">
+                        <div className="font-bold text-foreground">
+                          Pending: Booking {pending.bookingId.slice(0, 8).toUpperCase()}
+                        </div>
+                        <div className="text-muted-foreground">
+                          Waiting for proximity to confirm (expires in{' '}
+                          {Math.max(0, Math.ceil((PENDING_TTL_MS - (Date.now() - pending.scannedAt)) / 1000))}s).
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setPending(null)}
+                        className="text-[10px] uppercase tracking-wider font-bold text-destructive hover:underline shrink-0"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   )}
                 </div>
@@ -396,7 +445,30 @@ const CourseManagement = () => {
               toast.error('Not a valid TacLink check-in QR.');
               return;
             }
-            markAttended(parsed.bookingId, { source: 'qr' });
+            const match = bookings.find((b: any) => b.id === parsed.bookingId);
+            if (!match) {
+              toast.error('That QR is not for this course.');
+              return;
+            }
+            if (match.status === 'attended') {
+              toast.info('Already checked in.');
+              return;
+            }
+            if (autoCheckin) {
+              const inRange =
+                proximity.reading && proximity.reading.smoothedM <= PROXIMITY_TRIGGER_METERS;
+              if (inRange) {
+                // Both factors satisfied right now — commit.
+                markAttended(parsed.bookingId, { source: 'proximity' });
+                setPending(null);
+              } else {
+                // Stage and wait for proximity. NO DB write yet.
+                setPending({ bookingId: parsed.bookingId, scannedAt: Date.now() });
+                toast.info('QR verified — waiting for proximity to confirm.');
+              }
+            } else {
+              markAttended(parsed.bookingId, { source: 'qr' });
+            }
           }}
           onClose={() => setScannerOpen(false)}
         />
