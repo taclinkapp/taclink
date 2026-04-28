@@ -267,6 +267,7 @@ export type Database = {
           moderation_severity: string | null
           moderation_status: string
           price_cents: number
+          skill_level: string
           starts_at: string | null
           state: string | null
           status: string
@@ -292,6 +293,7 @@ export type Database = {
           moderation_severity?: string | null
           moderation_status?: string
           price_cents?: number
+          skill_level?: string
           starts_at?: string | null
           state?: string | null
           status?: string
@@ -317,6 +319,7 @@ export type Database = {
           moderation_severity?: string | null
           moderation_status?: string
           price_cents?: number
+          skill_level?: string
           starts_at?: string | null
           state?: string | null
           status?: string

@@ -20,8 +20,17 @@ export type DbCourse = {
   ends_at: string | null;
   cover_image_url: string | null;
   status: string;
+  skill_level?: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+export const SKILL_LEVEL_LABELS: Record<SkillLevel, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+  all_levels: 'All Levels',
 };
 
 const PLACEHOLDER_IMG =
@@ -76,6 +85,7 @@ export const dbToViewCourse = (
     prerequisites: "",
     equipment: "",
     status: row.status === "draft" ? "draft" : "active",
+    skillLevel: (row.skill_level as any) ?? 'all_levels',
     lat: row.lat ?? 0,
     lng: row.lng ?? 0,
   };
@@ -147,6 +157,7 @@ export type NewCourseInput = {
   starts_at?: string; // ISO
   ends_at?: string; // ISO
   cover_image_url?: string;
+  skill_level?: SkillLevel;
   status: "draft" | "published";
 };
 

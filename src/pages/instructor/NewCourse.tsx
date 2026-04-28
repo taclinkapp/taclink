@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { US_STATES } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { createCourse, uploadCoursePhoto } from '@/lib/courses';
+import { createCourse, uploadCoursePhoto, SKILL_LEVEL_LABELS, type SkillLevel } from '@/lib/courses';
 import { supabase } from '@/integrations/supabase/client';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { redeemFreeListingCredit, fetchPunchCardState } from '@/lib/punchCard';
@@ -44,6 +44,7 @@ const NewCourse = () => {
   // form state
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
+  const [skillLevel, setSkillLevel] = useState<SkillLevel>('all_levels');
   const [description, setDescription] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -81,6 +82,7 @@ const NewCourse = () => {
       const d = JSON.parse(raw);
       if (d.title) setTitle(d.title);
       if (d.category) setCategory(d.category);
+      if (d.skillLevel) setSkillLevel(d.skillLevel);
       if (d.description) setDescription(d.description);
       if (d.date) setDate(d.date);
       if (d.startTime) setStartTime(d.startTime);
@@ -109,7 +111,7 @@ const NewCourse = () => {
         const savedAt = new Date().toISOString();
         localStorage.setItem(
           DRAFT_KEY,
-          JSON.stringify({ title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
+          JSON.stringify({ title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
         );
         setLastSavedAt(new Date(savedAt));
         setDraftStatus('saved');
@@ -118,14 +120,14 @@ const NewCourse = () => {
       }
     }, 800);
     return () => clearTimeout(t);
-  }, [title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, DRAFT_KEY]);
+  }, [title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, DRAFT_KEY]);
 
   const saveDraftNow = () => {
     try {
       const savedAt = new Date().toISOString();
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
+        JSON.stringify({ title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
       );
       setLastSavedAt(new Date(savedAt));
       setDraftStatus('saved');
@@ -139,7 +141,7 @@ const NewCourse = () => {
     localStorage.removeItem(DRAFT_KEY);
     setLastSavedAt(null);
     setDraftStatus('idle');
-    setTitle(''); setCategory(''); setDescription('');
+    setTitle(''); setCategory(''); setSkillLevel('all_levels'); setDescription('');
     setDate(''); setStartTime(''); setEndTime('');
     setAddress(''); setCity(''); setState('');
     setCapacity(''); setPrice('');
@@ -225,6 +227,7 @@ const NewCourse = () => {
         title: title.trim(),
         description: description.trim() || undefined,
         category,
+        skill_level: skillLevel,
         price_cents: Math.round(Number(price) * 100),
         duration_minutes: durationMin,
         capacity: Number(capacity),
@@ -339,6 +342,16 @@ const NewCourse = () => {
                 </SelectContent>
               </Select>
             </Field>
+            <Field label="Skill Level">
+              <Select value={skillLevel} onValueChange={(v) => setSkillLevel(v as SkillLevel)}>
+                <SelectTrigger className="bg-card border-border h-11"><SelectValue placeholder="Select level" /></SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {(Object.keys(SKILL_LEVEL_LABELS) as SkillLevel[]).map((lv) => (
+                    <SelectItem key={lv} value={lv}>{SKILL_LEVEL_LABELS[lv]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
             <Field
               label="Description"
               action={
@@ -450,7 +463,7 @@ const NewCourse = () => {
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Summary</div>
               <h2 className="font-bold text-lg">{title || 'Untitled course'}</h2>
               <div className="text-xs text-muted-foreground space-y-1">
-                <div>Category: {category || '—'}</div>
+                <div>Category: {category || '—'} · Level: {SKILL_LEVEL_LABELS[skillLevel]}</div>
                 <div>Date: {date || '—'} · {startTime || '—'} – {endTime || '—'}</div>
                 <div>Location: {[address, city, state].filter(Boolean).join(', ') || '—'}</div>
                 <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
