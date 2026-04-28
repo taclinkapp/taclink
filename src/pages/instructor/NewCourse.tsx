@@ -248,7 +248,13 @@ const NewCourse = () => {
             <div key={i} className={cn('h-1 flex-1 rounded-full', i <= step ? 'bg-primary' : 'bg-border')} />
           ))}
         </div>
-        <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold mt-2">Step {step + 1} of 4 · {STEPS[step]}</div>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Step {step + 1} of 4 · {STEPS[step]}</div>
+          <div className="text-[10px] text-muted-foreground">
+            {draftStatus === 'saving' && 'Saving draft…'}
+            {draftStatus === 'saved' && lastSavedAt && `Draft saved ${lastSavedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
+          </div>
+        </div>
       </div>
 
       <div className="px-4 py-5 space-y-4">
