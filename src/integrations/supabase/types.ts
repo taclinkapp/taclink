@@ -584,6 +584,42 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          brand: string
+          cardholder_name: string
+          created_at: string
+          exp_month: number
+          exp_year: number
+          id: string
+          last4: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand: string
+          cardholder_name: string
+          created_at?: string
+          exp_month: number
+          exp_year: number
+          id?: string
+          last4: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string
+          cardholder_name?: string
+          created_at?: string
+          exp_month?: number
+          exp_year?: number
+          id?: string
+          last4?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       policy_acknowledgments: {
         Row: {
           created_at: string
