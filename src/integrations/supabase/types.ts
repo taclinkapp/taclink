@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          attended_at: string | null
+          booked_at: string
+          course_id: string
+          created_at: string
+          id: string
+          status: Database["public"]["Enums"]["booking_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          attended_at?: string | null
+          booked_at?: string
+          course_id: string
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          attended_at?: string | null
+          booked_at?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           course_id: string | null
@@ -331,6 +372,7 @@ export type Database = {
     }
     Enums: {
       app_role: "student" | "instructor" | "admin"
+      booking_status: "reserved" | "attended" | "cancelled" | "no_show"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -459,6 +501,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["student", "instructor", "admin"],
+      booking_status: ["reserved", "attended", "cancelled", "no_show"],
     },
   },
 } as const
