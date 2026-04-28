@@ -383,14 +383,14 @@ const InstructorRoster = () => {
                               via {r.depositMethod} {r.depositHandleUsed}
                             </span>
                           )}
-                          {r.depositStatus !== 'confirmed' && (
+                          {r.depositStatus === 'awaiting_confirmation' && (
                             <button
                               disabled={busy}
                               onClick={() => confirmDeposit(r.bookingId)}
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 text-[11px] font-bold uppercase tracking-wider hover:bg-emerald-500/20 disabled:opacity-50"
                             >
                               {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-                              Confirm received
+                              Mark received
                             </button>
                           )}
                         </div>
