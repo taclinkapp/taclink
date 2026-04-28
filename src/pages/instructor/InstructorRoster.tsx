@@ -3,8 +3,11 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, CalendarDays, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Users, CalendarDays, CheckCircle2, XCircle, Clock, RotateCcw, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+
+type BookingStatus = 'reserved' | 'attended' | 'cancelled' | 'no_show';
 
 type RosterRow = {
   bookingId: string;
