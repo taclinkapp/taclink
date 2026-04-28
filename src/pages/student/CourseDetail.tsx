@@ -54,7 +54,7 @@ const CourseDetail = () => {
         {/* Instructor card */}
         <div className="px-4 -mt-6 relative z-10">
           <div className="tactical-card p-4 flex items-center gap-3">
-            <img src={course.instructorPhoto} className="h-14 w-14 rounded-full object-cover border-2 border-primary" alt="" />
+            <WatermarkedAvatar src={course.instructorPhoto} size={56} className="border-2 border-primary" alt={course.instructorName} />
             <div className="flex-1">
               <div className="flex items-center gap-1">
                 <span className="font-bold">{course.instructorName}</span>
