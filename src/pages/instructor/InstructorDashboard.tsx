@@ -55,7 +55,7 @@ const InstructorDashboard = () => {
     const avgRating =
       reviewRows.reduce((s, r) => s + r.rating, 0) / Math.max(1, reviewRows.length);
 
-    return { revenueRows, revenueTotal, studentRows, activeRows, reviewRows, avgRating };
+    return { revenueRows, revenueTotal, revenueGross, revenueFees, studentRows, activeRows, reviewRows, avgRating };
   }, [myCourses]);
 
   const stats: Array<{ key: StatKey; label: string; value: string; icon: typeof Calendar; primary?: boolean; accent?: boolean }> = [
