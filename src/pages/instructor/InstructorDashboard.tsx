@@ -198,8 +198,8 @@ const InstructorDashboard = () => {
                       </SheetTitle>
                       <SheetDescription className="text-xs">
                         {drillCourse
-                          ? `${new Date(drillCourse.date).toLocaleDateString()} · ${drillCourse.seats} × $${drillCourse.unit} = $${drillCourse.total.toLocaleString()}`
-                          : `${monthLabel} · $${breakdown.revenueTotal.toLocaleString()} total`}
+                          ? `${new Date(drillCourse.date).toLocaleDateString()} · ${drillStudents.length} attended · Net $${drillCourse.total.toLocaleString()}`
+                          : `${monthLabel} · Gross $${breakdown.revenueGross.toLocaleString()} − Fees $${breakdown.revenueFees.toLocaleString()} = Net $${breakdown.revenueTotal.toLocaleString()}`}
                       </SheetDescription>
                     </div>
                     {!drillCourse && (
