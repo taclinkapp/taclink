@@ -156,6 +156,7 @@ export type NewCourseInput = {
   starts_at?: string; // ISO
   ends_at?: string; // ISO
   cover_image_url?: string;
+  skill_level?: SkillLevel;
   status: "draft" | "published";
 };
 
