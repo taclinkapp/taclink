@@ -31,7 +31,7 @@ const iconFor = (type: string) => {
 
 const Notifications = () => {
   const nav = useNavigate();
-  const user = getCurrentUser();
+  const user = useIdentity();
   const { items, loading, unreadCount, markAllRead, markRead, setReadState } = useNotifications();
 
   const [selectMode, setSelectMode] = useState(false);
