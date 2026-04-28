@@ -118,7 +118,8 @@ const CourseManagement = () => {
 
   const c = course;
   const enrolled = c.maxStudents - c.spotsRemaining;
-  const checkedIn = mockRoster.filter((s) => s.checkedIn).length;
+  const attendedBookings = bookings.filter((b: any) => b.status === 'attended');
+  const checkedIn = attendedBookings.length;
 
   return (
     <MobileShell withTabBar={false}>
