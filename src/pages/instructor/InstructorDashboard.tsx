@@ -1,0 +1,99 @@
+import { Link } from 'react-router-dom';
+import { MobileShell, PageHeader } from '@/components/MobileShell';
+import { InstructorTabBar } from '@/components/InstructorTabBar';
+import { mockCourses, mockRoster } from '@/lib/mockData';
+import { Bell, TrendingUp, Users, DollarSign, Calendar, ChevronRight, Sparkles } from 'lucide-react';
+
+const InstructorDashboard = () => {
+  const stats = [
+    { label: 'Active', value: '4', icon: Calendar },
+    { label: 'Students', value: '47', icon: Users },
+    { label: 'Reviews', value: '3', icon: TrendingUp, accent: true },
+    { label: 'Revenue', value: '$2.8K', icon: DollarSign, primary: true },
+  ];
+  return (
+    <MobileShell>
+      <PageHeader
+        right={
+          <button className="text-muted-foreground hover:text-primary p-2 -mr-2 relative">
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
+          </button>
+        }
+      />
+      <div className="px-4 pt-2">
+        <div className="flex items-center gap-3">
+          <img src="https://i.pravatar.cc/150?img=12" className="h-12 w-12 rounded-full border-2 border-primary" alt="" />
+          <div>
+            <p className="text-xs text-muted-foreground">Good morning,</p>
+            <h1 className="text-xl font-black">Marcus Reyes</h1>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 mt-5">
+          {stats.map((s) => (
+            <div key={s.label} className="tactical-card p-4">
+              <s.icon className={`h-4 w-4 mb-2 ${s.primary ? 'text-primary' : 'text-muted-foreground'}`} />
+              <div className={`text-2xl font-black ${s.primary ? 'text-primary' : 'text-foreground'}`}>{s.value}</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">{s.label} this month</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Demand banner */}
+        <div className="mt-4 tactical-card border-primary/30 bg-gradient-to-br from-primary/15 to-transparent p-4">
+          <div className="flex items-start gap-3">
+            <div className="h-9 w-9 rounded-md bg-primary/20 flex items-center justify-center shrink-0">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold leading-snug">
+                <span className="text-primary font-black">47 students</span> in TX are looking for Pistol courses this week.
+              </p>
+              <Link to="/instructor/courses/new" className="inline-flex items-center gap-1 text-xs font-bold text-primary mt-2 uppercase tracking-wider">
+                Post a Course <ChevronRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <Section title="Upcoming Courses">
+          {mockCourses.slice(0, 3).map((c) => (
+            <Link key={c.id} to={`/instructor/courses/${c.id}`} className="tactical-card p-3 flex items-center gap-3 hover:border-primary/40">
+              <div className="h-12 w-1 rounded-sm bg-primary" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm truncate">{c.title}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {c.maxStudents - c.spotsRemaining}/{c.maxStudents} students
+                </div>
+              </div>
+              <div className="text-xs font-bold uppercase text-primary">Manage</div>
+            </Link>
+          ))}
+        </Section>
+
+        <Section title="Recent Activity">
+          {mockRoster.slice(0, 4).map((s) => (
+            <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
+              <img src={s.photo} className="h-9 w-9 rounded-full border border-border" alt="" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm"><span className="font-semibold">{s.name}</span> <span className="text-muted-foreground">{s.checkedIn ? 'checked in' : 'booked a course'}</span></div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">{new Date(s.bookedAt).toLocaleDateString()}</div>
+              </div>
+            </div>
+          ))}
+        </Section>
+      </div>
+      <InstructorTabBar />
+    </MobileShell>
+  );
+};
+
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="mt-6">
+    <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-3">{title}</h3>
+    <div className="space-y-2">{children}</div>
+  </div>
+);
+
+export default InstructorDashboard;
