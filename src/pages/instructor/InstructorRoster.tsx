@@ -86,6 +86,21 @@ const InstructorRoster = () => {
   };
 
   const confirmDeposit = async (bookingId: string) => {
+    const target = rows.find((r) => r.bookingId === bookingId);
+    if (!target) return;
+    // Lock: only allow confirming an awaiting deposit. Confirmed/expired are immutable here.
+    if (target.depositStatus === 'confirmed') {
+      toast.info('Deposit already confirmed');
+      return;
+    }
+    if (target.depositStatus === 'expired') {
+      toast.error('Deposit window expired — booking was auto-cancelled');
+      return;
+    }
+    if (target.depositStatus !== 'awaiting_confirmation') {
+      toast.error('Student has not marked the deposit as sent yet');
+      return;
+    }
     setUpdatingId(bookingId);
     const prev = rows;
     setRows((rs) =>
@@ -93,20 +108,51 @@ const InstructorRoster = () => {
         r.bookingId === bookingId ? { ...r, depositStatus: 'confirmed' } : r,
       ),
     );
-    const { error } = await supabase
+    // Guarded update — refuses to overwrite an already-confirmed or expired row.
+    const { data, error } = await supabase
       .from('bookings')
       .update({
         deposit_status: 'confirmed',
         deposit_confirmed_at: new Date().toISOString(),
       })
-      .eq('id', bookingId);
+      .eq('id', bookingId)
+      .eq('deposit_status', 'awaiting_confirmation')
+      .select('id')
+      .maybeSingle();
     setUpdatingId(null);
     if (error) {
       setRows(prev);
       toast.error('Could not confirm deposit', { description: error.message });
+    } else if (!data) {
+      setRows(prev);
+      toast.error('Deposit state changed — refresh and try again');
     } else {
-      toast.success('Deposit confirmed');
+      toast.success('Deposit confirmed — booking locked in');
     }
+  };
+
+  // Lazy auto-expire: any pending_send / awaiting_confirmation booking past its
+  // 24-hour deadline gets flipped to expired + cancelled.
+  const expireOverdue = async (candidates: RosterRow[]) => {
+    const nowMs = Date.now();
+    const overdue = candidates.filter(
+      (r) =>
+        r.depositExpiresAt &&
+        new Date(r.depositExpiresAt).getTime() < nowMs &&
+        (r.depositStatus === 'pending_send' || r.depositStatus === 'awaiting_confirmation'),
+    );
+    if (overdue.length === 0) return candidates;
+    const ids = overdue.map((r) => r.bookingId);
+    await supabase
+      .from('bookings')
+      .update({ deposit_status: 'expired', status: 'cancelled' })
+      .in('id', ids)
+      .in('deposit_status', ['pending_send', 'awaiting_confirmation']);
+    return candidates.map((r) =>
+      ids.includes(r.bookingId)
+        ? { ...r, depositStatus: 'expired', status: 'cancelled' }
+        : r,
+    );
   };
 
   useEffect(() => {
