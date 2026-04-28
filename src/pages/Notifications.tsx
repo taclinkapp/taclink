@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { useNotifications } from "@/hooks/useNotifications";
-import { getCurrentUser } from "@/lib/messaging";
+import { useIdentity } from "@/hooks/useIdentity";
 import { Bell, MessageSquare, Loader2, CheckCheck, X, MailOpen, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,7 +31,7 @@ const iconFor = (type: string) => {
 
 const Notifications = () => {
   const nav = useNavigate();
-  const user = getCurrentUser();
+  const user = useIdentity();
   const { items, loading, unreadCount, markAllRead, markRead, setReadState } = useNotifications();
 
   const [selectMode, setSelectMode] = useState(false);

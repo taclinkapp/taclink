@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentUser } from "@/lib/messaging";
+import { useIdentity } from "@/hooks/useIdentity";
 
 export type NotificationRow = {
   id: string;
@@ -15,7 +15,7 @@ export type NotificationRow = {
 };
 
 export const useNotifications = () => {
-  const user = getCurrentUser();
+  const user = useIdentity();
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
 

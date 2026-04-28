@@ -7,11 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { mockCourses } from "@/lib/mockData";
 import {
   ensureConversation,
-  getCurrentUser,
   sendMessage,
   type ConversationRow,
   type MessageRow,
 } from "@/lib/messaging";
+import { useIdentity } from "@/hooks/useIdentity";
 import { Send, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +30,7 @@ export const ConversationView = ({ variant }: Props) => {
   const [params] = useSearchParams();
   const courseId = params.get("courseId");
   const nav = useNavigate();
-  const user = getCurrentUser();
+  const user = useIdentity();
 
   const [conversation, setConversation] = useState<ConversationRow | null>(null);
   const [messages, setMessages] = useState<MessageRow[]>([]);
