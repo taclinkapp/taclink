@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversations: {
+        Row: {
+          course_id: string | null
+          course_title: string | null
+          created_at: string
+          id: string
+          instructor_id: string
+          instructor_name: string | null
+          instructor_photo: string | null
+          last_message: string | null
+          last_message_at: string
+          student_id: string
+          student_name: string | null
+          student_photo: string | null
+          updated_at: string
+        }
+        Insert: {
+          course_id?: string | null
+          course_title?: string | null
+          created_at?: string
+          id?: string
+          instructor_id: string
+          instructor_name?: string | null
+          instructor_photo?: string | null
+          last_message?: string | null
+          last_message_at?: string
+          student_id: string
+          student_name?: string | null
+          student_photo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string | null
+          course_title?: string | null
+          created_at?: string
+          id?: string
+          instructor_id?: string
+          instructor_name?: string | null
+          instructor_photo?: string | null
+          last_message?: string | null
+          last_message_at?: string
+          student_id?: string
+          student_name?: string | null
+          student_photo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       issue_reports: {
         Row: {
           admin_notes: string | null
@@ -61,6 +109,44 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+          sender_role: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id: string
+          sender_role: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
