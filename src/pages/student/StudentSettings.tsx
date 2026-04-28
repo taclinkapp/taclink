@@ -41,7 +41,7 @@ const StudentSettings = () => {
         </Section>
 
         <Section title="Legal">
-          <Row label="Privacy Policy" />
+          <Row label="Privacy Policy" onClick={() => nav('/legal/privacy')} />
           <Row label="Terms of Service" onClick={() => nav('/legal/terms')} />
         </Section>
 

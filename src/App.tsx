@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import NotFound from "./pages/NotFound.tsx";
 import Notifications from "./pages/Notifications";
 import TermsOfService from "./pages/legal/TermsOfService";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 
 import Splash from "./pages/Splash";
 import SignIn from "./pages/auth/SignIn";
@@ -116,6 +117,7 @@ const App = () => (
 
             <Route path="/notifications" element={<Authed><Notifications /></Authed>} />
             <Route path="/legal/terms" element={<TermsOfService />} />
+            <Route path="/legal/privacy" element={<PrivacyPolicy />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
