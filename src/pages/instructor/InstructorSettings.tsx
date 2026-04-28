@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, LogOut, Trash2, Package } from 'lucide-react';
+import { ChevronRight, LogOut, Trash2, Package, Bug } from 'lucide-react';
+import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 
 const InstructorSettings = () => {
   const nav = useNavigate();
+  const [reportOpen, setReportOpen] = useState(false);
   return (
     <MobileShell withTabBar={false}>
       <PageHeader title="Settings" back />
@@ -23,6 +26,12 @@ const InstructorSettings = () => {
           <ToggleRow label="Reviews" defaultOn />
           <ToggleRow label="Weekly demand digest" defaultOn />
         </Section>
+        <Section title="Support">
+          <button onClick={() => setReportOpen(true)} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
+            <span className="text-sm font-medium flex items-center gap-2"><Bug className="h-4 w-4 text-primary" />Report an Issue</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </Section>
         <Section title="Legal">
           <Row label="Privacy Policy" />
           <Row label="Terms of Service" />
@@ -36,6 +45,7 @@ const InstructorSettings = () => {
           </button>
         </div>
       </div>
+      <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
     </MobileShell>
   );
 };

@@ -34,7 +34,9 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { AdminUsers, AdminInstructors } from "./pages/admin/AdminUsers";
 import { AdminCourses, AdminWaitlist, AdminActivity, AdminSettings } from "./pages/admin/AdminCourses";
+import { AdminReports } from "./pages/admin/AdminReports";
 import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
+import { ReportIssueButton } from "./components/ReportIssueButton";
 
 const queryClient = new QueryClient();
 
@@ -81,12 +83,14 @@ const App = () => (
             <Route path="instructors" element={<AdminInstructors />} />
             <Route path="courses" element={<AdminCourses />} />
             <Route path="waitlist" element={<AdminWaitlist />} />
+            <Route path="reports" element={<AdminReports />} />
             <Route path="activity" element={<AdminActivity />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <ReportIssueButton />
         <DevRoleSwitcher />
       </BrowserRouter>
     </TooltipProvider>
