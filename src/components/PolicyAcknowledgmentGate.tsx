@@ -93,16 +93,17 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
               <Lock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
               <p>
                 <span className="font-bold">All bookings and communication stay on TacLink.</span>{" "}
-                Sharing phone numbers, emails, social handles or payment apps inside the
-                app is not allowed.
+                Course payments are handled directly between you and the instructor
+                outside the app — but the booking itself must be made on TacLink.
+                Sharing phone numbers, emails, or social handles to arrange training
+                off-platform is not allowed.
               </p>
             </div>
             <div className="flex gap-2">
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
               <p>
-                Trying to move payments off-platform — or arranging training without a
-                booking — may result in a trust-score penalty, withheld payouts, or
-                account suspension.
+                Arranging training without a TacLink booking may result in a
+                trust-score penalty or account suspension.
               </p>
             </div>
           </div>
