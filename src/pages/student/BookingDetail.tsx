@@ -133,13 +133,19 @@ const BookingDetail = () => {
         {upcoming && (
           <div className="tactical-card p-5 text-center">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">Check-In QR</div>
-            <div className="mx-auto h-56 w-56 bg-white p-3 rounded-sm">
-              <div className="h-full w-full" style={{
-                backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)',
-                backgroundSize: '14px 14px',
-                backgroundPosition: '0 0, 0 7px, 7px -7px, -7px 0',
-              }} />
+            <div className="mx-auto bg-white p-4 rounded-sm w-fit">
+              <QRCodeSVG value={buildCheckinPayload(b.id)} size={208} level="M" includeMargin={false} />
             </div>
+            <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed">
+              Show this to your instructor at the course. They'll scan it to mark you attended.
+            </p>
+          </div>
+        )}
+
+        {attended && (
+          <div className="tactical-card p-4 flex items-center gap-3 border-success/30 bg-success/5">
+            <CheckCircle2 className="h-5 w-5 text-success" />
+            <div className="text-sm font-semibold">You're checked in for this course.</div>
           </div>
         )}
 
