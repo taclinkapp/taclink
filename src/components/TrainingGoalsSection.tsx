@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Target, Plus, Trash2, CheckCircle2, Calendar, Loader2, Flag, Pencil } from 'lucide-react';
+import { Target, Plus, Trash2, CheckCircle2, Calendar, Loader2, Flag, Pencil, History, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   useTrainingGoals,
