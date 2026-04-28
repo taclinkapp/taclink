@@ -98,6 +98,16 @@ const NewCourse = () => {
     const endsAt = new Date(`${date}T${endTime}:00`);
     const durationMin = Math.max(0, Math.round((endsAt.getTime() - startsAt.getTime()) / 60000));
     try {
+      let coverUrl: string | undefined;
+      if (coverFile) {
+        try {
+          coverUrl = await uploadCoursePhoto(user.id, coverFile);
+        } catch (uploadErr: any) {
+          toast.error(uploadErr?.message ?? 'Cover photo upload failed');
+          setSaving(false);
+          return;
+        }
+      }
       await createCourse(user.id, {
         title: title.trim(),
         description: description.trim() || undefined,
@@ -110,6 +120,7 @@ const NewCourse = () => {
         state,
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
+        cover_image_url: coverUrl,
         status: 'published',
       });
       qc.invalidateQueries({ queryKey: ['courses'] });
