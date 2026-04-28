@@ -317,6 +317,86 @@ const GoalCard = ({
   );
 };
 
+const formatRelative = (iso: string) => {
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  const min = Math.round(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.round(hr / 24);
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString();
+};
+
+const formatFull = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+const GoalHistory = ({ goal }: { goal: GoalWithProgress }) => {
+  const [open, setOpen] = useState(false);
+  const last = goal.lastEvent;
+  const hasHistory = goal.events.length > 0;
+
+  if (!hasHistory && !goal.completed_at) return null;
+
+  const lastLabel = last
+    ? last.event_type === 'marked_complete'
+      ? 'Marked complete'
+      : 'Marked incomplete'
+    : 'Updated';
+  const lastTime = last?.created_at ?? goal.completed_at ?? goal.updated_at;
+
+  return (
+    <div className="mt-1.5">
+      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+        <span>
+          {lastLabel}{' '}
+          <span title={formatFull(lastTime)} className="text-foreground/70">
+            {formatRelative(lastTime)}
+          </span>
+        </span>
+        {hasHistory && goal.events.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="ml-1 inline-flex items-center gap-0.5 hover:text-primary transition-colors"
+            aria-expanded={open}
+          >
+            <History className="h-3 w-3" />
+            <span>History</span>
+            <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180')} />
+          </button>
+        )}
+      </div>
+      {open && goal.events.length > 1 && (
+        <ul className="mt-1.5 pl-2 border-l border-border/60 space-y-0.5">
+          {goal.events.map((e) => (
+            <li key={e.id} className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+              <span
+                className={cn(
+                  'h-1.5 w-1.5 rounded-full flex-shrink-0',
+                  e.event_type === 'marked_complete' ? 'bg-primary' : 'bg-muted-foreground/50',
+                )}
+              />
+              <span className="text-foreground/80">
+                {e.event_type === 'marked_complete' ? 'Complete' : 'Incomplete'}
+              </span>
+              <span title={formatFull(e.created_at)}>· {formatRelative(e.created_at)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
 const GoalFormDialog = ({
   mode,
   initial,
