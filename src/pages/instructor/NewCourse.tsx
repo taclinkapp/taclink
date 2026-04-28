@@ -360,8 +360,30 @@ const NewCourse = () => {
         )}
         {step === 2 && (
           <>
-            <Field label="Max Students"><Input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)} className="bg-card border-border h-11" placeholder="12" /></Field>
-            <Field label="Booking Fee per Student (USD, min $5)"><Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-card border-border h-11" placeholder="185" /></Field>
+            <Field
+              label="Max Students"
+              action={
+                <AISuggestButton
+                  field="capacity"
+                  context={{ title, category, description, duration_minutes: durationMinutesFromTimes(date, startTime, endTime) }}
+                  onApply={(v) => setCapacity(v.replace(/[^0-9]/g, ''))}
+                />
+              }
+            >
+              <Input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)} className="bg-card border-border h-11" placeholder="12" />
+            </Field>
+            <Field
+              label="Booking Fee per Student (USD, min $5)"
+              action={
+                <AISuggestButton
+                  field="price"
+                  context={{ title, category, description, duration_minutes: durationMinutesFromTimes(date, startTime, endTime), city, state, capacity }}
+                  onApply={(v) => setPrice(v.replace(/[^0-9]/g, ''))}
+                />
+              }
+            >
+              <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-card border-border h-11" placeholder="185" />
+            </Field>
           </>
         )}
         {step === 3 && (
