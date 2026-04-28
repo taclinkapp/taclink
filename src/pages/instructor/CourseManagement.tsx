@@ -99,12 +99,30 @@ const CourseManagement = () => {
     triggerMeters: PROXIMITY_TRIGGER_METERS,
     enabled: autoCheckin,
     onTrigger: () => {
-      // Auto check-in the next reserved booking (demo behavior — instructor-side
-      // can't know which student walked in, so we mark the first reserved seat).
-      const next = bookings.find((b: any) => b.status === 'reserved');
-      if (next) markAttended(next.id, { source: 'proximity' });
-      else toast.info('All students already checked in.');
-      setAutoCheckin(false);
+      // Two-factor: only commit the booking that was scanned, and only if
+      // the scan is still fresh and the booking belongs to this course.
+      if (!pending) {
+        toast.info('In range — scan a student QR to confirm check-in.');
+        return;
+      }
+      if (Date.now() - pending.scannedAt > PENDING_TTL_MS) {
+        toast.error('Scan expired. Re-scan the student QR.');
+        setPending(null);
+        return;
+      }
+      const match = bookings.find((b: any) => b.id === pending.bookingId);
+      if (!match) {
+        toast.error('Scanned QR is not for this course.');
+        setPending(null);
+        return;
+      }
+      if (match.status === 'attended') {
+        toast.info('That student is already checked in.');
+        setPending(null);
+        return;
+      }
+      markAttended(pending.bookingId, { source: 'proximity' });
+      setPending(null);
     },
   });
 
