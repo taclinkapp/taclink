@@ -193,13 +193,8 @@ const NewCourse = () => {
     if (step < 3) { setStep(step + 1); return; }
     if (!user) { toast.error('You must be signed in'); return; }
     if (!hasPM) {
-      toast.error('Add a payment method before publishing', { description: 'Required to pay the monthly platform fee.' });
+      toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
       nav('/instructor/payment-methods');
-      return;
-    }
-    if (!subActive) {
-      toast.error('Activate your instructor subscription to publish', { description: '$4.99 / month.' });
-      nav('/instructor/subscription');
       return;
     }
 
