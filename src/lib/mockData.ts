@@ -61,6 +61,7 @@ export const mockCourses: Course[] = [
     prerequisites: 'Must own a reliable pistol and 300 rounds of ammunition.',
     equipment: 'Pistol, 3 magazines, holster (OWB or IWB), eye + ear pro',
     status: 'active',
+    lat: 30.2672, lng: -97.7431,
   },
   {
     id: 'c2',
@@ -87,6 +88,7 @@ export const mockCourses: Course[] = [
     prerequisites: 'AR-15 or similar carbine, sling, optic.',
     equipment: 'Carbine, 6 magazines, 500 rounds, sling',
     status: 'active',
+    lat: 33.4484, lng: -112.0740,
   },
   {
     id: 'c3',
@@ -113,6 +115,7 @@ export const mockCourses: Course[] = [
     prerequisites: 'None — beginner friendly.',
     equipment: 'Athletic clothes, mouthguard recommended',
     status: 'active',
+    lat: 39.7392, lng: -104.9903,
   },
   {
     id: 'c4',
@@ -139,6 +142,7 @@ export const mockCourses: Course[] = [
     prerequisites: 'None.',
     equipment: 'Provided',
     status: 'active',
+    lat: 25.7617, lng: -80.1918,
   },
   {
     id: 'c5',
@@ -165,6 +169,7 @@ export const mockCourses: Course[] = [
     prerequisites: 'Pump or semi-auto shotgun.',
     equipment: 'Shotgun, 50 birdshot, 25 buckshot, 10 slugs',
     status: 'full',
+    lat: 30.3072, lng: -97.7531,
   },
 ];
 
