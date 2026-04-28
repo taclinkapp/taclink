@@ -84,6 +84,30 @@ const InstructorRoster = () => {
     }
   };
 
+  const confirmDeposit = async (bookingId: string) => {
+    setUpdatingId(bookingId);
+    const prev = rows;
+    setRows((rs) =>
+      rs.map((r) =>
+        r.bookingId === bookingId ? { ...r, depositStatus: 'confirmed' } : r,
+      ),
+    );
+    const { error } = await supabase
+      .from('bookings')
+      .update({
+        deposit_status: 'confirmed',
+        deposit_confirmed_at: new Date().toISOString(),
+      })
+      .eq('id', bookingId);
+    setUpdatingId(null);
+    if (error) {
+      setRows(prev);
+      toast.error('Could not confirm deposit', { description: error.message });
+    } else {
+      toast.success('Deposit confirmed');
+    }
+  };
+
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
