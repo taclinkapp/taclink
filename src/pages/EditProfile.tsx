@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, User, Save, Camera, Trash2, CheckCircle2, Circle } from 'lucide-react';
+import { Loader2, User, Save, Camera, Trash2, CheckCircle2, Circle, AlertTriangle, RotateCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const PROFILE_BUCKET = 'profile-photos';
