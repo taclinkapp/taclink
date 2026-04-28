@@ -60,9 +60,13 @@ const Badge = ({ size }: { size: number }) => (
     strokeLinejoin="round"
     aria-hidden="true"
   >
-    {/* Hexagon outline removed for a cleaner mark */}
-    {/* North arrow */}
-    <path d="M50 6 L46 16 L54 16 Z" fill="currentColor" stroke="none" />
+    {/* Hexagon outline */}
+    <path
+      d="M50 6 L88 28 L88 72 L50 94 L12 72 L12 28 Z"
+      strokeWidth={4}
+    />
+    {/* North arrow breaking the hex */}
+    <path d="M50 2 L46 12 L54 12 Z" fill="currentColor" stroke="none" />
     {/* Compass circle */}
     <circle cx="50" cy="38" r="14" strokeWidth={2.2} />
     {/* Compass star */}
