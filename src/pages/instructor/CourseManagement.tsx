@@ -26,6 +26,10 @@ const CourseManagement = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [autoCheckin, setAutoCheckin] = useState(false);
+  // Two-factor auto check-in: a scanned QR stages a pending booking that
+  // proximity must then confirm in-range before the row is marked attended.
+  const [pending, setPending] = useState<{ bookingId: string; scannedAt: number } | null>(null);
+  const PENDING_TTL_MS = 60_000;
   const qc = useQueryClient();
 
   // Real bookings on this course (used for check-in list + auto check-in pool)
