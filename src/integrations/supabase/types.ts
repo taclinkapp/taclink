@@ -814,9 +814,11 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string
           bio: string | null
           created_at: string
           display_name: string | null
+          final_warning_sent_at: string | null
           id: string
           payment_method_added: boolean
           phone: string | null
@@ -825,14 +827,17 @@ export type Database = {
           service_city: string | null
           service_state: string | null
           state: string | null
+          strike_points: number
           subscription_status: string
           subscription_updated_at: string | null
           updated_at: string
         }
         Insert: {
+          account_status?: string
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          final_warning_sent_at?: string | null
           id: string
           payment_method_added?: boolean
           phone?: string | null
@@ -841,14 +846,17 @@ export type Database = {
           service_city?: string | null
           service_state?: string | null
           state?: string | null
+          strike_points?: number
           subscription_status?: string
           subscription_updated_at?: string | null
           updated_at?: string
         }
         Update: {
+          account_status?: string
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          final_warning_sent_at?: string | null
           id?: string
           payment_method_added?: boolean
           phone?: string | null
@@ -857,6 +865,7 @@ export type Database = {
           service_city?: string | null
           service_state?: string | null
           state?: string | null
+          strike_points?: number
           subscription_status?: string
           subscription_updated_at?: string | null
           updated_at?: string
@@ -1149,6 +1158,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_strike: {
+        Args: { _points?: number; _user_id: string }
+        Returns: {
+          new_points: number
+          new_status: string
+          suspended: boolean
+          warning_issued: boolean
+        }[]
+      }
       current_dev_user_id: { Args: never; Returns: string }
       has_role: {
         Args: {
