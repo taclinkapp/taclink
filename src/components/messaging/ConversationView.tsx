@@ -111,6 +111,7 @@ export const ConversationView = ({ variant }: Props) => {
         .from("messages")
         .select("*")
         .eq("conversation_id", conversation.id)
+        .neq("moderation_status", "flagged")
         .order("created_at", { ascending: true });
       if (error) console.error(error);
       setMessages((data as MessageRow[]) ?? []);
@@ -129,7 +130,8 @@ export const ConversationView = ({ variant }: Props) => {
         },
         (payload) => {
           setMessages((prev) => {
-            const incoming = payload.new as MessageRow;
+            const incoming = payload.new as MessageRow & { moderation_status?: string };
+            if (incoming.moderation_status === "flagged") return prev;
             if (prev.some((m) => m.id === incoming.id)) return prev;
             return [...prev, incoming];
           });

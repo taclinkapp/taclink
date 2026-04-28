@@ -157,11 +157,27 @@ export const sendMessage = async (
   senderRole: "student" | "instructor",
   body: string,
 ) => {
-  const { error } = await supabase.from("messages").insert({
-    conversation_id: conversationId,
-    sender_id: senderId,
-    sender_role: senderRole,
-    body,
-  });
+  const { data: inserted, error } = await supabase
+    .from("messages")
+    .insert({
+      conversation_id: conversationId,
+      sender_id: senderId,
+      sender_role: senderRole,
+      body,
+    })
+    .select("id")
+    .single();
   if (error) throw error;
+
+  // Fire-and-forget AI moderation. The edge function will hide the message
+  // and queue it for admin review if it violates policy.
+  const { moderateContent } = await import("@/lib/moderation");
+  moderateContent({
+    contentType: "message",
+    contentId: inserted?.id ?? null,
+    conversationId,
+    text: body,
+    authorId: senderId,
+    authorRole: senderRole,
+  }).catch(() => {});
 };
