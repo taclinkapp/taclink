@@ -15,6 +15,8 @@ const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
 const CourseManagement = () => {
   const { id } = useParams();
+  const { profile } = useAuth();
+  const isSubscribed = profile?.subscription_status === 'active';
   const { data: course, isLoading } = useCourse(id);
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
   const [showReceipt, setShowReceipt] = useState(false);
