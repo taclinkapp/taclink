@@ -375,7 +375,30 @@ const CourseManagement = () => {
                           </span>
                         )}
                       </div>
-                      <div>Trigger at ≤ {PROXIMITY_TRIGGER_METERS} m (~10 ft).</div>
+                      <div>Trigger at ≤ {PROXIMITY_TRIGGER_METERS} m (~10 ft) — only after a QR scan.</div>
+                    </div>
+                  )}
+
+                  {pending && (
+                    <div className="mt-3 rounded-md border border-primary/40 bg-primary/10 p-3 flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-primary/20 flex items-center justify-center shrink-0">
+                        <QrCode className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-[11px]">
+                        <div className="font-bold text-foreground">
+                          Pending: Booking {pending.bookingId.slice(0, 8).toUpperCase()}
+                        </div>
+                        <div className="text-muted-foreground">
+                          Waiting for proximity to confirm (expires in{' '}
+                          {Math.max(0, Math.ceil((PENDING_TTL_MS - (Date.now() - pending.scannedAt)) / 1000))}s).
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setPending(null)}
+                        className="text-[10px] uppercase tracking-wider font-bold text-destructive hover:underline shrink-0"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   )}
                 </div>
