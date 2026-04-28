@@ -127,7 +127,7 @@ const NewCourse = () => {
       const savedAt = new Date().toISOString();
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
+        JSON.stringify({ title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
       );
       setLastSavedAt(new Date(savedAt));
       setDraftStatus('saved');
