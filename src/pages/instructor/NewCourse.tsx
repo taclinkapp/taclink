@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, uploadCoursePhoto } from '@/lib/courses';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { Check, MapPin, Loader2, ImagePlus, X } from 'lucide-react';
+import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
@@ -41,6 +41,88 @@ const NewCourse = () => {
   const [state, setState] = useState('');
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
+
+  // ---- Draft autosave (localStorage) ----
+  const DRAFT_KEY = user ? `course-draft:${user.id}` : 'course-draft:anon';
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const hydrated = useRef(false);
+
+  // Hydrate once
+  useEffect(() => {
+    if (hydrated.current) return;
+    hydrated.current = true;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.title) setTitle(d.title);
+      if (d.category) setCategory(d.category);
+      if (d.description) setDescription(d.description);
+      if (d.date) setDate(d.date);
+      if (d.startTime) setStartTime(d.startTime);
+      if (d.endTime) setEndTime(d.endTime);
+      if (d.address) setAddress(d.address);
+      if (d.city) setCity(d.city);
+      if (d.state) setState(d.state);
+      if (d.capacity) setCapacity(d.capacity);
+      if (d.price) setPrice(d.price);
+      if (typeof d.step === 'number') setStep(d.step);
+      if (d.savedAt) setLastSavedAt(new Date(d.savedAt));
+      toast.message('Draft restored', { description: 'Picked up where you left off.' });
+    } catch {
+      // ignore corrupt drafts
+    }
+  }, [DRAFT_KEY]);
+
+  // Debounced autosave on changes
+  useEffect(() => {
+    if (!hydrated.current) return;
+    const hasContent = title || category || description || date || startTime || endTime || address || city || state || capacity || price;
+    if (!hasContent) return;
+    setDraftStatus('saving');
+    const t = setTimeout(() => {
+      try {
+        const savedAt = new Date().toISOString();
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({ title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
+        );
+        setLastSavedAt(new Date(savedAt));
+        setDraftStatus('saved');
+      } catch {
+        setDraftStatus('idle');
+      }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, DRAFT_KEY]);
+
+  const saveDraftNow = () => {
+    try {
+      const savedAt = new Date().toISOString();
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ title, category, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
+      );
+      setLastSavedAt(new Date(savedAt));
+      setDraftStatus('saved');
+      toast.success('Draft saved');
+    } catch {
+      toast.error('Could not save draft');
+    }
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setLastSavedAt(null);
+    setDraftStatus('idle');
+    setTitle(''); setCategory(''); setDescription('');
+    setDate(''); setStartTime(''); setEndTime('');
+    setAddress(''); setCity(''); setState('');
+    setCapacity(''); setPrice('');
+    setStep(0);
+    toast.success('Draft cleared');
+  };
 
   const onPickCover = (file: File | null) => {
     if (!file) {
@@ -147,6 +229,7 @@ const NewCourse = () => {
       }
 
       qc.invalidateQueries({ queryKey: ['courses'] });
+      localStorage.removeItem(DRAFT_KEY);
       toast.success('Course published');
       nav('/instructor/courses');
     } catch (e: any) {
@@ -165,7 +248,13 @@ const NewCourse = () => {
             <div key={i} className={cn('h-1 flex-1 rounded-full', i <= step ? 'bg-primary' : 'bg-border')} />
           ))}
         </div>
-        <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold mt-2">Step {step + 1} of 4 · {STEPS[step]}</div>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Step {step + 1} of 4 · {STEPS[step]}</div>
+          <div className="text-[10px] text-muted-foreground">
+            {draftStatus === 'saving' && 'Saving draft…'}
+            {draftStatus === 'saved' && lastSavedAt && `Draft saved ${lastSavedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
+          </div>
+        </div>
       </div>
 
       <div className="px-4 py-5 space-y-4">
@@ -279,6 +368,29 @@ const NewCourse = () => {
           <Button onClick={next} disabled={saving} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3 ? 'Continue' : 'Publish Course'}
           </Button>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={saveDraftNow}
+            disabled={saving}
+            className="flex-1 h-11 bg-card border-border font-semibold"
+          >
+            <Save className="h-4 w-4 mr-1.5" /> Save Draft
+          </Button>
+          {lastSavedAt && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={clearDraft}
+              disabled={saving}
+              className="h-11 px-3 text-destructive hover:bg-destructive/10 font-semibold"
+              aria-label="Clear draft"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </MobileShell>
