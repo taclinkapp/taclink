@@ -35,13 +35,13 @@ const Discover = () => {
           </button>
         </div>
         <div className="px-4 pb-3">
-          <div className="relative">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative neu-inset">
+            <Search className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search courses, instructors, locations…"
-              className="bg-card border-border pl-9 h-11"
+              className="bg-transparent border-0 pl-10 h-12 rounded-2xl shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
         </div>
