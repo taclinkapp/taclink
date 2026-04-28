@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,12 @@ import {
   type MessageRow,
 } from "@/lib/messaging";
 import { useIdentity } from "@/hooks/useIdentity";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, ShieldAlert, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { detectContactInfo } from "@/lib/contactRedaction";
+import { logBypassAttempt } from "@/lib/bypassLogging";
+import { ContactInfoWarning } from "@/components/ContactInfoWarning";
+import { toast } from "sonner";
 
 type Props = {
   variant: "student" | "instructor";
