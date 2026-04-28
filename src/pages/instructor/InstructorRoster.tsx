@@ -1,0 +1,218 @@
+import { useEffect, useMemo, useState } from 'react';
+import { MobileShell, PageHeader } from '@/components/MobileShell';
+import { InstructorTabBar } from '@/components/InstructorTabBar';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Users, CalendarDays, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type RosterRow = {
+  bookingId: string;
+  status: string;
+  bookedAt: string;
+  studentId: string;
+  studentName: string;
+  studentPhoto: string | null;
+  courseId: string;
+  courseTitle: string;
+  startsAt: string | null;
+};
+
+const statusStyles: Record<string, string> = {
+  reserved: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+  attended: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+  cancelled: 'bg-muted text-muted-foreground border-border',
+  no_show: 'bg-destructive/10 text-destructive border-destructive/30',
+};
+
+const statusIcon: Record<string, any> = {
+  reserved: Clock,
+  attended: CheckCircle2,
+  cancelled: XCircle,
+  no_show: XCircle,
+};
+
+const filters = ['Upcoming', 'Attended', 'All'] as const;
+
+const InstructorRoster = () => {
+  const { user } = useAuth();
+  const [rows, setRows] = useState<RosterRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<typeof filters[number]>('Upcoming');
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data: courses } = await supabase
+        .from('courses')
+        .select('id, title, starts_at')
+        .eq('instructor_id', user.id);
+      const courseIds = (courses ?? []).map((c) => c.id);
+      if (courseIds.length === 0) {
+        if (!cancelled) {
+          setRows([]);
+          setLoading(false);
+        }
+        return;
+      }
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('id, status, booked_at, student_id, course_id')
+        .in('course_id', courseIds)
+        .order('booked_at', { ascending: false });
+      const studentIds = Array.from(new Set((bookings ?? []).map((b) => b.student_id)));
+      const { data: profiles } = studentIds.length
+        ? await supabase
+            .from('profiles')
+            .select('id, display_name, photo_url')
+            .in('id', studentIds)
+        : { data: [] as any[] };
+      const courseMap = new Map((courses ?? []).map((c) => [c.id, c]));
+      const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+      const result: RosterRow[] = (bookings ?? []).map((b: any) => {
+        const c = courseMap.get(b.course_id);
+        const p = profileMap.get(b.student_id);
+        return {
+          bookingId: b.id,
+          status: b.status,
+          bookedAt: b.booked_at,
+          studentId: b.student_id,
+          studentName: p?.display_name ?? 'Student',
+          studentPhoto: p?.photo_url ?? null,
+          courseId: b.course_id,
+          courseTitle: c?.title ?? 'Course',
+          startsAt: c?.starts_at ?? null,
+        };
+      });
+      if (!cancelled) {
+        setRows(result);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const now = Date.now();
+  const filtered = useMemo(() => {
+    return rows.filter((r) => {
+      const startMs = r.startsAt ? new Date(r.startsAt).getTime() : 0;
+      if (tab === 'Upcoming')
+        return r.status === 'reserved' && (!startMs || startMs >= now);
+      if (tab === 'Attended') return r.status === 'attended';
+      return true;
+    });
+  }, [rows, tab, now]);
+
+  const grouped = useMemo(() => {
+    const m = new Map<string, { title: string; startsAt: string | null; rows: RosterRow[] }>();
+    filtered.forEach((r) => {
+      if (!m.has(r.courseId))
+        m.set(r.courseId, { title: r.courseTitle, startsAt: r.startsAt, rows: [] });
+      m.get(r.courseId)!.rows.push(r);
+    });
+    return Array.from(m.entries());
+  }, [filtered]);
+
+  const totalStudents = filtered.length;
+
+  return (
+    <MobileShell>
+      <PageHeader title="Roster" />
+      <div className="px-4 pt-3 pb-24 space-y-4">
+        <div className="rounded-md border border-border bg-card p-4 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+            <Users className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold">{totalStudents}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">
+              {tab} students
+            </div>
+          </div>
+        </div>
+
+        <div className="flex bg-card border border-border rounded-sm p-0.5">
+          {filters.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                'flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-colors rounded-sm',
+                tab === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground',
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="text-center text-muted-foreground text-sm py-12">Loading roster…</div>
+        ) : grouped.length === 0 ? (
+          <div className="text-center text-muted-foreground text-sm py-12">
+            No students in this view yet.
+          </div>
+        ) : (
+          grouped.map(([courseId, group]) => (
+            <div key={courseId} className="rounded-md border border-border bg-card overflow-hidden">
+              <div className="px-4 py-3 border-b border-border bg-muted/30">
+                <div className="font-semibold text-sm truncate">{group.title}</div>
+                {group.startsAt && (
+                  <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <CalendarDays className="h-3 w-3" />
+                    {new Date(group.startsAt).toLocaleString()}
+                  </div>
+                )}
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  {group.rows.length} student{group.rows.length === 1 ? '' : 's'}
+                </div>
+              </div>
+              <ul className="divide-y divide-border">
+                {group.rows.map((r) => {
+                  const Icon = statusIcon[r.status] ?? Clock;
+                  return (
+                    <li key={r.bookingId} className="px-4 py-3 flex items-center gap-3">
+                      {r.studentPhoto ? (
+                        <img
+                          src={r.studentPhoto}
+                          alt={r.studentName}
+                          className="h-9 w-9 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                          {r.studentName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{r.studentName}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          Booked {new Date(r.bookedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <span
+                        className={cn(
+                          'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider',
+                          statusStyles[r.status] ?? statusStyles.reserved,
+                        )}
+                      >
+                        <Icon className="h-3 w-3" />
+                        {r.status.replace('_', ' ')}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))
+        )}
+      </div>
+      <InstructorTabBar />
+    </MobileShell>
+  );
+};
+
+export default InstructorRoster;

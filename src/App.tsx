@@ -42,6 +42,7 @@ import ListingPacks from "./pages/instructor/ListingPacks";
 import InstructorMessages from "./pages/instructor/InstructorMessages";
 import InstructorConversation from "./pages/instructor/InstructorConversation";
 import InstructorCredentials from "./pages/instructor/InstructorCredentials";
+import InstructorRoster from "./pages/instructor/InstructorRoster";
 
 import { AdminLayout } from "./components/AdminLayout";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -111,6 +112,7 @@ const App = () => (
             <Route path="/instructor/messages" element={<Instructor><InstructorMessages /></Instructor>} />
             <Route path="/instructor/messages/:id" element={<Instructor><InstructorConversation /></Instructor>} />
             <Route path="/instructor/credentials" element={<Instructor><InstructorCredentials /></Instructor>} />
+            <Route path="/instructor/roster" element={<Instructor><InstructorRoster /></Instructor>} />
 
             {/* Admin */}
             <Route path="/admin/login" element={<AdminLogin />} />
