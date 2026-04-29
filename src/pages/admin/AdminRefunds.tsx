@@ -549,7 +549,7 @@ export const AdminRefunds = () => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={(e) => { e.preventDefault(); setConfirmOpen(false); submit(); }} disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm refund'}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Issue credit'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
