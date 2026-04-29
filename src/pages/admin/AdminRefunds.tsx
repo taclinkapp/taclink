@@ -251,7 +251,7 @@ export const AdminRefunds = () => {
     }
     const cents = Math.round(parseFloat(amount || '0') * 100);
     if (!cents || cents <= 0) {
-      toast.error('Enter a refund amount');
+      toast.error('Enter a credit amount');
       return;
     }
     if (!reason.trim()) {
