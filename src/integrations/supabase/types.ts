@@ -451,6 +451,45 @@ export type Database = {
         }
         Relationships: []
       }
+      fee_overrides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deposit_pct: number | null
+          id: string
+          note: string | null
+          platform_fee_cents: number | null
+          platform_fee_pct: number | null
+          scope: string
+          target_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deposit_pct?: number | null
+          id?: string
+          note?: string | null
+          platform_fee_cents?: number | null
+          platform_fee_pct?: number | null
+          scope: string
+          target_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deposit_pct?: number | null
+          id?: string
+          note?: string | null
+          platform_fee_cents?: number | null
+          platform_fee_pct?: number | null
+          scope?: string
+          target_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback_submissions: {
         Row: {
           admin_notes: string | null
@@ -760,10 +799,53 @@ export type Database = {
         }
         Relationships: []
       }
+      issue_clusters: {
+        Row: {
+          created_at: string
+          id: string
+          report_count: number
+          resolved_at: string | null
+          resolved_by: string | null
+          root_cause: string | null
+          severity: string
+          status: string
+          suggested_fix: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          report_count?: number
+          resolved_at?: string | null
+          resolved_by?: string | null
+          root_cause?: string | null
+          severity?: string
+          status?: string
+          suggested_fix?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          report_count?: number
+          resolved_at?: string | null
+          resolved_by?: string | null
+          root_cause?: string | null
+          severity?: string
+          status?: string
+          suggested_fix?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       issue_reports: {
         Row: {
           admin_notes: string | null
           category: string
+          cluster_id: string | null
           created_at: string
           description: string
           id: string
@@ -771,14 +853,18 @@ export type Database = {
           reporter_email: string | null
           reporter_name: string | null
           reporter_role: string | null
+          root_cause: string | null
           severity: string
           status: string
+          suggested_fix: string | null
+          triaged_at: string | null
           updated_at: string
           user_agent: string | null
         }
         Insert: {
           admin_notes?: string | null
           category?: string
+          cluster_id?: string | null
           created_at?: string
           description: string
           id?: string
@@ -786,14 +872,18 @@ export type Database = {
           reporter_email?: string | null
           reporter_name?: string | null
           reporter_role?: string | null
+          root_cause?: string | null
           severity?: string
           status?: string
+          suggested_fix?: string | null
+          triaged_at?: string | null
           updated_at?: string
           user_agent?: string | null
         }
         Update: {
           admin_notes?: string | null
           category?: string
+          cluster_id?: string | null
           created_at?: string
           description?: string
           id?: string
@@ -801,8 +891,11 @@ export type Database = {
           reporter_email?: string | null
           reporter_name?: string | null
           reporter_role?: string | null
+          root_cause?: string | null
           severity?: string
           status?: string
+          suggested_fix?: string | null
+          triaged_at?: string | null
           updated_at?: string
           user_agent?: string | null
         }

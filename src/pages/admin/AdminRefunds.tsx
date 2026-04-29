@@ -10,6 +10,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,7 +28,7 @@ import { DollarSign, Loader2, RefreshCw, Search, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fmt } from '@/lib/fees';
 
-type RefundType = 'platform_fee' | 'deposit' | 'full' | 'other';
+type RefundType = 'platform_fee' | 'deposit' | 'full' | 'partial' | 'goodwill' | 'other';
 type RefundStatus = 'issued' | 'failed' | 'reversed';
 
 type RefundRow = {
@@ -68,6 +72,7 @@ export const AdminRefunds = () => {
   const [externalRef, setExternalRef] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -462,10 +467,12 @@ export const AdminRefunds = () => {
                     <Select value={type} onValueChange={(v) => onTypeChange(v as RefundType)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="platform_fee">Platform fee</SelectItem>
+                        <SelectItem value="platform_fee">Platform fee ($25)</SelectItem>
                         <SelectItem value="deposit">Deposit (10%)</SelectItem>
                         <SelectItem value="full">Full (online + deposit)</SelectItem>
-                        <SelectItem value="other">Other / partial</SelectItem>
+                        <SelectItem value="partial">Partial (custom amount)</SelectItem>
+                        <SelectItem value="goodwill">Goodwill credit</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -517,13 +524,36 @@ export const AdminRefunds = () => {
             <Button variant="outline" onClick={() => { setOpen(false); reset(); }}>
               Cancel
             </Button>
-            <Button onClick={submit} disabled={!picked || submitting}>
+            <Button onClick={() => {
+              if (!picked) { toast.error('Pick a booking first'); return; }
+              const cents = Math.round(parseFloat(amount || '0') * 100);
+              if (!cents || cents <= 0) { toast.error('Enter a refund amount'); return; }
+              if (!reason.trim()) { toast.error('Reason is required'); return; }
+              setConfirmOpen(true);
+            }} disabled={!picked || submitting}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Record refund
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm refund</AlertDialogTitle>
+            <AlertDialogDescription>
+              Issue <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". The student will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); setConfirmOpen(false); submit(); }} disabled={submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm refund'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

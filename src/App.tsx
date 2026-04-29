@@ -69,6 +69,9 @@ import AdminModeration from "./pages/admin/AdminModeration";
 import AdminRefunds from "./pages/admin/AdminRefunds";
 import AdminFinancials from "./pages/admin/AdminFinancials";
 import AdminFeaturedCourses from "./pages/admin/AdminFeaturedCourses";
+import AdminBugTriage from "./pages/admin/AdminBugTriage";
+import AdminCourseEditor from "./pages/admin/AdminCourseEditor";
+import AdminFeeOverrides from "./pages/admin/AdminFeeOverrides";
 import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -153,6 +156,9 @@ const App = () => (
               <Route path="refunds" element={<AdminRefunds />} />
               <Route path="financials" element={<AdminFinancials />} />
               <Route path="featured" element={<AdminFeaturedCourses />} />
+              <Route path="bug-triage" element={<AdminBugTriage />} />
+              <Route path="course-editor" element={<AdminCourseEditor />} />
+              <Route path="fee-overrides" element={<AdminFeeOverrides />} />
               <Route path="activity" element={<AdminAuditLog />} />
               <Route path="flags" element={<AdminFeatureFlags />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
