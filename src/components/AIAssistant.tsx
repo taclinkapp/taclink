@@ -142,7 +142,7 @@ export function AIAssistant({ role }: { role: Role }) {
               <Sparkles className="h-5 w-5 text-primary-foreground" />
               <div className="flex-1">
                 <div className="text-sm font-bold text-primary-foreground">
-                  {isInstructor ? "TacLink AI Coach" : "TacLink AI Buddy"}
+                  {isInstructor ? "TacLink™ AI Coach" : "TacLink™ AI Buddy"}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider text-primary-foreground/80">
                   {isInstructor ? "Curriculum • Gear • Waivers • Messages" : "Messages • Reviews • Gear lists"}

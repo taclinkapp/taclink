@@ -66,7 +66,7 @@ const SignIn = () => {
           <Logo showTagline widthPx={180} />
         </div>
         <h1 className="text-2xl font-black mb-1">Welcome back</h1>
-        <p className="text-muted-foreground text-sm mb-8">Sign in to your TacLink account.</p>
+        <p className="text-muted-foreground text-sm mb-8">Sign in to your TacLink™ account.</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
