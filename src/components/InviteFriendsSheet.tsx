@@ -105,6 +105,14 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
               </Button>
             </div>
 
+            <Button
+              onClick={() => setScanning(true)}
+              variant="outline"
+              className="w-full h-11 mt-2 bg-card border-border font-bold uppercase text-xs tracking-wider"
+            >
+              <ScanLine className="h-4 w-4" /> Scan a friend's QR
+            </Button>
+
             <div className="grid grid-cols-3 gap-2 mt-5">
               <Stat label="Invited" value={totalInvites} />
               <Stat label="Pending" value={pendingInvites} />
@@ -113,6 +121,7 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
           </>
         )}
       </SheetContent>
+      {scanning && <QrScanner onDecode={onScanned} onClose={() => setScanning(false)} />}
     </Sheet>
   );
 };
