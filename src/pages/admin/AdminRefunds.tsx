@@ -275,15 +275,15 @@ export const AdminRefunds = () => {
       setSubmitting(false);
       return;
     }
-    // Notify student
+    // Notify student — refunds are issued as in-app credit, not cash.
     await supabase.from('notifications').insert({
       recipient_id: picked.student_id,
       type: 'refund_issued',
-      title: `Refund issued: ${fmt(cents)}`,
-      body: `Refund for ${picked.courseTitle}: ${reason.trim()}`,
+      title: `In-app credit issued: ${fmt(cents)}`,
+      body: `${fmt(cents)} credit added to your account for ${picked.courseTitle}. Apply it to your next booking. Reason: ${reason.trim()}`,
       link: `/student/booking/${picked.id}`,
     });
-    toast.success('Refund recorded — student notified');
+    toast.success('Refund credit issued — student notified');
     setSubmitting(false);
     setOpen(false);
     reset();
@@ -309,10 +309,10 @@ export const AdminRefunds = () => {
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-primary" /> Refunds
+            <DollarSign className="h-6 w-6 text-primary" /> Refunds (App Credit)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Record refunds issued to students for the platform fee, deposit, or other corrections. The student is notified automatically.
+            All booking-fee refunds are issued as <span className="font-semibold text-foreground">in-app credit</span> the student can apply to a future course. No cash is returned. The student is notified automatically.
           </p>
         </div>
         <div className="flex gap-2">
@@ -407,9 +407,9 @@ export const AdminRefunds = () => {
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Record a refund</DialogTitle>
+            <DialogTitle>Issue refund as in-app credit</DialogTitle>
             <DialogDescription>
-              Find the booking, choose what's being refunded, then confirm. The student will be notified automatically.
+              Find the booking and choose how much credit to issue. The student receives an in-app credit (no cash refund) and is notified automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -541,15 +541,15 @@ export const AdminRefunds = () => {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm refund</AlertDialogTitle>
+            <AlertDialogTitle>Issue in-app credit</AlertDialogTitle>
             <AlertDialogDescription>
-              Issue <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". The student will be notified.
+              Issue <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> as in-app credit ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". This is NOT a cash refund — it's a credit toward a future booking. The student will be notified.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={(e) => { e.preventDefault(); setConfirmOpen(false); submit(); }} disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm refund'}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Issue credit'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
