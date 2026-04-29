@@ -39,8 +39,8 @@ const FAQS: { category: string; items: Faq[] }[] = [
       },
       {
         q: 'Can I cancel a booking?',
-        a: 'Open **My Bookings → [course] → Cancel**. Refund eligibility depends on the instructor\'s cancellation window — check the course detail page before booking.',
-        tags: ['booking', 'refund'],
+        a: 'Open **My Bookings → [course] → Cancel**. Any booking-fee refund TacLink issues will be provided as **in-app credit** you can apply to a future course — we do not issue cash refunds for booking fees. Anything paid in person to the instructor is between you and them.',
+        tags: ['booking', 'refund', 'credit'],
       },
       {
         q: 'How does the waitlist work?',
