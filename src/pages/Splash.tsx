@@ -68,6 +68,7 @@ const Splash = () => {
           </button>
         </p>
       </div>
+      </div>
     </div>
   );
 };
