@@ -104,7 +104,7 @@ export const AdminLayout = () => {
       >
         <div className="p-5 border-b border-sidebar-border flex items-start justify-between">
           <div>
-            <Logo size="md" />
+            <Logo showTagline widthPx={120} />
             <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mt-2">Admin Panel</div>
           </div>
           <button

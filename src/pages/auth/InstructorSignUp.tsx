@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/MobileShell';
+import { Logo } from '@/components/Logo';
 import { Camera, Loader2, Gift } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES } from '@/lib/mockData';
@@ -79,6 +80,9 @@ const InstructorSignUp = () => {
     <div className="min-h-screen bg-background">
       <PageHeader title="Instructor Application" back />
       <div className="max-w-md mx-auto px-6 py-6">
+        <div className="flex justify-center mb-6">
+          <Logo showTagline widthPx={180} />
+        </div>
         <p className="text-muted-foreground text-sm mb-6">Apply to teach on TacLink. We'll verify your credentials within 1 hour.</p>
         {referralCode && (
           <div className="tactical-card p-3 mb-5 flex items-center gap-3 border-primary/40">
