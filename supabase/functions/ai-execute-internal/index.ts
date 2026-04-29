@@ -117,13 +117,13 @@ serve(async (req) => {
 
           const decision = payload.recommended_action;
           const isRefund = decision === "approve_full_refund" || decision === "offer_app_credit";
-          const amount = payload.refund_amount_cents ?? payload.credit_amount_cents ?? 0;
+          const requested = payload.refund_amount_cents ?? payload.credit_amount_cents ?? 0;
 
-          if (!isRefund || !conv.booking_id || amount <= 0) {
+          if (!isRefund || !conv.booking_id || requested <= 0) {
             throw new Error("dispute_triage not eligible for auto-refund (no amount or wrong action)");
           }
-          if (amount > maxAmount) {
-            throw new Error(`amount ${amount} exceeds auto-refund cap ${maxAmount}`);
+          if (requested > maxAmount) {
+            throw new Error(`amount ${requested} exceeds auto-refund cap ${maxAmount}`);
           }
 
           const { data: b } = await admin
