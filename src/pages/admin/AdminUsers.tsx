@@ -19,8 +19,8 @@ export const AdminUsers = () => (
         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input placeholder="Search users by name or email…" className="bg-card border-border pl-9 h-11 max-w-md" />
       </div>
-      <div className="tactical-card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="tactical-card overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
             <tr>
               <th className="text-left px-4 py-3 font-bold">Name</th>
@@ -63,8 +63,8 @@ export const AdminInstructors = () => (
   <>
     <AdminHeader title="Instructors" subtitle={`${instructors.length} total · 1 pending review`} />
     <div className="p-8">
-      <div className="tactical-card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="tactical-card overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
             <tr>
               <th className="text-left px-4 py-3 font-bold">Name</th>
