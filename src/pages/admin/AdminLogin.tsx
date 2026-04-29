@@ -10,8 +10,8 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <Logo size="lg" />
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Logo showTagline widthPx={180} />
           <div className="text-[10px] uppercase tracking-[0.3em] text-primary font-bold mt-2 flex items-center justify-center gap-1">
             <Lock className="h-3 w-3" /> Admin Access
           </div>

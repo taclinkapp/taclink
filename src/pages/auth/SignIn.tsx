@@ -63,7 +63,7 @@ const SignIn = () => {
       <PageHeader back />
       <div className="max-w-md mx-auto px-6 pt-4">
         <div className="flex justify-center mb-8">
-          <Logo size="lg" />
+          <Logo showTagline widthPx={180} />
         </div>
         <h1 className="text-2xl font-black mb-1">Welcome back</h1>
         <p className="text-muted-foreground text-sm mb-8">Sign in to your TacLink account.</p>
