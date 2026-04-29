@@ -1,60 +1,38 @@
 /// <reference types="npm:@types/react@18.3.1" />
 
 import * as React from 'npm:react@18.3.1'
-
 import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
+  Body, Container, Head, Heading, Html, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
+import * as s from './_brand.ts'
 
-interface ReauthenticationEmailProps {
-  token: string
-}
+interface Props { siteName: string; token: string }
 
-export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
+export const ReauthenticationEmail = ({ siteName, token }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your verification code</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm reauthentication</Heading>
-        <Text style={text}>Use the code below to confirm your identity:</Text>
-        <Text style={codeStyle}>{token}</Text>
-        <Text style={footer}>
-          This code will expire shortly. If you didn't request this, you can
-          safely ignore this email.
-        </Text>
+    <Preview>Your {siteName} verification code</Preview>
+    <Body style={s.main}>
+      <Container style={s.container}>
+        <Section style={s.header}>
+          <Text style={s.brand}>{siteName}</Text>
+        </Section>
+        <Section style={s.inner}>
+          <Heading style={s.h1}>Verification code</Heading>
+          <Text style={s.text}>
+            Enter this code in {siteName} to confirm it's you. The code expires
+            in 5 minutes.
+          </Text>
+          <Text style={s.code}>{token}</Text>
+          <Text style={s.muted}>
+            Didn't request this code? You can safely ignore this email — but if
+            you see repeated requests, change your password.
+          </Text>
+        </Section>
+        <Section style={s.footer}>Tactical training, locked in.</Section>
       </Container>
     </Body>
   </Html>
 )
 
 export default ReauthenticationEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const codeStyle = {
-  fontFamily: 'Courier, monospace',
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 30px',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

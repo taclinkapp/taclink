@@ -1,79 +1,37 @@
 /// <reference types="npm:@types/react@18.3.1" />
 
 import * as React from 'npm:react@18.3.1'
-
 import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Text,
+  Body, Container, Head, Heading, Html, Preview, Section, Text, Button,
 } from 'npm:@react-email/components@0.0.22'
+import * as s from './_brand.ts'
 
-interface InviteEmailProps {
-  siteName: string
-  siteUrl: string
-  confirmationUrl: string
-}
+interface Props { siteName: string; confirmationUrl: string }
 
-export const InviteEmail = ({
-  siteName,
-  siteUrl,
-  confirmationUrl,
-}: InviteEmailProps) => (
+export const InviteEmail = ({ siteName, confirmationUrl }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>You've been invited to join {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
-        <Text style={text}>
-          You've been invited to join{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          . Click the button below to accept the invitation and create your
-          account.
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Accept Invitation
-        </Button>
-        <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
-        </Text>
+    <Preview>You've been invited to {siteName}</Preview>
+    <Body style={s.main}>
+      <Container style={s.container}>
+        <Section style={s.header}>
+          <Text style={s.brand}>{siteName}</Text>
+        </Section>
+        <Section style={s.inner}>
+          <Heading style={s.h1}>You're invited</Heading>
+          <Text style={s.text}>
+            You've been invited to join {siteName}. Accept the invitation below
+            to set up your account.
+          </Text>
+          <Button style={s.button} href={confirmationUrl}>Accept invitation</Button>
+          <Text style={s.muted}>
+            If you weren't expecting this invite, you can ignore this email.
+          </Text>
+        </Section>
+        <Section style={s.footer}>Tactical training, locked in.</Section>
       </Container>
     </Body>
   </Html>
 )
 
 export default InviteEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
