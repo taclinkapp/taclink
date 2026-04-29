@@ -48,8 +48,8 @@ export const Logo = ({
         <span
           aria-hidden
           className={cn(
-            'ml-0.5 mt-0.5 text-[0.55em] font-semibold leading-none tracking-normal',
-            onLight ? 'text-foreground/70' : 'text-foreground/80',
+            'ml-1 mt-0.5 text-[0.85em] font-semibold leading-none tracking-normal',
+            onLight ? 'text-foreground/80' : 'text-foreground/90',
           )}
         >
           ™
