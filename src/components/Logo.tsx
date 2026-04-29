@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import iconMark from '@/assets/taclink-icon.png';
-import fullLogo from '@/assets/taclink-logo.jpg';
+import fullLogo from '@/assets/taclink-logo.png';
 
 /**
  * Official TacLink mark.
@@ -41,8 +41,8 @@ export const Logo = ({
         alt="TacLink — Find. Book. Train."
         className={cn(
           'h-auto object-contain',
-          // Invert dark-on-white artwork so it reads on dark UI surfaces.
-          !onLight && 'invert',
+          // Artwork is white-on-transparent. Invert to dark for light surfaces (emails, PDFs).
+          onLight && 'invert',
           className,
         )}
         style={{ width: w }}
