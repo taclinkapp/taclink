@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.ai-execute]
 verify_jwt = false
+
+[functions.ai-scheduled-scan]
+verify_jwt = false
+
+[functions.ai-daily-digest]
+verify_jwt = false
