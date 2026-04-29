@@ -251,7 +251,7 @@ export const AdminRefunds = () => {
     }
     const cents = Math.round(parseFloat(amount || '0') * 100);
     if (!cents || cents <= 0) {
-      toast.error('Enter a refund amount');
+      toast.error('Enter a credit amount');
       return;
     }
     if (!reason.trim()) {
@@ -271,7 +271,7 @@ export const AdminRefunds = () => {
       status: 'issued',
     });
     if (error) {
-      toast.error('Could not record refund', { description: error.message });
+      toast.error('Could not issue credit', { description: error.message });
       setSubmitting(false);
       return;
     }
@@ -291,7 +291,7 @@ export const AdminRefunds = () => {
   };
 
   const reverse = async (id: string) => {
-    if (!confirm('Mark this refund as reversed? Use only if the payment was clawed back.')) return;
+    if (!confirm('Mark this refund credit as reversed? This cancels the in-app credit if the student hasn\'t already redeemed it.')) return;
     const { error } = await supabase
       .from('refunds')
       .update({ status: 'reversed' })
@@ -300,7 +300,7 @@ export const AdminRefunds = () => {
       toast.error('Could not reverse', { description: error.message });
       return;
     }
-    toast.success('Refund marked reversed');
+    toast.success('Refund credit marked reversed');
     load();
   };
 
@@ -321,14 +321,14 @@ export const AdminRefunds = () => {
             Refresh
           </Button>
           <Button onClick={() => setOpen(true)}>
-            <DollarSign className="h-4 w-4 mr-2" /> Record refund
+            <DollarSign className="h-4 w-4 mr-2" /> Issue refund credit
           </Button>
         </div>
       </header>
 
       <div className="grid grid-cols-3 gap-4">
-        <Stat label="Refunds issued" value={String(totals.count)} />
-        <Stat label="Total refunded" value={fmt(totals.issued)} />
+        <Stat label="Credits issued" value={String(totals.count)} />
+        <Stat label="Total credit issued" value={fmt(totals.issued)} />
         <Stat label="Last 200 records" value={String(refunds.length)} />
       </div>
 
@@ -349,13 +349,13 @@ export const AdminRefunds = () => {
             {loading ? (
               <tr>
                 <td colSpan={7} className="text-center py-8 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading refunds…
+                  <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading credits…
                 </td>
               </tr>
             ) : refunds.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No refunds recorded yet.
+                  No refund credits issued yet.
                 </td>
               </tr>
             ) : (
@@ -463,7 +463,7 @@ export const AdminRefunds = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs">Refund type</Label>
+                    <Label className="text-xs">Credit type</Label>
                     <Select value={type} onValueChange={(v) => onTypeChange(v as RefundType)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -527,12 +527,12 @@ export const AdminRefunds = () => {
             <Button onClick={() => {
               if (!picked) { toast.error('Pick a booking first'); return; }
               const cents = Math.round(parseFloat(amount || '0') * 100);
-              if (!cents || cents <= 0) { toast.error('Enter a refund amount'); return; }
+              if (!cents || cents <= 0) { toast.error('Enter a credit amount'); return; }
               if (!reason.trim()) { toast.error('Reason is required'); return; }
               setConfirmOpen(true);
             }} disabled={!picked || submitting}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Record refund
+              Issue credit
             </Button>
           </DialogFooter>
         </DialogContent>

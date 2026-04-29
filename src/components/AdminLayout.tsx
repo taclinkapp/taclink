@@ -27,7 +27,7 @@ const items: Item[] = [
   { to: '/admin/deposit-review', icon: Wallet, label: 'Deposit Review', badgeKey: 'stuckDeposits' },
   { to: '/admin/financials', icon: TrendingUp, label: 'Financials' },
   { to: '/admin/fee-overrides', icon: Percent, label: 'Fee Overrides' },
-  { to: '/admin/refunds', icon: DollarSign, label: 'Refunds' },
+  { to: '/admin/refunds', icon: DollarSign, label: 'Refund Credits' },
   { to: '/admin/bug-triage', icon: Sparkles, label: 'Bug Triage AI' },
   { to: '/admin/waitlist', icon: Mail, label: 'Waitlist' },
   { to: '/admin/reports', icon: Bug, label: 'Issue Reports' },
