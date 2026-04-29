@@ -27,13 +27,7 @@ const Splash = () => {
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center px-6 pt-10">
-        <Logo size="xl" />
-        <h1 className="mt-5 text-4xl font-black tracking-[0.18em] text-foreground" style={{ fontFamily: "'Stardos Stencil', 'Inter', sans-serif" }}>
-          TACLINK
-        </h1>
-        <div className="mt-1 text-[11px] uppercase tracking-[0.32em] text-primary font-bold">
-          Find. Book. Train.
-        </div>
+        <Logo showTagline widthPx={260} />
 
         {/* Pre-launch badge */}
         <span className="mt-8 inline-flex items-center gap-2 px-3 py-1 rounded-full neu-sm text-[0.625rem] font-bold uppercase tracking-[0.2em] text-primary">
