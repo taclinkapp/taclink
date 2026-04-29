@@ -31,15 +31,20 @@ export const AdminFinancials = () => {
     inPerson: 0,
     refunds: 0,
     bookings: 0,
+    instructorPayouts: 0,
+    creditsGranted: 0,
   });
-  const [topInstructors, setTopInstructors] = useState<Array<{ id: string; name: string; revenue: number; bookings: number }>>([]);
+  const [topInstructors, setTopInstructors] = useState<Array<{ id: string; name: string; revenue: number; bookings: number; payout: number }>>([]);
 
   const load = async () => {
     setLoading(true);
     const since = sinceFor(range);
-    let bq: any = supabase.from('booking_fees').select('platform_fee_cents, instructor_deposit_cents, due_in_person_cents, instructor_id');
+    let bq: any = supabase.from('booking_fees').select('platform_fee_cents, instructor_deposit_cents, due_in_person_cents, instructor_id, course_price_cents');
     if (since) bq = bq.gte('created_at', since);
-    const [{ data: fees }, refundsRes, bookingsCount] = await Promise.all([
+    const creditsQ = since
+      ? supabase.from('instructor_credits').select('id', { count: 'exact', head: true }).gte('earned_at', since)
+      : supabase.from('instructor_credits').select('id', { count: 'exact', head: true });
+    const [{ data: fees }, refundsRes, bookingsCount, creditsCount] = await Promise.all([
       bq,
       since
         ? supabase.from('refunds').select('amount_cents').eq('status', 'issued').gte('created_at', since)
@@ -47,6 +52,7 @@ export const AdminFinancials = () => {
       since
         ? supabase.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', since)
         : supabase.from('bookings').select('id', { count: 'exact', head: true }),
+      creditsQ,
     ]);
 
     const rows = fees ?? [];
@@ -54,12 +60,16 @@ export const AdminFinancials = () => {
     const deposits = rows.reduce((s, r: any) => s + (r.instructor_deposit_cents ?? 0), 0);
     const inPerson = rows.reduce((s, r: any) => s + (r.due_in_person_cents ?? 0), 0);
     const refunds = (refundsRes.data ?? []).reduce((s, r: any) => s + (r.amount_cents ?? 0), 0);
+    // Instructor payout = course price - platform fee they would owe (deposit is held back).
+    // Simpler model used in this project: instructor receives `due_in_person_cents` directly.
+    const instructorPayouts = inPerson;
 
-    // Top instructors by revenue (platform fee proxy)
-    const grouped = new Map<string, { revenue: number; bookings: number }>();
+    // Top instructors by revenue (platform fee proxy) + their payout
+    const grouped = new Map<string, { revenue: number; bookings: number; payout: number }>();
     rows.forEach((r: any) => {
-      const cur = grouped.get(r.instructor_id) ?? { revenue: 0, bookings: 0 };
+      const cur = grouped.get(r.instructor_id) ?? { revenue: 0, bookings: 0, payout: 0 };
       cur.revenue += (r.platform_fee_cents ?? 0) + (r.instructor_deposit_cents ?? 0);
+      cur.payout += (r.due_in_person_cents ?? 0);
       cur.bookings += 1;
       grouped.set(r.instructor_id, cur);
     });
@@ -77,6 +87,8 @@ export const AdminFinancials = () => {
       inPerson,
       refunds,
       bookings: bookingsCount.count ?? 0,
+      instructorPayouts,
+      creditsGranted: creditsCount.count ?? 0,
     });
     setLoading(false);
   };
