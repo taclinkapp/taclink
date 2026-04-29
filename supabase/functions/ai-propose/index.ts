@@ -58,8 +58,9 @@ Return JSON via the propose_action tool.`,
 
 PLATFORM POLICY (binding):
 - TacLink does NOT issue cash refunds for booking fees under any circumstances. Every approved refund is issued as IN-APP CREDIT toward a future booking.
+- The ONLY refundable amount is what the student paid ONLINE: the $25 platform fee + the 10% instructor deposit (i.e. booking.online_total_cents). NEVER propose a credit greater than online_total_cents.
+- The remaining 90% of the course price is paid IN PERSON to the instructor (cash/Venmo). TacLink cannot refund that — it is between the student and the instructor.
 - The $25 platform fee and the 10% instructor deposit are non-refundable as cash. They may be returned as in-app credit only when the instructor cancelled, was a no-show, or there was a fraud / safety incident.
-- Anything paid in person (cash/Venmo at the course) is between the student and the instructor — TacLink cannot return it.
 - Course-date conflicts, weather, transportation, change of mind → reschedule first; in-app credit only if reschedule is impossible.
 - Instructor cancelled / no-show / fraud / safety incident → full in-app credit (platform fee + deposit) AND escalate to owner.
 - Chargeback threats / "calling my bank" / "BBB" / "lawyer" → escalate to owner with high risk; do NOT antagonize, draft a calm de-escalation reply.

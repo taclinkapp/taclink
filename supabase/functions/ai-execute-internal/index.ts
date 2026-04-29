@@ -117,13 +117,13 @@ serve(async (req) => {
 
           const decision = payload.recommended_action;
           const isRefund = decision === "approve_full_refund" || decision === "offer_app_credit";
-          const amount = payload.refund_amount_cents ?? payload.credit_amount_cents ?? 0;
+          const requested = payload.refund_amount_cents ?? payload.credit_amount_cents ?? 0;
 
-          if (!isRefund || !conv.booking_id || amount <= 0) {
+          if (!isRefund || !conv.booking_id || requested <= 0) {
             throw new Error("dispute_triage not eligible for auto-refund (no amount or wrong action)");
           }
-          if (amount > maxAmount) {
-            throw new Error(`amount ${amount} exceeds auto-refund cap ${maxAmount}`);
+          if (requested > maxAmount) {
+            throw new Error(`amount ${requested} exceeds auto-refund cap ${maxAmount}`);
           }
 
           const { data: b } = await admin
@@ -132,6 +132,15 @@ serve(async (req) => {
             .eq("id", conv.booking_id)
             .single();
           if (!b) throw new Error("booking not found");
+
+          // Hard cap: TacLink only credits what the student paid online
+          // ($25 platform fee + 10% instructor deposit). The 90% paid in person
+          // is between the student and instructor and is never refundable by the platform.
+          const onlinePaid = b.online_total_cents ?? 0;
+          const amount = Math.min(requested, onlinePaid);
+          if (amount <= 0) {
+            throw new Error("booking has no online amount to credit");
+          }
 
           // Compute risk score
           const { data: riskRows } = await admin.rpc("compute_student_risk_score", {
