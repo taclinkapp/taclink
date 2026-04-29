@@ -1429,43 +1429,64 @@ export type Database = {
       }
       refunds: {
         Row: {
+          ai_action_id: string | null
           amount_cents: number
+          auto_issued: boolean
           booking_id: string
           created_at: string
+          dispute_window_until: string | null
           external_reference: string | null
           id: string
+          instructor_dispute_reason: string | null
+          instructor_disputed_at: string | null
           issued_by: string
           notes: string | null
           reason: string
           refund_type: string
+          risk_factors: Json | null
+          risk_score: number | null
           status: string
           student_id: string
           updated_at: string
         }
         Insert: {
+          ai_action_id?: string | null
           amount_cents: number
+          auto_issued?: boolean
           booking_id: string
           created_at?: string
+          dispute_window_until?: string | null
           external_reference?: string | null
           id?: string
+          instructor_dispute_reason?: string | null
+          instructor_disputed_at?: string | null
           issued_by: string
           notes?: string | null
           reason: string
           refund_type: string
+          risk_factors?: Json | null
+          risk_score?: number | null
           status?: string
           student_id: string
           updated_at?: string
         }
         Update: {
+          ai_action_id?: string | null
           amount_cents?: number
+          auto_issued?: boolean
           booking_id?: string
           created_at?: string
+          dispute_window_until?: string | null
           external_reference?: string | null
           id?: string
+          instructor_dispute_reason?: string | null
+          instructor_disputed_at?: string | null
           issued_by?: string
           notes?: string | null
           reason?: string
           refund_type?: string
+          risk_factors?: Json | null
+          risk_score?: number | null
           status?: string
           student_id?: string
           updated_at?: string
@@ -1830,6 +1851,13 @@ export type Database = {
           warning_issued: boolean
         }[]
       }
+      compute_student_risk_score: {
+        Args: { _student_id: string }
+        Returns: {
+          factors: Json
+          score: number
+        }[]
+      }
       current_dev_user_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -1846,6 +1874,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      instructor_dispute_refund: {
+        Args: { _reason: string; _refund_id: string }
+        Returns: Json
       }
       log_admin_action: {
         Args: {
