@@ -54,8 +54,13 @@ import InstructorSubscription from "./pages/instructor/InstructorSubscription";
 import { AdminLayout } from "./components/AdminLayout";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import { AdminUsers, AdminInstructors } from "./pages/admin/AdminUsers";
-import { AdminCourses, AdminWaitlist, AdminActivity, AdminSettings } from "./pages/admin/AdminCourses";
+import { AdminInstructors } from "./pages/admin/AdminUsers";
+import { AdminWaitlist } from "./pages/admin/AdminCourses";
+import { AdminUsersReal } from "./pages/admin/AdminUsersReal";
+import { AdminCoursesReal } from "./pages/admin/AdminCoursesReal";
+import { AdminPlatformSettings } from "./pages/admin/AdminPlatformSettings";
+import { AdminFeatureFlags } from "./pages/admin/AdminFeatureFlags";
+import { AdminAuditLog } from "./pages/admin/AdminAuditLog";
 import { AdminReports } from "./pages/admin/AdminReports";
 import { AdminSupportTickets } from "./pages/admin/AdminSupportTickets";
 import { AdminConversations } from "./pages/admin/AdminConversations";
@@ -133,9 +138,9 @@ const App = () => (
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<AdminUsers />} />
+              <Route path="users" element={<AdminUsersReal />} />
               <Route path="instructors" element={<AdminInstructors />} />
-              <Route path="courses" element={<AdminCourses />} />
+              <Route path="courses" element={<AdminCoursesReal />} />
               <Route path="waitlist" element={<AdminWaitlist />} />
               <Route path="reports" element={<AdminReports />} />
               <Route path="support" element={<AdminSupportTickets />} />
@@ -144,8 +149,9 @@ const App = () => (
               <Route path="moderation" element={<AdminModeration />} />
               <Route path="deposit-review" element={<DepositReview />} />
               <Route path="refunds" element={<AdminRefunds />} />
-              <Route path="activity" element={<AdminActivity />} />
-              <Route path="settings" element={<AdminSettings />} />
+              <Route path="activity" element={<AdminAuditLog />} />
+              <Route path="flags" element={<AdminFeatureFlags />} />
+              <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
 
             <Route path="/notifications" element={<Authed><Notifications /></Authed>} />

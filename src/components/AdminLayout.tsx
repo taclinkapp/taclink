@@ -1,9 +1,10 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminAIPanel } from '@/components/admin/AdminAIPanel';
 
 type Item = {
   to: string;
@@ -25,7 +26,8 @@ const items: Item[] = [
   { to: '/admin/waitlist', icon: Mail, label: 'Waitlist' },
   { to: '/admin/reports', icon: Bug, label: 'Issue Reports' },
   { to: '/admin/support', icon: LifeBuoy, label: 'Support Tickets' },
-  { to: '/admin/activity', icon: ScrollText, label: 'Activity Log' },
+  { to: '/admin/activity', icon: ScrollText, label: 'Audit Log' },
+  { to: '/admin/flags', icon: ToggleLeft, label: 'Feature Flags' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -97,6 +99,7 @@ export const AdminLayout = () => {
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>
+      <AdminAIPanel />
     </div>
   );
 };

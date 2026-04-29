@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_email: string | null
+          admin_id: string
+          after_value: Json | null
+          before_value: Json | null
+          created_at: string
+          id: string
+          reason: string | null
+          source: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_email?: string | null
+          admin_id: string
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          source?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_email?: string | null
+          admin_id?: string
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          source?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       booking_fees: {
         Row: {
           booking_id: string
@@ -229,6 +271,33 @@ export type Database = {
         }
         Relationships: []
       }
+      course_featured_placements: {
+        Row: {
+          course_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          sort_order: number
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          sort_order?: number
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          sort_order?: number
+        }
+        Relationships: []
+      }
       course_waivers: {
         Row: {
           ai_generated: boolean
@@ -346,6 +415,39 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      feature_flags: {
+        Row: {
+          audience: string
+          created_at: string
+          description: string | null
+          enabled: boolean
+          key: string
+          rollout_pct: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key: string
+          rollout_pct?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          rollout_pct?: number
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -842,6 +944,36 @@ export type Database = {
           method_type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
         }
         Relationships: []
       }
@@ -1379,6 +1511,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_admin_action: {
+        Args: {
+          _action: string
+          _after: Json
+          _before: Json
+          _reason?: string
+          _source?: string
+          _target_id: string
+          _target_type: string
+        }
+        Returns: string
       }
     }
     Enums: {
