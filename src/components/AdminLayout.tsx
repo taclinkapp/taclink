@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft, TrendingUp, Star } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,9 +19,11 @@ const items: Item[] = [
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/instructors', icon: Shield, label: 'Instructors' },
   { to: '/admin/courses', icon: BookOpen, label: 'Courses' },
+  { to: '/admin/featured', icon: Star, label: 'Featured Courses' },
   { to: '/admin/conversations', icon: MessageSquare, label: 'Conversations' },
   { to: '/admin/moderation', icon: ShieldAlert, label: 'AI Moderation' },
   { to: '/admin/deposit-review', icon: Wallet, label: 'Deposit Review', badgeKey: 'stuckDeposits' },
+  { to: '/admin/financials', icon: TrendingUp, label: 'Financials' },
   { to: '/admin/refunds', icon: DollarSign, label: 'Refunds' },
   { to: '/admin/waitlist', icon: Mail, label: 'Waitlist' },
   { to: '/admin/reports', icon: Bug, label: 'Issue Reports' },
