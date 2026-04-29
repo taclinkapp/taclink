@@ -140,7 +140,8 @@ export const AdminFinancials = () => {
               {topInstructors.length === 0 ? (
                 <div className="text-sm text-muted-foreground">No data in this range.</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto -mx-6 px-6">
+                <table className="w-full min-w-[640px] text-sm">
                   <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="text-left py-1">Instructor</th>
