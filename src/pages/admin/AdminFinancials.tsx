@@ -126,10 +126,11 @@ export const AdminFinancials = () => {
               <Stat icon={Users} label="Bookings" value={String(stats.bookings)} />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <Stat icon={DollarSign} label="Deposits Collected" value={fmt(stats.deposits)} />
               <Stat icon={DollarSign} label="In-Person Owed" value={fmt(stats.inPerson)} />
-              <Stat icon={DollarSign} label="GMV (online + in-person)" value={fmt(stats.platformFees + stats.deposits + stats.inPerson)} />
+              <Stat icon={DollarSign} label="Instructor Payouts" value={fmt(stats.instructorPayouts)} />
+              <Stat icon={DollarSign} label="GMV" value={fmt(stats.platformFees + stats.deposits + stats.inPerson)} />
             </div>
 
             <GrantCreditCard />
@@ -141,7 +142,12 @@ export const AdminFinancials = () => {
               ) : (
                 <table className="w-full text-sm">
                   <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    <tr><th className="text-left py-1">Instructor</th><th className="text-right py-1">Bookings</th><th className="text-right py-1">Revenue</th></tr>
+                    <tr>
+                      <th className="text-left py-1">Instructor</th>
+                      <th className="text-right py-1">Bookings</th>
+                      <th className="text-right py-1">Platform revenue</th>
+                      <th className="text-right py-1">Their payout</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {topInstructors.map((t) => (
@@ -149,6 +155,7 @@ export const AdminFinancials = () => {
                         <td className="py-2">{t.name}</td>
                         <td className="py-2 text-right">{t.bookings}</td>
                         <td className="py-2 text-right font-semibold">{fmt(t.revenue)}</td>
+                        <td className="py-2 text-right text-muted-foreground">{fmt(t.payout)}</td>
                       </tr>
                     ))}
                   </tbody>
