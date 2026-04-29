@@ -56,6 +56,69 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_actions: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          edited_payload: Json | null
+          error: string | null
+          executed_at: string | null
+          id: string
+          kind: string
+          model: string | null
+          payload: Json
+          preview: string | null
+          reasoning: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_level: string
+          status: string
+          target_id: string | null
+          target_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          edited_payload?: Json | null
+          error?: string | null
+          executed_at?: string | null
+          id?: string
+          kind: string
+          model?: string | null
+          payload?: Json
+          preview?: string | null
+          reasoning?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string
+          status?: string
+          target_id?: string | null
+          target_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          edited_payload?: Json | null
+          error?: string | null
+          executed_at?: string | null
+          id?: string
+          kind?: string
+          model?: string | null
+          payload?: Json
+          preview?: string | null
+          reasoning?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string
+          status?: string
+          target_id?: string | null
+          target_type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_fees: {
         Row: {
           booking_id: string
