@@ -321,7 +321,7 @@ export const AdminRefunds = () => {
             Refresh
           </Button>
           <Button onClick={() => setOpen(true)}>
-            <DollarSign className="h-4 w-4 mr-2" /> Record refund
+            <DollarSign className="h-4 w-4 mr-2" /> Issue refund credit
           </Button>
         </div>
       </header>
