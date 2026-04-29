@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MobileShell } from '@/components/MobileShell';
+import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { Input } from '@/components/ui/input';
 import { Search, Map, List, SlidersHorizontal, Gift, X } from 'lucide-react';
 import { usePublishedCourses } from '@/hooks/useCourses';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
-import { Logo } from '@/components/Logo';
+
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
