@@ -349,13 +349,13 @@ export const AdminRefunds = () => {
             {loading ? (
               <tr>
                 <td colSpan={7} className="text-center py-8 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading refunds…
+                  <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading credits…
                 </td>
               </tr>
             ) : refunds.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No refunds recorded yet.
+                  No refund credits issued yet.
                 </td>
               </tr>
             ) : (
