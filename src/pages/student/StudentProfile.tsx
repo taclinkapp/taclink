@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { mockBookings, mockCourses } from '@/lib/mockData';
-import { Settings, ChevronRight } from 'lucide-react';
+import { Settings, ChevronRight, Gift } from 'lucide-react';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
+import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 
 const StudentProfile = () => {
   const nav = useNavigate();
+  const [inviteOpen, setInviteOpen] = useState(false);
   return (
     <MobileShell>
       <PageHeader
@@ -40,6 +43,22 @@ const StudentProfile = () => {
           ))}
         </div>
 
+        <Section title="Invite & Earn">
+          <button
+            onClick={() => setInviteOpen(true)}
+            className="tactical-card w-full p-4 flex items-center gap-3 hover:border-primary/40 text-left"
+          >
+            <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center text-primary">
+              <Gift className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold">Invite friends, get a free booking</div>
+              <div className="text-xs text-muted-foreground">When they book their first course, you score a free one.</div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </Section>
+
         <Section title="Training History">
           {mockBookings.slice(0, 3).map((b) => (
             <Link key={b.id} to={`/student/booking/${b.id}`} className="tactical-card p-3 flex items-center gap-3 hover:border-primary/40">
@@ -69,6 +88,11 @@ const StudentProfile = () => {
         </Section>
       </div>
       <StudentTabBar />
+      <InviteFriendsSheet
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        rewardLabel="1 free booking"
+      />
     </MobileShell>
   );
 };
