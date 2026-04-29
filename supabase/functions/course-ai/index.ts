@@ -21,12 +21,32 @@ interface Body {
   };
 }
 
+const COURSE_CATALOG_HINT = `
+Use TacLink's official categories and standard course-type names. Categories: Pistol, Rifle, Shotgun, Multi-Platform, Concealed Carry & Legal, Combatives, Tactical, Medical, Security & EP, Law Enforcement, Hunting & Field, Youth & Family, Specialty.
+Standard pistol types: Pistol Fundamentals (Beginner), Concealed Carry / CCW Qualification, Defensive Pistol, Pistol Marksmanship & Accuracy, Low-Light / Nighttime Pistol, One-Handed Pistol Techniques, Pistol Malfunction Clearance, Competition Pistol (USPSA / IDPA Prep), Draw Stroke & Holster Work, Force-on-Force Pistol (Simunitions).
+Standard rifle types: AR-15 / Carbine Fundamentals, Patrol Rifle Operator, Long-Range Precision Rifle, Designated Marksman (DMR), Low-Light / Night Vision Rifle, Rifle Malfunction Clearance, Home Defense Rifle, Competition Rifle (3-Gun Prep), Suppressor Operations, Vehicle-Based Rifle Tactics.
+Standard shotgun types: Shotgun Fundamentals, Defensive Shotgun, Tactical Shotgun Operations, Breaching Fundamentals (Shotgun), Competition Shotgun (3-Gun Prep).
+Multi-Platform: Pistol + Carbine Transition, 3-Gun Fundamentals, Low-Light Multi-Platform, Vehicle CQB (Pistol + Rifle).
+Concealed Carry & Legal: CCW / CHL / LTC Qualification, Concealed Carry Renewal, Legal Use of Force, Aftermath of a Defensive Shooting, Traveling Armed, Workplace Carry Policies.
+Combatives: Combatives Level 1, Combatives Level 2, Ground Fighting & Grappling, Knife Defense, Edged Weapon Offense, Combatives + Pistol Integration, Women's Self-Defense, Active Threat / Ambush Defense.
+Tactical: Close Quarters Battle (CQB) — Room Clearing, Building Clearing, Vehicle Tactics, Hostage Rescue Fundamentals, Surveillance Detection & Counter-Surveillance, Tracking & Counter-Tracking, Urban Survival & Evasion, Team Movement & Communication.
+Medical: Tactical Combat Casualty Care (TCCC), Stop the Bleed, Tourniquet Application & Wound Packing, Mass Casualty Response, TECC, Wilderness First Aid for Operators, Medical Under Fire.
+Security & EP: Executive Protection Fundamentals, Advance Team Operations, Protective Detail Driving, Threat Assessment & Recognition, Dignitary Protection, Armed Security Officer Certification.
+Law Enforcement: Active Shooter Response (LE), De-escalation & Use of Force, Patrol Tactics, Traffic Stop Safety, K-9 Handler Support, Interview & Interrogation Techniques.
+Hunting & Field: Long-Range Hunting (Precision Rifle), Backcountry Survival, Land Navigation, Hunting Safety Certification, Bowhunting Fundamentals.
+Youth & Family: Youth Firearms Safety (NRA Eddie Eagle), Parent & Child Pistol Fundamentals, Teen Self-Defense, Family Home Defense Planning.
+Specialty: Sniper / Precision Rifle Advanced, Breaching, Explosive Ordnance Awareness, SERE Fundamentals, Drone Awareness & Counter-UAS, Cyber & Physical Security Integration.
+When the field is "title", prefer one of the standard course-type names above when it matches the category and current draft, otherwise produce a tightly-scoped variant in the same naming style.
+`;
+
 const fieldSystemPrompt = (field: string) => `You are an expert firearms / tactical training course copywriter helping an instructor fill out their course listing. The platform is for U.S. self-defense, firearms, combatives, medical, and similar tactical training. Be concrete, professional, and avoid contact info, URLs, phone numbers, emails, or social handles.
+
+${COURSE_CATALOG_HINT}
 
 Return ONLY the value for the "${field}" field, no extra commentary, no quotes, no markdown headings.
 
 Field-specific rules:
-- title: 4-9 words, action-oriented, include skill level if obvious. No emojis.
+- title: 4-9 words, action-oriented, include skill level if obvious. No emojis. Prefer a name from the TacLink standard course-type list when it fits.
 - description: 80-160 words, 2-3 short paragraphs. Cover: what students will learn, prerequisites, what to bring, who it's for. No contact info.
 - capacity: a single integer between 4 and 16 appropriate for the course type and duration.
 - price: a single integer USD amount appropriate for the course type, duration, and U.S. market (typical range $75-$450). No dollar sign.`;
