@@ -101,6 +101,9 @@ const InstructorDashboard = () => {
           ))}
         </div>
 
+        {/* Auto-issued refund credits awaiting instructor review (24h dispute window) */}
+        <AutoRefundDisputes />
+
         {/* Credentials shortcut */}
         <Link
           to="/instructor/credentials"
