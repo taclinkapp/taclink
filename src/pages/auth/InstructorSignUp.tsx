@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/MobileShell';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, Gift } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES } from '@/lib/mockData';
 import { supabase } from '@/integrations/supabase/client';
