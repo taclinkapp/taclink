@@ -262,6 +262,15 @@ export const AdminRefunds = () => {
       toast.error('Enter a credit amount');
       return;
     }
+    // Hard cap: TacLink never credits more than the student paid online
+    // ($25 platform fee + 10% instructor deposit). The 90% paid in person is
+    // between the student and the instructor and cannot be refunded by the platform.
+    if (cents > picked.online_total_cents) {
+      toast.error('Credit cannot exceed what the student paid online', {
+        description: `Max refundable: ${fmt(picked.online_total_cents)} ($25 platform fee + 10% deposit). The remaining 90% was paid in person to the instructor.`,
+      });
+      return;
+    }
     if (!reason.trim()) {
       toast.error('Reason is required');
       return;
