@@ -133,6 +133,15 @@ serve(async (req) => {
             .single();
           if (!b) throw new Error("booking not found");
 
+          // Hard cap: TacLink only credits what the student paid online
+          // ($25 platform fee + 10% instructor deposit). The 90% paid in person
+          // is between the student and instructor and is never refundable by the platform.
+          const onlinePaid = b.online_total_cents ?? 0;
+          const amount = Math.min(requested, onlinePaid);
+          if (amount <= 0) {
+            throw new Error("booking has no online amount to credit");
+          }
+
           // Compute risk score
           const { data: riskRows } = await admin.rpc("compute_student_risk_score", {
             _student_id: b.student_id,
