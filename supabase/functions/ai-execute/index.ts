@@ -284,6 +284,7 @@ serve(async (req) => {
               link: `/student/bookings`,
             });
           }
+          break;
         }
 
         default:
