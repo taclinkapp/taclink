@@ -93,6 +93,7 @@ const App = () => (
             <Route path="/auth/student-signup" element={<StudentSignUp />} />
             <Route path="/auth/instructor-signup" element={<InstructorSignUp />} />
             <Route path="/auth/credential-verification" element={<CredentialVerification />} />
+            <Route path="/auth/invite/:code" element={<InviteLanding />}/>
 
             {/* Student */}
             <Route path="/student" element={<Student><Discover /></Student>} />
