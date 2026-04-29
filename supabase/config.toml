@@ -1,13 +1,13 @@
 project_id = "jocnlpkbaqmriedmbocl"
 
-[functions.get-mapbox-token]
-verify_jwt = false
-
-[functions.ai-assistant]
-verify_jwt = false
-
-[functions.admin-ai]
-verify_jwt = true
-
-[functions.bug-triage]
-verify_jwt = true
+[functions]
+  [functions.admin-ai]
+    verify_jwt = true
+  [functions.ai-assistant]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.bug-triage]
+    verify_jwt = true
+  [functions.get-mapbox-token]
+    verify_jwt = false
