@@ -240,6 +240,29 @@ serve(async (req) => {
               });
             }
           }
+
+          // If app credit was offered, issue a free_booking credit toward next course.
+          if (payload.recommended_action === "offer_app_credit" && conv.student_id) {
+            const amount = payload.credit_amount_cents ?? 0;
+            await admin.from("student_credits").insert({
+              student_id: conv.student_id,
+              credit_type: "free_booking",
+              source: "dispute_resolution",
+              note:
+                payload.internal_note ??
+                `Goodwill credit toward next course (dispute: ${payload.classification})`,
+            });
+            await admin.from("notifications").insert({
+              recipient_id: conv.student_id,
+              type: "credit_issued",
+              title: "Course credit added to your account",
+              body:
+                amount > 0
+                  ? `A free-booking credit (worth ~$${(amount / 100).toFixed(2)}) has been added toward your next course.`
+                  : `A free-booking credit has been added toward your next course.`,
+              link: `/student/bookings`,
+            });
+          }
           break;
         }
 
