@@ -463,7 +463,7 @@ export const AdminRefunds = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs">Refund type</Label>
+                    <Label className="text-xs">Credit type</Label>
                     <Select value={type} onValueChange={(v) => onTypeChange(v as RefundType)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
