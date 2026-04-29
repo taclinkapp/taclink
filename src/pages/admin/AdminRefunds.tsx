@@ -271,7 +271,7 @@ export const AdminRefunds = () => {
       status: 'issued',
     });
     if (error) {
-      toast.error('Could not record refund', { description: error.message });
+      toast.error('Could not issue credit', { description: error.message });
       setSubmitting(false);
       return;
     }
