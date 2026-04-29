@@ -67,6 +67,8 @@ import { AdminConversations } from "./pages/admin/AdminConversations";
 import { AdminConversationDetail } from "./pages/admin/AdminConversationDetail";
 import AdminModeration from "./pages/admin/AdminModeration";
 import AdminRefunds from "./pages/admin/AdminRefunds";
+import AdminFinancials from "./pages/admin/AdminFinancials";
+import AdminFeaturedCourses from "./pages/admin/AdminFeaturedCourses";
 import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -149,6 +151,8 @@ const App = () => (
               <Route path="moderation" element={<AdminModeration />} />
               <Route path="deposit-review" element={<DepositReview />} />
               <Route path="refunds" element={<AdminRefunds />} />
+              <Route path="financials" element={<AdminFinancials />} />
+              <Route path="featured" element={<AdminFeaturedCourses />} />
               <Route path="activity" element={<AdminAuditLog />} />
               <Route path="flags" element={<AdminFeatureFlags />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
