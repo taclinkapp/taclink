@@ -22,6 +22,7 @@ import InviteLanding from "./pages/auth/InviteLanding";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import ChangePassword from "./pages/auth/ChangePassword";
+import Unsubscribe from "./pages/Unsubscribe";
 
 import Discover from "./pages/student/Discover";
 import CourseDetail from "./pages/student/CourseDetail";
@@ -110,6 +111,7 @@ const App = () => (
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/auth/change-password" element={<Authed><ChangePassword /></Authed>} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
 
             {/* Student */}
             <Route path="/student" element={<Student><Discover /></Student>} />
