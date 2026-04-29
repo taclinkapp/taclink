@@ -1524,32 +1524,38 @@ export type Database = {
       }
       student_credits: {
         Row: {
+          amount_cents: number
           credit_type: string
           earned_at: string
           id: string
           note: string | null
           redeemed_at: string | null
           redeemed_booking_id: string | null
+          refund_id: string | null
           source: string
           student_id: string
         }
         Insert: {
+          amount_cents?: number
           credit_type?: string
           earned_at?: string
           id?: string
           note?: string | null
           redeemed_at?: string | null
           redeemed_booking_id?: string | null
+          refund_id?: string | null
           source?: string
           student_id: string
         }
         Update: {
+          amount_cents?: number
           credit_type?: string
           earned_at?: string
           id?: string
           note?: string | null
           redeemed_at?: string | null
           redeemed_booking_id?: string | null
+          refund_id?: string | null
           source?: string
           student_id?: string
         }
