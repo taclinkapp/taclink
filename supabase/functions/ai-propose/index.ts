@@ -222,7 +222,7 @@ serve(async (req) => {
         risk_level: args.risk_level,
         target_type: body.target_type ?? null,
         target_id: body.target_id ?? null,
-        payload: args.payload,
+        payload: normalizePayload(body.kind, args),
         preview: args.preview,
         reasoning: args.reasoning,
         model: "google/gemini-3-flash-preview",
@@ -266,4 +266,40 @@ function json(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+// Some models occasionally return the action fields as siblings of `payload`
+// instead of nested inside it. Merge any known top-level fields into payload
+// so downstream consumers (cockpit UI, ai-execute) always see a consistent shape.
+function normalizePayload(kind: string, args: any): Record<string, any> {
+  const base: Record<string, any> =
+    args?.payload && typeof args.payload === "object" && !Array.isArray(args.payload)
+      ? { ...args.payload }
+      : {};
+
+  const KNOWN_FIELDS_BY_KIND: Record<string, string[]> = {
+    dispute_triage: [
+      "classification",
+      "recommended_action",
+      "reply_text",
+      "internal_note",
+      "refund_amount_cents",
+      "credit_amount_cents",
+    ],
+    message_reply: ["reply_text", "sender_role", "sender_id"],
+    support_reply: ["reply_text"],
+    credential_verify: ["decision", "notes"],
+    course_moderation: ["decision", "title", "description", "reason"],
+    review_moderation: ["decision", "cleaned_text", "reason"],
+    refund_recommendation: ["decision", "amount_cents", "reason"],
+    instructor_nudge: ["message", "link"],
+  };
+
+  const fields = KNOWN_FIELDS_BY_KIND[kind] ?? [];
+  for (const f of fields) {
+    if (base[f] === undefined && args?.[f] !== undefined) {
+      base[f] = args[f];
+    }
+  }
+  return base;
 }
