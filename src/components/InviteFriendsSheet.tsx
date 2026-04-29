@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Share2, Gift, Loader2 } from 'lucide-react';
+import { Copy, Check, Share2, Gift, Loader2, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
-import { useReferral, buildReferralUrl } from '@/hooks/useReferral';
+import { useReferral, buildReferralUrl, extractReferralCode } from '@/hooks/useReferral';
+import { QrScanner } from '@/components/QrScanner';
 
 type Props = {
   open: boolean;
