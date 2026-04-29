@@ -36,8 +36,8 @@ const MyProgress = () => {
   return (
     <MobileShell>
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
-        <div className="px-4 pt-4 pb-3 grid grid-cols-[auto_1fr_auto] items-center gap-3">
-          <Logo size="sm" />
+        <div className="px-4 h-14 grid grid-cols-[auto_1fr_auto] items-center gap-3">
+          <Logo showTagline className="h-7 w-auto" />
           <h1 className="font-stencil text-xl font-bold uppercase tracking-[0.12em] text-center">
             My Progress
           </h1>
