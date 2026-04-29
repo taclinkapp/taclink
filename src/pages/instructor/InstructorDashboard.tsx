@@ -67,7 +67,7 @@ const InstructorDashboard = () => {
 
   return (
     <MobileShell>
-      <PageHeader right={<NotificationsBell className="-mr-2" />} />
+      <PageHeader brand right={<NotificationsBell className="-mr-2" />} />
       <div className="px-4 pt-2">
         <div className="flex items-center gap-3">
           <img src="https://i.pravatar.cc/150?img=12" className="h-12 w-12 rounded-full border-2 border-primary" alt="" />

@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/components/Logo';
 
 export const MobileShell = ({ children, className, withTabBar = true }: { children: ReactNode; className?: string; withTabBar?: boolean }) => (
   <div className="min-h-screen bg-background">
@@ -7,10 +8,30 @@ export const MobileShell = ({ children, className, withTabBar = true }: { childr
   </div>
 );
 
-export const PageHeader = ({ title, right, back, onBack }: { title?: string; right?: ReactNode; back?: boolean; onBack?: () => void }) => (
+/**
+ * PageHeader
+ *  - title:  text title (sub-pages)
+ *  - brand:  show the TacLink full lockup (top-level "home" pages). When set,
+ *            the title is hidden in favour of the brand mark.
+ *  - back / onBack: optional back button.
+ *  - right:  trailing slot (notifications bell, actions, etc).
+ */
+export const PageHeader = ({
+  title,
+  brand,
+  right,
+  back,
+  onBack,
+}: {
+  title?: string;
+  brand?: boolean;
+  right?: ReactNode;
+  back?: boolean;
+  onBack?: () => void;
+}) => (
   <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
     <div className="flex items-center justify-between px-4 h-14">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         {back && (
           <button
             onClick={onBack ?? (() => window.history.back())}
@@ -20,7 +41,11 @@ export const PageHeader = ({ title, right, back, onBack }: { title?: string; rig
             ←
           </button>
         )}
-        {title && <h1 className="text-base font-bold tracking-tight">{title}</h1>}
+        {brand ? (
+          <Logo showTagline widthPx={108} />
+        ) : (
+          title && <h1 className="text-base font-bold tracking-tight truncate">{title}</h1>
+        )}
       </div>
       <div>{right}</div>
     </div>
