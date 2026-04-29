@@ -407,9 +407,9 @@ export const AdminRefunds = () => {
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Record a refund</DialogTitle>
+            <DialogTitle>Issue refund as in-app credit</DialogTitle>
             <DialogDescription>
-              Find the booking, choose what's being refunded, then confirm. The student will be notified automatically.
+              Find the booking and choose how much credit to issue. The student receives an in-app credit (no cash refund) and is notified automatically.
             </DialogDescription>
           </DialogHeader>
 
