@@ -90,11 +90,111 @@ serve(async (req) => {
           break;
         }
 
+        case "dispute_triage": {
+          // Auto-execute path for low-risk auto-refunds.
+          // Gate: must be approve_full_refund OR offer_app_credit, with refund/credit amount,
+          // and student risk score must be low enough.
+          const conversationId = action.target_id;
+          if (!conversationId) throw new Error("missing conversation_id");
+
+          const { data: conv } = await admin
+            .from("conversations")
+            .select("instructor_id, student_id, booking_id")
+            .eq("id", conversationId)
+            .single();
+          if (!conv) throw new Error("conversation not found");
+
+          // Pull auto-refund settings
+          const { data: settings } = await admin
+            .from("ai_auto_approve_settings")
+            .select("rules")
+            .eq("id", 1)
+            .maybeSingle();
+          const rule = settings?.rules?.auto_refund ?? {};
+          const maxAmount = rule.max_amount_cents ?? 5000;
+          const maxRiskScore = rule.max_risk_score ?? 30;
+          const windowHours = rule.dispute_window_hours ?? 24;
+
+          const decision = payload.recommended_action;
+          const isRefund = decision === "approve_full_refund" || decision === "offer_app_credit";
+          const amount = payload.refund_amount_cents ?? payload.credit_amount_cents ?? 0;
+
+          if (!isRefund || !conv.booking_id || amount <= 0) {
+            throw new Error("dispute_triage not eligible for auto-refund (no amount or wrong action)");
+          }
+          if (amount > maxAmount) {
+            throw new Error(`amount ${amount} exceeds auto-refund cap ${maxAmount}`);
+          }
+
+          const { data: b } = await admin
+            .from("bookings")
+            .select("student_id, online_total_cents, platform_fee_cents, deposit_amount_cents")
+            .eq("id", conv.booking_id)
+            .single();
+          if (!b) throw new Error("booking not found");
+
+          // Compute risk score
+          const { data: riskRows } = await admin.rpc("compute_student_risk_score", {
+            _student_id: b.student_id,
+          });
+          const risk = Array.isArray(riskRows) ? riskRows[0] : riskRows;
+          const score = risk?.score ?? 50;
+          const factors = risk?.factors ?? {};
+
+          if (score > maxRiskScore) {
+            throw new Error(`student risk score ${score} exceeds cap ${maxRiskScore} — escalating to owner`);
+          }
+
+          // Send the drafted reply
+          if (payload.reply_text) {
+            await admin.from("messages").insert({
+              conversation_id: conversationId,
+              sender_id: conv.instructor_id,
+              sender_role: "instructor",
+              body: `${payload.reply_text}\n\n— the TacLink team`,
+            });
+          }
+
+          // Issue auto-refund credit with dispute window
+          const windowUntil = new Date(Date.now() + windowHours * 3600 * 1000).toISOString();
+          await admin.from("refunds").insert({
+            booking_id: conv.booking_id,
+            student_id: b.student_id,
+            amount_cents: amount,
+            reason: payload.internal_note ?? `Auto-issued credit (${payload.classification ?? "dispute"})`,
+            refund_type: decision === "approve_full_refund" ? "full" : "goodwill",
+            issued_by: b.student_id, // service-role insert; tracked as auto via flag
+            notes: `AUTO-ISSUED. Risk score ${score}. Instructor may dispute within ${windowHours}h.`,
+            auto_issued: true,
+            risk_score: score,
+            risk_factors: factors,
+            dispute_window_until: windowUntil,
+            ai_action_id: action.id,
+          });
+
+          await admin.from("notifications").insert([
+            {
+              recipient_id: b.student_id,
+              type: "refund_issued",
+              title: `In-app credit issued: $${(amount / 100).toFixed(2)}`,
+              body: `A $${(amount / 100).toFixed(2)} credit has been added. Apply it to your next booking.`,
+              link: `/student/booking/${conv.booking_id}`,
+            },
+            {
+              recipient_id: conv.instructor_id,
+              type: "auto_refund_issued",
+              title: "Auto-credit issued — you have 24h to dispute",
+              body: `An automatic $${(amount / 100).toFixed(2)} credit was issued to a student. If this isn't right, dispute it within 24h.`,
+              link: `/instructor/dashboard`,
+            },
+          ]);
+          break;
+        }
+
         case "credential_verify":
         case "course_moderation":
         case "support_reply":
         case "refund_recommendation":
-        case "dispute_triage":
           throw new Error(`kind ${action.kind} not eligible for auto-execute`);
 
         default:
