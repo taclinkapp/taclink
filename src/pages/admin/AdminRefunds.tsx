@@ -327,8 +327,8 @@ export const AdminRefunds = () => {
       </header>
 
       <div className="grid grid-cols-3 gap-4">
-        <Stat label="Refunds issued" value={String(totals.count)} />
-        <Stat label="Total refunded" value={fmt(totals.issued)} />
+        <Stat label="Credits issued" value={String(totals.count)} />
+        <Stat label="Total credit issued" value={fmt(totals.issued)} />
         <Stat label="Last 200 records" value={String(refunds.length)} />
       </div>
 
