@@ -32,25 +32,36 @@ export const Logo = ({
 
   if (showTagline) {
     return (
-      <img
-        src={fullLogo}
-        alt="TacLink — Find. Book. Train."
-        className={cn(
-          'object-contain',
-          // Default size when caller hasn't pinned width or passed sizing classes.
-          widthPx == null && !className && 'h-10 w-auto',
-          onLight && 'invert',
-          className,
-        )}
-        style={widthPx != null ? { width: widthPx } : undefined}
-      />
+      <span className="relative inline-flex items-start">
+        <img
+          src={fullLogo}
+          alt="TacLink™ — Find. Book. Train."
+          className={cn(
+            'object-contain',
+            // Default size when caller hasn't pinned width or passed sizing classes.
+            widthPx == null && !className && 'h-10 w-auto',
+            onLight && 'invert',
+            className,
+          )}
+          style={widthPx != null ? { width: widthPx } : undefined}
+        />
+        <span
+          aria-hidden
+          className={cn(
+            'ml-0.5 mt-0.5 text-[0.55em] font-semibold leading-none tracking-normal',
+            onLight ? 'text-foreground/70' : 'text-foreground/80',
+          )}
+        >
+          ™
+        </span>
+      </span>
     );
   }
 
   return (
     <img
       src={iconMark}
-      alt="TacLink"
+      alt="TacLink™"
       className={cn('object-contain inline-block', className)}
       style={{ width: dim, height: dim }}
     />
