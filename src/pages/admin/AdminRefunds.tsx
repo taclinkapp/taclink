@@ -10,6 +10,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,7 +28,7 @@ import { DollarSign, Loader2, RefreshCw, Search, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fmt } from '@/lib/fees';
 
-type RefundType = 'platform_fee' | 'deposit' | 'full' | 'other';
+type RefundType = 'platform_fee' | 'deposit' | 'full' | 'partial' | 'goodwill' | 'other';
 type RefundStatus = 'issued' | 'failed' | 'reversed';
 
 type RefundRow = {
@@ -462,10 +466,12 @@ export const AdminRefunds = () => {
                     <Select value={type} onValueChange={(v) => onTypeChange(v as RefundType)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="platform_fee">Platform fee</SelectItem>
+                        <SelectItem value="platform_fee">Platform fee ($25)</SelectItem>
                         <SelectItem value="deposit">Deposit (10%)</SelectItem>
                         <SelectItem value="full">Full (online + deposit)</SelectItem>
-                        <SelectItem value="other">Other / partial</SelectItem>
+                        <SelectItem value="partial">Partial (custom amount)</SelectItem>
+                        <SelectItem value="goodwill">Goodwill credit</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
