@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,8 @@ import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  const referralCode = (params.get('ref') ?? '').trim().toUpperCase();
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
@@ -51,6 +53,7 @@ const InstructorSignUp = () => {
           state,
           bio,
           role: 'instructor',
+          ...(referralCode ? { referral_code: referralCode } : {}),
         },
       },
     });

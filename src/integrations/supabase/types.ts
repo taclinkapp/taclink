@@ -932,6 +932,72 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          user_id: string
+          user_role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          user_id: string
+          user_role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          user_role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code_used: string
+          created_at: string
+          id: string
+          referred_user_id: string
+          referrer_id: string
+          referrer_role: Database["public"]["Enums"]["app_role"]
+          reward_id: string | null
+          reward_type: string | null
+          rewarded_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code_used: string
+          created_at?: string
+          id?: string
+          referred_user_id: string
+          referrer_id: string
+          referrer_role: Database["public"]["Enums"]["app_role"]
+          reward_id?: string | null
+          reward_type?: string | null
+          rewarded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code_used?: string
+          created_at?: string
+          id?: string
+          referred_user_id?: string
+          referrer_id?: string
+          referrer_role?: Database["public"]["Enums"]["app_role"]
+          reward_id?: string | null
+          reward_type?: string | null
+          rewarded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       refunds: {
         Row: {
           amount_cents: number
@@ -1026,6 +1092,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      student_credits: {
+        Row: {
+          credit_type: string
+          earned_at: string
+          id: string
+          note: string | null
+          redeemed_at: string | null
+          redeemed_booking_id: string | null
+          source: string
+          student_id: string
+        }
+        Insert: {
+          credit_type?: string
+          earned_at?: string
+          id?: string
+          note?: string | null
+          redeemed_at?: string | null
+          redeemed_booking_id?: string | null
+          source?: string
+          student_id: string
+        }
+        Update: {
+          credit_type?: string
+          earned_at?: string
+          id?: string
+          note?: string | null
+          redeemed_at?: string | null
+          redeemed_booking_id?: string | null
+          source?: string
+          student_id?: string
+        }
+        Relationships: []
       }
       support_ticket_messages: {
         Row: {
@@ -1273,6 +1372,7 @@ export type Database = {
         }[]
       }
       current_dev_user_id: { Args: never; Returns: string }
+      generate_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

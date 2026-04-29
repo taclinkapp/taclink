@@ -1,0 +1,55 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+
+export type ReferralStats = {
+  code: string | null;
+  totalInvites: number;
+  rewardedInvites: number;
+  pendingInvites: number;
+};
+
+export const useReferral = () => {
+  const { user } = useAuth();
+  const [stats, setStats] = useState<ReferralStats>({
+    code: null,
+    totalInvites: 0,
+    rewardedInvites: 0,
+    pendingInvites: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const [{ data: codeRow }, { data: refs }] = await Promise.all([
+        supabase.from('referral_codes').select('code').eq('user_id', user.id).maybeSingle(),
+        supabase.from('referrals').select('status').eq('referrer_id', user.id),
+      ]);
+      if (cancelled) return;
+      const all = refs ?? [];
+      setStats({
+        code: codeRow?.code ?? null,
+        totalInvites: all.length,
+        rewardedInvites: all.filter((r) => r.status === 'rewarded').length,
+        pendingInvites: all.filter((r) => r.status === 'pending').length,
+      });
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  return { ...stats, loading };
+};
+
+export const buildReferralUrl = (code: string) => {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${origin}/auth/student-signup?ref=${encodeURIComponent(code)}`;
+};

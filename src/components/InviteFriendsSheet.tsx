@@ -1,0 +1,110 @@
+import { useMemo, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Copy, Check, Share2, Gift, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { useReferral, buildReferralUrl } from '@/hooks/useReferral';
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  rewardLabel?: string;
+};
+
+export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) => {
+  const { code, totalInvites, rewardedInvites, pendingInvites, loading } = useReferral();
+  const [copied, setCopied] = useState(false);
+  const link = useMemo(() => (code ? buildReferralUrl(code) : ''), [code]);
+
+  const onCopy = async () => {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      toast.success('Link copied');
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error('Could not copy');
+    }
+  };
+
+  const onShare = async () => {
+    if (!link) return;
+    const text = `Train with me on TacLink. Sign up with my link and we both win.`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'TacLink', text, url: link });
+      } catch {
+        /* user cancelled */
+      }
+    } else {
+      onCopy();
+    }
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="bg-background border-border max-h-[92vh] overflow-y-auto">
+        <SheetHeader className="text-left">
+          <SheetTitle className="font-stencil uppercase tracking-[0.12em] flex items-center gap-2">
+            <Gift className="h-4 w-4 text-primary" />
+            Invite & Earn
+          </SheetTitle>
+        </SheetHeader>
+
+        <div className="mt-2 mb-5">
+          <p className="text-sm text-muted-foreground">
+            Share your code. When a friend creates their first booking, you get{' '}
+            <span className="text-primary font-bold">{rewardLabel ?? 'a free reward'}</span>.
+          </p>
+        </div>
+
+        {loading || !code ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-center">
+              <div className="bg-white p-4 rounded-md border-4 border-primary">
+                <QRCodeSVG value={link} size={208} level="M" includeMargin={false} />
+              </div>
+            </div>
+
+            <div className="mt-5 tactical-card p-3">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-1">
+                Your code
+              </div>
+              <div className="font-stencil text-2xl tracking-widest text-primary">{code}</div>
+              <div className="mt-2 text-[11px] text-muted-foreground break-all">{link}</div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <Button onClick={onCopy} variant="outline" className="h-11 bg-card border-border font-bold uppercase text-xs tracking-wider">
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? 'Copied' : 'Copy link'}
+              </Button>
+              <Button onClick={onShare} className="h-11 bg-primary text-primary-foreground font-bold uppercase text-xs tracking-wider">
+                <Share2 className="h-4 w-4" /> Share
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 mt-5">
+              <Stat label="Invited" value={totalInvites} />
+              <Stat label="Pending" value={pendingInvites} />
+              <Stat label="Rewards" value={rewardedInvites} highlight />
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+};
+
+const Stat = ({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) => (
+  <div className="tactical-card p-3 text-center">
+    <div className={`text-xl font-black ${highlight ? 'text-primary' : 'text-foreground'}`}>{value}</div>
+    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">{label}</div>
+  </div>
+);

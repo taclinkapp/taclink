@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { Input } from '@/components/ui/input';
-import { Search, Map, List, SlidersHorizontal } from 'lucide-react';
+import { Search, Map, List, SlidersHorizontal, Gift, X } from 'lucide-react';
 import { usePublishedCourses } from '@/hooks/useCourses';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
 import { Logo } from '@/components/Logo';
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
+import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { cn } from '@/lib/utils';
 
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
@@ -27,6 +28,14 @@ const Discover = () => {
   const [discipline, setDiscipline] = useState<string>('All');
   const [level, setLevel] = useState<LevelFilter>('all');
   const [query, setQuery] = useState('');
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => typeof window !== 'undefined' && sessionStorage.getItem('invite-banner-dismissed') === '1',
+  );
+  const dismissBanner = () => {
+    sessionStorage.setItem('invite-banner-dismissed', '1');
+    setBannerDismissed(true);
+  };
   const { data: courses = [], isLoading } = usePublishedCourses();
 
   const filtered = courses.filter((c) => {
@@ -105,6 +114,27 @@ const Discover = () => {
         </div>
       </header>
 
+      {!bannerDismissed && (
+        <div className="px-4 pt-3">
+          <div className="tactical-card p-3 flex items-center gap-3 border-primary/40">
+            <div className="h-9 w-9 rounded-md bg-primary/15 flex items-center justify-center text-primary shrink-0">
+              <Gift className="h-4 w-4" />
+            </div>
+            <button onClick={() => setInviteOpen(true)} className="flex-1 text-left min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wider">Invite a friend, get a free booking</div>
+              <div className="text-[11px] text-muted-foreground">Share your QR code — when they book, you score.</div>
+            </button>
+            <button
+              onClick={dismissBanner}
+              aria-label="Dismiss"
+              className="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground flex items-center justify-center shrink-0"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {view === 'list' ? (
         <div className="px-4 py-4 space-y-3">
           {isLoading ? (
@@ -131,6 +161,7 @@ const Discover = () => {
       )}
 
       <StudentTabBar />
+      <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} rewardLabel="1 free booking" />
     </MobileShell>
   );
 };

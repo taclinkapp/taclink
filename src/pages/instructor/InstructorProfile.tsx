@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
-import { Settings, Star, MapPin, Award } from 'lucide-react';
+import { Settings, Star, MapPin, Award, Gift, ChevronRight } from 'lucide-react';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { mockReviews, mockCourses } from '@/lib/mockData';
+import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 
 const InstructorProfile = () => {
   const nav = useNavigate();
+  const [inviteOpen, setInviteOpen] = useState(false);
   return (
     <MobileShell>
       <PageHeader
@@ -34,6 +37,22 @@ const InstructorProfile = () => {
         <p className="text-sm text-muted-foreground leading-relaxed mt-3">
           Former Marine. NRA-certified pistol & rifle instructor with 12 years of training experience. Focused on real-world defensive shooting.
         </p>
+
+        <Section title="Invite & Earn">
+          <button
+            onClick={() => setInviteOpen(true)}
+            className="tactical-card w-full p-4 flex items-center gap-3 hover:border-primary/40 text-left"
+          >
+            <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center text-primary">
+              <Gift className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold">Invite & earn a free listing</div>
+              <div className="text-xs text-muted-foreground">When your invite books their first course, you get a free listing credit.</div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </Section>
 
         <Section title="Credentials">
           {[
@@ -74,6 +93,11 @@ const InstructorProfile = () => {
         </Section>
       </div>
       <InstructorTabBar />
+      <InviteFriendsSheet
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        rewardLabel="1 free course listing"
+      />
     </MobileShell>
   );
 };
