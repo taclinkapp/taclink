@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
 import { ContactInfoWarning } from '@/components/ContactInfoWarning';
+import { validatePassword } from '@/lib/passwordRules';
+import { PasswordRequirements } from '@/components/PasswordRequirements';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
@@ -34,7 +36,12 @@ const InstructorSignUp = () => {
     e.preventDefault();
     if (loading) return;
     if (password !== confirm) return toast.error('Passwords do not match');
-    if (password.length < 8) return toast.error('Password must be at least 8 characters');
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      return toast.error('Password does not meet requirements', {
+        description: pwCheck.failed.map((r) => `• ${r.label}`).join('\n'),
+      });
+    }
     if (!agree) return toast.error('You must agree to the terms');
     const bioHits = detectContactInfo(bio);
     if (bioHits.length) {
@@ -119,6 +126,10 @@ const InstructorSignUp = () => {
               <Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
             </div>
           </div>
+          <PasswordRequirements password={password} />
+          {confirm && confirm !== password && (
+            <p className="text-[11px] text-destructive -mt-2">Passwords do not match</p>
+          )}
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">State</Label>
             <Select value={state} onValueChange={setState}>
