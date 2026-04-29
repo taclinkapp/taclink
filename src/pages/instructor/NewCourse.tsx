@@ -10,6 +10,7 @@ import { US_STATES } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { createCourse, uploadCoursePhoto, SKILL_LEVEL_LABELS, type SkillLevel } from '@/lib/courses';
+import { COURSE_CATALOG, getCategoryTypes } from '@/lib/courseCatalog';
 import { supabase } from '@/integrations/supabase/client';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { redeemFreeListingCredit, fetchPunchCardState } from '@/lib/punchCard';
@@ -337,13 +338,26 @@ const NewCourse = () => {
               <Input value={title} onChange={(e) => setTitle(e.target.value)} className="bg-card border-border h-11" placeholder="e.g. Defensive Pistol Fundamentals" />
             </Field>
             <Field label="Category">
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category} onValueChange={(v) => { setCategory(v); }}>
                 <SelectTrigger className="bg-card border-border h-11"><SelectValue placeholder="Select category" /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {['Pistol', 'Rifle', 'Shotgun', 'Combatives', 'Medical', 'Other'].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                <SelectContent className="bg-card border-border max-h-72">
+                  {COURSE_CATALOG.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
+            {category && getCategoryTypes(category).length > 0 && (
+              <Field label="Course Type (optional — prefills title)">
+                <Select
+                  value=""
+                  onValueChange={(v) => { if (v) setTitle(v); }}
+                >
+                  <SelectTrigger className="bg-card border-border h-11"><SelectValue placeholder="Pick a standard course type" /></SelectTrigger>
+                  <SelectContent className="bg-card border-border max-h-72">
+                    {getCategoryTypes(category).map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
             <Field label="Skill Level *">
               <Select value={skillLevel} onValueChange={(v) => setSkillLevel(v as SkillLevel)}>
                 <SelectTrigger className={cn('bg-card border-border h-11', !skillLevel && 'border-destructive/60')}><SelectValue placeholder="Select level (required)" /></SelectTrigger>
