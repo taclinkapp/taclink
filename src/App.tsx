@@ -18,6 +18,7 @@ import SignIn from "./pages/auth/SignIn";
 import StudentSignUp from "./pages/auth/StudentSignUp";
 import InstructorSignUp from "./pages/auth/InstructorSignUp";
 import CredentialVerification from "./pages/auth/CredentialVerification";
+import InviteLanding from "./pages/auth/InviteLanding";
 
 import Discover from "./pages/student/Discover";
 import CourseDetail from "./pages/student/CourseDetail";
