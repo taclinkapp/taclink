@@ -222,7 +222,7 @@ serve(async (req) => {
         risk_level: args.risk_level,
         target_type: body.target_type ?? null,
         target_id: body.target_id ?? null,
-        payload: args.payload,
+        payload: normalizePayload(body.kind, args),
         preview: args.preview,
         reasoning: args.reasoning,
         model: "google/gemini-3-flash-preview",
