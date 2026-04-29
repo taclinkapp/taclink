@@ -20,6 +20,7 @@ import {
   type PayoutHandle,
   type PayoutMethod,
 } from "@/lib/payouts";
+import { sendAppEmail } from "@/lib/appEmail";
 import { cn } from "@/lib/utils";
 
 const ICON: Record<PayoutMethod, typeof Smartphone> = {
@@ -125,6 +126,22 @@ export const SendDepositCard = ({
       return;
     }
     toast.success("Marked as sent — instructor will confirm receipt.");
+
+    // Email student a deposit acknowledgment receipt (fire-and-forget)
+    const { data: auth } = await supabase.auth.getUser();
+    if (auth.user?.email) {
+      sendAppEmail({
+        templateName: "deposit-received",
+        recipientEmail: auth.user.email,
+        idempotencyKey: `deposit-received-${bookingId}`,
+        templateData: {
+          studentName: auth.user.user_metadata?.display_name,
+          courseTitle,
+          amount: fmt(depositCents),
+        },
+      });
+    }
+
     onChanged();
   };
 
