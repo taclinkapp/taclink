@@ -17,6 +17,8 @@ type Props = {
 export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) => {
   const { code, totalInvites, rewardedInvites, pendingInvites, loading } = useReferral();
   const [copied, setCopied] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const nav = useNavigate();
   const link = useMemo(() => (code ? buildReferralUrl(code) : ''), [code]);
 
   const onCopy = async () => {
