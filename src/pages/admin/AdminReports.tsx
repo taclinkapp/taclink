@@ -109,8 +109,8 @@ export const AdminReports = () => {
             No reports {filter !== 'all' && `with status "${filter}"`}.
           </div>
         ) : (
-          <div className="tactical-card overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="tactical-card overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
               <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
                 <tr>
                   <th className="text-left px-4 py-3 font-bold">When</th>

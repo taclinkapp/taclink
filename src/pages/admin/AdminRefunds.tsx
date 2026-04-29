@@ -332,8 +332,8 @@ export const AdminRefunds = () => {
         <Stat label="Last 200 records" value={String(refunds.length)} />
       </div>
 
-      <div className="rounded-md border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-md border border-border overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="text-left px-3 py-2">Issued</th>

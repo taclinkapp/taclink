@@ -86,8 +86,8 @@ export const AdminConversations = () => {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="border border-border rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="border border-border rounded-xl overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-card text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="text-left px-4 py-2.5 font-semibold">Student</th>

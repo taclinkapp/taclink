@@ -10,8 +10,8 @@ export const AdminCourses = () => (
   <>
     <AdminHeader title="Courses" subtitle={`${mockCourses.length} listings`} />
     <div className="p-8">
-      <div className="tactical-card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="tactical-card overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
             <tr>
               <th className="text-left px-4 py-3 font-bold">Title</th>
@@ -58,8 +58,8 @@ export const AdminWaitlist = () => (
       <Button className="h-10 bg-primary text-primary-foreground font-bold">Notify All Waitlist</Button>
     } />
     <div className="p-8">
-      <div className="tactical-card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="tactical-card overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
             <tr>
               <th className="text-left px-4 py-3 font-bold">Email</th>
@@ -99,8 +99,8 @@ export const AdminActivity = () => {
     <>
       <AdminHeader title="Activity Log" subtitle="All admin actions" />
       <div className="p-8">
-        <div className="tactical-card overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="tactical-card overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
               <tr>
                 <th className="text-left px-4 py-3 font-bold">Time</th>

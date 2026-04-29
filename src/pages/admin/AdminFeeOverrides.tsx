@@ -172,8 +172,8 @@ export const AdminFeeOverrides = () => {
         action={<Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" /> New override</Button>}
       />
       <div className="p-8 space-y-4">
-        <div className="rounded-md border border-border overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rounded-md border border-border overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="text-left px-3 py-2">Scope</th>
