@@ -309,10 +309,10 @@ export const AdminRefunds = () => {
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-primary" /> Refunds
+            <DollarSign className="h-6 w-6 text-primary" /> Refunds (App Credit)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Record refunds issued to students for the platform fee, deposit, or other corrections. The student is notified automatically.
+            All booking-fee refunds are issued as <span className="font-semibold text-foreground">in-app credit</span> the student can apply to a future course. No cash is returned. The student is notified automatically.
           </p>
         </div>
         <div className="flex gap-2">
