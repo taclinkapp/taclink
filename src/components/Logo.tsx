@@ -5,18 +5,15 @@ import fullLogo from '@/assets/taclink-logo.png';
 /**
  * Official TacLink mark.
  *
- * Two artworks:
- *  - Icon: hexagon + scope reticle + amber location pin on dark background.
- *    Used for favicon, app icon, mobile header, any compact mark.
- *  - Full lockup: dark hexagon w/ compass rose + TACLINK stencil +
- *    FIND. BOOK. TRAIN. tagline on a white background. Used for splash,
- *    auth screens, sidebar, emails, and hero areas.
+ * - showTagline=false → compact icon mark (hexagon + scope + amber pin).
+ * - showTagline=true  → full brand lockup, white-on-transparent.
  *
- * Props:
- *  - showTagline=false → render the dark icon mark.
- *  - showTagline=true  → render the full brand lockup.
- *  - widthPx           → override the rendered width of the full lockup.
- *  - onLight=true      → opt out of inversion (use on white/PDF/email).
+ * Sizing for the full lockup:
+ *   • Pass `widthPx` to pin width (e.g. 180 for auth screens).
+ *   • Pass a Tailwind sizing className (e.g. "h-9 w-auto") to fit headers.
+ *   • Default: h-10 w-auto.
+ *
+ * `onLight` flips colors back to dark ink for use on white backgrounds (emails/PDFs).
  */
 export const Logo = ({
   size = 'md',
@@ -34,18 +31,18 @@ export const Logo = ({
   const dim = { sm: 24, md: 36, lg: 56, xl: 96 }[size];
 
   if (showTagline) {
-    const w = widthPx ?? dim * 2.4;
     return (
       <img
         src={fullLogo}
         alt="TacLink — Find. Book. Train."
         className={cn(
-          'h-auto object-contain',
-          // Artwork is white-on-transparent. Invert to dark for light surfaces (emails, PDFs).
+          'object-contain',
+          // Default size when caller hasn't pinned width or passed sizing classes.
+          widthPx == null && !className && 'h-10 w-auto',
           onLight && 'invert',
           className,
         )}
-        style={{ width: w }}
+        style={widthPx != null ? { width: widthPx } : undefined}
       />
     );
   }

@@ -42,7 +42,7 @@ export const PageHeader = ({
           </button>
         )}
         {brand ? (
-          <Logo showTagline widthPx={108} />
+          <Logo showTagline className="h-9 w-auto" />
         ) : (
           title && <h1 className="text-base font-bold tracking-tight truncate">{title}</h1>
         )}
