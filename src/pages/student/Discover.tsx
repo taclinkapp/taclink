@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { MobileShell } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { Input } from '@/components/ui/input';
-import { Search, Map, List, SlidersHorizontal } from 'lucide-react';
+import { Search, Map, List, SlidersHorizontal, Gift, X } from 'lucide-react';
 import { usePublishedCourses } from '@/hooks/useCourses';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
 import { Logo } from '@/components/Logo';
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
+import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { cn } from '@/lib/utils';
 
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
@@ -27,6 +28,14 @@ const Discover = () => {
   const [discipline, setDiscipline] = useState<string>('All');
   const [level, setLevel] = useState<LevelFilter>('all');
   const [query, setQuery] = useState('');
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => typeof window !== 'undefined' && sessionStorage.getItem('invite-banner-dismissed') === '1',
+  );
+  const dismissBanner = () => {
+    sessionStorage.setItem('invite-banner-dismissed', '1');
+    setBannerDismissed(true);
+  };
   const { data: courses = [], isLoading } = usePublishedCourses();
 
   const filtered = courses.filter((c) => {
