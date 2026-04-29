@@ -36,8 +36,6 @@ const destinations: Record<Role, string> = {
 };
 
 export const DevRoleSwitcher = () => {
-  if (!import.meta.env.DEV) return null;
-
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<Role | null>(null);
