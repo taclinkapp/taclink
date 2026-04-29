@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import iconMark from '@/assets/taclink-icon.png';
-import fullLogo from '@/assets/taclink-logo.png';
+import fullLogo from '@/assets/taclink-logo.jpg';
 
 /**
  * Official TacLink mark.
