@@ -8,6 +8,7 @@ import { NotificationsBell } from '@/components/NotificationsBell';
 import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 import { FeeInsights } from '@/components/instructor/FeeInsights';
 import { PunchCard } from '@/components/instructor/PunchCard';
+import { AutoRefundDisputes } from '@/components/instructor/AutoRefundDisputes';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
@@ -99,6 +100,9 @@ const InstructorDashboard = () => {
             </button>
           ))}
         </div>
+
+        {/* Auto-issued refund credits awaiting instructor review (24h dispute window) */}
+        <AutoRefundDisputes />
 
         {/* Credentials shortcut */}
         <Link

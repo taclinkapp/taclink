@@ -209,6 +209,33 @@ serve(async (req) => {
           autoApproved = true;
         }
       }
+
+      // Auto-refund path: dispute_triage that recommends a refund/credit.
+      // Honors the auto_refund rule's amount/confidence gates; executor also
+      // verifies the student risk score before issuing.
+      if (body.kind === "dispute_triage" && status === "proposed" && !autoApproved) {
+        const refundRule = settings?.rules?.auto_refund;
+        const decision = args.payload?.recommended_action ?? args.recommended_action;
+        const amount =
+          args.payload?.refund_amount_cents ??
+          args.refund_amount_cents ??
+          args.payload?.credit_amount_cents ??
+          args.credit_amount_cents ??
+          0;
+        const isRefund =
+          decision === "approve_full_refund" || decision === "offer_app_credit";
+        if (
+          refundRule?.enabled &&
+          isRefund &&
+          amount > 0 &&
+          amount <= (refundRule.max_amount_cents ?? 5000) &&
+          (args.confidence ?? 0) >= (refundRule.min_confidence ?? 0.95) &&
+          args.risk_level !== "high"
+        ) {
+          status = "approved";
+          autoApproved = true;
+        }
+      }
     } catch (e) {
       console.error("auto-approve check failed", e);
     }

@@ -42,6 +42,12 @@ type RefundRow = {
   external_reference: string | null;
   notes: string | null;
   created_at: string;
+  auto_issued?: boolean;
+  risk_score?: number | null;
+  risk_factors?: any;
+  dispute_window_until?: string | null;
+  instructor_disputed_at?: string | null;
+  instructor_dispute_reason?: string | null;
   studentName?: string;
   courseTitle?: string;
 };
@@ -333,56 +339,105 @@ export const AdminRefunds = () => {
       </div>
 
       <div className="rounded-md border border-border overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="text-left px-3 py-2">Issued</th>
               <th className="text-left px-3 py-2">Student / Course</th>
+              <th className="text-left px-3 py-2">Source</th>
+              <th className="text-left px-3 py-2">Risk</th>
               <th className="text-left px-3 py-2">Type</th>
               <th className="text-right px-3 py-2">Amount</th>
-              <th className="text-left px-3 py-2">Reason</th>
-              <th className="text-left px-3 py-2">Status</th>
+              <th className="text-left px-3 py-2">Status / Window</th>
               <th className="text-right px-3 py-2"> </th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                <td colSpan={8} className="text-center py-8 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading credits…
                 </td>
               </tr>
             ) : refunds.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                <td colSpan={8} className="text-center py-8 text-muted-foreground">
                   No refund credits issued yet.
                 </td>
               </tr>
             ) : (
-              refunds.map((r) => (
+              refunds.map((r) => {
+                const windowOpen =
+                  r.auto_issued &&
+                  r.status === 'issued' &&
+                  r.dispute_window_until &&
+                  new Date(r.dispute_window_until) > new Date() &&
+                  !r.instructor_disputed_at;
+                return (
                 <tr key={r.id} className="border-t border-border">
-                  <td className="px-3 py-2 text-xs text-muted-foreground">
+                  <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">
                     {new Date(r.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-3 py-2">
                     <div className="font-medium">{r.studentName}</div>
                     <div className="text-[11px] text-muted-foreground">{r.courseTitle}</div>
+                    {r.reason && (
+                      <div className="text-[10px] text-muted-foreground/80 italic mt-0.5 max-w-[260px] truncate">{r.reason}</div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    {r.auto_issued ? (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-500/10 text-blue-600 border border-blue-500/30">
+                        AI auto
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">Manual</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    {typeof r.risk_score === 'number' ? (
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${
+                          r.risk_score >= 60
+                            ? 'bg-destructive/10 text-destructive border border-destructive/30'
+                            : r.risk_score >= 30
+                              ? 'bg-amber-500/10 text-amber-600 border border-amber-500/30'
+                              : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30'
+                        }`}
+                        title={JSON.stringify(r.risk_factors ?? {}, null, 2)}
+                      >
+                        {r.risk_score}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-xs uppercase">{r.refund_type.replace('_', ' ')}</td>
                   <td className="px-3 py-2 text-right font-semibold">{fmt(r.amount_cents)}</td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground max-w-[260px] truncate">{r.reason}</td>
                   <td className="px-3 py-2">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        r.status === 'issued'
-                          ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30'
-                          : r.status === 'reversed'
-                            ? 'bg-muted text-muted-foreground border border-border'
-                            : 'bg-destructive/10 text-destructive border border-destructive/30'
-                      }`}
-                    >
-                      {r.status}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span
+                        className={`inline-flex w-fit px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          r.status === 'issued'
+                            ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30'
+                            : r.status === 'reversed'
+                              ? 'bg-muted text-muted-foreground border border-border'
+                              : 'bg-destructive/10 text-destructive border border-destructive/30'
+                        }`}
+                      >
+                        {r.status}
+                      </span>
+                      {windowOpen && (
+                        <span className="text-[10px] text-amber-600">
+                          Instructor can dispute until {new Date(r.dispute_window_until!).toLocaleString()}
+                        </span>
+                      )}
+                      {r.instructor_disputed_at && (
+                        <span className="text-[10px] text-destructive">
+                          Disputed by instructor
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-3 py-2 text-right">
                     {r.status === 'issued' && (
@@ -397,7 +452,7 @@ export const AdminRefunds = () => {
                     )}
                   </td>
                 </tr>
-              ))
+              );})
             )}
           </tbody>
         </table>
