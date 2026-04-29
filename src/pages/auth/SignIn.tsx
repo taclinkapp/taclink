@@ -90,7 +90,7 @@ const SignIn = () => {
               className="bg-card border-border h-12 mt-1.5"
             />
           </div>
-          <button type="button" className="text-xs text-primary font-semibold">Forgot password?</button>
+          <button type="button" onClick={() => nav('/auth/forgot-password')} className="text-xs text-primary font-semibold">Forgot password?</button>
           <Button
             type="submit"
             disabled={loading}
