@@ -51,5 +51,26 @@ export const useReferral = () => {
 
 export const buildReferralUrl = (code: string) => {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${origin}/auth/student-signup?ref=${encodeURIComponent(code)}`;
+  return `${origin}/auth/invite/${encodeURIComponent(code)}`;
 };
+
+// Extract a referral code from a scanned QR payload. Accepts:
+// - a full invite URL (/auth/invite/CODE)
+// - a legacy signup URL (?ref=CODE)
+// - a bare code string
+export const extractReferralCode = (text: string): string | null => {
+  const raw = (text ?? '').trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    const refParam = url.searchParams.get('ref');
+    if (refParam) return refParam.trim().toUpperCase();
+    const match = url.pathname.match(/\/auth\/invite\/([A-Za-z0-9]+)/);
+    if (match) return match[1].toUpperCase();
+  } catch {
+    /* not a URL */
+  }
+  if (/^[A-Za-z0-9]{6,16}$/.test(raw)) return raw.toUpperCase();
+  return null;
+};
+

@@ -18,6 +18,7 @@ import SignIn from "./pages/auth/SignIn";
 import StudentSignUp from "./pages/auth/StudentSignUp";
 import InstructorSignUp from "./pages/auth/InstructorSignUp";
 import CredentialVerification from "./pages/auth/CredentialVerification";
+import InviteLanding from "./pages/auth/InviteLanding";
 
 import Discover from "./pages/student/Discover";
 import CourseDetail from "./pages/student/CourseDetail";
@@ -92,6 +93,7 @@ const App = () => (
             <Route path="/auth/student-signup" element={<StudentSignUp />} />
             <Route path="/auth/instructor-signup" element={<InstructorSignUp />} />
             <Route path="/auth/credential-verification" element={<CredentialVerification />} />
+            <Route path="/auth/invite/:code" element={<InviteLanding />}/>
 
             {/* Student */}
             <Route path="/student" element={<Student><Discover /></Student>} />

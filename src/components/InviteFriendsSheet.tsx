@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Share2, Gift, Loader2 } from 'lucide-react';
+import { Copy, Check, Share2, Gift, Loader2, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
-import { useReferral, buildReferralUrl } from '@/hooks/useReferral';
+import { useReferral, buildReferralUrl, extractReferralCode } from '@/hooks/useReferral';
+import { QrScanner } from '@/components/QrScanner';
 
 type Props = {
   open: boolean;
@@ -15,6 +17,8 @@ type Props = {
 export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) => {
   const { code, totalInvites, rewardedInvites, pendingInvites, loading } = useReferral();
   const [copied, setCopied] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const nav = useNavigate();
   const link = useMemo(() => (code ? buildReferralUrl(code) : ''), [code]);
 
   const onCopy = async () => {
@@ -41,6 +45,17 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
     } else {
       onCopy();
     }
+  };
+
+  const onScanned = (text: string) => {
+    const scanned = extractReferralCode(text);
+    setScanning(false);
+    if (!scanned) {
+      toast.error('No referral code found in QR');
+      return;
+    }
+    onOpenChange(false);
+    nav(`/auth/invite/${scanned}`);
   };
 
   return (
@@ -90,6 +105,14 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
               </Button>
             </div>
 
+            <Button
+              onClick={() => setScanning(true)}
+              variant="outline"
+              className="w-full h-11 mt-2 bg-card border-border font-bold uppercase text-xs tracking-wider"
+            >
+              <ScanLine className="h-4 w-4" /> Scan a friend's QR
+            </Button>
+
             <div className="grid grid-cols-3 gap-2 mt-5">
               <Stat label="Invited" value={totalInvites} />
               <Stat label="Pending" value={pendingInvites} />
@@ -98,6 +121,7 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
           </>
         )}
       </SheetContent>
+      {scanning && <QrScanner onDecode={onScanned} onClose={() => setScanning(false)} />}
     </Sheet>
   );
 };

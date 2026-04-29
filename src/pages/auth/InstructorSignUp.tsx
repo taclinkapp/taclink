@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/MobileShell';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, Gift } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES } from '@/lib/mockData';
 import { supabase } from '@/integrations/supabase/client';
@@ -73,6 +73,17 @@ const InstructorSignUp = () => {
       <PageHeader title="Instructor Application" back />
       <div className="max-w-md mx-auto px-6 py-6">
         <p className="text-muted-foreground text-sm mb-6">Apply to teach on TacLink. We'll verify your credentials within 1 hour.</p>
+        {referralCode && (
+          <div className="tactical-card p-3 mb-5 flex items-center gap-3 border-primary/40">
+            <div className="h-9 w-9 rounded-md bg-primary/15 flex items-center justify-center text-primary">
+              <Gift className="h-4 w-4" />
+            </div>
+            <div className="text-xs">
+              <div className="font-bold uppercase tracking-wider">Referral applied</div>
+              <div className="text-muted-foreground">Code <span className="text-primary font-mono">{referralCode}</span> — your friend earns a reward when you book your first course.</div>
+            </div>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-center mb-2">
             <button type="button" className="h-28 w-28 rounded-full bg-card border-2 border-dashed border-primary/40 flex flex-col items-center justify-center text-muted-foreground hover:text-primary transition">
