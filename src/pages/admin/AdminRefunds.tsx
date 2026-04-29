@@ -532,7 +532,7 @@ export const AdminRefunds = () => {
               setConfirmOpen(true);
             }} disabled={!picked || submitting}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Record refund
+              Issue credit
             </Button>
           </DialogFooter>
         </DialogContent>
