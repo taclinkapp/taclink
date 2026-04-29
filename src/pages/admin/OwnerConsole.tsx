@@ -47,6 +47,7 @@ const KIND_LABEL: Record<string, string> = {
   review_moderation: "Review moderation",
   refund_recommendation: "Refund decision",
   instructor_nudge: "Instructor nudge",
+  dispute_triage: "Dispute / refund request",
 };
 
 const KINDS = Object.keys(KIND_LABEL);
