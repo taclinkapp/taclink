@@ -114,6 +114,27 @@ const Discover = () => {
         </div>
       </header>
 
+      {!bannerDismissed && (
+        <div className="px-4 pt-3">
+          <div className="tactical-card p-3 flex items-center gap-3 border-primary/40">
+            <div className="h-9 w-9 rounded-md bg-primary/15 flex items-center justify-center text-primary shrink-0">
+              <Gift className="h-4 w-4" />
+            </div>
+            <button onClick={() => setInviteOpen(true)} className="flex-1 text-left min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wider">Invite a friend, get a free booking</div>
+              <div className="text-[11px] text-muted-foreground">Share your QR code — when they book, you score.</div>
+            </button>
+            <button
+              onClick={dismissBanner}
+              aria-label="Dismiss"
+              className="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground flex items-center justify-center shrink-0"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {view === 'list' ? (
         <div className="px-4 py-4 space-y-3">
           {isLoading ? (
@@ -140,6 +161,7 @@ const Discover = () => {
       )}
 
       <StudentTabBar />
+      <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} rewardLabel="1 free booking" />
     </MobileShell>
   );
 };
