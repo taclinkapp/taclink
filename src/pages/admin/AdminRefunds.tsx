@@ -291,7 +291,7 @@ export const AdminRefunds = () => {
   };
 
   const reverse = async (id: string) => {
-    if (!confirm('Mark this refund as reversed? Use only if the payment was clawed back.')) return;
+    if (!confirm('Mark this refund credit as reversed? This cancels the in-app credit if the student hasn\'t already redeemed it.')) return;
     const { error } = await supabase
       .from('refunds')
       .update({ status: 'reversed' })
@@ -300,7 +300,7 @@ export const AdminRefunds = () => {
       toast.error('Could not reverse', { description: error.message });
       return;
     }
-    toast.success('Refund marked reversed');
+    toast.success('Refund credit marked reversed');
     load();
   };
 
