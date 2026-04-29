@@ -24,7 +24,7 @@ const SECTIONS = [
   },
   {
     title: '6. Cancellations & Refunds',
-    body: "The $25 TacLink booking fee is non-refundable. Course fee refunds are subject to the instructor's cancellation policy. Contact the instructor directly for refund requests on course fees.",
+    body: "All booking-fee refunds issued by TacLink — including the $25 platform fee and the 10% instructor deposit — are provided exclusively as in-app credit toward a future booking. TacLink does not issue cash refunds for booking fees under any circumstances. In-app credit is non-transferable, has no cash value, and does not expire. Any portion of a course fee paid in person to the instructor (cash, Venmo, or otherwise) is between the student and the instructor; TacLink cannot refund those amounts. Refund eligibility is determined by TacLink based on the circumstances of the cancellation.",
   },
   {
     title: '7. Prohibited Conduct',
