@@ -101,7 +101,7 @@ export const AdminFinancials = () => {
     <>
       <AdminHeader
         title="Financial Controls"
-        subtitle="Revenue, refunds, and manual credits"
+        subtitle="Revenue, refund credits, and manual credits"
         action={
           <Select value={range} onValueChange={(v) => setRange(v as Range)}>
             <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
