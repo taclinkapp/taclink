@@ -131,9 +131,8 @@ serve(async (req) => {
 
     const args = JSON.parse(call.function.arguments);
 
-    // Auto-pause anything high-risk OR low-confidence (still goes to inbox,
-    // just with a clearer "needs your decision" status).
-    const status =
+    // Default status: auto-pause high-risk or low-confidence; otherwise proposed.
+    let status =
       args.risk_level === "high" || (args.confidence ?? 0) < 0.6
         ? "auto_paused"
         : "proposed";
@@ -142,6 +141,30 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Check trust settings — does this kind/risk/confidence qualify for auto-approve?
+    let autoApproved = false;
+    try {
+      const { data: settings } = await supabase
+        .from("ai_auto_approve_settings")
+        .select("rules")
+        .eq("id", 1)
+        .maybeSingle();
+      const rule = settings?.rules?.[body.kind];
+      if (rule?.enabled && status === "proposed") {
+        const riskOk =
+          rule.max_risk === "medium"
+            ? args.risk_level !== "high"
+            : args.risk_level === "low";
+        const confOk = (args.confidence ?? 0) >= (rule.min_confidence ?? 0.85);
+        if (riskOk && confOk) {
+          status = "approved";
+          autoApproved = true;
+        }
+      }
+    } catch (e) {
+      console.error("auto-approve check failed", e);
+    }
 
     const { data: row, error } = await supabase
       .from("ai_actions")
@@ -156,6 +179,7 @@ serve(async (req) => {
         preview: args.preview,
         reasoning: args.reasoning,
         model: "google/gemini-3-flash-preview",
+        auto_approved: autoApproved,
       })
       .select()
       .single();
@@ -165,7 +189,25 @@ serve(async (req) => {
       return json({ error: error.message }, 500);
     }
 
-    return json({ action: row });
+    // If auto-approved, immediately invoke ai-execute (fire-and-forget).
+    if (autoApproved && row) {
+      try {
+        const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+        const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        await fetch(`${SUPABASE_URL}/functions/v1/ai-execute-internal`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SERVICE_KEY}`,
+          },
+          body: JSON.stringify({ action_id: row.id }),
+        });
+      } catch (e) {
+        console.error("auto-execute trigger failed", e);
+      }
+    }
+
+    return json({ action: row, auto_approved: autoApproved });
   } catch (e) {
     console.error("ai-propose error", e);
     return json({ error: e instanceof Error ? e.message : "unknown" }, 500);

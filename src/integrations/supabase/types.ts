@@ -58,6 +58,7 @@ export type Database = {
       }
       ai_actions: {
         Row: {
+          auto_approved: boolean
           confidence: number | null
           created_at: string
           edited_payload: Json | null
@@ -78,6 +79,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_approved?: boolean
           confidence?: number | null
           created_at?: string
           edited_payload?: Json | null
@@ -98,6 +100,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_approved?: boolean
           confidence?: number | null
           created_at?: string
           edited_payload?: Json | null
@@ -116,6 +119,27 @@ export type Database = {
           target_id?: string | null
           target_type?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_auto_approve_settings: {
+        Row: {
+          id: number
+          rules: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: number
+          rules?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: number
+          rules?: Json
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -280,6 +304,36 @@ export type Database = {
           redacted_content?: string | null
           user_id?: string | null
           user_role?: string | null
+        }
+        Relationships: []
+      }
+      cockpit_briefs: {
+        Row: {
+          action_items: Json
+          emailed_at: string | null
+          generated_at: string
+          id: string
+          metrics: Json
+          summary: string | null
+          week_starting: string
+        }
+        Insert: {
+          action_items?: Json
+          emailed_at?: string | null
+          generated_at?: string
+          id?: string
+          metrics?: Json
+          summary?: string | null
+          week_starting: string
+        }
+        Update: {
+          action_items?: Json
+          emailed_at?: string | null
+          generated_at?: string
+          id?: string
+          metrics?: Json
+          summary?: string | null
+          week_starting?: string
         }
         Relationships: []
       }

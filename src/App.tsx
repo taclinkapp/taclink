@@ -77,6 +77,7 @@ import AdminBugTriage from "./pages/admin/AdminBugTriage";
 import AdminCourseEditor from "./pages/admin/AdminCourseEditor";
 import AdminFeeOverrides from "./pages/admin/AdminFeeOverrides";
 import OwnerConsole from "./pages/admin/OwnerConsole";
+import WeeklyBrief from "./pages/admin/WeeklyBrief";
 import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -153,6 +154,8 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="owner-console" element={<OwnerConsole />} />
+              <Route path="cockpit" element={<OwnerConsole />} />
+              <Route path="brief" element={<WeeklyBrief />} />
               <Route path="users" element={<AdminUsersReal />} />
               <Route path="instructors" element={<AdminInstructors />} />
               <Route path="courses" element={<AdminCoursesReal />} />
