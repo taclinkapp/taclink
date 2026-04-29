@@ -78,7 +78,7 @@ export const AdminLayout = () => {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <Logo size="sm" />
+        <Logo showTagline className="h-7 w-auto" />
         <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Admin</div>
         {stuckDeposits > 0 && (
           <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
