@@ -541,9 +541,9 @@ export const AdminRefunds = () => {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm refund</AlertDialogTitle>
+            <AlertDialogTitle>Issue in-app credit</AlertDialogTitle>
             <AlertDialogDescription>
-              Issue <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". The student will be notified.
+              Issue <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> as in-app credit ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". This is NOT a cash refund — it's a credit toward a future booking. The student will be notified.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
