@@ -502,6 +502,17 @@ function ActionCard({
             <Badge variant="outline" className="text-[10px] uppercase">
               {KIND_LABEL[a.kind] ?? a.kind}
             </Badge>
+            {a.kind === "dispute_triage" && (() => {
+              const cls = (a.edited_payload ?? a.payload ?? {}).classification as string | undefined;
+              const meta = cls ? DISPUTE_META[cls] : null;
+              if (!meta) return null;
+              const Icon = meta.icon;
+              return (
+                <Badge variant="outline" className={cn("text-[10px] uppercase border gap-1", meta.color)}>
+                  <Icon className="h-3 w-3" /> {meta.label}
+                </Badge>
+              );
+            })()}
             <Badge variant="outline" className={cn("text-[10px] uppercase border", riskColor)}>
               {a.risk_level} risk
             </Badge>
