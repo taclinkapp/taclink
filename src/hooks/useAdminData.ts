@@ -380,9 +380,9 @@ export function useIssueRefund() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin_bookings'] });
       qc.invalidateQueries({ queryKey: ['admin_audit_log'] });
-      toast({ title: 'Refund issued' });
+      toast({ title: 'Refund credit issued' });
     },
-    onError: (e: any) => toast({ title: 'Refund failed', description: e.message, variant: 'destructive' }),
+    onError: (e: any) => toast({ title: 'Could not issue credit', description: e.message, variant: 'destructive' }),
   });
 }
 
