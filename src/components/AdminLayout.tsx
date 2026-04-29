@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft, TrendingUp, Star, Sparkles, Edit3, Percent } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft, TrendingUp, Star, Sparkles, Edit3, Percent, Menu, X } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +40,7 @@ export const AdminLayout = () => {
   const nav = useNavigate();
   const location = useLocation();
   const [stuckDeposits, setStuckDeposits] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const refreshBadges = async () => {
     // Stuck = awaiting_confirmation past expiry window.
@@ -55,19 +56,63 @@ export const AdminLayout = () => {
     refreshBadges();
     const id = setInterval(refreshBadges, 60_000);
     return () => clearInterval(id);
-    // re-poll on route change so the badge updates after admin acts
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  // Close drawer on route change (mobile)
+  useEffect(() => {
+    setMobileOpen(false);
   }, [location.pathname]);
 
   const counts = { stuckDeposits };
 
   return (
     <div className="min-h-screen bg-background flex">
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 inset-x-0 h-14 z-40 bg-sidebar border-b border-sidebar-border flex items-center px-3 gap-3">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="h-10 w-10 rounded-md flex items-center justify-center text-sidebar-foreground hover:bg-sidebar-accent"
+          aria-label="Open admin menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <Logo size="sm" />
+        <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Admin</div>
+        {stuckDeposits > 0 && (
+          <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+            {stuckDeposits > 99 ? '99+' : stuckDeposits}
+          </span>
+        )}
+      </div>
+
+      {/* Mobile drawer backdrop */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/60"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col">
-        <div className="p-5 border-b border-sidebar-border">
-          <Logo size="md" />
-          <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mt-2">Admin Panel</div>
+      <aside
+        className={cn(
+          'fixed lg:static inset-y-0 left-0 z-50 w-60 shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-200',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+        )}
+      >
+        <div className="p-5 border-b border-sidebar-border flex items-start justify-between">
+          <div>
+            <Logo size="md" />
+            <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mt-2">Admin Panel</div>
+          </div>
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden h-8 w-8 rounded-md flex items-center justify-center text-sidebar-foreground hover:bg-sidebar-accent"
+            aria-label="Close menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {items.map((it) => {
@@ -101,7 +146,7 @@ export const AdminLayout = () => {
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pt-14 lg:pt-0 min-w-0">
         <Outlet />
       </main>
       <AdminAIPanel />
