@@ -47,6 +47,17 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
     }
   };
 
+  const onScanned = (text: string) => {
+    const scanned = extractReferralCode(text);
+    setScanning(false);
+    if (!scanned) {
+      toast.error('No referral code found in QR');
+      return;
+    }
+    onOpenChange(false);
+    nav(`/auth/invite/${scanned}`);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="bg-background border-border max-h-[92vh] overflow-y-auto">
