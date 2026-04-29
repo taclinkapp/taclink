@@ -42,6 +42,12 @@ type RefundRow = {
   external_reference: string | null;
   notes: string | null;
   created_at: string;
+  auto_issued?: boolean;
+  risk_score?: number | null;
+  risk_factors?: any;
+  dispute_window_until?: string | null;
+  instructor_disputed_at?: string | null;
+  instructor_dispute_reason?: string | null;
   studentName?: string;
   courseTitle?: string;
 };
