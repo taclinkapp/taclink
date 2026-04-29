@@ -80,26 +80,34 @@ CLASSIFY into exactly one of:
   "billing_confusion"       — doesn't understand the charge, thinks they were double-charged
   "other"                   — anything else
 
+RECOMMENDED ACTIONS — pick exactly one:
+  "deny_politely"        — Standard policy denial. Use for: change_of_mind, billing_confusion (after explaining), most course_quality_complaint after attendance.
+  "offer_reschedule"     — Use for: weather_or_personal (sickness, transportation, schedule conflict, weather). Offer to move them to another date with the same instructor at no extra platform fee. Course has not happened yet.
+  "offer_app_credit"     — Use INSTEAD OF a cash refund when the student has a real grievance but policy denies cash back (e.g. moderate course_quality_complaint, billing confusion they're upset about, weather where reschedule isn't workable). Offer in-app credit equal to what they paid online (platform fee + deposit) toward their NEXT course booking. Costs us nothing in cash, retains the student. Set credit_amount_cents to online_total_cents.
+  "approve_full_refund"  — ONLY for confirmed instructor_no_show or instructor cancellation. Refunds platform fee + deposit in cash.
+  "escalate_to_owner"    — chargeback_threat, lawyer/BBB language, repeat complainer (prior_refunds > 0 OR prior_disputes_in_thread > 0), or any case where you're not confident.
+
 DRAFT a reply (3–6 sentences) that:
   - Acknowledges them by name when available, in a warm professional tone.
   - States the relevant policy clearly without sounding cold or scripted.
-  - Offers the best path forward: reschedule, talk to instructor, or (rare) full refund.
+  - Concretely offers the chosen path (reschedule date suggestion, credit toward next course, etc).
   - Never insults, never accuses, never threatens.
   - Never invents instructor commitments.
   - Signs off as "the TacLink team".
 
 RISK LEVEL:
-  - "low": clear change_of_mind / weather / billing_confusion with standard denial → safe to send if owner trusts AI.
-  - "medium": course_quality_complaint, ambiguous cases.
+  - "low": clear change_of_mind with standard denial, or straightforward weather reschedule offer → safe to send if owner trusts AI.
+  - "medium": offer_app_credit, course_quality_complaint, ambiguous cases.
   - "high": instructor_no_show, chargeback_threat, repeat complainer (prior_refunds > 0 OR prior_disputes_in_thread > 0). Owner MUST review.
 
 PAYLOAD shape:
 {
   "classification": "<one of the categories above>",
-  "recommended_action": "deny_politely" | "offer_reschedule" | "approve_full_refund" | "escalate_to_owner",
+  "recommended_action": "deny_politely" | "offer_reschedule" | "offer_app_credit" | "approve_full_refund" | "escalate_to_owner",
   "reply_text": "<the drafted message to send to the student>",
   "internal_note": "<1-2 sentences for the owner explaining the recommendation and any red flags>",
-  "refund_amount_cents": 0  // only > 0 if recommended_action is approve_full_refund
+  "refund_amount_cents": 0,    // only > 0 if recommended_action is approve_full_refund
+  "credit_amount_cents": 0     // only > 0 if recommended_action is offer_app_credit (typically equal to online_total_cents)
 }
 
 Return JSON via the propose_action tool.`,
