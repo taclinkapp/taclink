@@ -143,7 +143,7 @@ export const template = {
     summary: 'Bookings up 24% week-over-week. AI auto-handled 18 messages and 4 review moderations. Two stuck deposits and one dormant top-instructor need a personal touch.',
     actionItems: [
       { title: 'Re-engage SGT Reyes', why: 'Top-rated instructor, no course updates in 3 weeks.', how: 'Send a personal message offering a free listing pack.', priority: 'high' },
-      { title: 'Resolve 2 stuck deposits', why: 'Blocking $480 in revenue and souring the customer experience.', how: 'Open Cockpit → Refunds queue → process both.', priority: 'high' },
+      { title: 'Resolve 2 stuck deposits', why: 'Blocking $480 in revenue and souring the customer experience.', how: 'Open Cockpit → Refund Credits queue → process both.', priority: 'high' },
       { title: 'Approve featured courses for next week', why: 'Featured slots drive 30% of weekend bookings.', how: 'Cockpit → Featured Courses → review AI suggestions.', priority: 'medium' },
     ],
     metrics: {
