@@ -19,7 +19,8 @@ type Kind =
   | "course_moderation"
   | "review_moderation"
   | "refund_recommendation"
-  | "instructor_nudge";
+  | "instructor_nudge"
+  | "dispute_triage";
 
 interface ProposeBody {
   kind: Kind;
@@ -58,6 +59,49 @@ Return JSON via the propose_action tool.`,
   refund_recommendation: `Given the booking context, recommend "approve_full", "approve_partial" (with amount_cents), or "deny" with a one-sentence reason. Mark risk_level "high" for anything over $100 or any denial.
 Return JSON via the propose_action tool.`,
   instructor_nudge: `Given the instructor activity context, draft a short in-app nudge message (1–2 sentences) to encourage them to take a specific next step (publish first course, complete payout setup, respond to pending student message, etc). Risk: low.
+Return JSON via the propose_action tool.`,
+  dispute_triage: `You are TacLink's dispute triage AI. A student has sent a message that looks like a refund / cancellation / chargeback / complaint. Your job: classify it, then draft a polished, policy-compliant response on behalf of the platform.
+
+PLATFORM POLICY (binding):
+- The $25 platform fee is NON-REFUNDABLE for any reason except instructor cancellation or instructor no-show.
+- The instructor deposit (10%) is NON-REFUNDABLE for the same reasons.
+- Anything paid in person (cash/Venmo at the course) is between the student and the instructor — TacLink cannot refund it.
+- Course-date conflicts, weather, transportation, change of mind → reschedule, do NOT refund.
+- Instructor cancelled / no-show / fraud / safety incident → full refund (platform fee + deposit) AND escalate to owner.
+- Chargeback threats / "calling my bank" / "BBB" / "lawyer" → escalate to owner with high risk; do NOT antagonize, draft a calm de-escalation reply.
+- Repeat refund requests from same student → flag as high risk regardless of merit.
+
+CLASSIFY into exactly one of:
+  "instructor_no_show"      — student says instructor never showed / cancelled day-of
+  "weather_or_personal"     — weather, sickness, schedule conflict, transportation
+  "change_of_mind"          — buyer's remorse, "decided not to go", "no longer interested"
+  "chargeback_threat"       — threatens bank dispute, lawyer, BBB, social media
+  "course_quality_complaint"— attended but unhappy with quality
+  "billing_confusion"       — doesn't understand the charge, thinks they were double-charged
+  "other"                   — anything else
+
+DRAFT a reply (3–6 sentences) that:
+  - Acknowledges them by name when available, in a warm professional tone.
+  - States the relevant policy clearly without sounding cold or scripted.
+  - Offers the best path forward: reschedule, talk to instructor, or (rare) full refund.
+  - Never insults, never accuses, never threatens.
+  - Never invents instructor commitments.
+  - Signs off as "the TacLink team".
+
+RISK LEVEL:
+  - "low": clear change_of_mind / weather / billing_confusion with standard denial → safe to send if owner trusts AI.
+  - "medium": course_quality_complaint, ambiguous cases.
+  - "high": instructor_no_show, chargeback_threat, repeat complainer (prior_refunds > 0 OR prior_disputes_in_thread > 0). Owner MUST review.
+
+PAYLOAD shape:
+{
+  "classification": "<one of the categories above>",
+  "recommended_action": "deny_politely" | "offer_reschedule" | "approve_full_refund" | "escalate_to_owner",
+  "reply_text": "<the drafted message to send to the student>",
+  "internal_note": "<1-2 sentences for the owner explaining the recommendation and any red flags>",
+  "refund_amount_cents": 0  // only > 0 if recommended_action is approve_full_refund
+}
+
 Return JSON via the propose_action tool.`,
 };
 

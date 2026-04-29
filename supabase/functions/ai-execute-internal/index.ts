@@ -94,6 +94,7 @@ serve(async (req) => {
         case "course_moderation":
         case "support_reply":
         case "refund_recommendation":
+        case "dispute_triage":
           throw new Error(`kind ${action.kind} not eligible for auto-execute`);
 
         default:
