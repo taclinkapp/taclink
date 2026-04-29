@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.ai-daily-digest]
 verify_jwt = false
+
+[functions.ai-execute-internal]
+verify_jwt = false
+
+[functions.ai-weekly-brief]
+verify_jwt = false
