@@ -40,6 +40,7 @@ export const AdminLayout = () => {
   const nav = useNavigate();
   const location = useLocation();
   const [stuckDeposits, setStuckDeposits] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const refreshBadges = async () => {
     // Stuck = awaiting_confirmation past expiry window.
@@ -55,8 +56,12 @@ export const AdminLayout = () => {
     refreshBadges();
     const id = setInterval(refreshBadges, 60_000);
     return () => clearInterval(id);
-    // re-poll on route change so the badge updates after admin acts
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  // Close drawer on route change (mobile)
+  useEffect(() => {
+    setMobileOpen(false);
   }, [location.pathname]);
 
   const counts = { stuckDeposits };
