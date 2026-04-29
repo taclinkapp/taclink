@@ -3,11 +3,29 @@ import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { CountdownClock } from '@/components/CountdownClock';
 import { GraduationCap, Shield } from 'lucide-react';
+import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const Splash = () => {
   const nav = useNavigate();
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="relative min-h-screen bg-background flex flex-col overflow-hidden">
+      {/* Ambient background video */}
+      <video
+        src={splashBg.url}
+        autoPlay
+        loop
+        muted
+        playsInline
+        aria-hidden
+        className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+      />
+      {/* Readability overlay */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none bg-gradient-to-b from-background/70 via-background/60 to-background/90"
+      />
+      {/* Content */}
+      <div className="relative z-10 flex-1 flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center px-6 pt-10">
         <Logo size="xl" showTagline />
 
@@ -49,6 +67,7 @@ const Splash = () => {
             Sign In
           </button>
         </p>
+      </div>
       </div>
     </div>
   );
