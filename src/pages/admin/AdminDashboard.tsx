@@ -2,12 +2,12 @@ import { Users, Shield, BookOpen, CalendarCheck, DollarSign, AlertTriangle, Bell
 import { Button } from '@/components/ui/button';
 
 export const AdminHeader = ({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) => (
-  <div className="border-b border-border px-8 py-6 flex items-center justify-between bg-surface">
-    <div>
-      <h1 className="text-2xl font-black">{title}</h1>
-      {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+  <div className="border-b border-border px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between bg-surface gap-3">
+    <div className="min-w-0">
+      <h1 className="text-xl sm:text-2xl font-black truncate">{title}</h1>
+      {subtitle && <p className="text-xs sm:text-sm text-muted-foreground mt-1">{subtitle}</p>}
     </div>
-    <div>{action}</div>
+    <div className="shrink-0">{action}</div>
   </div>
 );
 
