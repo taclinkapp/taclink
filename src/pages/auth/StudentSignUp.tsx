@@ -69,6 +69,9 @@ const StudentSignUp = () => {
     <div className="min-h-screen bg-background">
       <PageHeader title="Student Sign Up" back />
       <div className="max-w-md mx-auto px-6 py-6">
+        <div className="flex justify-center mb-6">
+          <Logo showTagline widthPx={180} />
+        </div>
         <p className="text-muted-foreground text-sm mb-6">Create your free TacLink account to discover and book courses.</p>
         {referralCode && (
           <div className="tactical-card p-3 mb-5 flex items-center gap-3 border-primary/40">
