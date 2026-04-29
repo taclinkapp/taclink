@@ -53,6 +53,44 @@ const KIND_LABEL: Record<string, string> = {
 
 const KINDS = Object.keys(KIND_LABEL);
 
+const DISPUTE_META: Record<string, { label: string; color: string; icon: typeof UserX }> = {
+  instructor_no_show: {
+    label: "No-show",
+    color: "bg-destructive/10 text-destructive border-destructive/40",
+    icon: UserX,
+  },
+  chargeback_threat: {
+    label: "Chargeback threat",
+    color: "bg-destructive/10 text-destructive border-destructive/40",
+    icon: Gavel,
+  },
+  weather_or_personal: {
+    label: "Weather / personal",
+    color: "bg-sky-500/10 text-sky-600 border-sky-500/40",
+    icon: CloudRain,
+  },
+  change_of_mind: {
+    label: "Change of mind",
+    color: "bg-muted text-muted-foreground border-border",
+    icon: HeartCrack,
+  },
+  course_quality_complaint: {
+    label: "Quality complaint",
+    color: "bg-amber-500/10 text-amber-600 border-amber-500/40",
+    icon: MessageSquareWarning,
+  },
+  billing_confusion: {
+    label: "Billing confusion",
+    color: "bg-amber-500/10 text-amber-600 border-amber-500/40",
+    icon: Receipt,
+  },
+  other: {
+    label: "Other",
+    color: "bg-muted text-muted-foreground border-border",
+    icon: HelpCircle,
+  },
+};
+
 const STATUS_TABS = [
   { value: "inbox", label: "Inbox" },
   { value: "auto_paused", label: "Needs decision" },
