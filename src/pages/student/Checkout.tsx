@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import { computeFees, fmt } from '@/lib/fees';
 import { Link } from 'react-router-dom';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
+import { sendAppEmail } from '@/lib/appEmail';
 
 type Course = {
   id: string;
@@ -148,6 +149,35 @@ const Checkout = () => {
           await supabase.from('bookings').delete().eq('id', booking.id);
           throw sErr;
         }
+      }
+
+      // 4) Send booking confirmation email (fire-and-forget)
+      if (user.email) {
+        const { data: instructor } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', course.instructor_id)
+          .maybeSingle();
+        const startDate = course.starts_at
+          ? new Date(course.starts_at).toLocaleString(undefined, {
+              weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+              hour: 'numeric', minute: '2-digit',
+            })
+          : undefined;
+        const location = [course.city, course.state].filter(Boolean).join(', ') || undefined;
+        sendAppEmail({
+          templateName: 'booking-confirmation',
+          recipientEmail: user.email,
+          idempotencyKey: `booking-confirm-${booking.id}`,
+          templateData: {
+            studentName: profile?.display_name || undefined,
+            courseTitle: course.title,
+            instructorName: (instructor as any)?.display_name || undefined,
+            date: startDate,
+            location,
+            bookingUrl: `${window.location.origin}/student/booking/${booking.id}`,
+          },
+        });
       }
 
       toast.success('Booking confirmed');
