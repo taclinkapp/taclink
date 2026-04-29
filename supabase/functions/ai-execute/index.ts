@@ -189,6 +189,60 @@ serve(async (req) => {
           break;
         }
 
+        case "dispute_triage": {
+          // payload: { classification, recommended_action, reply_text, internal_note, refund_amount_cents }
+          const conversationId = action.target_id;
+          if (!conversationId) throw new Error("missing conversation_id");
+          const { data: conv } = await admin
+            .from("conversations")
+            .select("instructor_id, student_id, booking_id")
+            .eq("id", conversationId)
+            .single();
+          if (!conv) throw new Error("conversation not found");
+
+          // Always send the drafted reply to the student (as the platform/team).
+          if (payload.reply_text) {
+            await admin.from("messages").insert({
+              conversation_id: conversationId,
+              sender_id: conv.instructor_id,
+              sender_role: "instructor",
+              body: `${payload.reply_text}\n\n— the TacLink team`,
+            });
+          }
+
+          // If a full refund was approved, record it.
+          if (
+            payload.recommended_action === "approve_full_refund" &&
+            conv.booking_id &&
+            (payload.refund_amount_cents ?? 0) > 0
+          ) {
+            const { data: b } = await admin
+              .from("bookings")
+              .select("student_id, online_total_cents, platform_fee_cents, deposit_amount_cents")
+              .eq("id", conv.booking_id)
+              .single();
+            if (b) {
+              await admin.from("refunds").insert({
+                booking_id: conv.booking_id,
+                student_id: b.student_id,
+                amount_cents: payload.refund_amount_cents,
+                reason: payload.internal_note ?? "Approved by owner — instructor no-show / dispute exception",
+                refund_type: "full",
+                issued_by: user.id,
+                notes: `Dispute classification: ${payload.classification}`,
+              });
+              await admin.from("notifications").insert({
+                recipient_id: b.student_id,
+                type: "refund_issued",
+                title: "Refund issued",
+                body: `A full refund has been processed for your recent booking.`,
+                link: `/student/booking/${conv.booking_id}`,
+              });
+            }
+          }
+          break;
+        }
+
         default:
           throw new Error(`unknown action kind: ${action.kind}`);
       }
