@@ -8,6 +8,8 @@ import { PageHeader } from '@/components/MobileShell';
 import { Camera, Loader2, Gift } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { validatePassword } from '@/lib/passwordRules';
+import { PasswordRequirements } from '@/components/PasswordRequirements';
 
 const StudentSignUp = () => {
   const nav = useNavigate();
@@ -28,8 +30,11 @@ const StudentSignUp = () => {
       toast.error('Passwords do not match');
       return;
     }
-    if (password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+    const { valid, failed } = validatePassword(password);
+    if (!valid) {
+      toast.error('Password does not meet requirements', {
+        description: failed.map((r) => `• ${r.label}`).join('\n'),
+      });
       return;
     }
     if (!agree) {
@@ -99,10 +104,14 @@ const StudentSignUp = () => {
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
             <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
+            <PasswordRequirements password={password} className="mt-2" />
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Confirm Password</Label>
             <Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
+            {confirm && confirm !== password && (
+              <p className="text-[11px] text-destructive mt-1.5">Passwords do not match</p>
+            )}
           </div>
           <div className="flex items-start gap-3 pt-2">
             <Checkbox id="age" checked={agree} onCheckedChange={(v) => setAgree(!!v)} className="mt-0.5" />
