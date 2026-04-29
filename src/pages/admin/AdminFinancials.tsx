@@ -122,7 +122,7 @@ export const AdminFinancials = () => {
             <div className="grid grid-cols-4 gap-4">
               <Stat icon={DollarSign} label="Platform Fees" value={fmt(stats.platformFees)} primary />
               <Stat icon={TrendingUp} label="Net Revenue" value={fmt(netRevenue)} />
-              <Stat icon={DollarSign} label="Refunds Issued" value={fmt(stats.refunds)} alert />
+              <Stat icon={DollarSign} label="Refund Credits Issued" value={fmt(stats.refunds)} alert />
               <Stat icon={Users} label="Bookings" value={String(stats.bookings)} />
             </div>
 
