@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/MobileShell';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, Gift } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const StudentSignUp = () => {
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  const referralCode = (params.get('ref') ?? '').trim().toUpperCase();
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
@@ -43,6 +45,7 @@ const StudentSignUp = () => {
         data: {
           display_name: `${first} ${last}`.trim(),
           role: 'student',
+          ...(referralCode ? { referral_code: referralCode } : {}),
         },
       },
     });
@@ -62,6 +65,17 @@ const StudentSignUp = () => {
       <PageHeader title="Student Sign Up" back />
       <div className="max-w-md mx-auto px-6 py-6">
         <p className="text-muted-foreground text-sm mb-6">Create your free TacLink account to discover and book courses.</p>
+        {referralCode && (
+          <div className="tactical-card p-3 mb-5 flex items-center gap-3 border-primary/40">
+            <div className="h-9 w-9 rounded-md bg-primary/15 flex items-center justify-center text-primary">
+              <Gift className="h-4 w-4" />
+            </div>
+            <div className="text-xs">
+              <div className="font-bold uppercase tracking-wider">Referral applied</div>
+              <div className="text-muted-foreground">Code <span className="text-primary font-mono">{referralCode}</span> — your friend gets a reward when you book.</div>
+            </div>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-center mb-2">
             <button type="button" className="h-24 w-24 rounded-full bg-card border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition">
