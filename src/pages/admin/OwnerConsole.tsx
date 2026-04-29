@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
   Sparkles, CheckCircle2, XCircle, Edit3, Loader2, AlertTriangle,
-  RefreshCw, Bot, Settings2, Zap, FileText,
+  RefreshCw, Bot, Settings2, Zap, FileText, UserX, Gavel, CloudRain,
+  HeartCrack, MessageSquareWarning, Receipt, HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,44 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 const KINDS = Object.keys(KIND_LABEL);
+
+const DISPUTE_META: Record<string, { label: string; color: string; icon: typeof UserX }> = {
+  instructor_no_show: {
+    label: "No-show",
+    color: "bg-destructive/10 text-destructive border-destructive/40",
+    icon: UserX,
+  },
+  chargeback_threat: {
+    label: "Chargeback threat",
+    color: "bg-destructive/10 text-destructive border-destructive/40",
+    icon: Gavel,
+  },
+  weather_or_personal: {
+    label: "Weather / personal",
+    color: "bg-sky-500/10 text-sky-600 border-sky-500/40",
+    icon: CloudRain,
+  },
+  change_of_mind: {
+    label: "Change of mind",
+    color: "bg-muted text-muted-foreground border-border",
+    icon: HeartCrack,
+  },
+  course_quality_complaint: {
+    label: "Quality complaint",
+    color: "bg-amber-500/10 text-amber-600 border-amber-500/40",
+    icon: MessageSquareWarning,
+  },
+  billing_confusion: {
+    label: "Billing confusion",
+    color: "bg-amber-500/10 text-amber-600 border-amber-500/40",
+    icon: Receipt,
+  },
+  other: {
+    label: "Other",
+    color: "bg-muted text-muted-foreground border-border",
+    icon: HelpCircle,
+  },
+};
 
 const STATUS_TABS = [
   { value: "inbox", label: "Inbox" },
@@ -501,6 +540,17 @@ function ActionCard({
             <Badge variant="outline" className="text-[10px] uppercase">
               {KIND_LABEL[a.kind] ?? a.kind}
             </Badge>
+            {a.kind === "dispute_triage" && (() => {
+              const cls = (a.edited_payload ?? a.payload ?? {}).classification as string | undefined;
+              const meta = cls ? DISPUTE_META[cls] : null;
+              if (!meta) return null;
+              const Icon = meta.icon;
+              return (
+                <Badge variant="outline" className={cn("text-[10px] uppercase border gap-1", meta.color)}>
+                  <Icon className="h-3 w-3" /> {meta.label}
+                </Badge>
+              );
+            })()}
             <Badge variant="outline" className={cn("text-[10px] uppercase border", riskColor)}>
               {a.risk_level} risk
             </Badge>
