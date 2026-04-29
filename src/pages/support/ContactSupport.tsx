@@ -170,7 +170,7 @@ const ContactSupport = () => {
                 <Sparkles className="h-3.5 w-3.5" /> AI-Powered Support
               </div>
               <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                Tell us what's going on. Our AI handles common questions instantly. If it can't resolve your issue, your conversation is sent to a TacLink admin to follow up by email.
+                Tell us what's going on. Our AI handles common questions instantly. If it can't resolve your issue, your conversation is sent to a TacLink™ admin to follow up by email.
               </p>
             </div>
 

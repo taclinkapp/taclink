@@ -134,7 +134,7 @@ const HelpCenter = () => {
           </div>
           <h2 className="text-lg font-extrabold mt-1 leading-tight">How can we help?</h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Search our FAQs or chat with our AI assistant. Issues we can't solve are sent straight to a TacLink admin.
+            Search our FAQs or chat with our AI assistant. Issues we can't solve are sent straight to a TacLink™ admin.
           </p>
           <Button
             onClick={() => nav('/support/contact')}

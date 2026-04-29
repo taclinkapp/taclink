@@ -81,7 +81,7 @@ export default function Unsubscribe() {
         {status === "ready" && (
           <>
             <p className="text-sm text-muted-foreground">
-              Confirm you'd like to unsubscribe from TacLink app emails. You'll
+              Confirm you'd like to unsubscribe from TacLink™ app emails. You'll
               still receive critical account emails like password resets.
             </p>
             <Button onClick={confirm} className="w-full">

@@ -92,7 +92,7 @@ export const HowPaymentsWorkCard = ({
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[10px] uppercase tracking-wider text-primary font-bold">
-            How TacLink Payments Work
+            How TacLink™ Payments Work
           </div>
           <div className="text-xs text-muted-foreground truncate">
             {audience === "student"

@@ -8,7 +8,7 @@ const SECTIONS = [
   },
   {
     title: '2. How We Use Your Information',
-    body: 'We use your information to: operate the TacLink platform, process course bookings, send booking confirmations and reminders, improve the app experience, and communicate with you about your account.',
+    body: 'We use your information to: operate the TacLink™ platform, process course bookings, send booking confirmations and reminders, improve the app experience, and communicate with you about your account.',
   },
   {
     title: '3. Information Sharing',

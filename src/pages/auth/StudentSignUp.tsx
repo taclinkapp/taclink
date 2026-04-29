@@ -73,7 +73,7 @@ const StudentSignUp = () => {
         <div className="flex justify-center mb-6">
           <Logo showTagline widthPx={180} />
         </div>
-        <p className="text-muted-foreground text-sm mb-6">Create your free TacLink account to discover and book courses.</p>
+        <p className="text-muted-foreground text-sm mb-6">Create your free TacLink™ account to discover and book courses.</p>
         {referralCode && (
           <div className="tactical-card p-3 mb-5 flex items-center gap-3 border-primary/40">
             <div className="h-9 w-9 rounded-md bg-primary/15 flex items-center justify-center text-primary">

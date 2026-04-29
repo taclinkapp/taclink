@@ -4,7 +4,7 @@ import { LegalAccountBanner } from '@/components/legal/LegalAccountBanner';
 const SECTIONS = [
   {
     title: '1. Acceptance of Terms',
-    body: 'By using TacLink, you agree to these Terms of Service. TacLink is a booking and scheduling platform connecting students with independent tactical training instructors. We do not conduct training ourselves.',
+    body: 'By using TacLink™, you agree to these Terms of Service. TacLink™ is a booking and scheduling platform connecting students with independent tactical training instructors. We do not conduct training ourselves.',
   },
   {
     title: '2. Booking Fee',

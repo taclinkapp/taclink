@@ -36,7 +36,7 @@ const Splash = () => {
         </span>
 
         <p className="mt-4 text-center text-muted-foreground max-w-xs text-sm leading-relaxed">
-          TacLink is in pre-launch. Sign up now to reserve your spot for launch day,
+          TacLink™ is in pre-launch. Sign up now to reserve your spot for launch day,
           browse the app, and help shape what's coming. Your info is collected by our
           team to get you onboarded the moment we go live.
         </p>

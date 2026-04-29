@@ -35,7 +35,7 @@ const InviteLanding = () => {
         .eq('id', codeRow.user_id)
         .maybeSingle();
       if (cancelled) return;
-      setReferrer({ name: profile?.display_name ?? 'A TacLink user', role: codeRow.user_role });
+      setReferrer({ name: profile?.display_name ?? 'A TacLink™ user', role: codeRow.user_role });
       setLoading(false);
     })();
     return () => {
@@ -103,7 +103,7 @@ const InviteLanding = () => {
               </div>
               <div className="flex-1">
                 <div className="font-bold text-sm">Instructor</div>
-                <div className="text-xs text-muted-foreground">Apply to teach courses on TacLink.</div>
+                <div className="text-xs text-muted-foreground">Apply to teach courses on TacLink™.</div>
               </div>
             </Link>
           </>

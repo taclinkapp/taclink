@@ -83,7 +83,7 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
               <ShieldCheck className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold leading-tight">Keep TacLink safe</h1>
+              <h1 className="text-lg font-bold leading-tight">Keep TacLink™ safe</h1>
               <p className="text-xs text-muted-foreground">Quick policy acknowledgment</p>
             </div>
           </div>
