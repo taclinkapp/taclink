@@ -399,7 +399,7 @@ function TrustSettingsDialog() {
                   <div>
                     <div className="font-semibold text-sm">{KIND_LABEL[kind]}</div>
                     <div className="text-xs text-muted-foreground">
-                      {kind === "refund_recommendation" || kind === "credential_verify"
+                      {kind === "refund_recommendation" || kind === "credential_verify" || kind === "dispute_triage"
                         ? "⚠️ Money/identity decision — recommend keeping manual"
                         : kind === "course_moderation" || kind === "support_reply"
                         ? "Sensitive — review carefully before enabling"
