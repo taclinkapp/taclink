@@ -223,7 +223,9 @@ export const AdminRefunds = () => {
       case 'deposit':
         return b.deposit_amount_cents;
       case 'full':
-        return b.online_total_cents + b.deposit_amount_cents;
+        // Online total already includes platform fee ($25) + instructor deposit (10%).
+        // TacLink only ever credits what the student paid online — never the in-person 90%.
+        return b.online_total_cents;
       default:
         return 0;
     }
