@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
   Sparkles, CheckCircle2, XCircle, Edit3, Loader2, AlertTriangle,
-  RefreshCw, Bot, Settings2, Zap, FileText,
+  RefreshCw, Bot, Settings2, Zap, FileText, UserX, Gavel, CloudRain,
+  HeartCrack, MessageSquareWarning, Receipt, HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
