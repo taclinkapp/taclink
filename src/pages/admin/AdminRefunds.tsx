@@ -72,6 +72,7 @@ export const AdminRefunds = () => {
   const [externalRef, setExternalRef] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -523,13 +524,36 @@ export const AdminRefunds = () => {
             <Button variant="outline" onClick={() => { setOpen(false); reset(); }}>
               Cancel
             </Button>
-            <Button onClick={submit} disabled={!picked || submitting}>
+            <Button onClick={() => {
+              if (!picked) { toast.error('Pick a booking first'); return; }
+              const cents = Math.round(parseFloat(amount || '0') * 100);
+              if (!cents || cents <= 0) { toast.error('Enter a refund amount'); return; }
+              if (!reason.trim()) { toast.error('Reason is required'); return; }
+              setConfirmOpen(true);
+            }} disabled={!picked || submitting}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Record refund
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm refund</AlertDialogTitle>
+            <AlertDialogDescription>
+              Issue <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". The student will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); setConfirmOpen(false); submit(); }} disabled={submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm refund'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
