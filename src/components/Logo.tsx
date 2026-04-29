@@ -1,48 +1,57 @@
 import { cn } from '@/lib/utils';
-import logo from '@/assets/taclink-logo.png';
+import iconMark from '@/assets/taclink-icon.png';
+import fullLogo from '@/assets/taclink-logo.png';
 
 /**
- * Official TacLink mark — hexagonal badge + stencil wordmark + tagline.
- * The source artwork is black on white; we invert it for our dark theme.
+ * Official TacLink mark.
  *
- * - `showTagline=false` (default): shows the hex badge only (top portion).
- * - `showTagline=true`: shows the full lockup with TACLINK + FIND. BOOK. TRAIN.
+ * Two artworks:
+ * - Icon (hexagon + scope reticle + amber location pin on dark background) —
+ *   used for the favicon, app icon, mobile header, and any compact mark.
+ * - Full lockup (dark hexagon w/ compass rose + TACLINK stencil + FIND. BOOK. TRAIN.)
+ *   on a white background — used for splash, auth screens, sidebar, emails, hero.
+ *
+ * Props:
+ *  - showTagline=false → render the dark icon mark.
+ *  - showTagline=true  → render the full brand lockup. On dark surfaces the
+ *    full lockup is auto-inverted so the wordmark reads white-on-dark.
+ *  - onLight=true      → opt out of inversion (use on white/PDF/email).
  */
 export const Logo = ({
   size = 'md',
   showTagline = false,
+  onLight = false,
   className,
 }: {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showTagline?: boolean;
+  onLight?: boolean;
   className?: string;
 }) => {
   const dim = { sm: 24, md: 36, lg: 56, xl: 96 }[size];
 
-  // Artwork is already white-on-black — render as-is on dark surfaces.
   if (showTagline) {
     return (
       <img
-        src={logo}
+        src={fullLogo}
         alt="TacLink — Find. Book. Train."
-        className={cn('w-auto object-contain', className)}
+        className={cn(
+          'w-auto object-contain',
+          // Invert the dark-on-white artwork to read on dark UI surfaces.
+          !onLight && 'invert',
+          className,
+        )}
         style={{ height: dim * 2.4 }}
       />
     );
   }
 
   return (
-    <div
-      aria-label="TacLink"
-      className={cn('overflow-hidden inline-block', className)}
+    <img
+      src={iconMark}
+      alt="TacLink"
+      className={cn('object-contain inline-block', className)}
       style={{ width: dim, height: dim }}
-    >
-      <img
-        src={logo}
-        alt=""
-        className="block object-contain object-top w-full"
-        style={{ height: dim * 1.6 }}
-      />
-    </div>
+    />
   );
 };
