@@ -8,10 +8,11 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, Download, Plus, QrCode, Loader2, Pencil } from 'lucide-react';
+import { Copy, Download, Plus, QrCode, Loader2, Pencil, History, Receipt, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { buildInfluencerUrl } from '@/lib/influencer';
+import { format } from 'date-fns';
 
 type Audience = 'student' | 'instructor' | 'both';
 
