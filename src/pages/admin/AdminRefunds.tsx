@@ -27,6 +27,7 @@ import {
 import { DollarSign, Loader2, RefreshCw, Search, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fmt } from '@/lib/fees';
+import { stripeEnvironment } from '@/lib/stripe';
 
 type RefundType = 'platform_fee' | 'deposit' | 'full' | 'partial' | 'goodwill' | 'other';
 type ReasonCategory =
@@ -79,6 +80,8 @@ type RefundRow = {
   dispute_window_until?: string | null;
   instructor_disputed_at?: string | null;
   instructor_dispute_reason?: string | null;
+  stripe_refund_id?: string | null;
+  stripe_refund_status?: string | null;
   studentName?: string;
   courseTitle?: string;
 };
@@ -415,6 +418,26 @@ export const AdminRefunds = () => {
     load();
   };
 
+  const retryStripeRefund = async (refundId: string) => {
+    const { data, error } = await supabase.functions.invoke(
+      `process-refund?env=${stripeEnvironment}`,
+      { body: { refund_id: refundId } },
+    );
+    if (error) {
+      toast.error('Stripe refund failed', { description: error.message });
+      return;
+    }
+    const result = (data as any)?.results?.[0];
+    if (result?.error) {
+      toast.error('Stripe refund failed', { description: result.error });
+    } else if (result?.stripe_refund_id) {
+      toast.success('Stripe refund issued', { description: result.stripe_refund_id });
+    } else {
+      toast.success('Refund queue swept');
+    }
+    load();
+  };
+
   return (
     <div className="p-8 space-y-6">
       <header className="flex items-start justify-between gap-4">
@@ -543,19 +566,41 @@ export const AdminRefunds = () => {
                           Disputed by instructor
                         </span>
                       )}
+                      {r.stripe_refund_id ? (
+                        <span className="text-[10px] text-emerald-600 font-mono truncate max-w-[160px]" title={r.stripe_refund_id}>
+                          Stripe: {r.stripe_refund_status ?? 'sent'}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-amber-600">
+                          Stripe: {r.stripe_refund_status ?? 'not sent'}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
-                    {r.status === 'issued' && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => reverse(r.id)}
-                        className="text-xs"
-                      >
-                        <Undo2 className="h-3 w-3 mr-1" /> Reverse
-                      </Button>
-                    )}
+                    <div className="flex justify-end gap-1">
+                      {!r.stripe_refund_id && r.status !== 'reversed' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => retryStripeRefund(r.id)}
+                          className="text-xs"
+                          title="Send / retry refund via Stripe"
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" /> Send
+                        </Button>
+                      )}
+                      {r.status === 'issued' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => reverse(r.id)}
+                          className="text-xs"
+                        >
+                          <Undo2 className="h-3 w-3 mr-1" /> Reverse
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );})

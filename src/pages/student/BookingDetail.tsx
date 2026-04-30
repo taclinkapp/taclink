@@ -16,6 +16,7 @@ import {
   instructorNoShowConfirmMessage,
 } from '@/lib/refundCopy';
 import { toast } from 'sonner';
+import { stripeEnvironment } from '@/lib/stripe';
 
 type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
 
@@ -139,6 +140,17 @@ const BookingDetail = () => {
   const [cancelling, setCancelling] = useState(false);
   const [reportingNoShow, setReportingNoShow] = useState(false);
 
+  const triggerStripeRefund = async (refundId: string | undefined) => {
+    if (!refundId) return;
+    try {
+      await supabase.functions.invoke(`process-refund?env=${stripeEnvironment}`, {
+        body: { refund_id: refundId },
+      });
+    } catch (e) {
+      console.error('process-refund invoke failed', e);
+    }
+  };
+
   const cancelBooking = async () => {
     if (!b) return;
     const inGrace = !!cancelDeadline(c?.starts_at ?? null, b.booked_at, b.cancellation_cutoff_hours);
@@ -151,6 +163,7 @@ const BookingDetail = () => {
       return;
     }
     const refund = (data as any)?.student_refund_cents ?? 0;
+    await triggerStripeRefund((data as any)?.refund_id);
     toast.success('Booking cancelled', {
       description: `Refund of $${(refund / 100).toFixed(2)} on the way to your card.`,
     });
@@ -168,6 +181,7 @@ const BookingDetail = () => {
       return;
     }
     const refund = (data as any)?.student_refund_cents ?? 0;
+    await triggerStripeRefund((data as any)?.refund_id);
     toast.success('Report filed — full refund issued', {
       description: `$${(refund / 100).toFixed(2)} on the way to your card.`,
     });
