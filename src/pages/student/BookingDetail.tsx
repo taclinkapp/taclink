@@ -107,6 +107,16 @@ const BookingDetail = () => {
 
   useEffect(() => { reload(); /* eslint-disable-next-line */ }, [id]);
 
+  // Deep-link from notifications: ?focus=attendance scrolls to the claim card.
+  useEffect(() => {
+    if (loading || !b) return;
+    if (searchParams.get('focus') !== 'attendance') return;
+    const t = setTimeout(() => {
+      attendanceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [loading, b, searchParams]);
+
   // Auto-refresh the signed QR a minute before it expires.
   useEffect(() => {
     if (!b || !tokenExpiresAt) return;
