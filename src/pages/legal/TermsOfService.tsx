@@ -53,7 +53,7 @@ const TermsOfService = () => (
     <PageHeader title="Terms of Service" back />
     <div className="px-4 py-4 space-y-4">
       <LegalAccountBanner documentName="Terms of Service" />
-      <p className="text-xs text-muted-foreground">Last updated: April 2026</p>
+      <p className="text-xs text-muted-foreground">Last updated: April 30, 2026</p>
       {SECTIONS.map((s) => (
         <section key={s.title} className="tactical-card p-4">
           <h2 className="font-bold text-sm mb-2">{s.title}</h2>
