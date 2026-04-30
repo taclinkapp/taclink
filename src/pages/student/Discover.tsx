@@ -159,11 +159,18 @@ const Discover = () => {
   }, [selectedLocation, mapboxToken]);
 
   const locationSuggestions = useMemo(() => {
-    const q = locationQuery.trim().toLowerCase();
-    const list = q
-      ? locationOptions.filter((o) => o.label.toLowerCase().includes(q))
+    // Strip diacritics + lowercase so "São Paulo" matches "sao paulo".
+    const norm = (s: string) =>
+      s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const tokens = norm(locationQuery).split(/\s+/).filter(Boolean);
+    const list = tokens.length
+      ? locationOptions.filter((o) => {
+          const haystack = norm(o.label);
+          // Every typed token must appear somewhere — order-independent partial match.
+          return tokens.every((t) => haystack.includes(t));
+        })
       : locationOptions;
-    return showAllLocations || q ? list : list.slice(0, 8);
+    return showAllLocations || tokens.length ? list : list.slice(0, 8);
   }, [locationOptions, locationQuery, showAllLocations]);
 
   // Reset highlighted suggestion whenever the visible list changes.
@@ -179,6 +186,23 @@ const Discover = () => {
     );
     el?.scrollIntoView({ block: 'nearest' });
   }, [activeLocationIndex, locationOpen]);
+
+  // Close the dropdown only when the user interacts outside the combobox or list,
+  // so clicking an option / dragging the scrollbar keeps it open.
+  const locationContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!locationOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (locationContainerRef.current?.contains(target)) return;
+      if (locationListRef.current?.contains(target)) return;
+      setLocationOpen(false);
+      setShowAllLocations(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [locationOpen]);
 
   const matchesSelectedLocation = (c: { city: string; state: string }) => {
     if (!selectedLocation) return true;
@@ -289,7 +313,7 @@ const Discover = () => {
               </button>
             </div>
           ) : (
-            <div className="relative">
+            <div className="relative" ref={locationContainerRef}>
               <div className="relative neu-inset flex items-center pr-1">
                 <MapPin className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <Input
@@ -297,7 +321,6 @@ const Discover = () => {
                   value={locationQuery}
                   onChange={(e) => { setLocationQuery(e.target.value); setLocationOpen(true); setShowAllLocations(false); }}
                   onFocus={() => setLocationOpen(true)}
-                  onBlur={() => setTimeout(() => { setLocationOpen(false); setShowAllLocations(false); }, 150)}
                   onKeyDown={handleLocationKeyDown}
                   placeholder="Where do you want to train?"
                   role="combobox"
