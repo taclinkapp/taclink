@@ -1,7 +1,8 @@
-// Creates a Stripe Embedded Checkout session for the booking deposit.
-// Charges $25 platform fee + 10% deposit. The 10% is held in TacLink's
-// Stripe balance until release-escrow-deposits transfers it to the
-// instructor's Connect account 24h after the course ends.
+// Creates a Stripe Embedded Checkout session for full-online booking.
+// FULL-ONLINE MODEL: charges the student the $25 platform fee + the full
+// course price. The full course price is held in TacLink's Stripe balance
+// until release-escrow-deposits transfers it to the instructor's Connect
+// account 24h after the course ends. TacLink keeps only the $25 fee.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
 
@@ -70,16 +71,16 @@ Deno.serve(async (req) => {
         {
           price_data: {
             currency: "usd",
-            product_data: { name: `${courseTitle} — Platform fee` },
-            unit_amount: booking.platform_fee_cents,
+            product_data: { name: `${courseTitle} — Course price (held in escrow)` },
+            unit_amount: booking.instructor_deposit_cents,
           },
           quantity: 1,
         },
         {
           price_data: {
             currency: "usd",
-            product_data: { name: `${courseTitle} — 10% deposit (held in escrow)` },
-            unit_amount: booking.instructor_deposit_cents,
+            product_data: { name: `TacLink platform fee` },
+            unit_amount: booking.platform_fee_cents,
           },
           quantity: 1,
         },

@@ -38,9 +38,20 @@ const NewCourse = () => {
   const { user, profile } = useAuth();
   const hasPM = !!profile?.payment_method_added;
   const subActive = profile?.subscription_status === 'active';
+  const [connectActive, setConnectActive] = useState(false);
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('stripe_connect_status')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setConnectActive((data as any)?.stripe_connect_status === 'active'));
+  }, [user?.id]);
 
   // form state
   const [title, setTitle] = useState('');
@@ -213,6 +224,13 @@ const NewCourse = () => {
     if (!hasPM) {
       toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
       nav('/instructor/payment-methods');
+      return;
+    }
+    if (!connectActive) {
+      toast.error('Set up Stripe payouts before publishing', {
+        description: 'Students pay the full course price online — you need a payout account to receive funds.',
+      });
+      nav('/instructor/payout-methods');
       return;
     }
 

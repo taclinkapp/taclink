@@ -2,10 +2,10 @@ import { useState } from "react";
 import {
   ChevronDown,
   CreditCard,
-  HandCoins,
   Info,
   ShieldCheck,
   Wallet,
+  Banknote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,15 +18,17 @@ interface Props {
 }
 
 /**
- * How TacLink payments work — escrow model.
+ * How TacLink payments work — FULL ONLINE model.
  *
- *   1) Student pays TacLink: $25 platform fee + 10% deposit at checkout
- *   2) TacLink holds the 10% in escrow until the instructor confirms
- *      attendance via QR scan at the course
- *   3) 24 hours after the course ends, the 10% is released to the instructor
- *   4) Cancellations: instructor cancels → student refunded fully within 48h.
- *      Student cancels after the 48h grace period → 10% goes to the instructor.
- *   5) Student pays the remaining balance to the instructor in person.
+ *   1) Student pays TacLink the full course price + $25 platform fee at checkout.
+ *      Nothing is paid in person.
+ *   2) TacLink holds the full course price in escrow until the instructor
+ *      confirms attendance via QR scan at the course.
+ *   3) 24 hours after the course ends, the full course price is transferred
+ *      to the instructor's Stripe payout account.
+ *   4) Refunds: instructor cancels/no-shows → student gets 100% back within 48h.
+ *      Student cancels within grace window → 100% back. Late student cancel →
+ *      90% back to student, 10% to instructor for the lost slot.
  */
 export const HowPaymentsWorkCard = ({
   audience,
@@ -40,35 +42,35 @@ export const HowPaymentsWorkCard = ({
       ? [
           {
             icon: CreditCard,
-            title: "Pay $25 + 10% deposit at checkout",
-            body: "Charged to your card. TacLink holds the 10% safely in escrow — the instructor doesn't get it yet.",
+            title: "Pay the full course price + $25 at checkout",
+            body: "Charged once to your card. Nothing else due — no cash, no card reader at the range, no surprise fees.",
           },
           {
             icon: ShieldCheck,
             title: "Get scanned in at the course",
-            body: "The instructor scans your QR code on arrival. That's the trigger that releases your deposit to them 24 hours after the course ends.",
+            body: "The instructor scans your QR code on arrival. That's the proof of attendance that releases payment to them after the course.",
           },
           {
-            icon: HandCoins,
-            title: "Pay the remaining balance in person",
-            body: "Settle the rest with the instructor at the course in their preferred method (cash, card reader, their own app).",
+            icon: Banknote,
+            title: "Instructor is paid 24h after course ends",
+            body: "TacLink holds the funds in secure escrow until the course is complete, then transfers the full course price to the instructor automatically.",
           },
         ]
       : [
           {
             icon: CreditCard,
-            title: "TacLink collects $25 + 10% deposit from the student",
-            body: "Held in escrow at checkout. The 10% is yours once you confirm the student attended.",
+            title: "TacLink collects the full course price + $25 from the student",
+            body: "Held safely in escrow at booking. You don't handle any cash, cards, or invoices on course day.",
           },
           {
             icon: ShieldCheck,
-            title: "Scan the student's QR code in person",
-            body: "Scan = proof of attendance. Funds auto-release to your payout method 24 hours after the course ends. Forgot to scan? File an attendance claim from the roster.",
+            title: "Scan the student's QR code at the course",
+            body: "Scan = proof of attendance. Forgot to scan? File an attendance claim from the roster.",
           },
           {
-            icon: HandCoins,
-            title: "Collect the balance in person, your way",
-            body: "Cash, card reader, your own app — whatever you prefer. TacLink only handles the 10% deposit.",
+            icon: Banknote,
+            title: "Full course price paid out 24h after course ends",
+            body: "Transferred straight to your Stripe payout account. TacLink keeps only the $25 platform fee — you keep 100% of your course price.",
           },
         ];
 
@@ -94,8 +96,8 @@ export const HowPaymentsWorkCard = ({
           </div>
           <div className="text-xs text-muted-foreground truncate">
             {audience === "student"
-              ? "$25 + 10% deposit held in escrow → released after attendance"
-              : "Student pays $25 + 10% to TacLink → released to you 24h after attendance"}
+              ? "Pay full price online → released to instructor after attendance"
+              : "Student pays full price online → paid to you 24h after course"}
           </div>
         </div>
         <ChevronDown
@@ -139,17 +141,15 @@ export const HowPaymentsWorkCard = ({
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               {audience === "student" ? (
                 <>
-                  Cancellations: if the instructor cancels or no-shows, you're
-                  refunded the full $25 + 10% within 48 hours. If you cancel
-                  after the 48-hour grace period, the 10% deposit goes to the
-                  instructor.
+                  Cancellations: instructor cancels or no-shows → 100% refund within 48 hours.
+                  You cancel within your grace window → 100% refund. Late cancel → 90% of the
+                  course price refunded; instructor keeps 10% for the lost slot.
                 </>
               ) : (
                 <>
-                  Cancellations: if you cancel or no-show, the student is
-                  refunded the full $25 + 10% within 48 hours. If the student
-                  cancels after the 48-hour grace period, the 10% deposit is
-                  released to you.
+                  Cancellations: you cancel or no-show → student is fully refunded ($25 + 100%
+                  course price). Student cancels within grace window → fully refunded. Late
+                  student cancel → you keep 10% of the course price as compensation.
                 </>
               )}
             </p>

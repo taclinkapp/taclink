@@ -13,19 +13,19 @@ type ConnectStatus = "not_started" | "onboarding" | "active" | "restricted";
 
 const STATUS_META: Record<ConnectStatus, { label: string; tone: string; description: string }> = {
   not_started: {
-    label: "Not connected",
-    tone: "border-border bg-background",
-    description: "Connect a Stripe account to receive 10% deposits 24h after each course.",
+    label: "Required to publish",
+    tone: "border-destructive/40 bg-destructive/5",
+    description: "Connect a Stripe payout account to receive the full course price (paid 24h after each completed course). You cannot publish courses until this is set up.",
   },
   onboarding: {
     label: "Setup in progress",
     tone: "border-amber-500/40 bg-amber-500/5",
-    description: "Finish onboarding with Stripe — they need a few more details to enable payouts.",
+    description: "Finish onboarding with Stripe — they need a few more details to enable payouts. Course publishing stays locked until this is complete.",
   },
   active: {
     label: "Payouts enabled",
     tone: "border-success/40 bg-success/5",
-    description: "Deposits will land automatically in your bank account 24h after each completed course.",
+    description: "Full course price will be transferred to your bank account 24h after each completed course. TacLink keeps only the $25 platform fee.",
   },
   restricted: {
     label: "Action required",
