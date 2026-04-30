@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import { computeFees, fmt } from '@/lib/fees';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 import { sendAppEmail } from '@/lib/appEmail';
+import { cancelDeadline } from '@/lib/cancellation';
 import { EscrowCheckout } from '@/components/student/EscrowCheckout';
 import { PaymentTestModeBanner } from '@/components/PaymentTestModeBanner';
 
@@ -112,7 +113,7 @@ const Checkout = () => {
           deposit_status: 'pending_payment',
           deposit_amount_cents: fees.instructorDepositCents,
         })
-        .select('id')
+        .select('id, booked_at, cancellation_cutoff_hours')
         .single();
       if (bErr) throw bErr;
 
@@ -159,6 +160,15 @@ const Checkout = () => {
             })
           : undefined;
         const location = [course.city, course.state].filter(Boolean).join(', ') || undefined;
+        const cutoffHours = (booking as any)?.cancellation_cutoff_hours ?? null;
+        const bookedAt = (booking as any)?.booked_at ?? null;
+        const deadline = cancelDeadline(course.starts_at ?? null, bookedAt, cutoffHours);
+        const deadlineStr = deadline
+          ? deadline.toLocaleString(undefined, {
+              weekday: 'short', month: 'short', day: 'numeric',
+              hour: 'numeric', minute: '2-digit',
+            })
+          : undefined;
         sendAppEmail({
           templateName: 'booking-confirmation',
           recipientEmail: user.email,
@@ -170,6 +180,8 @@ const Checkout = () => {
             date: startDate,
             location,
             bookingUrl: `${window.location.origin}/student/booking/${booking.id}`,
+            cancelGraceHours: typeof cutoffHours === 'number' ? cutoffHours : undefined,
+            cancelDeadline: deadlineStr,
           },
         });
       }
