@@ -237,7 +237,7 @@ const Checkout = () => {
               <span className="font-black text-primary text-lg">{fmt(fees.platformFeeCents)}</span>
             </div>
             <div className="flex justify-between pt-3 border-t border-dashed border-border mt-2">
-              <span className="text-muted-foreground">Deposit (10%) — sent direct to instructor within 24h</span>
+              <span className="text-muted-foreground">Deposit (10%) — held in escrow until attendance</span>
               <span className="font-semibold">{fmt(fees.instructorDepositCents)}</span>
             </div>
             <div className="flex justify-between">
@@ -246,7 +246,7 @@ const Checkout = () => {
             </div>
           </div>
           <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground leading-relaxed">
-            TacLink only charges the <strong className="text-foreground">{fmt(fees.platformFeeCents)} platform fee</strong> today. After booking, you'll send the <strong className="text-foreground">{fmt(fees.instructorDepositCents)} deposit</strong> directly to your instructor via Cash App, Venmo, PayPal, or Zelle — they get 100% of it. Remaining balance is paid in person.
+            TacLink charges <strong className="text-foreground">{fmt(fees.platformFeeCents)} + {fmt(fees.instructorDepositCents)} deposit</strong> today. We hold the 10% in escrow and release it to your instructor 24 hours after they scan you in at the course. If they cancel or no-show, you're refunded in full within 48 hours. Remaining balance is paid in person.
           </div>
         </div>
 
