@@ -270,7 +270,7 @@ const NewCourse = () => {
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
         cover_image_url: coverUrl,
-        status: 'published',
+        status: isPrelaunch ? 'draft' : 'published',
       });
 
       // AI moderation — scan course text + cover photo for contact info or
