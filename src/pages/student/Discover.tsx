@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Map as MapIcon, List, Gift, X, MapPin, ChevronDown } from 'lucide-react';
 import { usePublishedCourses } from '@/hooks/useCourses';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
