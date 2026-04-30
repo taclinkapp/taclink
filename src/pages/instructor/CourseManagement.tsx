@@ -371,6 +371,8 @@ const CourseManagement = () => {
                 Upgrade to Pro →
               </Link>
             )}
+          </div>
+        ) : (
           <>
             {tab === 'Roster' && mockRoster.map((s) => (
               <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
