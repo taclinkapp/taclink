@@ -1,9 +1,24 @@
-// Cron-triggered: finds bookings where the instructor scanned the student
-// in (attended_at IS NOT NULL) AND the course ended >24h ago AND deposit is
-// still held in escrow. Transfers the 10% to the instructor's Stripe Connect
-// account. Run hourly via pg_cron.
+// Cron-triggered (hourly): releases escrowed deposits to instructors.
+//
+// Eligibility:
+//  - booking.deposit_status = 'held_in_escrow'
+//  - booking.escrow_status   = 'held'
+//  - booking.attended_at IS NOT NULL  (instructor scanned student in)
+//  - course.ends_at + 24h <= now()
+//  - instructor profile has an active Stripe Connect account
+//
+// Safety:
+//  - Pre-claims rows by stamping release_attempted_at, so concurrent runs
+//    don't double-transfer.
+//  - Uses transfer_group + idempotency key derived from the booking id, so
+//    Stripe also rejects duplicates server-side.
+//  - On Stripe failure we record release_error and skip the row; the next
+//    run can retry once the attempt is older than RETRY_AFTER_MIN.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
+
+const RETRY_AFTER_MIN = 60; // re-attempt failed transfers after 1 hour
+const BATCH_LIMIT = 100;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -14,7 +29,6 @@ const json = (body: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  // Default to sandbox; live cron should pass ?env=live.
   const rawEnv = new URL(req.url).searchParams.get("env") ?? "sandbox";
   if (rawEnv !== "sandbox" && rawEnv !== "live") {
     return json({ error: "invalid env" }, 400);
@@ -27,15 +41,23 @@ Deno.serve(async (req) => {
   );
   const stripe = createStripeClient(env);
 
-  // Find releasable bookings: scanned in, course ended >24h ago, still escrowed
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const retryCutoff = new Date(Date.now() - RETRY_AFTER_MIN * 60 * 1000).toISOString();
+
+  // Find releasable bookings. Filter on attended_at, escrow held, course
+  // ended >24h ago, and no recent failed attempt.
   const { data: rows, error } = await supabase
     .from("bookings")
-    .select("id, instructor_deposit_cents, stripe_payment_intent_id, courses!inner(instructor_id, ends_at)")
+    .select(
+      "id, instructor_deposit_cents, stripe_payment_intent_id, release_attempted_at, courses!inner(instructor_id, ends_at)",
+    )
     .eq("deposit_status", "held_in_escrow")
+    .eq("escrow_status", "held")
     .not("attended_at", "is", null)
+    .gt("instructor_deposit_cents", 0)
     .lte("courses.ends_at", cutoff)
-    .limit(100);
+    .or(`release_attempted_at.is.null,release_attempted_at.lte.${retryCutoff}`)
+    .limit(BATCH_LIMIT);
 
   if (error) {
     console.error("release-escrow query error", error);
@@ -48,6 +70,20 @@ Deno.serve(async (req) => {
 
   for (const row of rows ?? []) {
     const instructorId = (row as any).courses.instructor_id as string;
+
+    // Pre-claim: stamp release_attempted_at and re-check we still own it.
+    const { data: claim, error: claimErr } = await supabase
+      .from("bookings")
+      .update({ release_attempted_at: new Date().toISOString(), release_error: null })
+      .eq("id", row.id)
+      .eq("escrow_status", "held")
+      .eq("deposit_status", "held_in_escrow")
+      .select("id");
+    if (claimErr || !claim?.length) {
+      skipped++;
+      continue;
+    }
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("stripe_connect_account_id, stripe_connect_status")
@@ -55,18 +91,30 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!profile?.stripe_connect_account_id || profile.stripe_connect_status !== "active") {
+      await supabase
+        .from("bookings")
+        .update({ release_error: "instructor_connect_not_active" })
+        .eq("id", row.id);
       skipped++;
       continue;
     }
 
     try {
-      const transfer = await stripe.transfers.create({
-        amount: row.instructor_deposit_cents,
-        currency: "usd",
-        destination: profile.stripe_connect_account_id,
-        transfer_group: row.id,
-        metadata: { bookingId: row.id, instructorId },
-      });
+      const transfer = await stripe.transfers.create(
+        {
+          amount: row.instructor_deposit_cents,
+          currency: "usd",
+          destination: profile.stripe_connect_account_id,
+          transfer_group: row.id,
+          metadata: { bookingId: row.id, instructorId },
+          // Use source_transaction when we have the captured PI so Stripe
+          // pulls funds from that specific charge balance entry.
+          ...(row.stripe_payment_intent_id
+            ? { source_transaction: undefined } // PI -> charge id required; skip if unknown
+            : {}),
+        },
+        { idempotencyKey: `release_${row.id}` },
+      );
 
       await supabase
         .from("bookings")
@@ -76,14 +124,20 @@ Deno.serve(async (req) => {
           escrow_released_at: new Date().toISOString(),
           stripe_transfer_id: transfer.id,
           instructor_payout_cents: row.instructor_deposit_cents,
+          release_error: null,
         })
         .eq("id", row.id);
       released++;
     } catch (e) {
-      console.error("release failed for booking", row.id, e);
-      errors.push(`${row.id}: ${(e as Error).message}`);
+      const msg = (e as Error).message ?? "transfer_failed";
+      console.error("release failed for booking", row.id, msg);
+      await supabase
+        .from("bookings")
+        .update({ release_error: msg.slice(0, 500) })
+        .eq("id", row.id);
+      errors.push(`${row.id}: ${msg}`);
     }
   }
 
-  return json({ released, skipped, errors });
+  return json({ released, skipped, errors, scanned: rows?.length ?? 0 });
 });

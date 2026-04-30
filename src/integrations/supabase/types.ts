@@ -280,7 +280,9 @@ export type Database = {
           online_total_cents: number
           platform_fee_cents: number
           refund_due_at: string | null
+          release_attempted_at: string | null
           release_eligible_at: string | null
+          release_error: string | null
           status: Database["public"]["Enums"]["booking_status"]
           stripe_charge_id: string | null
           stripe_checkout_session_id: string | null
@@ -314,7 +316,9 @@ export type Database = {
           online_total_cents?: number
           platform_fee_cents?: number
           refund_due_at?: string | null
+          release_attempted_at?: string | null
           release_eligible_at?: string | null
+          release_error?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_charge_id?: string | null
           stripe_checkout_session_id?: string | null
@@ -348,7 +352,9 @@ export type Database = {
           online_total_cents?: number
           platform_fee_cents?: number
           refund_due_at?: string | null
+          release_attempted_at?: string | null
           release_eligible_at?: string | null
+          release_error?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_charge_id?: string | null
           stripe_checkout_session_id?: string | null
@@ -1689,6 +1695,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stripe_webhook_events: {
+        Row: {
+          environment: string
+          event_id: string
+          event_type: string
+          payload: Json | null
+          processed_at: string
+        }
+        Insert: {
+          environment: string
+          event_id: string
+          event_type: string
+          payload?: Json | null
+          processed_at?: string
+        }
+        Update: {
+          environment?: string
+          event_id?: string
+          event_type?: string
+          payload?: Json | null
+          processed_at?: string
+        }
+        Relationships: []
       }
       support_ticket_messages: {
         Row: {

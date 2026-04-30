@@ -206,7 +206,7 @@ const Checkout = () => {
 
   // Stripe Embedded Checkout takeover after the booking is created.
   if (bookingId) {
-    const returnUrl = `${window.location.origin}/student/booking/${bookingId}?checkout=success`;
+    const returnUrl = `${window.location.origin}/student/checkout/${bookingId}/return`;
     return (
       <MobileShell withTabBar={false}>
         <PaymentTestModeBanner />
