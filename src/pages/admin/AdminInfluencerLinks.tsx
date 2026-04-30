@@ -113,10 +113,26 @@ const AdminInfluencerLinks = () => {
 
   const refresh = async () => {
     setLoading(true);
-    const [{ data: linkRows }, { data: signupRows }, { data: setting }] = await Promise.all([
+    const [
+      { data: linkRows },
+      { data: signupRows },
+      { data: setting },
+      { data: auditRows },
+      { data: commissionRows },
+    ] = await Promise.all([
       supabase.from('influencer_links').select('*').order('created_at', { ascending: false }),
       supabase.from('influencer_link_signups').select('link_id'),
       supabase.from('platform_settings').select('value').eq('key', 'default_influencer_commission_pct').maybeSingle(),
+      supabase
+        .from('influencer_commission_pct_audit')
+        .select('*')
+        .order('effective_at', { ascending: false })
+        .limit(50),
+      supabase
+        .from('influencer_commissions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100),
     ]);
     setLinks((linkRows as InfluencerLink[]) ?? []);
     const counts: Record<string, number> = {};
@@ -128,12 +144,37 @@ const AdminInfluencerLinks = () => {
       const n = Number(setting.value);
       if (!Number.isNaN(n)) setDefaultPct(n);
     }
+    setPctAudit((auditRows as PctAuditRow[]) ?? []);
+    setCommissions((commissionRows as CommissionRow[]) ?? []);
     setLoading(false);
   };
 
   useEffect(() => {
     refresh();
   }, []);
+
+  // Live slug availability check (debounced)
+  const previewSlug = useMemo(
+    () => slugify(newSlug || newHandle || newName),
+    [newSlug, newHandle, newName],
+  );
+  useEffect(() => {
+    if (!creating) return;
+    if (!previewSlug) {
+      setSlugCheck('invalid');
+      return;
+    }
+    setSlugCheck('checking');
+    const t = setTimeout(async () => {
+      const { data, error } = await supabase.rpc('is_influencer_slug_available', { _slug: previewSlug });
+      if (error) {
+        setSlugCheck('idle');
+        return;
+      }
+      setSlugCheck(data === true ? 'available' : 'taken');
+    }, 350);
+    return () => clearTimeout(t);
+  }, [previewSlug, creating]);
 
   const resetCreateForm = () => {
     setNewName('');
@@ -143,6 +184,7 @@ const AdminInfluencerLinks = () => {
     setNewAudience('both');
     setNewPct('');
     setNewNotes('');
+    setSlugCheck('idle');
   };
 
   const handleCreate = async () => {
@@ -150,9 +192,16 @@ const AdminInfluencerLinks = () => {
     if (!name) return toast.error('Influencer name is required');
     const slug = slugify(newSlug || newHandle || name);
     if (!slug) return toast.error('Could not build a slug — add a name or handle');
+    if (slugCheck === 'taken') return toast.error(`Slug "${slug}" is already in use`);
     const pct = newPct.trim() === '' ? null : Number(newPct);
     if (pct !== null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
       return toast.error('Commission % must be between 0 and 100');
+    }
+    // Final pre-flight check (race-safe — DB unique constraint is the real guard).
+    const { data: available } = await supabase.rpc('is_influencer_slug_available', { _slug: slug });
+    if (available === false) {
+      setSlugCheck('taken');
+      return toast.error(`Slug "${slug}" is already in use`);
     }
     const { error } = await supabase.from('influencer_links').insert({
       slug,
@@ -164,7 +213,9 @@ const AdminInfluencerLinks = () => {
       notes: newNotes.trim() || null,
     });
     if (error) {
-      toast.error(error.message.includes('duplicate') ? `Slug "${slug}" is already taken` : error.message);
+      const dup = error.message.toLowerCase().includes('duplicate') || error.code === '23505';
+      toast.error(dup ? `Slug "${slug}" is already in use` : error.message);
+      if (dup) setSlugCheck('taken');
       return;
     }
     toast.success(`Link /i/${slug} created`);
