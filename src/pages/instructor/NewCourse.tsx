@@ -214,7 +214,7 @@ const NewCourse = () => {
     }
     if (step === 3) {
       if (!skillLevel) return 'Skill level is required — go back to Basics and pick a level';
-      if (!feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
+      if (!isPrelaunch && !feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
     }
     return null;
   };
