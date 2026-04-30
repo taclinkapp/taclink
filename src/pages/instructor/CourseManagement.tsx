@@ -55,23 +55,25 @@ const CourseManagement = () => {
   const studentNameFor = (b: any): string | null =>
     b?.profiles?.display_name || null;
 
-  const markAttended = async (bookingId: string, opts?: { source: 'qr' | 'proximity' }) => {
+  const markAttended = async (
+    bookingId: string,
+    opts?: { source: 'qr' | 'proximity' },
+  ): Promise<ScanOutcome> => {
     const existing = bookings.find((b: any) => b.id === bookingId);
+    const studentName = existing ? studentNameFor(existing) : null;
     if (!existing) {
-      toast.error('That QR is not for this course.');
-      return;
+      return { kind: 'wrong_course' };
     }
     if (existing.status === 'attended') {
-      toast.info('Already checked in.');
-      return;
+      return { kind: 'already_attended', studentName };
     }
     if (existing.status === 'cancelled' || existing.status === 'no_show') {
-      toast.error(`Cannot check in — booking is ${existing.status}.`);
-      return;
+      return { kind: 'cannot_checkin', status: existing.status };
     }
     // Atomic guard: only flip 'reserved' → 'attended'. If another scan got here
     // first the row will already be 'attended' and the conditional update
-    // returns 0 rows, which we treat as a benign double-scan.
+    // returns 0 rows, which we surface as 'already_attended' so the instructor
+    // sees a clear retry-friendly message instead of an error.
     // Ordering note: attended_at is the column release-escrow-deposits filters on,
     // so attendance MUST commit before any payout eligibility update. The release
     // job also runs on a 24h delay, so there is no race with payout dispatch.
@@ -84,20 +86,15 @@ const CourseManagement = () => {
       .select('id')
       .maybeSingle();
     if (error) {
-      toast.error(error.message);
-      return;
+      return { kind: 'rpc_error', reason: error.message };
     }
-    if (!updated) {
-      toast.info('Already checked in.');
-      qc.invalidateQueries({ queryKey: ['course_bookings', id] });
-      return;
-    }
-    const label =
-      opts?.source === 'proximity'
-        ? 'Auto check-in confirmed (QR + proximity)'
-        : 'Checked in';
-    toast.success(label);
     qc.invalidateQueries({ queryKey: ['course_bookings', id] });
+    if (!updated) {
+      // Lost the race to another scan/admin update — treat as a benign
+      // double-scan so the instructor knows the student is still good to go.
+      return { kind: 'already_attended', studentName };
+    }
+    return { kind: 'success', studentName, source: opts?.source ?? 'qr' };
   };
 
 
