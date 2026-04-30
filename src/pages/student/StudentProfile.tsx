@@ -1,16 +1,74 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
-import { mockBookings, mockCourses } from '@/lib/mockData';
 import { Settings, ChevronRight, Gift } from 'lucide-react';
-import { VerifiedBadge } from '@/components/VerifiedBadge';
-import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+
+type HistoryRow = {
+  id: string;
+  course_id: string;
+  course_title: string;
+  course_category: string | null;
+  course_starts_at: string | null;
+};
 
 const StudentProfile = () => {
   const nav = useNavigate();
+  const { user, profile } = useAuth();
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [stats, setStats] = useState({ courses: 0, instructors: 0, reviews: 0 });
+  const [history, setHistory] = useState<HistoryRow[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const [{ data: bookings }, { count: reviewCount }] = await Promise.all([
+        supabase
+          .from('bookings')
+          .select('id, course_id, courses!inner(id, title, category, starts_at, instructor_id)')
+          .eq('student_id', user.id)
+          .order('booked_at', { ascending: false }),
+        supabase
+          .from('reviews')
+          .select('id', { count: 'exact', head: true })
+          .eq('student_id', user.id),
+      ]);
+      if (cancelled) return;
+      const rows = (bookings ?? []) as any[];
+      const instructorIds = new Set<string>();
+      const hist: HistoryRow[] = rows.map((r) => {
+        if (r.courses?.instructor_id) instructorIds.add(r.courses.instructor_id);
+        return {
+          id: r.id,
+          course_id: r.course_id,
+          course_title: r.courses?.title ?? 'Course',
+          course_category: r.courses?.category ?? null,
+          course_starts_at: r.courses?.starts_at ?? null,
+        };
+      });
+      setHistory(hist.slice(0, 3));
+      setStats({
+        courses: rows.length,
+        instructors: instructorIds.size,
+        reviews: reviewCount ?? 0,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const memberSince = useMemo(() => {
+    const created = (profile as any)?.created_at ?? user?.created_at;
+    if (!created) return '';
+    return new Date(created).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }, [profile, user]);
+
+  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Student';
+  const photo = profile?.photo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`;
+
   return (
     <MobileShell>
       <PageHeader
@@ -23,18 +81,18 @@ const StudentProfile = () => {
       />
       <div className="px-4 py-6">
         <div className="flex items-center gap-4">
-          <img src="https://i.pravatar.cc/150?img=14" className="h-20 w-20 rounded-full border-2 border-primary object-cover" alt="" />
+          <img src={photo} className="h-20 w-20 rounded-full border-2 border-primary object-cover" alt="" />
           <div>
-            <h2 className="text-xl font-black">James Kowalski</h2>
-            <p className="text-xs text-muted-foreground">Member since April 2026</p>
+            <h2 className="text-xl font-black">{displayName}</h2>
+            {memberSince && <p className="text-xs text-muted-foreground">Member since {memberSince}</p>}
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-6">
           {[
-            { label: 'Courses', value: '7' },
-            { label: 'Instructors', value: '4' },
-            { label: 'Reviews', value: '5' },
+            { label: 'Courses', value: stats.courses },
+            { label: 'Instructors', value: stats.instructors },
+            { label: 'Reviews', value: stats.reviews },
           ].map((s) => (
             <div key={s.label} className="tactical-card p-3 text-center">
               <div className="text-xl font-black text-primary">{s.value}</div>
@@ -60,30 +118,25 @@ const StudentProfile = () => {
         </Section>
 
         <Section title="Training History">
-          {mockBookings.slice(0, 3).map((b) => (
+          {history.length === 0 ? (
+            <div className="tactical-card p-4 text-center text-xs text-muted-foreground">
+              No bookings yet. Find a course to get started.
+            </div>
+          ) : history.map((b) => (
             <Link key={b.id} to={`/student/booking/${b.id}`} className="tactical-card p-3 flex items-center gap-3 hover:border-primary/40">
               <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center text-primary font-bold text-xs">
-                {b.course.category.slice(0, 3).toUpperCase()}
+                {(b.course_category ?? 'CRS').slice(0, 3).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{b.course.title}</div>
-                <div className="text-xs text-muted-foreground">{new Date(b.course.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                <div className="text-sm font-semibold truncate">{b.course_title}</div>
+                {b.course_starts_at && (
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(b.course_starts_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </div>
+                )}
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
-          ))}
-        </Section>
-
-        <Section title="Saved Instructors">
-          {mockCourses.slice(0, 2).map((c) => (
-            <div key={c.id} className="tactical-card p-3 flex items-center gap-3">
-              <WatermarkedAvatar src={c.instructorPhoto} size={40} className="border border-border" alt={c.instructorName} />
-              <div className="flex-1">
-                <div className="flex items-center gap-1 text-sm font-semibold">{c.instructorName} {c.instructorVerified && <VerifiedBadge />}</div>
-                <div className="text-xs text-muted-foreground">{c.city}, {c.state}</div>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </div>
           ))}
         </Section>
       </div>
