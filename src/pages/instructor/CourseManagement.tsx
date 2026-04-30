@@ -65,10 +65,10 @@ const CourseManagement = () => {
       return { kind: 'wrong_course' };
     }
     if (existing.status === 'attended') {
-      return { kind: 'already_attended', studentName };
+      return { kind: 'already_attended', bookingId, studentName };
     }
     if (existing.status === 'cancelled' || existing.status === 'no_show') {
-      return { kind: 'cannot_checkin', status: existing.status };
+      return { kind: 'cannot_checkin', bookingId, status: existing.status };
     }
     // Atomic guard: only flip 'reserved' → 'attended'. If another scan got here
     // first the row will already be 'attended' and the conditional update
@@ -86,15 +86,15 @@ const CourseManagement = () => {
       .select('id')
       .maybeSingle();
     if (error) {
-      return { kind: 'rpc_error', reason: error.message };
+      return { kind: 'rpc_error', bookingId, reason: error.message };
     }
     qc.invalidateQueries({ queryKey: ['course_bookings', id] });
     if (!updated) {
       // Lost the race to another scan/admin update — treat as a benign
       // double-scan so the instructor knows the student is still good to go.
-      return { kind: 'already_attended', studentName };
+      return { kind: 'already_attended', bookingId, studentName };
     }
-    return { kind: 'success', studentName, source: opts?.source ?? 'qr' };
+    return { kind: 'success', bookingId, studentName, source: opts?.source ?? 'qr' };
   };
 
 
@@ -156,6 +156,32 @@ const CourseManagement = () => {
     else proximity.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoCheckin, target?.lat, target?.lng]);
+
+  // Telemetry: log every scan outcome to checkin_attempts via the
+  // record_checkin_attempt RPC. The server validates instructor ownership
+  // of the course, so a tampered client can't poison another instructor's log.
+  useEffect(() => {
+    if (!scanOutcome || !id) return;
+    const o = scanOutcome;
+    const bookingId = 'bookingId' in o ? o.bookingId ?? null : null;
+    const source: 'qr' | 'proximity' = o.kind === 'success' ? o.source : 'qr';
+    const reason =
+      o.kind === 'verification_failed' || o.kind === 'invalid_qr' || o.kind === 'rpc_error'
+        ? o.reason
+        : o.kind === 'cannot_checkin'
+          ? `status=${o.status}`
+          : null;
+    supabase
+      .rpc('record_checkin_attempt', {
+        _course_id: id,
+        _outcome: o.kind,
+        _booking_id: bookingId,
+        _source: source,
+        _reason: reason,
+      })
+      .then(() => { /* fire-and-forget */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanOutcome, id]);
 
 
   if (isLoading || !course) {
@@ -549,7 +575,7 @@ const CourseManagement = () => {
             if (!resolvedBookingId) return;
             const match = bookings.find((b: any) => b.id === resolvedBookingId);
             if (!match) {
-              setScanOutcome({ kind: 'wrong_course' });
+              setScanOutcome({ kind: 'wrong_course', bookingId: resolvedBookingId });
               return;
             }
             const studentName = studentNameFor(match);
@@ -557,12 +583,12 @@ const CourseManagement = () => {
             // Surface unsigned-QR warning before attempting attendance so the
             // instructor knows to follow up — but still proceed (single-source policy).
             if (unsigned) {
-              setScanOutcome({ kind: 'unsigned_warning', studentName });
+              setScanOutcome({ kind: 'unsigned_warning', bookingId: resolvedBookingId, studentName });
               return;
             }
 
             if (match.status === 'attended') {
-              setScanOutcome({ kind: 'already_attended', studentName });
+              setScanOutcome({ kind: 'already_attended', bookingId: resolvedBookingId, studentName });
               return;
             }
 
@@ -575,7 +601,7 @@ const CourseManagement = () => {
                 setScanOutcome(outcome);
               } else {
                 setPending({ bookingId: resolvedBookingId, scannedAt: Date.now() });
-                setScanOutcome({ kind: 'pending_proximity', studentName });
+                setScanOutcome({ kind: 'pending_proximity', bookingId: resolvedBookingId, studentName });
               }
             } else {
               const outcome = await markAttended(resolvedBookingId, { source: 'qr' });

@@ -412,6 +412,42 @@ export type Database = {
         }
         Relationships: []
       }
+      checkin_attempts: {
+        Row: {
+          booking_id: string | null
+          course_id: string
+          created_at: string
+          id: string
+          instructor_id: string
+          outcome: string
+          reason: string | null
+          source: string
+          student_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          course_id: string
+          created_at?: string
+          id?: string
+          instructor_id: string
+          outcome: string
+          reason?: string | null
+          source?: string
+          student_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          course_id?: string
+          created_at?: string
+          id?: string
+          instructor_id?: string
+          outcome?: string
+          reason?: string | null
+          source?: string
+          student_id?: string | null
+        }
+        Relationships: []
+      }
       cockpit_briefs: {
         Row: {
           action_items: Json
@@ -1980,6 +2016,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      audit_booking_action: {
+        Args: {
+          _action: string
+          _after: Json
+          _before: Json
+          _booking_id: string
+          _reason?: string
+        }
+        Returns: undefined
+      }
       award_strike: {
         Args: { _points?: number; _user_id: string }
         Returns: {
@@ -2095,6 +2141,16 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      record_checkin_attempt: {
+        Args: {
+          _booking_id?: string
+          _course_id: string
+          _outcome: string
+          _reason?: string
+          _source?: string
+        }
+        Returns: string
       }
       student_cancel_booking: {
         Args: { _booking_id: string; _reason?: string }
