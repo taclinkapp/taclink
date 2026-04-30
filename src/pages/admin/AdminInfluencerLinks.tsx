@@ -930,20 +930,63 @@ const AdminInfluencerLinks = () => {
                   className="bg-background border-border h-11 mt-1.5"
                 />
               </div>
-              <div>
-                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Window (days)</Label>
-                <Input
-                  type="number" min={1} max={3650} step={1}
-                  value={newWindowDays}
-                  onChange={(e) => setNewWindowDays(e.target.value)}
-                  placeholder={`${defaultWindowDays}`}
-                  className="bg-background border-border h-11 mt-1.5"
-                />
-              </div>
+              {(() => {
+                const recRaw = newRecurringPct.trim();
+                const recVal = recRaw === '' ? defaultRecurringPct : Number(recRaw);
+                const windowDisabled = !Number.isNaN(recVal) && recVal === 0;
+                const winRaw = newWindowDays.trim();
+                const winNum = winRaw === '' ? null : Number(winRaw);
+                const winInvalid = winNum !== null && (Number.isNaN(winNum) || winNum < 1 || winNum > 3650);
+                return (
+                  <div>
+                    <Label className={`text-[10px] uppercase tracking-wider ${windowDisabled ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
+                      Window (days)
+                    </Label>
+                    <Input
+                      type="number" min={1} max={3650} step={1}
+                      value={newWindowDays}
+                      onChange={(e) => setNewWindowDays(e.target.value)}
+                      placeholder={`${defaultWindowDays}`}
+                      disabled={windowDisabled}
+                      className={`bg-background h-11 mt-1.5 ${winInvalid ? 'border-destructive focus-visible:ring-destructive' : 'border-border'}`}
+                    />
+                    {winInvalid && (
+                      <p className="text-[11px] text-destructive mt-1">Must be 1–3650 days.</p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
             <p className="text-[11px] text-muted-foreground -mt-1">
               Leave blank to inherit the platform defaults. Set Recurring % to 0 to disable recurring for this link.
             </p>
+
+            {/* Per-link payout preview */}
+            {(() => {
+              const firstPct = newFirstPct.trim() === '' ? defaultFirstPct : Number(newFirstPct);
+              const recPct = newRecurringPct.trim() === '' ? defaultRecurringPct : Number(newRecurringPct);
+              const winDays = newWindowDays.trim() === '' ? defaultWindowDays : Number(newWindowDays);
+              if (Number.isNaN(firstPct) || Number.isNaN(recPct)) return null;
+              return (
+                <div className="rounded bg-muted/40 border border-border px-3 py-2 text-[11px]">
+                  <div className="font-bold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">
+                    Preview on ${previewBookingDollars.toFixed(0)} booking
+                  </div>
+                  <div>First: <span className="font-bold text-foreground">${(previewBookingDollars * firstPct / 100).toFixed(2)}</span> ({firstPct}%)</div>
+                  <div>
+                    Recurring:{' '}
+                    {recPct > 0 ? (
+                      <>
+                        <span className="font-bold text-foreground">${(previewBookingDollars * recPct / 100).toFixed(2)}</span>{' '}
+                        ({recPct}% · {Number.isNaN(winDays) ? defaultWindowDays : winDays}d window)
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">disabled</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
               <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="bg-background border-border min-h-20 mt-1.5" />
