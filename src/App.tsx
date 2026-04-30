@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Notifications from "./pages/Notifications";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import CancellationsFAQ from "./pages/legal/CancellationsFAQ";
 import EditProfile from "./pages/EditProfile";
 import HelpCenter from "./pages/support/HelpCenter";
 import ContactSupport from "./pages/support/ContactSupport";
