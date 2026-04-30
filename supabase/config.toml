@@ -44,3 +44,12 @@ verify_jwt = false
 
 [functions.ai-weekly-brief]
 verify_jwt = false
+
+[functions.attendance-arbiter]
+verify_jwt = false
+
+[functions.attendance-reminders]
+verify_jwt = false
+
+[functions.proximity-handshake]
+verify_jwt = true
