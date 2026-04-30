@@ -33,11 +33,29 @@ type LocationOption = {
   lng: number;
 };
 
+const STORAGE_KEY = 'student-discover-prefs-v1';
+
+type PersistedPrefs = {
+  view?: 'list' | 'map';
+  level?: LevelFilter;
+  selectedLocation?: LocationOption | null;
+};
+
+const loadPrefs = (): PersistedPrefs => {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') as PersistedPrefs;
+  } catch {
+    return {};
+  }
+};
+
 const Discover = () => {
   const nav = useNavigate();
-  const [view, setView] = useState<'list' | 'map'>('list');
+  const initialPrefs = loadPrefs();
+  const [view, setView] = useState<'list' | 'map'>(initialPrefs.view ?? 'list');
   const [discipline, setDiscipline] = useState<string>('All');
-  const [level, setLevel] = useState<LevelFilter>('all');
+  const [level, setLevel] = useState<LevelFilter>(initialPrefs.level ?? 'all');
   const [query, setQuery] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   // Location lookup state
@@ -45,7 +63,10 @@ const Discover = () => {
   const [locationOpen, setLocationOpen] = useState(false);
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [activeLocationIndex, setActiveLocationIndex] = useState(0);
-  const [selectedLocation, setSelectedLocation] = useState<LocationOption | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationOption | null>(
+    initialPrefs.selectedLocation ?? null,
+  );
+  const [geocoding, setGeocoding] = useState(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const locationListRef = useRef<HTMLDivElement>(null);
   const [bannerDismissed, setBannerDismissed] = useState(
@@ -56,6 +77,19 @@ const Discover = () => {
     setBannerDismissed(true);
   };
   const { data: courses = [], isLoading } = usePublishedCourses();
+  const { token: mapboxToken } = useMapboxToken();
+
+  // Persist user preferences across navigation/refresh.
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ view, level, selectedLocation } satisfies PersistedPrefs),
+      );
+    } catch {
+      // ignore quota errors
+    }
+  }, [view, level, selectedLocation]);
 
   // Aggregate available locations (city, state) from published courses.
   const locationOptions: LocationOption[] = useMemo(() => {
