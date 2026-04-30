@@ -19,6 +19,13 @@ const formatWhen = (iso: string) => {
     : d.toLocaleDateString([], { month: "short", day: "numeric" });
 };
 
+/** Strip leading literal "undefined"/"null" tokens that escaped from buggy templates. */
+const sanitizePreview = (s?: string | null): string | null => {
+  if (!s) return null;
+  const cleaned = s.replace(/^(undefined|null)\s*[—\-:]?\s*/i, "").trim();
+  return cleaned.length ? cleaned : null;
+};
+
 type Props = {
   variant: "student" | "instructor";
   basePath: string;
