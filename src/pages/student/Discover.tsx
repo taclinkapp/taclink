@@ -329,7 +329,22 @@ const Discover = () => {
                   />
                 </button>
               </div>
-              {locationOpen && locationSuggestions.length > 0 && (
+              {locationOpen && isLoading && (
+                <div
+                  className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-2 space-y-2"
+                  role="status"
+                  aria-label="Loading locations"
+                >
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-1 py-1.5">
+                      <Skeleton className="h-4 w-4 rounded" />
+                      <Skeleton className="h-3.5 flex-1 rounded" />
+                      <Skeleton className="h-3 w-14 rounded" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {locationOpen && !isLoading && locationSuggestions.length > 0 && (
                 <div
                   ref={locationListRef}
                   id="location-listbox"
@@ -370,12 +385,12 @@ const Discover = () => {
                   })}
                 </div>
               )}
-              {locationOpen && locationQuery && locationSuggestions.length === 0 && (
+              {locationOpen && !isLoading && locationQuery && locationSuggestions.length === 0 && (
                 <div className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-3 text-xs text-muted-foreground">
                   No courses found for that location yet.
                 </div>
               )}
-              {locationOpen && !locationQuery && locationSuggestions.length === 0 && (
+              {locationOpen && !isLoading && !locationQuery && locationSuggestions.length === 0 && (
                 <div className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-3 text-xs text-muted-foreground">
                   No locations available yet.
                 </div>
