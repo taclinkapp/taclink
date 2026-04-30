@@ -29,6 +29,37 @@ import { toast } from 'sonner';
 import { fmt } from '@/lib/fees';
 
 type RefundType = 'platform_fee' | 'deposit' | 'full' | 'partial' | 'goodwill' | 'other';
+type ReasonCategory =
+  | 'instructor_no_show'
+  | 'instructor_cancel'
+  | 'fraud_safety'
+  | 'student_cancel_timely'
+  | 'student_cancel_late'
+  | 'weather_reschedule'
+  | 'quality_complaint'
+  | 'chargeback_threat'
+  | 'other';
+
+const REASON_LABELS: Record<ReasonCategory, string> = {
+  instructor_no_show: 'Instructor no-show',
+  instructor_cancel: 'Instructor cancelled',
+  fraud_safety: 'Fraud / safety incident',
+  student_cancel_timely: 'Student cancel (≥ 48h)',
+  student_cancel_late: 'Student cancel (< 48h)',
+  weather_reschedule: 'Weather / reschedule',
+  quality_complaint: 'Quality complaint',
+  chargeback_threat: 'Chargeback / legal threat',
+  other: 'Other (manual)',
+};
+
+type SplitPreview = {
+  student_credit_cents: number;
+  instructor_forfeit_cents: number;
+  platform_absorbed_cents: number;
+  requires_owner: boolean;
+  hours_before_course: number | null;
+  rationale: string;
+};
 type RefundStatus = 'issued' | 'failed' | 'reversed';
 
 type RefundRow = {
