@@ -522,7 +522,12 @@ const AdminInfluencerLinks = () => {
               <tbody className="divide-y divide-border">
                 {links.map((l) => {
                   const url = buildInfluencerUrl(l.slug);
-                  const pct = l.commission_pct ?? defaultPct;
+                  const firstPct = l.first_booking_pct ?? l.commission_pct ?? defaultFirstPct;
+                  const recurringPct = l.recurring_pct ?? defaultRecurringPct;
+                  const windowDays = l.recurring_window_days ?? defaultWindowDays;
+                  const firstIsDefault = l.first_booking_pct === null && l.commission_pct === null;
+                  const recurringIsDefault = l.recurring_pct === null;
+                  const windowIsDefault = l.recurring_window_days === null;
                   return (
                     <tr key={l.id} className="hover:bg-muted/30 align-top">
                       <td className="px-4 py-3">
@@ -539,8 +544,21 @@ const AdminInfluencerLinks = () => {
                         <div className="text-[11px] text-muted-foreground break-all mt-0.5">{url}</div>
                       </td>
                       <td className="px-4 py-3 capitalize">{l.audience}</td>
-                      <td className="px-4 py-3">
-                        {pct}%{l.commission_pct === null && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                      <td className="px-4 py-3 text-xs leading-relaxed">
+                        <div>
+                          <span className="font-bold text-foreground">{firstPct}%</span> first
+                          {firstIsDefault && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                        </div>
+                        <div>
+                          {recurringPct > 0 ? (
+                            <>
+                              <span className="font-bold text-foreground">{recurringPct}%</span> recurring · {windowDays}d
+                              {(recurringIsDefault || windowIsDefault) && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">no recurring</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 font-bold">{signupCounts[l.id] ?? 0}</td>
                       <td className="px-4 py-3">
