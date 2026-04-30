@@ -1,4 +1,12 @@
-// Cron-triggered (hourly): releases escrowed deposits to instructors.
+// Cron-triggered (hourly): releases escrowed funds to instructors.
+//
+// FULL-ONLINE MODEL: TacLink charges the student the full course price
+// upfront and holds it in escrow. This function transfers the full course
+// price to the instructor's Stripe Connect account 24h after course end.
+// TacLink keeps only the $25 platform fee.
+//
+// The booking column `instructor_deposit_cents` stores the payout amount
+// (= full course price under the new model; was 10% under the old model).
 //
 // Eligibility:
 //  - booking.deposit_status = 'held_in_escrow'
