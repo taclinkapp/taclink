@@ -2257,6 +2257,10 @@ export type Database = {
           warning_issued: boolean
         }[]
       }
+      check_influencer_slug_available: {
+        Args: { _slug: string }
+        Returns: Json
+      }
       compute_cancel_cutoff_hours: {
         Args: { _booked_at: string; _starts_at: string }
         Returns: number
@@ -2360,6 +2364,7 @@ export type Database = {
         }
         Returns: number
       }
+      normalize_influencer_slug: { Args: { _raw: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
