@@ -436,35 +436,62 @@ const AdminInfluencerLinks = () => {
       />
 
       <div className="p-4 sm:p-8 space-y-6">
-        {/* Default commission */}
+        {/* Default commissions (hybrid) */}
         <div className="tactical-card p-5">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-[220px]">
-              <h2 className="font-bold mb-1">Default commission</h2>
-              <p className="text-xs text-muted-foreground">
-                Applied to every link that has no per-link override. Captured at the moment a booking is attended — past
-                commissions never change.
-              </p>
-            </div>
-            <div className="flex items-end gap-2">
-              <div>
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">% of course price</Label>
+          <div className="space-y-1 mb-4">
+            <h2 className="font-bold">Default commissions (hybrid model)</h2>
+            <p className="text-xs text-muted-foreground">
+              Used for any link without a per-link override. The <span className="font-semibold text-foreground">first-booking %</span> is paid the first time a referred user attends a booking. The <span className="font-semibold text-foreground">recurring %</span> is paid on subsequent attended bookings, but only inside the time window after signup. Cancelled / no-show bookings never pay out. Past commissions are never re-priced.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-md border border-border p-3 space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">First-booking %</Label>
+              <div className="flex items-end gap-2">
                 <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={defaultPct}
-                  onChange={(e) => setDefaultPct(Number(e.target.value))}
-                  className="bg-background border-border h-11 mt-1.5 w-28"
+                  type="number" min={0} max={100} step={0.1}
+                  value={defaultFirstPct}
+                  onChange={(e) => setDefaultFirstPct(Number(e.target.value))}
+                  className="bg-background border-border h-11 w-24"
                 />
+                <Button
+                  size="sm"
+                  onClick={() => handleSaveDefault('default_influencer_first_booking_pct', defaultFirstPct, 'First-booking %')}
+                  className="h-11 bg-primary text-primary-foreground font-bold"
+                >Save</Button>
               </div>
-              <Button
-                onClick={() => handleSaveDefaultPct(defaultPct)}
-                className="h-11 bg-primary text-primary-foreground font-bold"
-              >
-                Save
-              </Button>
+            </div>
+            <div className="rounded-md border border-border p-3 space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Recurring % (0 = off)</Label>
+              <div className="flex items-end gap-2">
+                <Input
+                  type="number" min={0} max={100} step={0.1}
+                  value={defaultRecurringPct}
+                  onChange={(e) => setDefaultRecurringPct(Number(e.target.value))}
+                  className="bg-background border-border h-11 w-24"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => handleSaveDefault('default_influencer_recurring_pct', defaultRecurringPct, 'Recurring %')}
+                  className="h-11 bg-primary text-primary-foreground font-bold"
+                >Save</Button>
+              </div>
+            </div>
+            <div className="rounded-md border border-border p-3 space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Recurring window (days)</Label>
+              <div className="flex items-end gap-2">
+                <Input
+                  type="number" min={1} max={3650} step={1}
+                  value={defaultWindowDays}
+                  onChange={(e) => setDefaultWindowDays(Number(e.target.value))}
+                  className="bg-background border-border h-11 w-24"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => handleSaveDefault('default_influencer_recurring_window_days', defaultWindowDays, 'Recurring window')}
+                  className="h-11 bg-primary text-primary-foreground font-bold"
+                >Save</Button>
+              </div>
             </div>
           </div>
         </div>
