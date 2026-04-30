@@ -317,9 +317,18 @@ const AdminInfluencerLinks = () => {
 
   const handleSaveEdit = async () => {
     if (!editing) return;
-    const pct = editing.commission_pct;
-    if (pct !== null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
-      return toast.error('Commission % must be between 0 and 100');
+    const validatePct = (v: number | null, label: string) => {
+      if (v === null) return null;
+      if (Number.isNaN(v) || v < 0 || v > 100) return `${label} must be between 0 and 100`;
+      return null;
+    };
+    const err =
+      validatePct(editing.first_booking_pct, 'First-booking %') ??
+      validatePct(editing.recurring_pct, 'Recurring %');
+    if (err) return toast.error(err);
+    if (editing.recurring_window_days !== null) {
+      const w = editing.recurring_window_days;
+      if (Number.isNaN(w) || w < 1 || w > 3650) return toast.error('Recurring window must be 1–3650 days');
     }
     const { error } = await supabase
       .from('influencer_links')
@@ -328,7 +337,9 @@ const AdminInfluencerLinks = () => {
         influencer_handle: editing.influencer_handle,
         influencer_email: editing.influencer_email,
         audience: editing.audience,
-        commission_pct: editing.commission_pct,
+        first_booking_pct: editing.first_booking_pct,
+        recurring_pct: editing.recurring_pct,
+        recurring_window_days: editing.recurring_window_days,
         active: editing.active,
         notes: editing.notes,
       })
@@ -352,18 +363,27 @@ const AdminInfluencerLinks = () => {
     refresh();
   };
 
-  const handleSaveDefaultPct = async (value: number) => {
-    if (Number.isNaN(value) || value < 0 || value > 100) {
-      toast.error('Commission % must be between 0 and 100');
-      return;
-    }
+  const handleSaveDefault = async (
+    key:
+      | 'default_influencer_first_booking_pct'
+      | 'default_influencer_recurring_pct'
+      | 'default_influencer_recurring_window_days',
+    value: number,
+    label: string,
+  ) => {
+    const isPct = key !== 'default_influencer_recurring_window_days';
+    if (Number.isNaN(value)) return toast.error(`${label} must be a number`);
+    if (isPct && (value < 0 || value > 100)) return toast.error(`${label} must be between 0 and 100`);
+    if (!isPct && (value < 1 || value > 3650)) return toast.error(`${label} must be between 1 and 3650 days`);
     const { error } = await supabase
       .from('platform_settings')
       .update({ value: value as any })
-      .eq('key', 'default_influencer_commission_pct');
+      .eq('key', key);
     if (error) return toast.error(error.message);
-    toast.success(`Default commission set to ${value}%`);
-    setDefaultPct(value);
+    toast.success(`${label} saved`);
+    if (key === 'default_influencer_first_booking_pct') setDefaultFirstPct(value);
+    if (key === 'default_influencer_recurring_pct') setDefaultRecurringPct(value);
+    if (key === 'default_influencer_recurring_window_days') setDefaultWindowDays(value);
     refresh();
   };
 
