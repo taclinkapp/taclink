@@ -133,7 +133,11 @@ describe('ScanResultDialog — every outcome has live buttons + correct copy', (
       const { unmount } = render(
         <ScanResultDialog outcome={outcome} onScanAnother={vi.fn()} onClose={vi.fn()} />,
       );
-      bodies.push(screen.getByText(/already checked in/i).textContent ?? '');
+      // Body copy is duplicated in DialogDescription (sr-only) + visible <p>.
+      // Take the visible <p> by filtering out sr-only nodes.
+      const matches = screen.getAllByText(/already checked in/i);
+      const visible = matches.find((n) => !n.closest('.sr-only')) ?? matches[0];
+      bodies.push(visible.textContent ?? '');
       unmount();
     }
     expect(new Set(bodies).size).toBe(1);
