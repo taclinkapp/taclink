@@ -65,10 +65,10 @@ const CourseManagement = () => {
       return { kind: 'wrong_course' };
     }
     if (existing.status === 'attended') {
-      return { kind: 'already_attended', studentName };
+      return { kind: 'already_attended', bookingId, studentName };
     }
     if (existing.status === 'cancelled' || existing.status === 'no_show') {
-      return { kind: 'cannot_checkin', status: existing.status };
+      return { kind: 'cannot_checkin', bookingId, status: existing.status };
     }
     // Atomic guard: only flip 'reserved' → 'attended'. If another scan got here
     // first the row will already be 'attended' and the conditional update
@@ -86,15 +86,15 @@ const CourseManagement = () => {
       .select('id')
       .maybeSingle();
     if (error) {
-      return { kind: 'rpc_error', reason: error.message };
+      return { kind: 'rpc_error', bookingId, reason: error.message };
     }
     qc.invalidateQueries({ queryKey: ['course_bookings', id] });
     if (!updated) {
       // Lost the race to another scan/admin update — treat as a benign
       // double-scan so the instructor knows the student is still good to go.
-      return { kind: 'already_attended', studentName };
+      return { kind: 'already_attended', bookingId, studentName };
     }
-    return { kind: 'success', studentName, source: opts?.source ?? 'qr' };
+    return { kind: 'success', bookingId, studentName, source: opts?.source ?? 'qr' };
   };
 
 
