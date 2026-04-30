@@ -224,17 +224,21 @@ const NewCourse = () => {
     if (err) { toast.error(err); return; }
     if (step < 3) { setStep(step + 1); return; }
     if (!user) { toast.error('You must be signed in'); return; }
-    if (!hasPM) {
-      toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
-      nav('/instructor/payment-methods');
-      return;
-    }
-    if (!connectActive) {
-      toast.error('Set up Stripe payouts before publishing', {
-        description: 'Students pay the full course price online — you need a payout account to receive funds.',
-      });
-      nav('/instructor/payout-methods');
-      return;
+    // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
+    // since nothing is being published or charged yet.
+    if (!isPrelaunch) {
+      if (!hasPM) {
+        toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
+        nav('/instructor/payment-methods');
+        return;
+      }
+      if (!connectActive) {
+        toast.error('Set up Stripe payouts before publishing', {
+          description: 'Students pay the full course price online — you need a payout account to receive funds.',
+        });
+        nav('/instructor/payout-methods');
+        return;
+      }
     }
 
     setSaving(true);
