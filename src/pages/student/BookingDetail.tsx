@@ -9,6 +9,12 @@ import { QRCodeSVG } from 'qrcode.react';
 import { AttendanceClaimResponse } from '@/components/student/AttendanceClaimResponse';
 import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
 import { cancelDeadline } from '@/lib/cancellation';
+import {
+  REFUND_POLICY_BLURB,
+  cancelButtonLabel,
+  cancelConfirmMessage,
+  instructorNoShowConfirmMessage,
+} from '@/lib/refundCopy';
 import { toast } from 'sonner';
 
 type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
@@ -136,10 +142,7 @@ const BookingDetail = () => {
   const cancelBooking = async () => {
     if (!b) return;
     const inGrace = !!cancelDeadline(c?.starts_at ?? null, b.booked_at, b.cancellation_cutoff_hours);
-    const msg = inGrace
-      ? 'Cancel this booking?\n\nYou are within your grace window — you will receive a 100% refund ($25 platform fee + full course price) to your card within 48 hours.'
-      : 'Cancel this booking?\n\nYou are past your grace window. You will receive 90% of the course price back. The instructor keeps 10% as compensation for the lost slot, and the $25 platform fee is non-refundable.\n\nThis cannot be undone.';
-    if (!window.confirm(msg)) return;
+    if (!window.confirm(cancelConfirmMessage(inGrace))) return;
     setCancelling(true);
     const { data, error } = await supabase.rpc('student_cancel_booking', { _booking_id: b.id });
     setCancelling(false);
@@ -156,11 +159,7 @@ const BookingDetail = () => {
 
   const reportInstructorNoShow = async () => {
     if (!b) return;
-    if (!window.confirm(
-      'Report that the instructor did not show up?\n\n' +
-      'This will cancel your booking, refund you 100% (course price + $25 fee), ' +
-      'and add a strike to the instructor\'s account. Only use this if the instructor truly did not appear.',
-    )) return;
+    if (!window.confirm(instructorNoShowConfirmMessage())) return;
     setReportingNoShow(true);
     const { data, error } = await supabase.rpc('instructor_no_show_refund', { _booking_id: b.id });
     setReportingNoShow(false);
