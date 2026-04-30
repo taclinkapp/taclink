@@ -418,12 +418,25 @@ export const AdminRefunds = () => {
     load();
   };
 
-  return (
-    <div className="p-8 space-y-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-primary" /> Refunds (Cash via Stripe)
+  const retryStripeRefund = async (refundId: string) => {
+    const { data, error } = await supabase.functions.invoke(
+      `process-refund?env=${stripeEnvironment}`,
+      { body: { refund_id: refundId } },
+    );
+    if (error) {
+      toast.error('Stripe refund failed', { description: error.message });
+      return;
+    }
+    const result = (data as any)?.results?.[0];
+    if (result?.error) {
+      toast.error('Stripe refund failed', { description: result.error });
+    } else if (result?.stripe_refund_id) {
+      toast.success('Stripe refund issued', { description: result.stripe_refund_id });
+    } else {
+      toast.success('Refund queue swept');
+    }
+    load();
+  };
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Refunds are returned <span className="font-semibold text-foreground">in cash to the student's payment method via Stripe</span> within 48 hours.
