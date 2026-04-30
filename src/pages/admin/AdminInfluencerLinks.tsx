@@ -228,10 +228,26 @@ const AdminInfluencerLinks = () => {
     setNewEmail('');
     setNewSlug('');
     setNewAudience('both');
-    setNewPct('');
+    setNewFirstPct('');
+    setNewRecurringPct('');
+    setNewWindowDays('');
     setNewNotes('');
     setSlugCheck('idle');
     setSlugError(null);
+  };
+
+  const parseOptionalPct = (raw: string): { ok: boolean; value: number | null } => {
+    if (raw.trim() === '') return { ok: true, value: null };
+    const n = Number(raw);
+    if (Number.isNaN(n) || n < 0 || n > 100) return { ok: false, value: null };
+    return { ok: true, value: n };
+  };
+
+  const parseOptionalDays = (raw: string): { ok: boolean; value: number | null } => {
+    if (raw.trim() === '') return { ok: true, value: null };
+    const n = Number(raw);
+    if (Number.isNaN(n) || n < 1 || n > 3650 || !Number.isFinite(n)) return { ok: false, value: null };
+    return { ok: true, value: Math.floor(n) };
   };
 
   const handleCreate = async () => {
@@ -241,10 +257,12 @@ const AdminInfluencerLinks = () => {
     if (!slug) return toast.error('Could not build a slug — add a name or handle');
     if (slugCheck === 'taken') return toast.error(slugError ?? `Slug "${slug}" is already in use`);
     if (slugCheck === 'invalid') return toast.error(slugError ?? 'Slug format is invalid');
-    const pct = newPct.trim() === '' ? null : Number(newPct);
-    if (pct !== null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
-      return toast.error('Commission % must be between 0 and 100');
-    }
+    const firstParsed = parseOptionalPct(newFirstPct);
+    if (!firstParsed.ok) return toast.error('First-booking % must be between 0 and 100');
+    const recurringParsed = parseOptionalPct(newRecurringPct);
+    if (!recurringParsed.ok) return toast.error('Recurring % must be between 0 and 100');
+    const windowParsed = parseOptionalDays(newWindowDays);
+    if (!windowParsed.ok) return toast.error('Recurring window must be between 1 and 3650 days');
     // Final pre-flight check (race-safe — DB unique index + trigger are the real guard).
     const { data: check, error: checkErr } = await supabase
       .rpc('check_influencer_slug_available', { _slug: slug });
@@ -269,7 +287,9 @@ const AdminInfluencerLinks = () => {
       influencer_handle: newHandle.trim() || null,
       influencer_email: newEmail.trim() || null,
       audience: newAudience,
-      commission_pct: pct,
+      first_booking_pct: firstParsed.value,
+      recurring_pct: recurringParsed.value,
+      recurring_window_days: windowParsed.value,
       notes: newNotes.trim() || null,
     });
     if (error) {
