@@ -105,6 +105,9 @@ const InstructorDashboard = () => {
         {/* Auto-issued refund credits awaiting instructor review (24h dispute window) */}
         <AutoRefundDisputes />
 
+        {/* Lapsed Pro subscription banner */}
+        <LapsedSubscriptionBanner />
+
         {/* Credentials shortcut */}
         <Link
           to="/instructor/credentials"
