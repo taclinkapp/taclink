@@ -43,7 +43,11 @@ const Discover = () => {
   // Location lookup state
   const [locationQuery, setLocationQuery] = useState('');
   const [locationOpen, setLocationOpen] = useState(false);
+  const [showAllLocations, setShowAllLocations] = useState(false);
+  const [activeLocationIndex, setActiveLocationIndex] = useState(0);
   const [selectedLocation, setSelectedLocation] = useState<LocationOption | null>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  const locationListRef = useRef<HTMLDivElement>(null);
   const [bannerDismissed, setBannerDismissed] = useState(
     () => typeof window !== 'undefined' && sessionStorage.getItem('invite-banner-dismissed') === '1',
   );
