@@ -35,6 +35,8 @@ const BookingSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [bookedAt, setBookedAt] = useState<string | null>(null);
+  const [cutoffHours, setCutoffHours] = useState<number | null>(null);
   const [signature, setSignature] = useState<Signature | null>(null);
 
   useEffect(() => {
