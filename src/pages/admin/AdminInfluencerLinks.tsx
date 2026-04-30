@@ -97,7 +97,9 @@ type SlugCheck = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 const AdminInfluencerLinks = () => {
   const [links, setLinks] = useState<InfluencerLink[]>([]);
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
-  const [defaultPct, setDefaultPct] = useState<number>(2);
+  const [defaultFirstPct, setDefaultFirstPct] = useState<number>(5);
+  const [defaultRecurringPct, setDefaultRecurringPct] = useState<number>(1);
+  const [defaultWindowDays, setDefaultWindowDays] = useState<number>(180);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<InfluencerLink | null>(null);
@@ -111,7 +113,9 @@ const AdminInfluencerLinks = () => {
   const [newEmail, setNewEmail] = useState('');
   const [newSlug, setNewSlug] = useState('');
   const [newAudience, setNewAudience] = useState<Audience>('both');
-  const [newPct, setNewPct] = useState<string>('');
+  const [newFirstPct, setNewFirstPct] = useState<string>('');
+  const [newRecurringPct, setNewRecurringPct] = useState<string>('');
+  const [newWindowDays, setNewWindowDays] = useState<string>('');
   const [newNotes, setNewNotes] = useState('');
   const [slugCheck, setSlugCheck] = useState<SlugCheck>('idle');
 
