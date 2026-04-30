@@ -41,10 +41,7 @@ export const AdminFinancials = () => {
     const since = sinceFor(range);
     let bq: any = supabase.from('booking_fees').select('platform_fee_cents, instructor_deposit_cents, due_in_person_cents, instructor_id, course_price_cents');
     if (since) bq = bq.gte('created_at', since);
-    const creditsQ = since
-      ? supabase.from('instructor_credits').select('id', { count: 'exact', head: true }).gte('earned_at', since)
-      : supabase.from('instructor_credits').select('id', { count: 'exact', head: true });
-    const [{ data: fees }, refundsRes, bookingsCount, creditsCount] = await Promise.all([
+    const [{ data: fees }, refundsRes, bookingsCount] = await Promise.all([
       bq,
       since
         ? supabase.from('refunds').select('amount_cents').eq('status', 'issued').gte('created_at', since)
@@ -52,8 +49,8 @@ export const AdminFinancials = () => {
       since
         ? supabase.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', since)
         : supabase.from('bookings').select('id', { count: 'exact', head: true }),
-      creditsQ,
     ]);
+    const creditsCount = { count: 0 };
 
     const rows = fees ?? [];
     const platformFees = rows.reduce((s, r: any) => s + (r.platform_fee_cents ?? 0), 0);

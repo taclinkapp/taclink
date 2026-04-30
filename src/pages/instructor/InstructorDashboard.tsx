@@ -7,7 +7,7 @@ import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck, Plu
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 import { FeeInsights } from '@/components/instructor/FeeInsights';
-import { PunchCard } from '@/components/instructor/PunchCard';
+// PunchCard import removed — credit system retired
 import { AutoRefundDisputes } from '@/components/instructor/AutoRefundDisputes';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
@@ -123,7 +123,7 @@ const InstructorDashboard = () => {
 
         {/* Punch card + AI insights */}
         <div className="mt-4 space-y-3">
-          <PunchCard />
+          {/* PunchCard removed — credit system retired in favor of cash refunds */}
           <FeeInsights />
           <InstructorInsights />
         </div>
