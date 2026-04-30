@@ -754,7 +754,7 @@ const AdminInfluencerLinks = () => {
             <Button variant="outline" onClick={() => { setCreating(false); resetCreateForm(); }}>Cancel</Button>
             <Button
               onClick={handleCreate}
-              disabled={slugCheck === 'taken' || slugCheck === 'checking' || !newName.trim()}
+              disabled={slugCheck === 'taken' || slugCheck === 'invalid' || slugCheck === 'checking' || !newName.trim()}
               className="bg-primary text-primary-foreground font-bold"
             >
               Create link
