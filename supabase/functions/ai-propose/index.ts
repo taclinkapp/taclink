@@ -205,25 +205,29 @@ serve(async (req) => {
         }
       }
 
-      // Auto-refund path: dispute_triage that recommends a refund/credit.
-      // Honors the auto_refund rule's amount/confidence gates; executor also
-      // verifies the student risk score before issuing.
+      // Auto-refund path: dispute_triage with a reason category that issues credit.
+      // The executor calls compute_refund_split for the canonical amount; here we
+      // just decide if it qualifies for hands-off auto-execution.
       if (body.kind === "dispute_triage" && status === "proposed" && !autoApproved) {
         const refundRule = settings?.rules?.auto_refund;
         const decision = args.payload?.recommended_action ?? args.recommended_action;
-        const amount =
-          args.payload?.refund_amount_cents ??
-          args.refund_amount_cents ??
-          args.payload?.credit_amount_cents ??
-          args.credit_amount_cents ??
-          0;
-        const isRefund =
-          decision === "approve_full_refund" || decision === "offer_app_credit";
+        const reasonCategory =
+          args.payload?.refund_reason_category ??
+          args.refund_reason_category ??
+          args.payload?.classification ??
+          args.classification ??
+          null;
+        // Only auto-issue for reasons that don't require owner review.
+        const autoEligibleReasons = new Set([
+          "instructor_no_show",
+          "instructor_cancel",
+          "student_cancel_timely",
+        ]);
         if (
           refundRule?.enabled &&
-          isRefund &&
-          amount > 0 &&
-          amount <= (refundRule.max_amount_cents ?? 5000) &&
+          decision === "issue_credit" &&
+          reasonCategory &&
+          autoEligibleReasons.has(reasonCategory) &&
           (args.confidence ?? 0) >= (refundRule.min_confidence ?? 0.95) &&
           args.risk_level !== "high"
         ) {
