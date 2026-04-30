@@ -39,6 +39,8 @@ type CourseRow = {
 const BookingDetail = () => {
   const { id } = useParams();
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
+  const attendanceRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [b, setB] = useState<BookingRow | null>(null);
   const [c, setC] = useState<CourseRow | null>(null);
