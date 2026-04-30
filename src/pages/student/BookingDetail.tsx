@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react';
 import { fmt } from '@/lib/fees';
 import { QRCodeSVG } from 'qrcode.react';
-import { SendDepositCard } from '@/components/student/SendDepositCard';
 import { AttendanceClaimResponse } from '@/components/student/AttendanceClaimResponse';
-import type { DepositStatus } from '@/lib/payouts';
+
+type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
 
 type BookingRow = {
   id: string;
