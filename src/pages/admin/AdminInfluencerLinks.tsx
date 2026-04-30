@@ -273,11 +273,43 @@ const AdminInfluencerLinks = () => {
     if (error) return toast.error(error.message);
     toast.success(`Default commission set to ${value}%`);
     setDefaultPct(value);
+    refresh();
   };
+
+  const handleUpdateCommissionStatus = async (id: string, status: 'paid' | 'void' | 'accrued') => {
+    const { error } = await supabase
+      .from('influencer_commissions')
+      .update({ status })
+      .eq('id', id);
+    if (error) return toast.error(error.message);
+    toast.success(`Commission marked ${status}`);
+    refresh();
+  };
+
+  const linkNameById = useMemo(() => {
+    const m: Record<string, string> = {};
+    links.forEach((l) => { m[l.id] = l.influencer_name; });
+    return m;
+  }, [links]);
+
+  const linkSlugById = useMemo(() => {
+    const m: Record<string, string> = {};
+    links.forEach((l) => { m[l.id] = l.slug; });
+    return m;
+  }, [links]);
 
   const totalSignups = useMemo(
     () => Object.values(signupCounts).reduce((a, b) => a + b, 0),
     [signupCounts],
+  );
+
+  const totalAccruedCents = useMemo(
+    () => commissions.filter((c) => c.status === 'accrued').reduce((s, c) => s + c.amount_cents, 0),
+    [commissions],
+  );
+  const totalPaidCents = useMemo(
+    () => commissions.filter((c) => c.status === 'paid').reduce((s, c) => s + c.amount_cents, 0),
+    [commissions],
   );
 
   return (
