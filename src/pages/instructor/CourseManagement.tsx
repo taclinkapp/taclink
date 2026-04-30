@@ -44,7 +44,7 @@ const CourseManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bookings')
-        .select('id, status, student_id, attended_at, profiles:student_id(display_name, full_name)')
+        .select('id, status, student_id, attended_at, profiles:student_id(display_name)')
         .eq('course_id', id as string);
       if (error) throw error;
       return data ?? [];
@@ -53,7 +53,7 @@ const CourseManagement = () => {
   });
 
   const studentNameFor = (b: any): string | null =>
-    b?.profiles?.display_name || b?.profiles?.full_name || null;
+    b?.profiles?.display_name || null;
 
   const markAttended = async (bookingId: string, opts?: { source: 'qr' | 'proximity' }) => {
     const existing = bookings.find((b: any) => b.id === bookingId);
