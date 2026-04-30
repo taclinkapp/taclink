@@ -2044,6 +2044,10 @@ export type Database = {
         Args: { _reason: string; _refund_id: string }
         Returns: Json
       }
+      instructor_no_show_refund: {
+        Args: { _booking_id: string; _reason?: string }
+        Returns: Json
+      }
       list_due_attendance_claims: {
         Args: never
         Returns: {
@@ -2091,6 +2095,14 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      student_cancel_booking: {
+        Args: { _booking_id: string; _reason?: string }
+        Returns: Json
+      }
+      student_no_show_refund: {
+        Args: { _booking_id: string; _reason?: string }
+        Returns: Json
       }
     }
     Enums: {
