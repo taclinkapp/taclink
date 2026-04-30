@@ -48,7 +48,7 @@ import NewCourse from "./pages/instructor/NewCourse";
 import CourseManagement from "./pages/instructor/CourseManagement";
 import InstructorProfile from "./pages/instructor/InstructorProfile";
 import InstructorSettings from "./pages/instructor/InstructorSettings";
-import ListingPacks from "./pages/instructor/ListingPacks";
+
 import PayoutMethods from "./pages/instructor/PayoutMethods";
 import InstructorMessages from "./pages/instructor/InstructorMessages";
 import InstructorConversation from "./pages/instructor/InstructorConversation";
