@@ -31,6 +31,7 @@ const CourseManagement = () => {
   // Two-factor auto check-in: a scanned QR stages a pending booking that
   // proximity must then confirm in-range before the row is marked attended.
   const [pending, setPending] = useState<{ bookingId: string; scannedAt: number } | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const PENDING_TTL_MS = 60_000;
   const qc = useQueryClient();
 
