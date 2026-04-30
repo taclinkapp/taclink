@@ -64,6 +64,32 @@ const downloadQrPng = (slug: string, displayName: string) => {
   toast.success(`QR for ${displayName} downloaded`);
 };
 
+type PctAuditRow = {
+  id: string;
+  scope: 'link' | 'global_default';
+  link_id: string | null;
+  old_pct: number | null;
+  new_pct: number | null;
+  changed_by: string | null;
+  reason: string | null;
+  effective_at: string;
+};
+
+type CommissionRow = {
+  id: string;
+  link_id: string;
+  user_id: string;
+  booking_id: string;
+  course_price_cents: number;
+  pct_at_time: number;
+  amount_cents: number;
+  status: 'accrued' | 'paid' | 'void';
+  created_at: string;
+  updated_at: string;
+};
+
+type SlugCheck = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+
 const AdminInfluencerLinks = () => {
   const [links, setLinks] = useState<InfluencerLink[]>([]);
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
@@ -73,6 +99,9 @@ const AdminInfluencerLinks = () => {
   const [editing, setEditing] = useState<InfluencerLink | null>(null);
   const [qrFor, setQrFor] = useState<InfluencerLink | null>(null);
 
+  const [pctAudit, setPctAudit] = useState<PctAuditRow[]>([]);
+  const [commissions, setCommissions] = useState<CommissionRow[]>([]);
+
   const [newName, setNewName] = useState('');
   const [newHandle, setNewHandle] = useState('');
   const [newEmail, setNewEmail] = useState('');
@@ -80,6 +109,7 @@ const AdminInfluencerLinks = () => {
   const [newAudience, setNewAudience] = useState<Audience>('both');
   const [newPct, setNewPct] = useState<string>('');
   const [newNotes, setNewNotes] = useState('');
+  const [slugCheck, setSlugCheck] = useState<SlugCheck>('idle');
 
   const refresh = async () => {
     setLoading(true);
