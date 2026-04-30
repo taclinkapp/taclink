@@ -141,7 +141,7 @@ serve(async (req) => {
             );
           }
 
-          const studentCredit = split.student_credit_cents ?? 0;
+          const studentCredit = split.student_cash_refund_cents ?? split.student_credit_cents ?? 0;
           if (studentCredit <= 0) {
             // Send the AI's reply but issue no credit (e.g. student_cancel_late)
             if (payload.reply_text) {
