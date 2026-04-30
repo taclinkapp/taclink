@@ -2025,6 +2025,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      instructor_cancel_course: {
+        Args: { _course_id: string; _reason?: string }
+        Returns: {
+          bookings_refunded: number
+          course_id: string
+          hours_before_start: number
+          instructor_forfeited_cents: number
+          total_refunded_cents: number
+          was_timely: boolean
+        }[]
+      }
       instructor_dispute_refund: {
         Args: { _reason: string; _refund_id: string }
         Returns: Json

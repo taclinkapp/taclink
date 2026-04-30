@@ -14,6 +14,8 @@ import { QrScanner } from '@/components/QrScanner';
 import { parseCheckinPayload, looksLikeSignedToken, PROXIMITY_TRIGGER_METERS } from '@/lib/qrCheckin';
 import { useProximity } from '@/hooks/useProximity';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
@@ -29,6 +31,7 @@ const CourseManagement = () => {
   // Two-factor auto check-in: a scanned QR stages a pending booking that
   // proximity must then confirm in-range before the row is marked attended.
   const [pending, setPending] = useState<{ bookingId: string; scannedAt: number } | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const PENDING_TTL_MS = 60_000;
   const qc = useQueryClient();
 
@@ -235,6 +238,32 @@ const CourseManagement = () => {
             </div>
           );
         })()}
+
+        {/* Final-step instructor cancellation */}
+        {(c.status as string) !== 'cancelled' && (
+          <div className="tactical-card border-destructive/40 bg-destructive/5 p-3 mb-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] uppercase tracking-wider font-bold text-destructive">
+                  Cancel this course
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                  Cancel <strong>48+ hours</strong> before start to get your deposit back.
+                  Cancelling later refunds students in full and <strong>forfeits your deposit</strong>.
+                </p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="mt-2 h-8 text-[11px]"
+                  onClick={() => setCancelOpen(true)}
+                >
+                  Cancel course…
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
             { label: 'Enrolled', value: enrolled },
@@ -497,6 +526,15 @@ const CourseManagement = () => {
           onClose={() => setScannerOpen(false)}
         />
       )}
+
+      <CancelCourseDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        courseId={c.id}
+        courseTitle={c.title}
+        startsAt={c.date && c.startTime ? `${c.date}T${c.startTime}` : null}
+        onCancelled={() => qc.invalidateQueries({ queryKey: ['course', c.id] })}
+      />
     </MobileShell>
   );
 };
