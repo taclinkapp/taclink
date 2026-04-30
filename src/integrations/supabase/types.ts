@@ -1989,6 +1989,10 @@ export type Database = {
           warning_issued: boolean
         }[]
       }
+      compute_cancel_cutoff_hours: {
+        Args: { _booked_at: string; _starts_at: string }
+        Returns: number
+      }
       compute_refund_split: {
         Args: { _booking_id: string; _reason: string }
         Returns: {
