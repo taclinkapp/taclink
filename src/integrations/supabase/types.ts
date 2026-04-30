@@ -192,6 +192,7 @@ export type Database = {
         Row: {
           attended_at: string | null
           booked_at: string
+          cancellation_cutoff_hours: number
           course_id: string
           course_price_cents: number
           created_at: string
@@ -215,6 +216,7 @@ export type Database = {
         Insert: {
           attended_at?: string | null
           booked_at?: string
+          cancellation_cutoff_hours?: number
           course_id: string
           course_price_cents?: number
           created_at?: string
@@ -238,6 +240,7 @@ export type Database = {
         Update: {
           attended_at?: string | null
           booked_at?: string
+          cancellation_cutoff_hours?: number
           course_id?: string
           course_price_cents?: number
           created_at?: string
@@ -1436,12 +1439,16 @@ export type Database = {
           created_at: string
           dispute_window_until: string | null
           external_reference: string | null
+          hours_before_course: number | null
           id: string
           instructor_dispute_reason: string | null
           instructor_disputed_at: string | null
+          instructor_forfeit_cents: number
           issued_by: string
           notes: string | null
+          platform_absorbed_cents: number
           reason: string
+          refund_reason_category: string | null
           refund_type: string
           risk_factors: Json | null
           risk_score: number | null
@@ -1457,12 +1464,16 @@ export type Database = {
           created_at?: string
           dispute_window_until?: string | null
           external_reference?: string | null
+          hours_before_course?: number | null
           id?: string
           instructor_dispute_reason?: string | null
           instructor_disputed_at?: string | null
+          instructor_forfeit_cents?: number
           issued_by: string
           notes?: string | null
+          platform_absorbed_cents?: number
           reason: string
+          refund_reason_category?: string | null
           refund_type: string
           risk_factors?: Json | null
           risk_score?: number | null
@@ -1478,12 +1489,16 @@ export type Database = {
           created_at?: string
           dispute_window_until?: string | null
           external_reference?: string | null
+          hours_before_course?: number | null
           id?: string
           instructor_dispute_reason?: string | null
           instructor_disputed_at?: string | null
+          instructor_forfeit_cents?: number
           issued_by?: string
           notes?: string | null
+          platform_absorbed_cents?: number
           reason?: string
+          refund_reason_category?: string | null
           refund_type?: string
           risk_factors?: Json | null
           risk_score?: number | null
@@ -1849,6 +1864,18 @@ export type Database = {
           new_status: string
           suspended: boolean
           warning_issued: boolean
+        }[]
+      }
+      compute_refund_split: {
+        Args: { _booking_id: string; _reason: string }
+        Returns: {
+          hours_before_course: number
+          instructor_forfeit_cents: number
+          platform_absorbed_cents: number
+          rationale: string
+          reason_category: string
+          requires_owner: boolean
+          student_credit_cents: number
         }[]
       }
       compute_student_risk_score: {
