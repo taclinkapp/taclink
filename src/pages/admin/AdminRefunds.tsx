@@ -711,8 +711,15 @@ export const AdminRefunds = () => {
             <Button onClick={() => {
               if (!picked) { toast.error('Pick a booking first'); return; }
               const cents = Math.round(parseFloat(amount || '0') * 100);
-              if (!cents || cents <= 0) { toast.error('Enter a credit amount'); return; }
+              if (cents < 0) { toast.error('Amount cannot be negative'); return; }
+              if (cents > picked.online_total_cents && !manualOverride) {
+                toast.error('Amount exceeds what student paid online');
+                return;
+              }
               if (!reason.trim()) { toast.error('Reason is required'); return; }
+              if (!manualOverride && split?.requires_owner) {
+                if (!confirm('This reason normally requires owner review. Issue anyway?')) return;
+              }
               setConfirmOpen(true);
             }} disabled={!picked || submitting}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
