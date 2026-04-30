@@ -53,3 +53,15 @@ verify_jwt = false
 
 [functions.proximity-handshake]
 verify_jwt = true
+
+[functions.create-escrow-checkout]
+verify_jwt = false
+
+[functions.create-connect-onboarding]
+verify_jwt = false
+
+[functions.payments-webhook]
+verify_jwt = false
+
+[functions.release-escrow-deposits]
+verify_jwt = false

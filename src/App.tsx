@@ -51,7 +51,7 @@ import InstructorMessages from "./pages/instructor/InstructorMessages";
 import InstructorConversation from "./pages/instructor/InstructorConversation";
 import InstructorCredentials from "./pages/instructor/InstructorCredentials";
 import InstructorRoster from "./pages/instructor/InstructorRoster";
-import DepositReview from "./pages/instructor/DepositReview";
+
 import InstructorReviews from "./pages/instructor/InstructorReviews";
 import InstructorSubscription from "./pages/instructor/InstructorSubscription";
 
@@ -143,7 +143,7 @@ const App = () => (
             <Route path="/instructor/messages/:id" element={<Instructor><InstructorConversation /></Instructor>} />
             <Route path="/instructor/credentials" element={<Instructor><InstructorCredentials /></Instructor>} />
             <Route path="/instructor/roster" element={<Instructor><InstructorRoster /></Instructor>} />
-            <Route path="/instructor/deposit-review" element={<Authed><DepositReview /></Authed>} />
+            
             <Route path="/instructor/reviews" element={<Instructor><InstructorReviews /></Instructor>} />
             <Route path="/instructor/payment-methods" element={<Instructor><PaymentMethods /></Instructor>} />
             <Route path="/instructor/payouts" element={<Instructor><PayoutMethods /></Instructor>} />
@@ -165,7 +165,7 @@ const App = () => (
               <Route path="conversations" element={<AdminConversations />} />
               <Route path="conversations/:id" element={<AdminConversationDetail />} />
               <Route path="moderation" element={<AdminModeration />} />
-              <Route path="deposit-review" element={<DepositReview />} />
+              
               <Route path="refunds" element={<AdminRefunds />} />
               <Route path="financials" element={<AdminFinancials />} />
               <Route path="featured" element={<AdminFeaturedCourses />} />

@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react';
 import { fmt } from '@/lib/fees';
 import { QRCodeSVG } from 'qrcode.react';
-import { SendDepositCard } from '@/components/student/SendDepositCard';
 import { AttendanceClaimResponse } from '@/components/student/AttendanceClaimResponse';
-import type { DepositStatus } from '@/lib/payouts';
+
+type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
 
 type BookingRow = {
   id: string;
@@ -98,7 +98,7 @@ const BookingDetail = () => {
         .eq('id', row.course_id)
         .maybeSingle();
       setC((course as CourseRow) ?? null);
-      if (row.status === 'reserved' && row.deposit_status === 'confirmed') {
+      if (row.status === 'reserved' && (row.deposit_status === 'held_in_escrow' || row.deposit_status === 'confirmed')) {
         fetchSignedToken(row.id);
       }
     }
@@ -180,7 +180,21 @@ const BookingDetail = () => {
               <span>Charged online</span>
               <span className="font-bold">{fmt(b.online_total_cents)}</span>
             </div>
-            <Row label="Deposit (10%) — direct to instructor" value={fmt(b.deposit_amount_cents)} muted />
+            <Row
+              label={
+                b.deposit_status === 'released'
+                  ? 'Deposit (10%) — released to instructor'
+                  : b.deposit_status === 'held_in_escrow'
+                    ? 'Deposit (10%) — held in escrow'
+                    : b.deposit_status === 'pending_payment'
+                      ? 'Deposit (10%) — payment pending'
+                      : b.deposit_status === 'refunded'
+                        ? 'Deposit (10%) — refunded'
+                        : 'Deposit (10%)'
+              }
+              value={fmt(b.deposit_amount_cents)}
+              muted
+            />
             {dueInPerson && (
               <div className="mt-3 rounded-md border border-primary/40 bg-primary/10 p-3 flex items-center justify-between">
                 <div>
@@ -196,24 +210,11 @@ const BookingDetail = () => {
           </div>
         </div>
 
-        {/* Direct-handoff deposit flow */}
-        {b.deposit_amount_cents > 0 && b.deposit_status !== 'not_required' && (
-          <SendDepositCard
-            bookingId={b.id}
-            instructorId={c.instructor_id}
-            courseTitle={c.title}
-            depositCents={b.deposit_amount_cents}
-            depositStatus={b.deposit_status}
-            expiresAt={b.deposit_expires_at}
-            onChanged={reload}
-          />
-        )}
-
         <div ref={attendanceRef} id="attendance-claim" className="scroll-mt-24">
           <AttendanceClaimResponse bookingId={b.id} />
         </div>
 
-        {upcoming && b.deposit_status === 'confirmed' && (
+        {upcoming && (b.deposit_status === 'held_in_escrow' || b.deposit_status === 'confirmed') && (
           <div className="tactical-card p-5 text-center">
             <div className="flex items-center justify-center gap-1.5 mb-3">
               <ShieldCheck className="h-3.5 w-3.5 text-primary" />
