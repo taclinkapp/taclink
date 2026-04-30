@@ -693,7 +693,13 @@ const AdminInfluencerLinks = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setCreating(false); resetCreateForm(); }}>Cancel</Button>
-            <Button onClick={handleCreate} className="bg-primary text-primary-foreground font-bold">Create link</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={slugCheck === 'taken' || slugCheck === 'checking' || !newName.trim()}
+              className="bg-primary text-primary-foreground font-bold"
+            >
+              Create link
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
