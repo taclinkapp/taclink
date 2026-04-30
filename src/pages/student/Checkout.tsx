@@ -160,6 +160,15 @@ const Checkout = () => {
             })
           : undefined;
         const location = [course.city, course.state].filter(Boolean).join(', ') || undefined;
+        const cutoffHours = (booking as any)?.cancellation_cutoff_hours ?? null;
+        const bookedAt = (booking as any)?.booked_at ?? null;
+        const deadline = cancelDeadline(course.starts_at ?? null, bookedAt, cutoffHours);
+        const deadlineStr = deadline
+          ? deadline.toLocaleString(undefined, {
+              weekday: 'short', month: 'short', day: 'numeric',
+              hour: 'numeric', minute: '2-digit',
+            })
+          : undefined;
         sendAppEmail({
           templateName: 'booking-confirmation',
           recipientEmail: user.email,
@@ -171,6 +180,8 @@ const Checkout = () => {
             date: startDate,
             location,
             bookingUrl: `${window.location.origin}/student/booking/${booking.id}`,
+            cancelGraceHours: typeof cutoffHours === 'number' ? cutoffHours : undefined,
+            cancelDeadline: deadlineStr,
           },
         });
       }
