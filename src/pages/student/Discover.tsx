@@ -94,6 +94,7 @@ const Discover = () => {
   }, [view, level, selectedLocation]);
 
   // Aggregate available locations (city, state) from published courses.
+  // Prefer the first course with valid lat/lng for each city; fallback handled later via geocode.
   const locationOptions: LocationOption[] = useMemo(() => {
     const map = new Map<string, LocationOption>();
     for (const c of courses) {
@@ -101,9 +102,14 @@ const Discover = () => {
       const state = (c.state || '').trim();
       if (!city && !state) continue;
       const key = `${city.toLowerCase()}|${state.toLowerCase()}`;
+      const validCoords = Number.isFinite(c.lat) && Number.isFinite(c.lng);
       const existing = map.get(key);
       if (existing) {
         existing.count += 1;
+        if (validCoords && (!Number.isFinite(existing.lat) || !Number.isFinite(existing.lng))) {
+          existing.lat = c.lat;
+          existing.lng = c.lng;
+        }
       } else {
         map.set(key, {
           key,
@@ -111,13 +117,46 @@ const Discover = () => {
           city,
           state,
           count: 1,
-          lat: c.lat,
-          lng: c.lng,
+          lat: validCoords ? c.lat : NaN,
+          lng: validCoords ? c.lng : NaN,
         });
       }
     }
     return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [courses]);
+
+  // Fallback: if the selected location has no lat/lng (no course with coords),
+  // geocode the "city, state" via Mapbox so the map can still center on it.
+  useEffect(() => {
+    if (!selectedLocation) return;
+    if (Number.isFinite(selectedLocation.lat) && Number.isFinite(selectedLocation.lng)) return;
+    if (!mapboxToken) return;
+    let cancelled = false;
+    setGeocoding(true);
+    const q = encodeURIComponent(selectedLocation.label);
+    fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${q}.json?access_token=${mapboxToken}&limit=1&types=place,region,locality`,
+    )
+      .then((r) => r.json())
+      .then((data: { features?: Array<{ center: [number, number] }> }) => {
+        if (cancelled) return;
+        const center = data.features?.[0]?.center;
+        if (center) {
+          setSelectedLocation((prev) =>
+            prev && prev.key === selectedLocation.key
+              ? { ...prev, lng: center[0], lat: center[1] }
+              : prev,
+          );
+        }
+      })
+      .catch((e) => console.warn('Geocode fallback failed', e))
+      .finally(() => {
+        if (!cancelled) setGeocoding(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLocation, mapboxToken]);
 
   const locationSuggestions = useMemo(() => {
     const q = locationQuery.trim().toLowerCase();
