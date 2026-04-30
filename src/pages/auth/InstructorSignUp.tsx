@@ -17,11 +17,13 @@ import { logBypassAttempt } from '@/lib/bypassLogging';
 import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 import { validatePassword } from '@/lib/passwordRules';
 import { PasswordRequirements } from '@/components/PasswordRequirements';
+import { readInfluencerSlug } from '@/lib/influencer';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const referralCode = (params.get('ref') ?? '').trim().toUpperCase();
+  const influencerSlug = readInfluencerSlug();
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
@@ -62,6 +64,7 @@ const InstructorSignUp = () => {
           bio,
           role: 'instructor',
           ...(referralCode ? { referral_code: referralCode } : {}),
+          ...(influencerSlug ? { influencer_slug: influencerSlug } : {}),
         },
       },
     });

@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft, TrendingUp, Star, Sparkles, Edit3, Percent, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft, TrendingUp, Star, Sparkles, Edit3, Percent, Menu, X, Megaphone } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +17,7 @@ type Item = {
 const items: Item[] = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/owner-console', icon: Sparkles, label: 'Owner Console' },
+  { to: '/admin/influencers', icon: Megaphone, label: 'Influencer Links' },
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/instructors', icon: Shield, label: 'Instructors' },
   { to: '/admin/courses', icon: BookOpen, label: 'Courses' },

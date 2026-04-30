@@ -949,6 +949,140 @@ export type Database = {
         }
         Relationships: []
       }
+      influencer_commissions: {
+        Row: {
+          amount_cents: number
+          booking_id: string
+          course_price_cents: number
+          created_at: string
+          id: string
+          link_id: string
+          pct_at_time: number
+          signup_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number
+          booking_id: string
+          course_price_cents?: number
+          created_at?: string
+          id?: string
+          link_id: string
+          pct_at_time: number
+          signup_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          booking_id?: string
+          course_price_cents?: number
+          created_at?: string
+          id?: string
+          link_id?: string
+          pct_at_time?: number
+          signup_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_commissions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_commissions_signup_id_fkey"
+            columns: ["signup_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_link_signups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_link_signups: {
+        Row: {
+          id: string
+          link_id: string
+          signed_up_at: string
+          user_id: string
+          user_role: Database["public"]["Enums"]["app_role"] | null
+        }
+        Insert: {
+          id?: string
+          link_id: string
+          signed_up_at?: string
+          user_id: string
+          user_role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Update: {
+          id?: string
+          link_id?: string
+          signed_up_at?: string
+          user_id?: string
+          user_role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_link_signups_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_links: {
+        Row: {
+          active: boolean
+          audience: string
+          commission_pct: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          influencer_email: string | null
+          influencer_handle: string | null
+          influencer_name: string
+          notes: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          audience?: string
+          commission_pct?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          influencer_email?: string | null
+          influencer_handle?: string | null
+          influencer_name: string
+          notes?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          audience?: string
+          commission_pct?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          influencer_email?: string | null
+          influencer_handle?: string | null
+          influencer_name?: string
+          notes?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       instructor_charges: {
         Row: {
           amount_cents: number
