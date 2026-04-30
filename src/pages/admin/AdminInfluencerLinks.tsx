@@ -220,19 +220,32 @@ const AdminInfluencerLinks = () => {
     if (!name) return toast.error('Influencer name is required');
     const slug = slugify(newSlug || newHandle || name);
     if (!slug) return toast.error('Could not build a slug — add a name or handle');
-    if (slugCheck === 'taken') return toast.error(`Slug "${slug}" is already in use`);
+    if (slugCheck === 'taken') return toast.error(slugError ?? `Slug "${slug}" is already in use`);
+    if (slugCheck === 'invalid') return toast.error(slugError ?? 'Slug format is invalid');
     const pct = newPct.trim() === '' ? null : Number(newPct);
     if (pct !== null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
       return toast.error('Commission % must be between 0 and 100');
     }
-    // Final pre-flight check (race-safe — DB unique constraint is the real guard).
-    const { data: available } = await supabase.rpc('is_influencer_slug_available', { _slug: slug });
-    if (available === false) {
-      setSlugCheck('taken');
-      return toast.error(`Slug "${slug}" is already in use`);
+    // Final pre-flight check (race-safe — DB unique index + trigger are the real guard).
+    const { data: check, error: checkErr } = await supabase
+      .rpc('check_influencer_slug_available', { _slug: slug });
+    if (checkErr) {
+      return toast.error("Couldn't verify slug availability — try again.");
     }
+    const result = check as { ok: boolean; normalized: string | null; reason: string } | null;
+    if (!result?.ok) {
+      if (result?.reason === 'taken') {
+        setSlugCheck('taken');
+        setSlugError(`"${result.normalized ?? slug}" is already in use.`);
+        return toast.error(`Slug "${result.normalized ?? slug}" is already in use`);
+      }
+      setSlugCheck('invalid');
+      setSlugError('Slug format is invalid.');
+      return toast.error('Slug format is invalid');
+    }
+    const finalSlug = result.normalized ?? slug;
     const { error } = await supabase.from('influencer_links').insert({
-      slug,
+      slug: finalSlug,
       influencer_name: name,
       influencer_handle: newHandle.trim() || null,
       influencer_email: newEmail.trim() || null,
@@ -241,12 +254,23 @@ const AdminInfluencerLinks = () => {
       notes: newNotes.trim() || null,
     });
     if (error) {
-      const dup = error.message.toLowerCase().includes('duplicate') || error.code === '23505';
-      toast.error(dup ? `Slug "${slug}" is already in use` : error.message);
-      if (dup) setSlugCheck('taken');
+      const msg = error.message.toLowerCase();
+      const dup = msg.includes('duplicate') || error.code === '23505' || msg.includes('idx_influencer_links_slug_lower_uniq');
+      const badFormat = msg.includes('invalid_slug_format') || error.code === '22023';
+      if (dup) {
+        setSlugCheck('taken');
+        setSlugError(`"${finalSlug}" is already in use.`);
+        toast.error(`Slug "${finalSlug}" is already in use`);
+      } else if (badFormat) {
+        setSlugCheck('invalid');
+        setSlugError('Slug format is invalid.');
+        toast.error('Slug format is invalid');
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
-    toast.success(`Link /i/${slug} created`);
+    toast.success(`Link /i/${finalSlug} created`);
     setCreating(false);
     resetCreateForm();
     refresh();
