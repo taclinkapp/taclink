@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Map as MapIcon, List, Gift, X, MapPin, ChevronDown } from 'lucide-react';
 import { usePublishedCourses } from '@/hooks/useCourses';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
@@ -33,11 +35,29 @@ type LocationOption = {
   lng: number;
 };
 
+const STORAGE_KEY = 'student-discover-prefs-v1';
+
+type PersistedPrefs = {
+  view?: 'list' | 'map';
+  level?: LevelFilter;
+  selectedLocation?: LocationOption | null;
+};
+
+const loadPrefs = (): PersistedPrefs => {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') as PersistedPrefs;
+  } catch {
+    return {};
+  }
+};
+
 const Discover = () => {
   const nav = useNavigate();
-  const [view, setView] = useState<'list' | 'map'>('list');
+  const initialPrefs = loadPrefs();
+  const [view, setView] = useState<'list' | 'map'>(initialPrefs.view ?? 'list');
   const [discipline, setDiscipline] = useState<string>('All');
-  const [level, setLevel] = useState<LevelFilter>('all');
+  const [level, setLevel] = useState<LevelFilter>(initialPrefs.level ?? 'all');
   const [query, setQuery] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   // Location lookup state
@@ -45,7 +65,10 @@ const Discover = () => {
   const [locationOpen, setLocationOpen] = useState(false);
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [activeLocationIndex, setActiveLocationIndex] = useState(0);
-  const [selectedLocation, setSelectedLocation] = useState<LocationOption | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationOption | null>(
+    initialPrefs.selectedLocation ?? null,
+  );
+  const [geocoding, setGeocoding] = useState(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const locationListRef = useRef<HTMLDivElement>(null);
   const [bannerDismissed, setBannerDismissed] = useState(
@@ -56,8 +79,22 @@ const Discover = () => {
     setBannerDismissed(true);
   };
   const { data: courses = [], isLoading } = usePublishedCourses();
+  const { token: mapboxToken } = useMapboxToken();
+
+  // Persist user preferences across navigation/refresh.
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ view, level, selectedLocation } satisfies PersistedPrefs),
+      );
+    } catch {
+      // ignore quota errors
+    }
+  }, [view, level, selectedLocation]);
 
   // Aggregate available locations (city, state) from published courses.
+  // Prefer the first course with valid lat/lng for each city; fallback handled later via geocode.
   const locationOptions: LocationOption[] = useMemo(() => {
     const map = new Map<string, LocationOption>();
     for (const c of courses) {
@@ -65,9 +102,14 @@ const Discover = () => {
       const state = (c.state || '').trim();
       if (!city && !state) continue;
       const key = `${city.toLowerCase()}|${state.toLowerCase()}`;
+      const validCoords = Number.isFinite(c.lat) && Number.isFinite(c.lng);
       const existing = map.get(key);
       if (existing) {
         existing.count += 1;
+        if (validCoords && (!Number.isFinite(existing.lat) || !Number.isFinite(existing.lng))) {
+          existing.lat = c.lat;
+          existing.lng = c.lng;
+        }
       } else {
         map.set(key, {
           key,
@@ -75,13 +117,46 @@ const Discover = () => {
           city,
           state,
           count: 1,
-          lat: c.lat,
-          lng: c.lng,
+          lat: validCoords ? c.lat : NaN,
+          lng: validCoords ? c.lng : NaN,
         });
       }
     }
     return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [courses]);
+
+  // Fallback: if the selected location has no lat/lng (no course with coords),
+  // geocode the "city, state" via Mapbox so the map can still center on it.
+  useEffect(() => {
+    if (!selectedLocation) return;
+    if (Number.isFinite(selectedLocation.lat) && Number.isFinite(selectedLocation.lng)) return;
+    if (!mapboxToken) return;
+    let cancelled = false;
+    setGeocoding(true);
+    const q = encodeURIComponent(selectedLocation.label);
+    fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${q}.json?access_token=${mapboxToken}&limit=1&types=place,region,locality`,
+    )
+      .then((r) => r.json())
+      .then((data: { features?: Array<{ center: [number, number] }> }) => {
+        if (cancelled) return;
+        const center = data.features?.[0]?.center;
+        if (center) {
+          setSelectedLocation((prev) =>
+            prev && prev.key === selectedLocation.key
+              ? { ...prev, lng: center[0], lat: center[1] }
+              : prev,
+          );
+        }
+      })
+      .catch((e) => console.warn('Geocode fallback failed', e))
+      .finally(() => {
+        if (!cancelled) setGeocoding(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLocation, mapboxToken]);
 
   const locationSuggestions = useMemo(() => {
     const q = locationQuery.trim().toLowerCase();
@@ -200,7 +275,9 @@ const Discover = () => {
             <div className="flex items-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 px-3 h-12">
               <MapPin className="h-4 w-4 text-primary shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-primary">Training near</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                  {geocoding ? 'Locating…' : 'Training near'}
+                </div>
                 <div className="text-sm font-semibold truncate">{selectedLocation.label}</div>
               </div>
               <button
@@ -254,7 +331,22 @@ const Discover = () => {
                   />
                 </button>
               </div>
-              {locationOpen && locationSuggestions.length > 0 && (
+              {locationOpen && isLoading && (
+                <div
+                  className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-2 space-y-2"
+                  role="status"
+                  aria-label="Loading locations"
+                >
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-1 py-1.5">
+                      <Skeleton className="h-4 w-4 rounded" />
+                      <Skeleton className="h-3.5 flex-1 rounded" />
+                      <Skeleton className="h-3 w-14 rounded" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {locationOpen && !isLoading && locationSuggestions.length > 0 && (
                 <div
                   ref={locationListRef}
                   id="location-listbox"
@@ -295,12 +387,12 @@ const Discover = () => {
                   })}
                 </div>
               )}
-              {locationOpen && locationQuery && locationSuggestions.length === 0 && (
+              {locationOpen && !isLoading && locationQuery && locationSuggestions.length === 0 && (
                 <div className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-3 text-xs text-muted-foreground">
                   No courses found for that location yet.
                 </div>
               )}
-              {locationOpen && !locationQuery && locationSuggestions.length === 0 && (
+              {locationOpen && !isLoading && !locationQuery && locationSuggestions.length === 0 && (
                 <div className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-3 text-xs text-muted-foreground">
                   No locations available yet.
                 </div>
