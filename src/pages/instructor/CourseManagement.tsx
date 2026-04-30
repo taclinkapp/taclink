@@ -17,12 +17,15 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
+import { usePrelaunch } from '@/hooks/usePrelaunch';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
 const CourseManagement = () => {
   const { id } = useParams();
   const { profile } = useAuth();
+  const { data: prelaunch } = usePrelaunch();
+  const isPrelaunch = !!prelaunch?.enabled;
   const isSubscribed = profile?.subscription_status === 'active';
   const { data: course, isLoading } = useCourse(id);
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
