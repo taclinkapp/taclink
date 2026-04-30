@@ -23,7 +23,10 @@ type InfluencerLink = {
   influencer_handle: string | null;
   influencer_email: string | null;
   audience: Audience;
-  commission_pct: number | null;
+  commission_pct: number | null; // legacy, used as fallback for first_booking_pct
+  first_booking_pct: number | null;
+  recurring_pct: number | null;
+  recurring_window_days: number | null;
   active: boolean;
   notes: string | null;
   created_at: string;
@@ -84,6 +87,7 @@ type CommissionRow = {
   pct_at_time: number;
   amount_cents: number;
   status: 'accrued' | 'paid' | 'void';
+  commission_kind: 'first' | 'recurring';
   created_at: string;
   updated_at: string;
 };
@@ -93,7 +97,9 @@ type SlugCheck = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 const AdminInfluencerLinks = () => {
   const [links, setLinks] = useState<InfluencerLink[]>([]);
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
-  const [defaultPct, setDefaultPct] = useState<number>(2);
+  const [defaultFirstPct, setDefaultFirstPct] = useState<number>(5);
+  const [defaultRecurringPct, setDefaultRecurringPct] = useState<number>(1);
+  const [defaultWindowDays, setDefaultWindowDays] = useState<number>(180);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<InfluencerLink | null>(null);
@@ -107,7 +113,9 @@ const AdminInfluencerLinks = () => {
   const [newEmail, setNewEmail] = useState('');
   const [newSlug, setNewSlug] = useState('');
   const [newAudience, setNewAudience] = useState<Audience>('both');
-  const [newPct, setNewPct] = useState<string>('');
+  const [newFirstPct, setNewFirstPct] = useState<string>('');
+  const [newRecurringPct, setNewRecurringPct] = useState<string>('');
+  const [newWindowDays, setNewWindowDays] = useState<string>('');
   const [newNotes, setNewNotes] = useState('');
   const [slugCheck, setSlugCheck] = useState<SlugCheck>('idle');
 
@@ -116,13 +124,20 @@ const AdminInfluencerLinks = () => {
     const [
       { data: linkRows },
       { data: signupRows },
-      { data: setting },
+      { data: settingsRows },
       { data: auditRows },
       { data: commissionRows },
     ] = await Promise.all([
       supabase.from('influencer_links').select('*').order('created_at', { ascending: false }),
       supabase.from('influencer_link_signups').select('link_id'),
-      supabase.from('platform_settings').select('value').eq('key', 'default_influencer_commission_pct').maybeSingle(),
+      supabase
+        .from('platform_settings')
+        .select('key,value')
+        .in('key', [
+          'default_influencer_first_booking_pct',
+          'default_influencer_recurring_pct',
+          'default_influencer_recurring_window_days',
+        ]),
       supabase
         .from('influencer_commission_pct_audit')
         .select('*')
@@ -140,10 +155,13 @@ const AdminInfluencerLinks = () => {
       counts[r.link_id] = (counts[r.link_id] ?? 0) + 1;
     });
     setSignupCounts(counts);
-    if (setting?.value !== undefined && setting?.value !== null) {
-      const n = Number(setting.value);
-      if (!Number.isNaN(n)) setDefaultPct(n);
-    }
+    (settingsRows ?? []).forEach((row: any) => {
+      const n = Number(row.value);
+      if (Number.isNaN(n)) return;
+      if (row.key === 'default_influencer_first_booking_pct') setDefaultFirstPct(n);
+      if (row.key === 'default_influencer_recurring_pct') setDefaultRecurringPct(n);
+      if (row.key === 'default_influencer_recurring_window_days') setDefaultWindowDays(n);
+    });
     setPctAudit((auditRows as PctAuditRow[]) ?? []);
     setCommissions((commissionRows as CommissionRow[]) ?? []);
     setLoading(false);
@@ -210,10 +228,26 @@ const AdminInfluencerLinks = () => {
     setNewEmail('');
     setNewSlug('');
     setNewAudience('both');
-    setNewPct('');
+    setNewFirstPct('');
+    setNewRecurringPct('');
+    setNewWindowDays('');
     setNewNotes('');
     setSlugCheck('idle');
     setSlugError(null);
+  };
+
+  const parseOptionalPct = (raw: string): { ok: boolean; value: number | null } => {
+    if (raw.trim() === '') return { ok: true, value: null };
+    const n = Number(raw);
+    if (Number.isNaN(n) || n < 0 || n > 100) return { ok: false, value: null };
+    return { ok: true, value: n };
+  };
+
+  const parseOptionalDays = (raw: string): { ok: boolean; value: number | null } => {
+    if (raw.trim() === '') return { ok: true, value: null };
+    const n = Number(raw);
+    if (Number.isNaN(n) || n < 1 || n > 3650 || !Number.isFinite(n)) return { ok: false, value: null };
+    return { ok: true, value: Math.floor(n) };
   };
 
   const handleCreate = async () => {
@@ -223,10 +257,12 @@ const AdminInfluencerLinks = () => {
     if (!slug) return toast.error('Could not build a slug — add a name or handle');
     if (slugCheck === 'taken') return toast.error(slugError ?? `Slug "${slug}" is already in use`);
     if (slugCheck === 'invalid') return toast.error(slugError ?? 'Slug format is invalid');
-    const pct = newPct.trim() === '' ? null : Number(newPct);
-    if (pct !== null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
-      return toast.error('Commission % must be between 0 and 100');
-    }
+    const firstParsed = parseOptionalPct(newFirstPct);
+    if (!firstParsed.ok) return toast.error('First-booking % must be between 0 and 100');
+    const recurringParsed = parseOptionalPct(newRecurringPct);
+    if (!recurringParsed.ok) return toast.error('Recurring % must be between 0 and 100');
+    const windowParsed = parseOptionalDays(newWindowDays);
+    if (!windowParsed.ok) return toast.error('Recurring window must be between 1 and 3650 days');
     // Final pre-flight check (race-safe — DB unique index + trigger are the real guard).
     const { data: check, error: checkErr } = await supabase
       .rpc('check_influencer_slug_available', { _slug: slug });
@@ -251,7 +287,9 @@ const AdminInfluencerLinks = () => {
       influencer_handle: newHandle.trim() || null,
       influencer_email: newEmail.trim() || null,
       audience: newAudience,
-      commission_pct: pct,
+      first_booking_pct: firstParsed.value,
+      recurring_pct: recurringParsed.value,
+      recurring_window_days: windowParsed.value,
       notes: newNotes.trim() || null,
     });
     if (error) {
@@ -279,9 +317,18 @@ const AdminInfluencerLinks = () => {
 
   const handleSaveEdit = async () => {
     if (!editing) return;
-    const pct = editing.commission_pct;
-    if (pct !== null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
-      return toast.error('Commission % must be between 0 and 100');
+    const validatePct = (v: number | null, label: string) => {
+      if (v === null) return null;
+      if (Number.isNaN(v) || v < 0 || v > 100) return `${label} must be between 0 and 100`;
+      return null;
+    };
+    const err =
+      validatePct(editing.first_booking_pct, 'First-booking %') ??
+      validatePct(editing.recurring_pct, 'Recurring %');
+    if (err) return toast.error(err);
+    if (editing.recurring_window_days !== null) {
+      const w = editing.recurring_window_days;
+      if (Number.isNaN(w) || w < 1 || w > 3650) return toast.error('Recurring window must be 1–3650 days');
     }
     const { error } = await supabase
       .from('influencer_links')
@@ -290,7 +337,9 @@ const AdminInfluencerLinks = () => {
         influencer_handle: editing.influencer_handle,
         influencer_email: editing.influencer_email,
         audience: editing.audience,
-        commission_pct: editing.commission_pct,
+        first_booking_pct: editing.first_booking_pct,
+        recurring_pct: editing.recurring_pct,
+        recurring_window_days: editing.recurring_window_days,
         active: editing.active,
         notes: editing.notes,
       })
@@ -314,18 +363,27 @@ const AdminInfluencerLinks = () => {
     refresh();
   };
 
-  const handleSaveDefaultPct = async (value: number) => {
-    if (Number.isNaN(value) || value < 0 || value > 100) {
-      toast.error('Commission % must be between 0 and 100');
-      return;
-    }
+  const handleSaveDefault = async (
+    key:
+      | 'default_influencer_first_booking_pct'
+      | 'default_influencer_recurring_pct'
+      | 'default_influencer_recurring_window_days',
+    value: number,
+    label: string,
+  ) => {
+    const isPct = key !== 'default_influencer_recurring_window_days';
+    if (Number.isNaN(value)) return toast.error(`${label} must be a number`);
+    if (isPct && (value < 0 || value > 100)) return toast.error(`${label} must be between 0 and 100`);
+    if (!isPct && (value < 1 || value > 3650)) return toast.error(`${label} must be between 1 and 3650 days`);
     const { error } = await supabase
       .from('platform_settings')
       .update({ value: value as any })
-      .eq('key', 'default_influencer_commission_pct');
+      .eq('key', key);
     if (error) return toast.error(error.message);
-    toast.success(`Default commission set to ${value}%`);
-    setDefaultPct(value);
+    toast.success(`${label} saved`);
+    if (key === 'default_influencer_first_booking_pct') setDefaultFirstPct(value);
+    if (key === 'default_influencer_recurring_pct') setDefaultRecurringPct(value);
+    if (key === 'default_influencer_recurring_window_days') setDefaultWindowDays(value);
     refresh();
   };
 
@@ -378,35 +436,62 @@ const AdminInfluencerLinks = () => {
       />
 
       <div className="p-4 sm:p-8 space-y-6">
-        {/* Default commission */}
+        {/* Default commissions (hybrid) */}
         <div className="tactical-card p-5">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-[220px]">
-              <h2 className="font-bold mb-1">Default commission</h2>
-              <p className="text-xs text-muted-foreground">
-                Applied to every link that has no per-link override. Captured at the moment a booking is attended — past
-                commissions never change.
-              </p>
-            </div>
-            <div className="flex items-end gap-2">
-              <div>
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">% of course price</Label>
+          <div className="space-y-1 mb-4">
+            <h2 className="font-bold">Default commissions (hybrid model)</h2>
+            <p className="text-xs text-muted-foreground">
+              Used for any link without a per-link override. The <span className="font-semibold text-foreground">first-booking %</span> is paid the first time a referred user attends a booking. The <span className="font-semibold text-foreground">recurring %</span> is paid on subsequent attended bookings, but only inside the time window after signup. Cancelled / no-show bookings never pay out. Past commissions are never re-priced.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-md border border-border p-3 space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">First-booking %</Label>
+              <div className="flex items-end gap-2">
                 <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={defaultPct}
-                  onChange={(e) => setDefaultPct(Number(e.target.value))}
-                  className="bg-background border-border h-11 mt-1.5 w-28"
+                  type="number" min={0} max={100} step={0.1}
+                  value={defaultFirstPct}
+                  onChange={(e) => setDefaultFirstPct(Number(e.target.value))}
+                  className="bg-background border-border h-11 w-24"
                 />
+                <Button
+                  size="sm"
+                  onClick={() => handleSaveDefault('default_influencer_first_booking_pct', defaultFirstPct, 'First-booking %')}
+                  className="h-11 bg-primary text-primary-foreground font-bold"
+                >Save</Button>
               </div>
-              <Button
-                onClick={() => handleSaveDefaultPct(defaultPct)}
-                className="h-11 bg-primary text-primary-foreground font-bold"
-              >
-                Save
-              </Button>
+            </div>
+            <div className="rounded-md border border-border p-3 space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Recurring % (0 = off)</Label>
+              <div className="flex items-end gap-2">
+                <Input
+                  type="number" min={0} max={100} step={0.1}
+                  value={defaultRecurringPct}
+                  onChange={(e) => setDefaultRecurringPct(Number(e.target.value))}
+                  className="bg-background border-border h-11 w-24"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => handleSaveDefault('default_influencer_recurring_pct', defaultRecurringPct, 'Recurring %')}
+                  className="h-11 bg-primary text-primary-foreground font-bold"
+                >Save</Button>
+              </div>
+            </div>
+            <div className="rounded-md border border-border p-3 space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Recurring window (days)</Label>
+              <div className="flex items-end gap-2">
+                <Input
+                  type="number" min={1} max={3650} step={1}
+                  value={defaultWindowDays}
+                  onChange={(e) => setDefaultWindowDays(Number(e.target.value))}
+                  className="bg-background border-border h-11 w-24"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => handleSaveDefault('default_influencer_recurring_window_days', defaultWindowDays, 'Recurring window')}
+                  className="h-11 bg-primary text-primary-foreground font-bold"
+                >Save</Button>
+              </div>
             </div>
           </div>
         </div>
@@ -437,7 +522,12 @@ const AdminInfluencerLinks = () => {
               <tbody className="divide-y divide-border">
                 {links.map((l) => {
                   const url = buildInfluencerUrl(l.slug);
-                  const pct = l.commission_pct ?? defaultPct;
+                  const firstPct = l.first_booking_pct ?? l.commission_pct ?? defaultFirstPct;
+                  const recurringPct = l.recurring_pct ?? defaultRecurringPct;
+                  const windowDays = l.recurring_window_days ?? defaultWindowDays;
+                  const firstIsDefault = l.first_booking_pct === null && l.commission_pct === null;
+                  const recurringIsDefault = l.recurring_pct === null;
+                  const windowIsDefault = l.recurring_window_days === null;
                   return (
                     <tr key={l.id} className="hover:bg-muted/30 align-top">
                       <td className="px-4 py-3">
@@ -454,8 +544,21 @@ const AdminInfluencerLinks = () => {
                         <div className="text-[11px] text-muted-foreground break-all mt-0.5">{url}</div>
                       </td>
                       <td className="px-4 py-3 capitalize">{l.audience}</td>
-                      <td className="px-4 py-3">
-                        {pct}%{l.commission_pct === null && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                      <td className="px-4 py-3 text-xs leading-relaxed">
+                        <div>
+                          <span className="font-bold text-foreground">{firstPct}%</span> first
+                          {firstIsDefault && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                        </div>
+                        <div>
+                          {recurringPct > 0 ? (
+                            <>
+                              <span className="font-bold text-foreground">{recurringPct}%</span> recurring · {windowDays}d
+                              {(recurringIsDefault || windowIsDefault) && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">no recurring</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 font-bold">{signupCounts[l.id] ?? 0}</td>
                       <td className="px-4 py-3">
@@ -553,7 +656,12 @@ const AdminInfluencerLinks = () => {
                       </td>
                       <td className="px-4 py-3 font-mono text-[11px]">{c.booking_id.slice(0, 8)}…</td>
                       <td className="px-4 py-3">${(c.course_price_cents / 100).toFixed(2)}</td>
-                      <td className="px-4 py-3">{Number(c.pct_at_time)}%</td>
+                      <td className="px-4 py-3">
+                        {Number(c.pct_at_time)}%
+                        <span className={`ml-1.5 inline-block px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold ${c.commission_kind === 'first' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                          {c.commission_kind ?? 'first'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 font-bold">${(c.amount_cents / 100).toFixed(2)}</td>
                       <td className="px-4 py-3">
                         <span
@@ -717,34 +825,52 @@ const AdminInfluencerLinks = () => {
                 <p className="text-[11px] mt-1 text-destructive">{slugError}</p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Audience</Label>
+              <Select value={newAudience} onValueChange={(v) => setNewAudience(v as Audience)}>
+                <SelectTrigger className="bg-background border-border h-11 mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="both">Both (chooser)</SelectItem>
+                  <SelectItem value="student">Students only</SelectItem>
+                  <SelectItem value="instructor">Instructors only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
               <div>
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Audience</Label>
-                <Select value={newAudience} onValueChange={(v) => setNewAudience(v as Audience)}>
-                  <SelectTrigger className="bg-background border-border h-11 mt-1.5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="both">Both (chooser)</SelectItem>
-                    <SelectItem value="student">Students only</SelectItem>
-                    <SelectItem value="instructor">Instructors only</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">First %</Label>
+                <Input
+                  type="number" min={0} max={100} step={0.1}
+                  value={newFirstPct}
+                  onChange={(e) => setNewFirstPct(e.target.value)}
+                  placeholder={`${defaultFirstPct}`}
+                  className="bg-background border-border h-11 mt-1.5"
+                />
               </div>
               <div>
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Commission % <span className="normal-case text-[10px]">(blank = {defaultPct}%)</span>
-                </Label>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Recurring %</Label>
                 <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={newPct}
-                  onChange={(e) => setNewPct(e.target.value)}
-                  placeholder={`${defaultPct}`}
+                  type="number" min={0} max={100} step={0.1}
+                  value={newRecurringPct}
+                  onChange={(e) => setNewRecurringPct(e.target.value)}
+                  placeholder={`${defaultRecurringPct}`}
+                  className="bg-background border-border h-11 mt-1.5"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Window (days)</Label>
+                <Input
+                  type="number" min={1} max={3650} step={1}
+                  value={newWindowDays}
+                  onChange={(e) => setNewWindowDays(e.target.value)}
+                  placeholder={`${defaultWindowDays}`}
                   className="bg-background border-border h-11 mt-1.5"
                 />
               </div>
             </div>
+            <p className="text-[11px] text-muted-foreground -mt-1">
+              Leave blank to inherit the platform defaults. Set Recurring % to 0 to disable recurring for this link.
+            </p>
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
               <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="bg-background border-border min-h-20 mt-1.5" />
@@ -798,33 +924,52 @@ const AdminInfluencerLinks = () => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Audience</Label>
+                <Select value={editing.audience} onValueChange={(v) => setEditing({ ...editing, audience: v as Audience })}>
+                  <SelectTrigger className="bg-background border-border h-11 mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">Both (chooser)</SelectItem>
+                    <SelectItem value="student">Students only</SelectItem>
+                    <SelectItem value="instructor">Instructors only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Audience</Label>
-                  <Select value={editing.audience} onValueChange={(v) => setEditing({ ...editing, audience: v as Audience })}>
-                    <SelectTrigger className="bg-background border-border h-11 mt-1.5"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="both">Both (chooser)</SelectItem>
-                      <SelectItem value="student">Students only</SelectItem>
-                      <SelectItem value="instructor">Instructors only</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">First %</Label>
+                  <Input
+                    type="number" min={0} max={100} step={0.1}
+                    value={editing.first_booking_pct ?? editing.commission_pct ?? ''}
+                    onChange={(e) => setEditing({ ...editing, first_booking_pct: e.target.value === '' ? null : Number(e.target.value), commission_pct: null })}
+                    placeholder={`${defaultFirstPct}`}
+                    className="bg-background border-border h-11 mt-1.5"
+                  />
                 </div>
                 <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Commission % <span className="normal-case text-[10px]">(blank = default)</span>
-                  </Label>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Recurring %</Label>
                   <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    value={editing.commission_pct ?? ''}
-                    onChange={(e) => setEditing({ ...editing, commission_pct: e.target.value === '' ? null : Number(e.target.value) })}
+                    type="number" min={0} max={100} step={0.1}
+                    value={editing.recurring_pct ?? ''}
+                    onChange={(e) => setEditing({ ...editing, recurring_pct: e.target.value === '' ? null : Number(e.target.value) })}
+                    placeholder={`${defaultRecurringPct}`}
+                    className="bg-background border-border h-11 mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Window (days)</Label>
+                  <Input
+                    type="number" min={1} max={3650} step={1}
+                    value={editing.recurring_window_days ?? ''}
+                    onChange={(e) => setEditing({ ...editing, recurring_window_days: e.target.value === '' ? null : Number(e.target.value) })}
+                    placeholder={`${defaultWindowDays}`}
                     className="bg-background border-border h-11 mt-1.5"
                   />
                 </div>
               </div>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                Blank = inherit platform default. Recurring % = 0 disables recurring for this link.
+              </p>
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
                 <Textarea

@@ -997,6 +997,7 @@ export type Database = {
         Row: {
           amount_cents: number
           booking_id: string
+          commission_kind: string
           course_price_cents: number
           created_at: string
           id: string
@@ -1010,6 +1011,7 @@ export type Database = {
         Insert: {
           amount_cents?: number
           booking_id: string
+          commission_kind?: string
           course_price_cents?: number
           created_at?: string
           id?: string
@@ -1023,6 +1025,7 @@ export type Database = {
         Update: {
           amount_cents?: number
           booking_id?: string
+          commission_kind?: string
           course_price_cents?: number
           created_at?: string
           id?: string
@@ -1133,11 +1136,14 @@ export type Database = {
           commission_pct: number | null
           created_at: string
           created_by: string | null
+          first_booking_pct: number | null
           id: string
           influencer_email: string | null
           influencer_handle: string | null
           influencer_name: string
           notes: string | null
+          recurring_pct: number | null
+          recurring_window_days: number | null
           slug: string
           updated_at: string
         }
@@ -1147,11 +1153,14 @@ export type Database = {
           commission_pct?: number | null
           created_at?: string
           created_by?: string | null
+          first_booking_pct?: number | null
           id?: string
           influencer_email?: string | null
           influencer_handle?: string | null
           influencer_name: string
           notes?: string | null
+          recurring_pct?: number | null
+          recurring_window_days?: number | null
           slug: string
           updated_at?: string
         }
@@ -1161,11 +1170,14 @@ export type Database = {
           commission_pct?: number | null
           created_at?: string
           created_by?: string | null
+          first_booking_pct?: number | null
           id?: string
           influencer_email?: string | null
           influencer_handle?: string | null
           influencer_name?: string
           notes?: string | null
+          recurring_pct?: number | null
+          recurring_window_days?: number | null
           slug?: string
           updated_at?: string
         }
