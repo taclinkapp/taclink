@@ -107,6 +107,22 @@ Deno.serve(async (req) => {
       continue;
     }
 
+    // Resolve the captured charge id from the PI so Stripe can pull funds
+    // from that specific charge balance entry (avoids `balance_insufficient`
+    // when the platform's available balance hasn't settled yet).
+    let sourceTransaction: string | undefined;
+    if (row.stripe_payment_intent_id) {
+      try {
+        const pi = await stripe.paymentIntents.retrieve(row.stripe_payment_intent_id);
+        sourceTransaction =
+          (typeof pi.latest_charge === "string"
+            ? pi.latest_charge
+            : pi.latest_charge?.id) ?? undefined;
+      } catch (e) {
+        console.warn("Failed to resolve charge for booking", row.id, (e as Error).message);
+      }
+    }
+
     try {
       const transfer = await stripe.transfers.create(
         {
@@ -115,11 +131,7 @@ Deno.serve(async (req) => {
           destination: profile.stripe_connect_account_id,
           transfer_group: row.id,
           metadata: { bookingId: row.id, instructorId },
-          // Use source_transaction when we have the captured PI so Stripe
-          // pulls funds from that specific charge balance entry.
-          ...(row.stripe_payment_intent_id
-            ? { source_transaction: undefined } // PI -> charge id required; skip if unknown
-            : {}),
+          ...(sourceTransaction ? { source_transaction: sourceTransaction } : {}),
         },
         { idempotencyKey: `release_${row.id}` },
       );
