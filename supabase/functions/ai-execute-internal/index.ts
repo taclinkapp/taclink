@@ -91,9 +91,9 @@ serve(async (req) => {
         }
 
         case "dispute_triage": {
-          // Auto-execute path for low-risk auto-refunds.
-          // Gate: must be approve_full_refund OR offer_app_credit, with refund/credit amount,
-          // and student risk score must be low enough.
+          // Reason-based auto-refund. The AI provides a `refund_reason_category`
+          // (mapped from its classification); the DB function compute_refund_split
+          // is the single source of truth for who gets what.
           const conversationId = action.target_id;
           if (!conversationId) throw new Error("missing conversation_id");
 
@@ -104,7 +104,7 @@ serve(async (req) => {
             .single();
           if (!conv) throw new Error("conversation not found");
 
-          // Pull auto-refund settings
+          // Pull auto-refund settings (caps + risk threshold + dispute window)
           const { data: settings } = await admin
             .from("ai_auto_approve_settings")
             .select("rules")
@@ -115,34 +115,58 @@ serve(async (req) => {
           const maxRiskScore = rule.max_risk_score ?? 30;
           const windowHours = rule.dispute_window_hours ?? 24;
 
-          const decision = payload.recommended_action;
-          const isRefund = decision === "approve_full_refund" || decision === "offer_app_credit";
-          const requested = payload.refund_amount_cents ?? payload.credit_amount_cents ?? 0;
-
-          if (!isRefund || !conv.booking_id || requested <= 0) {
-            throw new Error("dispute_triage not eligible for auto-refund (no amount or wrong action)");
+          const reasonCategory =
+            payload.refund_reason_category ?? payload.reason_category ?? null;
+          if (!conv.booking_id) {
+            throw new Error("dispute_triage has no booking attached — cannot auto-execute");
           }
-          if (requested > maxAmount) {
-            throw new Error(`amount ${requested} exceeds auto-refund cap ${maxAmount}`);
+          if (!reasonCategory) {
+            throw new Error("dispute_triage missing refund_reason_category — escalating to owner");
+          }
+
+          // Compute the canonical split server-side
+          const { data: splitRows, error: splitErr } = await admin.rpc(
+            "compute_refund_split",
+            { _booking_id: conv.booking_id, _reason: reasonCategory },
+          );
+          if (splitErr) throw new Error(`compute_refund_split: ${splitErr.message}`);
+          const split = Array.isArray(splitRows) ? splitRows[0] : splitRows;
+          if (!split) throw new Error("compute_refund_split returned no rows");
+
+          if (split.requires_owner) {
+            throw new Error(
+              `reason ${reasonCategory} requires owner approval (${split.rationale})`,
+            );
+          }
+
+          const studentCredit = split.student_credit_cents ?? 0;
+          if (studentCredit <= 0) {
+            // Send the AI's reply but issue no credit (e.g. student_cancel_late)
+            if (payload.reply_text) {
+              await admin.from("messages").insert({
+                conversation_id: conversationId,
+                sender_id: conv.instructor_id,
+                sender_role: "instructor",
+                body: `${payload.reply_text}\n\n— the TacLink team`,
+              });
+            }
+            break;
+          }
+
+          if (studentCredit > maxAmount) {
+            throw new Error(
+              `student credit ${studentCredit} exceeds auto-refund cap ${maxAmount}`,
+            );
           }
 
           const { data: b } = await admin
             .from("bookings")
-            .select("student_id, online_total_cents, platform_fee_cents, deposit_amount_cents")
+            .select("student_id")
             .eq("id", conv.booking_id)
             .single();
           if (!b) throw new Error("booking not found");
 
-          // Hard cap: TacLink only credits what the student paid online
-          // ($25 platform fee + 10% instructor deposit). The 90% paid in person
-          // is between the student and instructor and is never refundable by the platform.
-          const onlinePaid = b.online_total_cents ?? 0;
-          const amount = Math.min(requested, onlinePaid);
-          if (amount <= 0) {
-            throw new Error("booking has no online amount to credit");
-          }
-
-          // Compute risk score
+          // Risk score check
           const { data: riskRows } = await admin.rpc("compute_student_risk_score", {
             _student_id: b.student_id,
           });
@@ -151,7 +175,9 @@ serve(async (req) => {
           const factors = risk?.factors ?? {};
 
           if (score > maxRiskScore) {
-            throw new Error(`student risk score ${score} exceeds cap ${maxRiskScore} — escalating to owner`);
+            throw new Error(
+              `student risk score ${score} exceeds cap ${maxRiskScore} — escalating to owner`,
+            );
           }
 
           // Send the drafted reply
@@ -164,16 +190,27 @@ serve(async (req) => {
             });
           }
 
-          // Issue auto-refund credit with dispute window
-          const windowUntil = new Date(Date.now() + windowHours * 3600 * 1000).toISOString();
+          // Issue refund — the trigger handles forfeiting the deposit + strike.
+          const windowUntil = new Date(
+            Date.now() + windowHours * 3600 * 1000,
+          ).toISOString();
           await admin.from("refunds").insert({
             booking_id: conv.booking_id,
             student_id: b.student_id,
-            amount_cents: amount,
-            reason: payload.internal_note ?? `Auto-issued credit (${payload.classification ?? "dispute"})`,
-            refund_type: decision === "approve_full_refund" ? "full" : "goodwill",
-            issued_by: b.student_id, // service-role insert; tracked as auto via flag
-            notes: `AUTO-ISSUED. Risk score ${score}. Instructor may dispute within ${windowHours}h.`,
+            amount_cents: studentCredit,
+            reason: payload.internal_note ?? `Auto-issued: ${reasonCategory}`,
+            refund_type:
+              reasonCategory === "instructor_no_show" ||
+              reasonCategory === "instructor_cancel" ||
+              reasonCategory === "fraud_safety"
+                ? "full"
+                : "goodwill",
+            refund_reason_category: reasonCategory,
+            instructor_forfeit_cents: split.instructor_forfeit_cents ?? 0,
+            platform_absorbed_cents: split.platform_absorbed_cents ?? 0,
+            hours_before_course: split.hours_before_course ?? null,
+            issued_by: b.student_id,
+            notes: `AUTO. Risk ${score}. ${split.rationale} Instructor may dispute within ${windowHours}h.`,
             auto_issued: true,
             risk_score: score,
             risk_factors: factors,
@@ -185,15 +222,15 @@ serve(async (req) => {
             {
               recipient_id: b.student_id,
               type: "refund_issued",
-              title: `In-app credit issued: $${(amount / 100).toFixed(2)}`,
-              body: `A $${(amount / 100).toFixed(2)} credit has been added. Apply it to your next booking.`,
+              title: `In-app credit issued: $${(studentCredit / 100).toFixed(2)}`,
+              body: `A $${(studentCredit / 100).toFixed(2)} credit was added to your account. Apply it to your next booking.`,
               link: `/student/booking/${conv.booking_id}`,
             },
             {
               recipient_id: conv.instructor_id,
               type: "auto_refund_issued",
               title: "Auto-credit issued — you have 24h to dispute",
-              body: `An automatic $${(amount / 100).toFixed(2)} credit was issued to a student. If this isn't right, dispute it within 24h.`,
+              body: `An automatic $${(studentCredit / 100).toFixed(2)} credit was issued (${reasonCategory}). If this isn't right, dispute it within 24h.`,
               link: `/instructor/dashboard`,
             },
           ]);

@@ -29,6 +29,37 @@ import { toast } from 'sonner';
 import { fmt } from '@/lib/fees';
 
 type RefundType = 'platform_fee' | 'deposit' | 'full' | 'partial' | 'goodwill' | 'other';
+type ReasonCategory =
+  | 'instructor_no_show'
+  | 'instructor_cancel'
+  | 'fraud_safety'
+  | 'student_cancel_timely'
+  | 'student_cancel_late'
+  | 'weather_reschedule'
+  | 'quality_complaint'
+  | 'chargeback_threat'
+  | 'other';
+
+const REASON_LABELS: Record<ReasonCategory, string> = {
+  instructor_no_show: 'Instructor no-show',
+  instructor_cancel: 'Instructor cancelled',
+  fraud_safety: 'Fraud / safety incident',
+  student_cancel_timely: 'Student cancel (≥ 48h)',
+  student_cancel_late: 'Student cancel (< 48h)',
+  weather_reschedule: 'Weather / reschedule',
+  quality_complaint: 'Quality complaint',
+  chargeback_threat: 'Chargeback / legal threat',
+  other: 'Other (manual)',
+};
+
+type SplitPreview = {
+  student_credit_cents: number;
+  instructor_forfeit_cents: number;
+  platform_absorbed_cents: number;
+  requires_owner: boolean;
+  hours_before_course: number | null;
+  rationale: string;
+};
 type RefundStatus = 'issued' | 'failed' | 'reversed';
 
 type RefundRow = {
@@ -73,6 +104,10 @@ export const AdminRefunds = () => {
   const [searching, setSearching] = useState(false);
   const [picked, setPicked] = useState<BookingLite | null>(null);
   const [type, setType] = useState<RefundType>('platform_fee');
+  const [reasonCategory, setReasonCategory] = useState<ReasonCategory>('student_cancel_timely');
+  const [split, setSplit] = useState<SplitPreview | null>(null);
+  const [splitLoading, setSplitLoading] = useState(false);
+  const [manualOverride, setManualOverride] = useState(false);
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [externalRef, setExternalRef] = useState('');
@@ -241,11 +276,62 @@ export const AdminRefunds = () => {
     if (picked) setAmount((suggestedAmount(t, picked) / 100).toFixed(2));
   };
 
+  // Recompute the canonical refund split whenever the booking or reason changes.
+  useEffect(() => {
+    if (!picked || manualOverride) {
+      setSplit(null);
+      return;
+    }
+    let cancelled = false;
+    setSplitLoading(true);
+    supabase
+      .rpc('compute_refund_split', { _booking_id: picked.id, _reason: reasonCategory })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setSplitLoading(false);
+        if (error) {
+          setSplit(null);
+          return;
+        }
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row) return;
+        setSplit({
+          student_credit_cents: row.student_credit_cents,
+          instructor_forfeit_cents: row.instructor_forfeit_cents,
+          platform_absorbed_cents: row.platform_absorbed_cents,
+          requires_owner: row.requires_owner,
+          hours_before_course: row.hours_before_course,
+          rationale: row.rationale,
+        });
+        setAmount((row.student_credit_cents / 100).toFixed(2));
+        // Map reason → refund_type for legacy column
+        if (row.student_credit_cents === 0) {
+          setType('other');
+        } else if (
+          reasonCategory === 'instructor_no_show' ||
+          reasonCategory === 'instructor_cancel' ||
+          reasonCategory === 'fraud_safety'
+        ) {
+          setType('full');
+        } else if (reasonCategory === 'student_cancel_timely') {
+          setType('platform_fee');
+        } else {
+          setType('goodwill');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [picked, reasonCategory, manualOverride]);
+
   const reset = () => {
     setBookingQuery('');
     setBookingResults([]);
     setPicked(null);
     setType('platform_fee');
+    setReasonCategory('student_cancel_timely');
+    setSplit(null);
+    setManualOverride(false);
     setAmount('');
     setReason('');
     setExternalRef('');
@@ -258,13 +344,11 @@ export const AdminRefunds = () => {
       return;
     }
     const cents = Math.round(parseFloat(amount || '0') * 100);
-    if (!cents || cents <= 0) {
-      toast.error('Enter a credit amount');
+    if (cents < 0) {
+      toast.error('Amount cannot be negative');
       return;
     }
-    // Hard cap: TacLink never credits more than the student paid online
-    // ($25 platform fee + 10% instructor deposit). The 90% paid in person is
-    // between the student and the instructor and cannot be refunded by the platform.
+    // Hard cap: TacLink never credits more than the student paid online.
     if (cents > picked.online_total_cents) {
       toast.error('Credit cannot exceed what the student paid online', {
         description: `Max refundable: ${fmt(picked.online_total_cents)} ($25 platform fee + 10% deposit). The remaining 90% was paid in person to the instructor.`,
@@ -282,9 +366,15 @@ export const AdminRefunds = () => {
       issued_by: user.id,
       amount_cents: cents,
       refund_type: type,
+      refund_reason_category: reasonCategory,
+      instructor_forfeit_cents: split?.instructor_forfeit_cents ?? 0,
+      platform_absorbed_cents: split?.platform_absorbed_cents ?? 0,
+      hours_before_course: split?.hours_before_course ?? null,
       reason: reason.trim(),
       external_reference: externalRef.trim() || null,
-      notes: notes.trim() || null,
+      notes: manualOverride
+        ? `MANUAL OVERRIDE. ${notes.trim() || ''}`.trim()
+        : (notes.trim() || null),
       status: 'issued',
     });
     if (error) {
@@ -292,15 +382,19 @@ export const AdminRefunds = () => {
       setSubmitting(false);
       return;
     }
-    // Notify student — refunds are issued as in-app credit, not cash.
-    await supabase.from('notifications').insert({
-      recipient_id: picked.student_id,
-      type: 'refund_issued',
-      title: `In-app credit issued: ${fmt(cents)}`,
-      body: `${fmt(cents)} credit added to your account for ${picked.courseTitle}. Apply it to your next booking. Reason: ${reason.trim()}`,
-      link: `/student/booking/${picked.id}`,
-    });
-    toast.success('Refund credit issued — student notified');
+    if (cents > 0) {
+      // Notify student — refunds are issued as in-app credit, not cash.
+      await supabase.from('notifications').insert({
+        recipient_id: picked.student_id,
+        type: 'refund_issued',
+        title: `In-app credit issued: ${fmt(cents)}`,
+        body: `${fmt(cents)} credit added to your account for ${picked.courseTitle}. Apply it to your next booking. Reason: ${reason.trim()}`,
+        link: `/student/booking/${picked.id}`,
+      });
+      toast.success('Refund credit issued — student notified');
+    } else {
+      toast.success('Decision recorded — no credit issued');
+    }
     setSubmitting(false);
     setOpen(false);
     reset();
@@ -527,29 +621,55 @@ export const AdminRefunds = () => {
                   </button>
                 </div>
 
+                <div className="space-y-1">
+                  <Label className="text-xs">Reason category</Label>
+                  <Select value={reasonCategory} onValueChange={(v) => setReasonCategory(v as ReasonCategory)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(REASON_LABELS) as ReasonCategory[]).map((k) => (
+                        <SelectItem key={k} value={k}>{REASON_LABELS[k]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Auto-computed split preview */}
+                {!manualOverride && split && (
+                  <div className="rounded-md border border-border bg-muted/40 p-3 text-xs space-y-1">
+                    <div className="font-semibold text-sm">Computed split</div>
+                    <div>Student credit: <span className="font-mono">{fmt(split.student_credit_cents)}</span></div>
+                    <div>Instructor forfeit: <span className="font-mono">{fmt(split.instructor_forfeit_cents)}</span></div>
+                    <div>TacLink absorbs: <span className="font-mono">{fmt(split.platform_absorbed_cents)}</span></div>
+                    {split.requires_owner && (
+                      <div className="text-destructive font-medium">⚠ Owner review required for this reason</div>
+                    )}
+                    <div className="text-muted-foreground italic mt-1">{split.rationale}</div>
+                  </div>
+                )}
+                {!manualOverride && splitLoading && (
+                  <div className="text-xs text-muted-foreground">Computing split…</div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Credit type</Label>
-                    <Select value={type} onValueChange={(v) => onTypeChange(v as RefundType)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="platform_fee">Platform fee ($25)</SelectItem>
-                        <SelectItem value="deposit">Deposit (10%)</SelectItem>
-                        <SelectItem value="full">Full (online + deposit)</SelectItem>
-                        <SelectItem value="partial">Partial (custom amount)</SelectItem>
-                        <SelectItem value="goodwill">Goodwill credit</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-1 flex items-end">
+                    <label className="flex items-center gap-2 text-xs cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={manualOverride}
+                        onChange={(e) => setManualOverride(e.target.checked)}
+                      />
+                      Manual override (custom amount)
+                    </label>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Amount (USD)</Label>
                     <Input
                       type="number"
                       step="0.01"
-                      min="0.01"
+                      min="0"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
+                      disabled={!manualOverride}
                     />
                   </div>
                 </div>
@@ -593,8 +713,15 @@ export const AdminRefunds = () => {
             <Button onClick={() => {
               if (!picked) { toast.error('Pick a booking first'); return; }
               const cents = Math.round(parseFloat(amount || '0') * 100);
-              if (!cents || cents <= 0) { toast.error('Enter a credit amount'); return; }
+              if (cents < 0) { toast.error('Amount cannot be negative'); return; }
+              if (cents > picked.online_total_cents && !manualOverride) {
+                toast.error('Amount exceeds what student paid online');
+                return;
+              }
               if (!reason.trim()) { toast.error('Reason is required'); return; }
+              if (!manualOverride && split?.requires_owner) {
+                if (!confirm('This reason normally requires owner review. Issue anyway?')) return;
+              }
               setConfirmOpen(true);
             }} disabled={!picked || submitting}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
