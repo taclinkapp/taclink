@@ -321,9 +321,38 @@ const BookingDetail = () => {
         <div className="tactical-card border-primary/20 bg-primary/5 p-3 flex items-start gap-2">
           <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">Cancellation policy:</strong> Grace period is set when you book — longer leads earn more time. After the deadline, cancellations are not refunded. If the instructor cancels, you're refunded automatically.
+            <strong className="text-foreground">Cancellation policy:</strong>{' '}
+            Cancel within your grace window for a <strong className="text-foreground">100% refund</strong>{' '}
+            ($25 platform fee + full course price). After the grace window, you receive{' '}
+            <strong className="text-foreground">90% of the course price</strong> back — the
+            instructor keeps 10% for the lost slot, and the $25 platform fee is non-refundable.
+            If the instructor cancels or no-shows, you're refunded in full automatically within 48 hours.
           </div>
         </div>
+
+        {upcoming && (
+          <Button
+            onClick={cancelBooking}
+            disabled={cancelling}
+            variant="outline"
+            className="w-full h-12 font-bold border-destructive/40 text-destructive hover:bg-destructive/10"
+          >
+            {cancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
+            {inGraceWindow ? 'Cancel for full refund' : 'Cancel booking (90% refund)'}
+          </Button>
+        )}
+
+        {upcoming && courseStarted && (
+          <Button
+            onClick={reportInstructorNoShow}
+            disabled={reportingNoShow}
+            variant="outline"
+            className="w-full h-12 font-bold border-destructive/40 text-destructive hover:bg-destructive/10"
+          >
+            {reportingNoShow ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserX className="mr-2 h-4 w-4" />}
+            Report instructor no-show
+          </Button>
+        )}
 
         {attended && (
           <Button onClick={() => nav(`/student/review/${b.id}`)} className="w-full h-12 bg-primary text-primary-foreground font-bold">
