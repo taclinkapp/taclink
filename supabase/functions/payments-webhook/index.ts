@@ -188,6 +188,13 @@ Deno.serve(async (req) => {
       case "account.updated":
         await handleAccountUpdated(event.data.object);
         break;
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+        await upsertSubscription(event.data.object, env);
+        break;
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(event.data.object, env);
+        break;
       default:
         console.log("Unhandled event:", event.type);
     }
