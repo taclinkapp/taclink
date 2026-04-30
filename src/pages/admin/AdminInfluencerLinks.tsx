@@ -153,25 +153,53 @@ const AdminInfluencerLinks = () => {
     refresh();
   }, []);
 
-  // Live slug availability check (debounced)
+  // Live slug availability check (debounced) — uses structured RPC for format + collision validation.
   const previewSlug = useMemo(
     () => slugify(newSlug || newHandle || newName),
     [newSlug, newHandle, newName],
   );
+  const [slugError, setSlugError] = useState<string | null>(null);
   useEffect(() => {
     if (!creating) return;
     if (!previewSlug) {
       setSlugCheck('invalid');
+      setSlugError(null);
       return;
     }
     setSlugCheck('checking');
+    setSlugError(null);
     const t = setTimeout(async () => {
-      const { data, error } = await supabase.rpc('is_influencer_slug_available', { _slug: previewSlug });
-      if (error) {
+      try {
+        const { data, error } = await supabase.rpc('check_influencer_slug_available', { _slug: previewSlug });
+        if (error) {
+          setSlugCheck('idle');
+          setSlugError("Couldn't check availability — try again.");
+          return;
+        }
+        const result = data as { ok: boolean; normalized: string | null; reason: string } | null;
+        if (!result) {
+          setSlugCheck('idle');
+          setSlugError('Unexpected response from server.');
+          return;
+        }
+        if (result.ok) {
+          setSlugCheck('available');
+          return;
+        }
+        if (result.reason === 'taken') {
+          setSlugCheck('taken');
+          setSlugError(`"${result.normalized ?? previewSlug}" is already in use.`);
+        } else if (result.reason === 'invalid_format') {
+          setSlugCheck('invalid');
+          setSlugError('Slug must be 2–32 characters, letters/numbers/hyphens only, and not a reserved word (admin, api, login…).');
+        } else {
+          setSlugCheck('invalid');
+          setSlugError('Slug is empty.');
+        }
+      } catch {
         setSlugCheck('idle');
-        return;
+        setSlugError("Couldn't check availability — try again.");
       }
-      setSlugCheck(data === true ? 'available' : 'taken');
     }, 350);
     return () => clearTimeout(t);
   }, [previewSlug, creating]);
@@ -185,6 +213,7 @@ const AdminInfluencerLinks = () => {
     setNewPct('');
     setNewNotes('');
     setSlugCheck('idle');
+    setSlugError(null);
   };
 
   const handleCreate = async () => {
@@ -192,19 +221,32 @@ const AdminInfluencerLinks = () => {
     if (!name) return toast.error('Influencer name is required');
     const slug = slugify(newSlug || newHandle || name);
     if (!slug) return toast.error('Could not build a slug — add a name or handle');
-    if (slugCheck === 'taken') return toast.error(`Slug "${slug}" is already in use`);
+    if (slugCheck === 'taken') return toast.error(slugError ?? `Slug "${slug}" is already in use`);
+    if (slugCheck === 'invalid') return toast.error(slugError ?? 'Slug format is invalid');
     const pct = newPct.trim() === '' ? null : Number(newPct);
     if (pct !== null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
       return toast.error('Commission % must be between 0 and 100');
     }
-    // Final pre-flight check (race-safe — DB unique constraint is the real guard).
-    const { data: available } = await supabase.rpc('is_influencer_slug_available', { _slug: slug });
-    if (available === false) {
-      setSlugCheck('taken');
-      return toast.error(`Slug "${slug}" is already in use`);
+    // Final pre-flight check (race-safe — DB unique index + trigger are the real guard).
+    const { data: check, error: checkErr } = await supabase
+      .rpc('check_influencer_slug_available', { _slug: slug });
+    if (checkErr) {
+      return toast.error("Couldn't verify slug availability — try again.");
     }
+    const result = check as { ok: boolean; normalized: string | null; reason: string } | null;
+    if (!result?.ok) {
+      if (result?.reason === 'taken') {
+        setSlugCheck('taken');
+        setSlugError(`"${result.normalized ?? slug}" is already in use.`);
+        return toast.error(`Slug "${result.normalized ?? slug}" is already in use`);
+      }
+      setSlugCheck('invalid');
+      setSlugError('Slug format is invalid.');
+      return toast.error('Slug format is invalid');
+    }
+    const finalSlug = result.normalized ?? slug;
     const { error } = await supabase.from('influencer_links').insert({
-      slug,
+      slug: finalSlug,
       influencer_name: name,
       influencer_handle: newHandle.trim() || null,
       influencer_email: newEmail.trim() || null,
@@ -213,12 +255,23 @@ const AdminInfluencerLinks = () => {
       notes: newNotes.trim() || null,
     });
     if (error) {
-      const dup = error.message.toLowerCase().includes('duplicate') || error.code === '23505';
-      toast.error(dup ? `Slug "${slug}" is already in use` : error.message);
-      if (dup) setSlugCheck('taken');
+      const msg = error.message.toLowerCase();
+      const dup = msg.includes('duplicate') || error.code === '23505' || msg.includes('idx_influencer_links_slug_lower_uniq');
+      const badFormat = msg.includes('invalid_slug_format') || error.code === '22023';
+      if (dup) {
+        setSlugCheck('taken');
+        setSlugError(`"${finalSlug}" is already in use.`);
+        toast.error(`Slug "${finalSlug}" is already in use`);
+      } else if (badFormat) {
+        setSlugCheck('invalid');
+        setSlugError('Slug format is invalid.');
+        toast.error('Slug format is invalid');
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
-    toast.success(`Link /i/${slug} created`);
+    toast.success(`Link /i/${finalSlug} created`);
     setCreating(false);
     resetCreateForm();
     refresh();
@@ -637,14 +690,14 @@ const AdminInfluencerLinks = () => {
                 onChange={(e) => setNewSlug(e.target.value)}
                 placeholder={slugify(newHandle || newName) || 'auto'}
                 className={`bg-background h-11 mt-1.5 font-mono ${
-                  slugCheck === 'taken'
+                  slugCheck === 'taken' || slugCheck === 'invalid'
                     ? 'border-destructive focus-visible:ring-destructive'
                     : slugCheck === 'available'
                     ? 'border-success'
                     : 'border-border'
                 }`}
               />
-              <p className="text-[11px] mt-1 flex items-center gap-1.5">
+              <p className="text-[11px] mt-1 flex items-center gap-1.5 flex-wrap">
                 <span className="text-muted-foreground">URL:</span>
                 <code>/i/{previewSlug || 'slug'}</code>
                 {previewSlug && slugCheck === 'checking' && (
@@ -656,7 +709,13 @@ const AdminInfluencerLinks = () => {
                 {previewSlug && slugCheck === 'taken' && (
                   <span className="text-destructive font-bold">· already in use</span>
                 )}
+                {slugCheck === 'invalid' && (
+                  <span className="text-destructive font-bold">· invalid format</span>
+                )}
               </p>
+              {slugError && (
+                <p className="text-[11px] mt-1 text-destructive">{slugError}</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -695,7 +754,7 @@ const AdminInfluencerLinks = () => {
             <Button variant="outline" onClick={() => { setCreating(false); resetCreateForm(); }}>Cancel</Button>
             <Button
               onClick={handleCreate}
-              disabled={slugCheck === 'taken' || slugCheck === 'checking' || !newName.trim()}
+              disabled={slugCheck === 'taken' || slugCheck === 'invalid' || slugCheck === 'checking' || !newName.trim()}
               className="bg-primary text-primary-foreground font-bold"
             >
               Create link
