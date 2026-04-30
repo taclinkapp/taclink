@@ -161,6 +161,14 @@ const Checkout = () => {
           waiver_content_snapshot: waiver.content,
           signed_full_name: signedName.trim(),
           user_agent: navigator.userAgent,
+          esign_consent_acknowledged: esignConsent,
+          esign_disclosure_version: ESIGN_DISCLOSURE_VERSION,
+          esign_consent_initials: esignInitials.trim().toUpperCase(),
+          is_minor: isMinor,
+          student_date_of_birth: isMinor && studentDob ? studentDob : null,
+          guardian_full_name: isMinor ? guardianName.trim() : null,
+          guardian_relationship: isMinor ? guardianRelationship.trim() : null,
+          guardian_signed_at: isMinor ? new Date().toISOString() : null,
         });
         if (sErr) {
           await supabase.from('bookings').delete().eq('id', booking.id);
