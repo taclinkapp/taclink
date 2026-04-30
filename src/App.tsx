@@ -24,6 +24,7 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import ChangePassword from "./pages/auth/ChangePassword";
 import Unsubscribe from "./pages/Unsubscribe";
+import InfluencerLanding from "./pages/auth/InfluencerLanding";
 
 import Discover from "./pages/student/Discover";
 import CourseDetail from "./pages/student/CourseDetail";
