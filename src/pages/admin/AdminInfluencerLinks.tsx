@@ -213,6 +213,7 @@ const AdminInfluencerLinks = () => {
     setNewPct('');
     setNewNotes('');
     setSlugCheck('idle');
+    setSlugError(null);
   };
 
   const handleCreate = async () => {
