@@ -35,7 +35,7 @@ const SYSTEM_PROMPTS: Record<Kind, string> = {
 Rules:
 - Tone: professional, friendly, concise (2–4 sentences).
 - Never make commitments about pricing, schedules, gear lists, or instruction unless the context explicitly supports it.
-- TacLink does not issue cash refunds; any approved refund is in-app credit toward a future booking. Never promise cash back.
+- Approved refunds are returned in cash to the student's original payment method via Stripe within 48 hours. Never promise in-app credit — TacLink no longer uses an in-app credit system.
 - If it requires a refund, account change, or policy exception, draft the reply but mark risk_level "high".
 Return JSON via the propose_action tool.`,
   credential_verify: `You are reviewing an instructor credential upload. Based on the AI OCR/analysis context provided, recommend a status: "verified", "needs_more_info", or "rejected".
