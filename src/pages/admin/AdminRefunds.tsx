@@ -619,29 +619,55 @@ export const AdminRefunds = () => {
                   </button>
                 </div>
 
+                <div className="space-y-1">
+                  <Label className="text-xs">Reason category</Label>
+                  <Select value={reasonCategory} onValueChange={(v) => setReasonCategory(v as ReasonCategory)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(REASON_LABELS) as ReasonCategory[]).map((k) => (
+                        <SelectItem key={k} value={k}>{REASON_LABELS[k]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Auto-computed split preview */}
+                {!manualOverride && split && (
+                  <div className="rounded-md border border-border bg-muted/40 p-3 text-xs space-y-1">
+                    <div className="font-semibold text-sm">Computed split</div>
+                    <div>Student credit: <span className="font-mono">{fmt(split.student_credit_cents)}</span></div>
+                    <div>Instructor forfeit: <span className="font-mono">{fmt(split.instructor_forfeit_cents)}</span></div>
+                    <div>TacLink absorbs: <span className="font-mono">{fmt(split.platform_absorbed_cents)}</span></div>
+                    {split.requires_owner && (
+                      <div className="text-destructive font-medium">⚠ Owner review required for this reason</div>
+                    )}
+                    <div className="text-muted-foreground italic mt-1">{split.rationale}</div>
+                  </div>
+                )}
+                {!manualOverride && splitLoading && (
+                  <div className="text-xs text-muted-foreground">Computing split…</div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Credit type</Label>
-                    <Select value={type} onValueChange={(v) => onTypeChange(v as RefundType)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="platform_fee">Platform fee ($25)</SelectItem>
-                        <SelectItem value="deposit">Deposit (10%)</SelectItem>
-                        <SelectItem value="full">Full (online + deposit)</SelectItem>
-                        <SelectItem value="partial">Partial (custom amount)</SelectItem>
-                        <SelectItem value="goodwill">Goodwill credit</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-1 flex items-end">
+                    <label className="flex items-center gap-2 text-xs cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={manualOverride}
+                        onChange={(e) => setManualOverride(e.target.checked)}
+                      />
+                      Manual override (custom amount)
+                    </label>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Amount (USD)</Label>
                     <Input
                       type="number"
                       step="0.01"
-                      min="0.01"
+                      min="0"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
+                      disabled={!manualOverride}
                     />
                   </div>
                 </div>
