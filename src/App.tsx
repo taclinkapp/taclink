@@ -114,6 +114,7 @@ const App = () => (
             <Route path="/auth/instructor-signup" element={<InstructorSignUp />} />
             <Route path="/auth/credential-verification" element={<CredentialVerification />} />
             <Route path="/auth/invite/:code" element={<InviteLanding />}/>
+            <Route path="/i/:slug" element={<InfluencerLanding />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/auth/change-password" element={<Authed><ChangePassword /></Authed>} />
