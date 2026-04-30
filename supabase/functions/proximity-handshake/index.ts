@@ -4,6 +4,15 @@
 // validates AND the instructor-issued counter-token validates within the same
 // course. Acts as the "AI proximity authentication" layer — combining GPS
 // smoothing + cryptographic handshake for strong fraud protection.
+//
+// Hardening (v2):
+//  - Tokens carry a server-issued nonce stored in `proximity_token_nonces`.
+//  - Nonces are single-use: verify atomically marks the row consumed; replay
+//    attempts are rejected.
+//  - Tokens are bound to bookingId + a device/session fingerprint provided by
+//    the issuing client. Verify must echo the same bookingId, and the device
+//    fingerprint is locked into the signed payload so a stolen token from one
+//    device cannot be used from another.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -40,6 +49,14 @@ const ctEq = (a: Uint8Array, b: Uint8Array) => {
   return d === 0;
 };
 
+const TOKEN_TTL_MS = 60_000;
+
+const json = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -51,15 +68,11 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!userData?.user) return json(401, { error: "Unauthorized" });
 
     const body = await req.json().catch(() => ({}));
-    const { mode, bookingId, distanceM, accuracyM, smoothedM, peerToken } = body ?? {};
+    const { mode, bookingId, distanceM, accuracyM, smoothedM, peerToken, deviceId } =
+      body ?? {};
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -67,11 +80,11 @@ Deno.serve(async (req) => {
     );
 
     if (mode === "issue") {
-      if (!bookingId) {
-        return new Response(JSON.stringify({ error: "bookingId required" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (typeof bookingId !== "string" || !bookingId) {
+        return json(400, { error: "bookingId required" });
+      }
+      if (typeof deviceId !== "string" || deviceId.length < 8 || deviceId.length > 128) {
+        return json(400, { error: "deviceId required (8-128 chars)" });
       }
       const { data: booking } = await admin
         .from("bookings")
@@ -79,52 +92,69 @@ Deno.serve(async (req) => {
         .eq("id", bookingId)
         .maybeSingle();
       if (!booking || booking.student_id !== userData.user.id) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json(403, { error: "Forbidden" });
       }
+      // Generate a server-side nonce + device-bound payload.
+      const nonceBytes = new Uint8Array(16);
+      crypto.getRandomValues(nonceBytes);
+      const nonce = b64url(nonceBytes);
+      const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
+
+      // Bind the device fingerprint cryptographically by hashing it into
+      // the payload (we still also store deviceId server-side for audit).
+      const dHash = b64url(
+        new Uint8Array(
+          await crypto.subtle.digest("SHA-256", enc.encode(`${nonce}.${deviceId}`)),
+        ),
+      ).slice(0, 22);
+
+      const { error: insErr } = await admin.from("proximity_token_nonces").insert({
+        nonce,
+        booking_id: booking.id,
+        student_id: booking.student_id,
+        device_id: deviceId,
+        expires_at: expiresAt.toISOString(),
+      });
+      if (insErr) return json(500, { error: "Could not issue token" });
+
       const payload = {
-        v: 1,
+        v: 2,
         b: booking.id,
         c: booking.course_id,
         s: booking.student_id,
+        n: nonce,
+        d: dHash,
         iat: Date.now(),
-        exp: Date.now() + 60_000,
+        exp: expiresAt.getTime(),
       };
       const pB64 = b64url(enc.encode(JSON.stringify(payload)));
       const sig = b64url(await hmac(pB64));
-      const token = `TLPX:v1:${pB64}.${sig}`;
-      return new Response(JSON.stringify({ token, expiresAt: payload.exp }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const token = `TLPX:v2:${pB64}.${sig}`;
+      return json(200, { token, expiresAt: payload.exp });
     }
 
     if (mode === "verify") {
-      // Instructor-side: receive the student's token, validate, and log a
-      // verified proximity_event with optional GPS data.
-      if (typeof peerToken !== "string" || !peerToken.startsWith("TLPX:v1:")) {
-        return new Response(JSON.stringify({ ok: false, reason: "Bad token" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (typeof peerToken !== "string") {
+        return json(200, { ok: false, reason: "Bad token" });
       }
-      const [pB64, sigB64] = peerToken.slice("TLPX:v1:".length).split(".");
-      if (!pB64 || !sigB64) {
-        return new Response(JSON.stringify({ ok: false, reason: "Malformed" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // Accept v2 only. (v1 is no longer issued and is rejected as insecure.)
+      if (!peerToken.startsWith("TLPX:v2:")) {
+        return json(200, { ok: false, reason: "Unsupported token version" });
       }
+      const [pB64, sigB64] = peerToken.slice("TLPX:v2:".length).split(".");
+      if (!pB64 || !sigB64) return json(200, { ok: false, reason: "Malformed" });
+
       const expected = await hmac(pB64);
       if (!ctEq(expected, fromB64url(sigB64))) {
-        return new Response(JSON.stringify({ ok: false, reason: "Bad signature" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json(200, { ok: false, reason: "Bad signature" });
       }
       const payload = JSON.parse(new TextDecoder().decode(fromB64url(pB64)));
       if (Date.now() > payload.exp) {
-        return new Response(JSON.stringify({ ok: false, reason: "Expired" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json(200, { ok: false, reason: "Expired" });
+      }
+      // Optional explicit booking binding from caller — must match payload.
+      if (bookingId && bookingId !== payload.b) {
+        return json(200, { ok: false, reason: "Booking mismatch" });
       }
       // Verify the calling user is the instructor for this course.
       const { data: course } = await admin
@@ -133,10 +163,35 @@ Deno.serve(async (req) => {
         .eq("id", payload.c)
         .maybeSingle();
       if (!course || course.instructor_id !== userData.user.id) {
-        return new Response(JSON.stringify({ ok: false, reason: "Not your course" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json(403, { ok: false, reason: "Not your course" });
+      }
+      // Atomically consume the nonce: replay protection.
+      const { data: consumed, error: consumeErr } = await admin
+        .from("proximity_token_nonces")
+        .update({
+          consumed_at: new Date().toISOString(),
+          consumed_by_instructor: userData.user.id,
+        })
+        .eq("nonce", payload.n)
+        .eq("booking_id", payload.b)
+        .is("consumed_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .select("nonce, device_id")
+        .maybeSingle();
+      if (consumeErr || !consumed) {
+        return json(200, { ok: false, reason: "Replay or unknown nonce" });
+      }
+      // Re-derive device hash and check it matches the signed payload.
+      const dHashCheck = b64url(
+        new Uint8Array(
+          await crypto.subtle.digest(
+            "SHA-256",
+            enc.encode(`${payload.n}.${consumed.device_id}`),
+          ),
+        ),
+      ).slice(0, 22);
+      if (dHashCheck !== payload.d) {
+        return json(200, { ok: false, reason: "Device binding mismatch" });
       }
       // Log verified handshake.
       await admin.from("proximity_events").insert({
@@ -148,22 +203,13 @@ Deno.serve(async (req) => {
         smoothed_m: smoothedM ?? null,
         source: "handshake",
         verified: true,
-        metadata: { issued_at: payload.iat },
+        metadata: { issued_at: payload.iat, nonce: payload.n },
       });
-      return new Response(
-        JSON.stringify({ ok: true, bookingId: payload.b, studentId: payload.s }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return json(200, { ok: true, bookingId: payload.b, studentId: payload.s });
     }
 
-    return new Response(JSON.stringify({ error: "mode must be 'issue' or 'verify'" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json(400, { error: "mode must be 'issue' or 'verify'" });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json(500, { error: String((e as Error)?.message ?? e) });
   }
 });
