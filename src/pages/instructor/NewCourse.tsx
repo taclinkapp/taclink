@@ -538,69 +538,82 @@ const NewCourse = () => {
                 <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
               </div>
             </div>
-            {/* Free credit banner — auto-applied if available */}
-            {availableCredits > 0 && (
-              <div className="tactical-card border-success/40 bg-success/10 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">🎉</div>
-                  <div className="flex-1">
-                    <div className="text-xs uppercase tracking-wider font-bold text-success">Free Listing Credit</div>
-                    <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                      Your punch card credit will be auto-applied — <strong className="text-foreground">no listing fee</strong> for this course.
-                      You'll have <strong>{availableCredits - 1}</strong> credit{availableCredits - 1 === 1 ? '' : 's'} left after publishing.
+            {isPrelaunch ? (
+              <div className="tactical-card border-primary/40 bg-primary/10 p-4 space-y-2">
+                <div className="text-xs uppercase tracking-wider font-bold text-primary">Pre-launch mode</div>
+                <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  TacLink™ hasn't launched yet. You can finish this course and save it as a
+                  <strong className="text-foreground"> draft</strong> — the listing fee is <strong className="text-foreground">not</strong> charged
+                  during pre-launch, and your course will be publishable the moment we go live.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Free credit banner — auto-applied if available */}
+                {availableCredits > 0 && (
+                  <div className="tactical-card border-success/40 bg-success/10 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">🎉</div>
+                      <div className="flex-1">
+                        <div className="text-xs uppercase tracking-wider font-bold text-success">Free Listing Credit</div>
+                        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                          Your punch card credit will be auto-applied — <strong className="text-foreground">no listing fee</strong> for this course.
+                          You'll have <strong>{availableCredits - 1}</strong> credit{availableCredits - 1 === 1 ? '' : 's'} left after publishing.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Listing fee preview — non-refundable disclosure */}
+                <div className={cn(
+                  "tactical-card border-primary/40 bg-primary/10 p-4 space-y-3",
+                  availableCredits > 0 && "opacity-50"
+                )}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs uppercase tracking-wider font-bold">Instructor Booking Fee</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price · charged at publish</div>
+                    </div>
+                    <div className="text-2xl font-black text-primary">
+                      {availableCredits > 0 ? <span className="line-through text-muted-foreground">{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</span> : fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}
+                    </div>
+                  </div>
+                  <div className="border-t border-primary/20 pt-3 space-y-2 text-[11px] leading-relaxed text-muted-foreground">
+                    <p>
+                      When you tap <strong className="text-foreground">Publish</strong>, your card on file will be charged
+                      <strong className="text-foreground"> {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> ({Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0}).
+                    </p>
+                    <p className="text-destructive font-bold uppercase tracking-wider text-[10px]">
+                      ⚠ This fee is non-refundable.
+                    </p>
+                    <p>
+                      It will <strong className="text-foreground">not</strong> be returned if you cancel, edit, unpublish, or
+                      delete this course, or if no students book. It is the cost of listing your course on the platform.
                     </p>
                   </div>
+                  <label className="flex items-start gap-2 pt-2 border-t border-primary/20 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={feeAck}
+                      onChange={(e) => setFeeAck(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-primary shrink-0"
+                    />
+                    <span className="text-[11px] leading-relaxed">
+                      I understand the <strong>{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> listing fee is <strong className="text-destructive">non-refundable</strong> and will be charged immediately when I publish{availableCredits > 0 ? ' (waived this time by your free credit)' : ''}.
+                    </span>
+                  </label>
                 </div>
-              </div>
-            )}
-            {/* Listing fee preview — non-refundable disclosure */}
-            <div className={cn(
-              "tactical-card border-primary/40 bg-primary/10 p-4 space-y-3",
-              availableCredits > 0 && "opacity-50"
-            )}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs uppercase tracking-wider font-bold">Instructor Booking Fee</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price · charged at publish</div>
+                <div className="tactical-card border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs">
+                  <Check className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-muted-foreground">Publishing makes this course visible to students immediately.</span>
                 </div>
-                <div className="text-2xl font-black text-primary">
-                  {availableCredits > 0 ? <span className="line-through text-muted-foreground">{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</span> : fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}
-                </div>
-              </div>
-              <div className="border-t border-primary/20 pt-3 space-y-2 text-[11px] leading-relaxed text-muted-foreground">
-                <p>
-                  When you tap <strong className="text-foreground">Publish</strong>, your card on file will be charged
-                  <strong className="text-foreground"> {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> ({Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0}).
-                </p>
-                <p className="text-destructive font-bold uppercase tracking-wider text-[10px]">
-                  ⚠ This fee is non-refundable.
-                </p>
-                <p>
-                  It will <strong className="text-foreground">not</strong> be returned if you cancel, edit, unpublish, or
-                  delete this course, or if no students book. It is the cost of listing your course on the platform.
-                </p>
-              </div>
-              <label className="flex items-start gap-2 pt-2 border-t border-primary/20 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={feeAck}
-                  onChange={(e) => setFeeAck(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-primary shrink-0"
-                />
-                <span className="text-[11px] leading-relaxed">
-                  I understand the <strong>{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> listing fee is <strong className="text-destructive">non-refundable</strong> and will be charged immediately when I publish{availableCredits > 0 ? ' (waived this time by your free credit)' : ''}.
-                </span>
-              </label>
-            </div>
-            <div className="tactical-card border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs">
-              <Check className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-muted-foreground">Publishing makes this course visible to students immediately.</span>
-            </div>
-            {!hasPM && (
-              <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
-                <div className="font-bold text-destructive">Required to publish:</div>
-                <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
-              </div>
+                {!hasPM && (
+                  <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
+                    <div className="font-bold text-destructive">Required to publish:</div>
+                    <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
