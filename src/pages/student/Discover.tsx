@@ -234,7 +234,7 @@ const Discover = () => {
               <List className="h-3.5 w-3.5" /> List
             </button>
             <button onClick={() => setView('map')} className={cn('px-3 h-8 flex items-center gap-1.5 text-xs font-semibold', view === 'map' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
-              <Map className="h-3.5 w-3.5" /> Map
+              <MapIcon className="h-3.5 w-3.5" /> Map
             </button>
           </div>
         </div>
@@ -270,7 +270,7 @@ const Discover = () => {
               onClick={() => setView('map')}
               className="w-full"
             >
-              <Map className="h-3.5 w-3.5" /> Show map for {selectedLocation.label}
+              <MapIcon className="h-3.5 w-3.5" /> Show map for {selectedLocation.label}
             </Button>
           )}
           {isLoading ? (
