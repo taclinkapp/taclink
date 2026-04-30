@@ -14,6 +14,8 @@ import { QrScanner } from '@/components/QrScanner';
 import { parseCheckinPayload, looksLikeSignedToken, PROXIMITY_TRIGGER_METERS } from '@/lib/qrCheckin';
 import { useProximity } from '@/hooks/useProximity';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
