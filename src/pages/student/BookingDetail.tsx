@@ -130,6 +130,51 @@ const BookingDetail = () => {
     return () => clearTimeout(t);
   }, [b, tokenExpiresAt]);
 
+  const [cancelling, setCancelling] = useState(false);
+  const [reportingNoShow, setReportingNoShow] = useState(false);
+
+  const cancelBooking = async () => {
+    if (!b) return;
+    const inGrace = !!cancelDeadline(c?.starts_at ?? null, b.booked_at, b.cancellation_cutoff_hours);
+    const msg = inGrace
+      ? 'Cancel this booking?\n\nYou are within your grace window — you will receive a 100% refund ($25 platform fee + full course price) to your card within 48 hours.'
+      : 'Cancel this booking?\n\nYou are past your grace window. You will receive 90% of the course price back. The instructor keeps 10% as compensation for the lost slot, and the $25 platform fee is non-refundable.\n\nThis cannot be undone.';
+    if (!window.confirm(msg)) return;
+    setCancelling(true);
+    const { data, error } = await supabase.rpc('student_cancel_booking', { _booking_id: b.id });
+    setCancelling(false);
+    if (error) {
+      toast.error('Could not cancel booking', { description: error.message });
+      return;
+    }
+    const refund = (data as any)?.student_refund_cents ?? 0;
+    toast.success('Booking cancelled', {
+      description: `Refund of $${(refund / 100).toFixed(2)} on the way to your card.`,
+    });
+    reload();
+  };
+
+  const reportInstructorNoShow = async () => {
+    if (!b) return;
+    if (!window.confirm(
+      'Report that the instructor did not show up?\n\n' +
+      'This will cancel your booking, refund you 100% (course price + $25 fee), ' +
+      'and add a strike to the instructor\'s account. Only use this if the instructor truly did not appear.',
+    )) return;
+    setReportingNoShow(true);
+    const { data, error } = await supabase.rpc('instructor_no_show_refund', { _booking_id: b.id });
+    setReportingNoShow(false);
+    if (error) {
+      toast.error('Could not file report', { description: error.message });
+      return;
+    }
+    const refund = (data as any)?.student_refund_cents ?? 0;
+    toast.success('Report filed — full refund issued', {
+      description: `$${(refund / 100).toFixed(2)} on the way to your card.`,
+    });
+    reload();
+  };
+
   if (loading) {
     return (
       <MobileShell withTabBar={false}>
@@ -153,6 +198,9 @@ const BookingDetail = () => {
   const upcoming = b.status === 'reserved';
   const attended = b.status === 'attended';
   const dueInPerson = b.due_in_person_cents > 0 && !b.in_person_paid_at;
+  const courseStarted =
+    !!c.starts_at && new Date(c.starts_at).getTime() < Date.now();
+  const inGraceWindow = !!cancelDeadline(c.starts_at, b.booked_at, b.cancellation_cutoff_hours);
 
   return (
     <MobileShell withTabBar={false}>
