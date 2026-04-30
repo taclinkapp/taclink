@@ -522,6 +522,51 @@ const AdminInfluencerLinks = () => {
               </div>
             </TabsContent>
           </Tabs>
+
+          {/* Live payout preview */}
+          <div className="mt-5 rounded-md border border-dashed border-border bg-muted/30 p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Sample booking amount</Label>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className="text-sm text-muted-foreground">$</span>
+                  <Input
+                    type="number" min={0} step={1}
+                    value={previewBookingDollars}
+                    onChange={(e) => setPreviewBookingDollars(Math.max(0, Number(e.target.value) || 0))}
+                    className="bg-background border-border h-10 w-28"
+                  />
+                </div>
+              </div>
+              <div className="flex-1 min-w-[200px] grid grid-cols-2 gap-3">
+                <div className="rounded bg-background border border-border px-3 py-2">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">First-booking payout</div>
+                  <div className="font-bold text-foreground">
+                    ${(previewBookingDollars * (defaultFirstPct / 100)).toFixed(2)}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">{defaultFirstPct}% of ${previewBookingDollars.toFixed(2)}</div>
+                </div>
+                <div className="rounded bg-background border border-border px-3 py-2">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Recurring payout (per booking)</div>
+                  {defaultRecurringPct > 0 ? (
+                    <>
+                      <div className="font-bold text-foreground">
+                        ${(previewBookingDollars * (defaultRecurringPct / 100)).toFixed(2)}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {defaultRecurringPct}% · within {defaultWindowDays}d of signup
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="font-bold text-muted-foreground">$0.00</div>
+                      <div className="text-[10px] text-muted-foreground">Recurring disabled</div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Links table */}
