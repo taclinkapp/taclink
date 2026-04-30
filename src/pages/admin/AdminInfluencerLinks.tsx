@@ -1115,7 +1115,16 @@ const AdminInfluencerLinks = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button onClick={handleSaveEdit} className="bg-primary text-primary-foreground font-bold">Save changes</Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={
+                !!editing &&
+                editing.recurring_window_days !== null &&
+                editing.recurring_window_days !== undefined &&
+                (Number.isNaN(editing.recurring_window_days) || editing.recurring_window_days < 1 || editing.recurring_window_days > 3650)
+              }
+              className="bg-primary text-primary-foreground font-bold"
+            >Save changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
