@@ -16,6 +16,7 @@ import { useProximity } from '@/hooks/useProximity';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
+import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
@@ -32,6 +33,8 @@ const CourseManagement = () => {
   // proximity must then confirm in-range before the row is marked attended.
   const [pending, setPending] = useState<{ bookingId: string; scannedAt: number } | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  // Last scan outcome — drives the user-friendly retry dialog.
+  const [scanOutcome, setScanOutcome] = useState<ScanOutcome | null>(null);
   const PENDING_TTL_MS = 60_000;
   const qc = useQueryClient();
 
