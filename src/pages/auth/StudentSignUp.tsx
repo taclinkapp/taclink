@@ -54,6 +54,7 @@ const StudentSignUp = () => {
           display_name: `${first} ${last}`.trim(),
           role: 'student',
           ...(referralCode ? { referral_code: referralCode } : {}),
+          ...(influencerSlug ? { influencer_slug: influencerSlug } : {}),
         },
       },
     });
