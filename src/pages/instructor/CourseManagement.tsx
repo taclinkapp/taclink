@@ -240,7 +240,7 @@ const CourseManagement = () => {
         })()}
 
         {/* Final-step instructor cancellation */}
-        {c.status !== 'cancelled' && (
+        {(c.status as string) !== 'cancelled' && (
           <div className="tactical-card border-destructive/40 bg-destructive/5 p-3 mb-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
