@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Sparkles, Loader2, Save, Eye, Printer, FileText } from 'lucide-react';
+import { Sparkles, Loader2, Save, Eye, Printer, FileText, AlertTriangle, Scale } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { generateCourseWaiver } from '@/lib/courseAI';
@@ -212,6 +212,27 @@ export const CourseWaiverDialog = ({ open, onOpenChange, courseId }: Props) => {
             <div className="text-center py-12 text-muted-foreground text-sm"><Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />Loading…</div>
           ) : tab === 'edit' ? (
             <div className="space-y-3">
+              {/* Prominent legal disclaimer */}
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
+                <div className="flex items-start gap-2 mb-1">
+                  <Scale className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-500">
+                    Not Legal Advice
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  AI-generated waivers are <strong className="text-foreground">a starting draft only</strong> and do not constitute legal advice. Liability law varies by state and by training discipline. Before publishing, you must:
+                </p>
+                <ul className="mt-1.5 ml-4 text-[11px] text-muted-foreground list-disc space-y-0.5">
+                  <li>Have this waiver reviewed by a <strong className="text-foreground">licensed attorney in your state</strong>.</li>
+                  <li>Confirm it complies with local statutes on assumption of risk and minors.</li>
+                  <li>Verify your insurance carrier accepts the language used.</li>
+                </ul>
+                <p className="mt-2 text-[10px] text-muted-foreground italic">
+                  TacLink is the record-keeper for the signed waiver — the agreement itself is between you (the instructor) and the student. TacLink is not a party to the waiver and assumes no liability for its content or enforceability.
+                </p>
+              </div>
+
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">Title</Label>
                 <input
@@ -235,8 +256,9 @@ export const CourseWaiverDialog = ({ open, onOpenChange, courseId }: Props) => {
                   placeholder="Click 'Generate with AI' to draft a waiver, then edit it here…"
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground italic">
-                AI-generated waivers are starting drafts. Review with qualified counsel before publishing.
+              <p className="text-[11px] text-muted-foreground italic flex items-start gap-1.5">
+                <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0 text-amber-600" />
+                By publishing, you confirm you have reviewed (or had counsel review) this waiver and accept full responsibility for its content.
               </p>
             </div>
           ) : tab === 'preview' ? (
