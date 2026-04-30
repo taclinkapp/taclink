@@ -949,6 +949,50 @@ export type Database = {
         }
         Relationships: []
       }
+      influencer_commission_pct_audit: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          effective_at: string
+          id: string
+          link_id: string | null
+          new_pct: number | null
+          old_pct: number | null
+          reason: string | null
+          scope: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          effective_at?: string
+          id?: string
+          link_id?: string | null
+          new_pct?: number | null
+          old_pct?: number | null
+          reason?: string | null
+          scope: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          effective_at?: string
+          id?: string
+          link_id?: string | null
+          new_pct?: number | null
+          old_pct?: number | null
+          reason?: string | null
+          scope?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_commission_pct_audit_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       influencer_commissions: {
         Row: {
           amount_cents: number
@@ -1002,6 +1046,50 @@ export type Database = {
             columns: ["signup_id"]
             isOneToOne: false
             referencedRelation: "influencer_link_signups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_link_redirect_log: {
+        Row: {
+          audience_on_link: string | null
+          created_at: string
+          detected_role: string | null
+          id: string
+          link_id: string | null
+          outcome: string
+          slug: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          audience_on_link?: string | null
+          created_at?: string
+          detected_role?: string | null
+          id?: string
+          link_id?: string | null
+          outcome: string
+          slug: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          audience_on_link?: string | null
+          created_at?: string
+          detected_role?: string | null
+          id?: string
+          link_id?: string | null
+          outcome?: string
+          slug?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_link_redirect_log_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links"
             referencedColumns: ["id"]
           },
         ]
@@ -2227,6 +2315,10 @@ export type Database = {
       instructor_no_show_refund: {
         Args: { _booking_id: string; _reason?: string }
         Returns: Json
+      }
+      is_influencer_slug_available: {
+        Args: { _slug: string }
+        Returns: boolean
       }
       list_due_attendance_claims: {
         Args: never

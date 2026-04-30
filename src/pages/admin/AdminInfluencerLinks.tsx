@@ -8,10 +8,11 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, Download, Plus, QrCode, Loader2, Pencil } from 'lucide-react';
+import { Copy, Download, Plus, QrCode, Loader2, Pencil, History, Receipt, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { buildInfluencerUrl } from '@/lib/influencer';
+import { format } from 'date-fns';
 
 type Audience = 'student' | 'instructor' | 'both';
 
@@ -63,6 +64,32 @@ const downloadQrPng = (slug: string, displayName: string) => {
   toast.success(`QR for ${displayName} downloaded`);
 };
 
+type PctAuditRow = {
+  id: string;
+  scope: 'link' | 'global_default';
+  link_id: string | null;
+  old_pct: number | null;
+  new_pct: number | null;
+  changed_by: string | null;
+  reason: string | null;
+  effective_at: string;
+};
+
+type CommissionRow = {
+  id: string;
+  link_id: string;
+  user_id: string;
+  booking_id: string;
+  course_price_cents: number;
+  pct_at_time: number;
+  amount_cents: number;
+  status: 'accrued' | 'paid' | 'void';
+  created_at: string;
+  updated_at: string;
+};
+
+type SlugCheck = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+
 const AdminInfluencerLinks = () => {
   const [links, setLinks] = useState<InfluencerLink[]>([]);
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
@@ -72,6 +99,9 @@ const AdminInfluencerLinks = () => {
   const [editing, setEditing] = useState<InfluencerLink | null>(null);
   const [qrFor, setQrFor] = useState<InfluencerLink | null>(null);
 
+  const [pctAudit, setPctAudit] = useState<PctAuditRow[]>([]);
+  const [commissions, setCommissions] = useState<CommissionRow[]>([]);
+
   const [newName, setNewName] = useState('');
   const [newHandle, setNewHandle] = useState('');
   const [newEmail, setNewEmail] = useState('');
@@ -79,13 +109,30 @@ const AdminInfluencerLinks = () => {
   const [newAudience, setNewAudience] = useState<Audience>('both');
   const [newPct, setNewPct] = useState<string>('');
   const [newNotes, setNewNotes] = useState('');
+  const [slugCheck, setSlugCheck] = useState<SlugCheck>('idle');
 
   const refresh = async () => {
     setLoading(true);
-    const [{ data: linkRows }, { data: signupRows }, { data: setting }] = await Promise.all([
+    const [
+      { data: linkRows },
+      { data: signupRows },
+      { data: setting },
+      { data: auditRows },
+      { data: commissionRows },
+    ] = await Promise.all([
       supabase.from('influencer_links').select('*').order('created_at', { ascending: false }),
       supabase.from('influencer_link_signups').select('link_id'),
       supabase.from('platform_settings').select('value').eq('key', 'default_influencer_commission_pct').maybeSingle(),
+      supabase
+        .from('influencer_commission_pct_audit')
+        .select('*')
+        .order('effective_at', { ascending: false })
+        .limit(50),
+      supabase
+        .from('influencer_commissions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100),
     ]);
     setLinks((linkRows as InfluencerLink[]) ?? []);
     const counts: Record<string, number> = {};
@@ -97,12 +144,37 @@ const AdminInfluencerLinks = () => {
       const n = Number(setting.value);
       if (!Number.isNaN(n)) setDefaultPct(n);
     }
+    setPctAudit((auditRows as PctAuditRow[]) ?? []);
+    setCommissions((commissionRows as CommissionRow[]) ?? []);
     setLoading(false);
   };
 
   useEffect(() => {
     refresh();
   }, []);
+
+  // Live slug availability check (debounced)
+  const previewSlug = useMemo(
+    () => slugify(newSlug || newHandle || newName),
+    [newSlug, newHandle, newName],
+  );
+  useEffect(() => {
+    if (!creating) return;
+    if (!previewSlug) {
+      setSlugCheck('invalid');
+      return;
+    }
+    setSlugCheck('checking');
+    const t = setTimeout(async () => {
+      const { data, error } = await supabase.rpc('is_influencer_slug_available', { _slug: previewSlug });
+      if (error) {
+        setSlugCheck('idle');
+        return;
+      }
+      setSlugCheck(data === true ? 'available' : 'taken');
+    }, 350);
+    return () => clearTimeout(t);
+  }, [previewSlug, creating]);
 
   const resetCreateForm = () => {
     setNewName('');
@@ -112,6 +184,7 @@ const AdminInfluencerLinks = () => {
     setNewAudience('both');
     setNewPct('');
     setNewNotes('');
+    setSlugCheck('idle');
   };
 
   const handleCreate = async () => {
@@ -119,9 +192,16 @@ const AdminInfluencerLinks = () => {
     if (!name) return toast.error('Influencer name is required');
     const slug = slugify(newSlug || newHandle || name);
     if (!slug) return toast.error('Could not build a slug — add a name or handle');
+    if (slugCheck === 'taken') return toast.error(`Slug "${slug}" is already in use`);
     const pct = newPct.trim() === '' ? null : Number(newPct);
     if (pct !== null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
       return toast.error('Commission % must be between 0 and 100');
+    }
+    // Final pre-flight check (race-safe — DB unique constraint is the real guard).
+    const { data: available } = await supabase.rpc('is_influencer_slug_available', { _slug: slug });
+    if (available === false) {
+      setSlugCheck('taken');
+      return toast.error(`Slug "${slug}" is already in use`);
     }
     const { error } = await supabase.from('influencer_links').insert({
       slug,
@@ -133,7 +213,9 @@ const AdminInfluencerLinks = () => {
       notes: newNotes.trim() || null,
     });
     if (error) {
-      toast.error(error.message.includes('duplicate') ? `Slug "${slug}" is already taken` : error.message);
+      const dup = error.message.toLowerCase().includes('duplicate') || error.code === '23505';
+      toast.error(dup ? `Slug "${slug}" is already in use` : error.message);
+      if (dup) setSlugCheck('taken');
       return;
     }
     toast.success(`Link /i/${slug} created`);
@@ -191,11 +273,43 @@ const AdminInfluencerLinks = () => {
     if (error) return toast.error(error.message);
     toast.success(`Default commission set to ${value}%`);
     setDefaultPct(value);
+    refresh();
   };
+
+  const handleUpdateCommissionStatus = async (id: string, status: 'paid' | 'void' | 'accrued') => {
+    const { error } = await supabase
+      .from('influencer_commissions')
+      .update({ status })
+      .eq('id', id);
+    if (error) return toast.error(error.message);
+    toast.success(`Commission marked ${status}`);
+    refresh();
+  };
+
+  const linkNameById = useMemo(() => {
+    const m: Record<string, string> = {};
+    links.forEach((l) => { m[l.id] = l.influencer_name; });
+    return m;
+  }, [links]);
+
+  const linkSlugById = useMemo(() => {
+    const m: Record<string, string> = {};
+    links.forEach((l) => { m[l.id] = l.slug; });
+    return m;
+  }, [links]);
 
   const totalSignups = useMemo(
     () => Object.values(signupCounts).reduce((a, b) => a + b, 0),
     [signupCounts],
+  );
+
+  const totalAccruedCents = useMemo(
+    () => commissions.filter((c) => c.status === 'accrued').reduce((s, c) => s + c.amount_cents, 0),
+    [commissions],
+  );
+  const totalPaidCents = useMemo(
+    () => commissions.filter((c) => c.status === 'paid').reduce((s, c) => s + c.amount_cents, 0),
+    [commissions],
   );
 
   return (
@@ -344,6 +458,155 @@ const AdminInfluencerLinks = () => {
             </table>
           )}
         </div>
+
+        {/* Commission accrual history */}
+        <div className="tactical-card">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5 pb-3">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-primary" />
+              <h2 className="font-bold">Commission accruals</h2>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Accrued <span className="font-bold text-foreground">${(totalAccruedCents / 100).toFixed(2)}</span>
+              {' · '}
+              Paid <span className="font-bold text-foreground">${(totalPaidCents / 100).toFixed(2)}</span>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            {commissions.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                No commissions yet. They appear automatically when an attributed booking is marked attended.
+              </div>
+            ) : (
+              <table className="w-full min-w-[760px] text-sm">
+                <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-bold">Influencer</th>
+                    <th className="text-left px-4 py-3 font-bold">Booking</th>
+                    <th className="text-left px-4 py-3 font-bold">Course price</th>
+                    <th className="text-left px-4 py-3 font-bold">% at time</th>
+                    <th className="text-left px-4 py-3 font-bold">Amount</th>
+                    <th className="text-left px-4 py-3 font-bold">Status</th>
+                    <th className="text-left px-4 py-3 font-bold">Accrued</th>
+                    <th className="text-left px-4 py-3 font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {commissions.map((c) => (
+                    <tr key={c.id} className="hover:bg-muted/30 align-top">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">{linkNameById[c.link_id] ?? '—'}</div>
+                        <div className="text-[11px] text-muted-foreground">/i/{linkSlugById[c.link_id] ?? '—'}</div>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[11px]">{c.booking_id.slice(0, 8)}…</td>
+                      <td className="px-4 py-3">${(c.course_price_cents / 100).toFixed(2)}</td>
+                      <td className="px-4 py-3">{Number(c.pct_at_time)}%</td>
+                      <td className="px-4 py-3 font-bold">${(c.amount_cents / 100).toFixed(2)}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-[10px] uppercase tracking-wider font-bold ${
+                            c.status === 'paid' ? 'text-success' : c.status === 'void' ? 'text-muted-foreground' : 'text-primary'
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {format(new Date(c.created_at), 'MMM d, yyyy h:mm a')}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.status !== 'paid' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              onClick={() => handleUpdateCommissionStatus(c.id, 'paid')}
+                            >
+                              <CheckCircle2 className="h-3 w-3 mr-1" /> Mark paid
+                            </Button>
+                          )}
+                          {c.status !== 'void' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs text-destructive"
+                              onClick={() => handleUpdateCommissionStatus(c.id, 'void')}
+                            >
+                              <XCircle className="h-3 w-3 mr-1" /> Void
+                            </Button>
+                          )}
+                          {c.status !== 'accrued' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs"
+                              onClick={() => handleUpdateCommissionStatus(c.id, 'accrued')}
+                            >
+                              Reset
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* Commission % audit log */}
+        <div className="tactical-card">
+          <div className="flex items-center gap-2 px-5 pt-5 pb-3">
+            <History className="h-4 w-4 text-primary" />
+            <h2 className="font-bold">Commission % change history</h2>
+          </div>
+          <div className="overflow-x-auto">
+            {pctAudit.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                No commission rate changes recorded yet.
+              </div>
+            ) : (
+              <table className="w-full min-w-[640px] text-sm">
+                <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-bold">Scope</th>
+                    <th className="text-left px-4 py-3 font-bold">Target</th>
+                    <th className="text-left px-4 py-3 font-bold">Old %</th>
+                    <th className="text-left px-4 py-3 font-bold">New %</th>
+                    <th className="text-left px-4 py-3 font-bold">Effective</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {pctAudit.map((row) => (
+                    <tr key={row.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-primary">
+                          {row.scope === 'global_default' ? 'Global default' : 'Per-link'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {row.scope === 'link' && row.link_id
+                          ? `${linkNameById[row.link_id] ?? 'Deleted link'} (/i/${linkSlugById[row.link_id] ?? '—'})`
+                          : 'Platform default'}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {row.old_pct === null ? '—' : `${Number(row.old_pct)}%`}
+                      </td>
+                      <td className="px-4 py-3 font-bold">
+                        {row.new_pct === null ? 'unset' : `${Number(row.new_pct)}%`}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {format(new Date(row.effective_at), 'MMM d, yyyy h:mm a')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Create dialog */}
@@ -373,10 +636,26 @@ const AdminInfluencerLinks = () => {
                 value={newSlug}
                 onChange={(e) => setNewSlug(e.target.value)}
                 placeholder={slugify(newHandle || newName) || 'auto'}
-                className="bg-background border-border h-11 mt-1.5 font-mono"
+                className={`bg-background h-11 mt-1.5 font-mono ${
+                  slugCheck === 'taken'
+                    ? 'border-destructive focus-visible:ring-destructive'
+                    : slugCheck === 'available'
+                    ? 'border-success'
+                    : 'border-border'
+                }`}
               />
-              <p className="text-[11px] text-muted-foreground mt-1">
-                URL: <code>/i/{slugify(newSlug || newHandle || newName) || 'slug'}</code>
+              <p className="text-[11px] mt-1 flex items-center gap-1.5">
+                <span className="text-muted-foreground">URL:</span>
+                <code>/i/{previewSlug || 'slug'}</code>
+                {previewSlug && slugCheck === 'checking' && (
+                  <span className="text-muted-foreground">· checking…</span>
+                )}
+                {previewSlug && slugCheck === 'available' && (
+                  <span className="text-success font-bold">· available</span>
+                )}
+                {previewSlug && slugCheck === 'taken' && (
+                  <span className="text-destructive font-bold">· already in use</span>
+                )}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -414,7 +693,13 @@ const AdminInfluencerLinks = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setCreating(false); resetCreateForm(); }}>Cancel</Button>
-            <Button onClick={handleCreate} className="bg-primary text-primary-foreground font-bold">Create link</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={slugCheck === 'taken' || slugCheck === 'checking' || !newName.trim()}
+              className="bg-primary text-primary-foreground font-bold"
+            >
+              Create link
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
