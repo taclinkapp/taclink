@@ -344,6 +344,81 @@ const Checkout = () => {
                 <ShieldCheck className="h-3 w-3" /> Your signature is recorded with a timestamped snapshot of this waiver.
               </p>
             </div>
+
+            {/* ESIGN / UETA explicit consent */}
+            <div className="mt-4 rounded-md border border-border bg-background p-3 space-y-2">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                Electronic Signature Consent (ESIGN / UETA)
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Under the federal ESIGN Act and the Uniform Electronic Transactions Act (UETA), you have the right to receive and sign this waiver on paper instead of electronically. By checking the box below and typing your initials, you (a) consent to use an electronic signature, (b) agree the electronic record has the same legal effect as a handwritten signature, (c) confirm you have the hardware and software needed to access and retain a copy (a modern web browser and email), and (d) understand you may withdraw consent at any time before signing by closing this page. A copy of this signed waiver will be available in your account and emailed to you.
+              </p>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox checked={esignConsent} onCheckedChange={(v) => setEsignConsent(!!v)} className="mt-0.5" />
+                <span className="text-[11px] text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">I intend to sign electronically</strong> and consent to the ESIGN/UETA disclosures above.
+                </span>
+              </label>
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Type your initials</Label>
+                <Input
+                  value={esignInitials}
+                  onChange={(e) => setEsignInitials(e.target.value.toUpperCase().slice(0, 6))}
+                  placeholder="e.g. JD"
+                  maxLength={6}
+                  className="bg-card border-border h-9 mt-1 font-mono text-sm uppercase tracking-widest w-32"
+                />
+              </div>
+            </div>
+
+            {/* Minor / parent-or-guardian co-signature */}
+            <div className="mt-4 rounded-md border border-border bg-background p-3 space-y-2">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox checked={isMinor} onCheckedChange={(v) => setIsMinor(!!v)} className="mt-0.5" />
+                <span className="text-[11px] text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">The student is under 18 years of age.</strong> A parent or legal guardian must co-sign.
+                </span>
+              </label>
+
+              {isMinor && (
+                <div className="pt-2 mt-2 border-t border-border space-y-3">
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Student date of birth</Label>
+                    <Input
+                      type="date"
+                      value={studentDob}
+                      onChange={(e) => setStudentDob(e.target.value)}
+                      className="bg-card border-border h-9 mt-1 text-sm"
+                      max={new Date().toISOString().slice(0, 10)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Parent/guardian full legal name</Label>
+                    <Input
+                      value={guardianName}
+                      onChange={(e) => setGuardianName(e.target.value)}
+                      placeholder="Parent or legal guardian"
+                      className="bg-card border-border h-11 mt-1 font-serif italic text-base"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Relationship to student</Label>
+                    <Input
+                      value={guardianRelationship}
+                      onChange={(e) => setGuardianRelationship(e.target.value)}
+                      placeholder="e.g. Mother, Father, Legal Guardian"
+                      className="bg-card border-border h-9 mt-1 text-sm"
+                    />
+                  </div>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <Checkbox checked={guardianConsent} onCheckedChange={(v) => setGuardianConsent(!!v)} className="mt-0.5" />
+                    <span className="text-[11px] text-muted-foreground leading-relaxed">
+                      <strong className="text-foreground">As the parent or legal guardian</strong>, I have read this waiver, accept its terms on behalf of the minor student, and authorize their participation in this training.
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="tactical-card p-4 text-xs text-muted-foreground">
