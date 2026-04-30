@@ -113,7 +113,7 @@ const Checkout = () => {
           deposit_status: 'pending_payment',
           deposit_amount_cents: fees.instructorDepositCents,
         })
-        .select('id')
+        .select('id, booked_at, cancellation_cutoff_hours')
         .single();
       if (bErr) throw bErr;
 
