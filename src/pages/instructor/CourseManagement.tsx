@@ -59,12 +59,31 @@ const CourseManagement = () => {
       toast.info('Already checked in.');
       return;
     }
-    const { error } = await supabase
+    if (existing.status === 'cancelled' || existing.status === 'no_show') {
+      toast.error(`Cannot check in — booking is ${existing.status}.`);
+      return;
+    }
+    // Atomic guard: only flip 'reserved' → 'attended'. If another scan got here
+    // first the row will already be 'attended' and the conditional update
+    // returns 0 rows, which we treat as a benign double-scan.
+    // Ordering note: attended_at is the column release-escrow-deposits filters on,
+    // so attendance MUST commit before any payout eligibility update. The release
+    // job also runs on a 24h delay, so there is no race with payout dispatch.
+    const { data: updated, error } = await supabase
       .from('bookings')
       .update({ status: 'attended', attended_at: new Date().toISOString() })
-      .eq('id', bookingId);
+      .eq('id', bookingId)
+      .eq('status', 'reserved')
+      .is('attended_at', null)
+      .select('id')
+      .maybeSingle();
     if (error) {
       toast.error(error.message);
+      return;
+    }
+    if (!updated) {
+      toast.info('Already checked in.');
+      qc.invalidateQueries({ queryKey: ['course_bookings', id] });
       return;
     }
     const label =
