@@ -39,8 +39,8 @@ const FAQS: { category: string; items: Faq[] }[] = [
       },
       {
         q: 'Can I cancel a booking?',
-        a: 'Open **My Bookings → [course] → Cancel**. Any booking-fee refund TacLink issues will be provided as **in-app credit** you can apply to a future course — we do not issue cash refunds for booking fees. Anything paid in person to the instructor is between you and them.',
-        tags: ['booking', 'refund', 'credit'],
+        a: 'Open **My Bookings → [course] → Cancel**. Your refund window is tiered by how far in advance you booked: **72h** if booked 7+ days out, **48h** if 3–7 days out, **24h** if 1–3 days out, and **none** if booked under 24h before the course. Cancel within your window for a full cash refund (platform fee + 10% deposit). See the full [cancellation policy](/legal/cancellations).',
+        tags: ['booking', 'refund', 'cancel', 'grace'],
       },
       {
         q: 'How does the waitlist work?',

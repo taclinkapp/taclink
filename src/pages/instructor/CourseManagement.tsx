@@ -249,9 +249,20 @@ const CourseManagement = () => {
                   Cancel this course
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
-                  Cancel <strong>48+ hours</strong> before start to get your deposit back.
-                  Cancelling later refunds students in full and <strong>forfeits your deposit</strong>.
+                  Students always get a full refund (platform fee + deposit) when you cancel.
+                  Your outcome depends on timing:
                 </p>
+                <ul className="text-[10px] text-muted-foreground leading-relaxed mt-1 ml-3 list-disc space-y-0.5">
+                  <li>
+                    <strong className="text-success">48+ hours before start:</strong> your deposit is released back to you. No strike.
+                  </li>
+                  <li>
+                    <strong className="text-destructive">Less than 48 hours before start:</strong> you forfeit your deposit on every booking and receive 1 strike.
+                  </li>
+                </ul>
+                <a href="/legal/cancellations" className="text-[10px] text-primary underline mt-1 inline-block">
+                  See full cancellation policy
+                </a>
                 <Button
                   variant="destructive"
                   size="sm"

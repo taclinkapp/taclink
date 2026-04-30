@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Notifications from "./pages/Notifications";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import CancellationsFAQ from "./pages/legal/CancellationsFAQ";
 import EditProfile from "./pages/EditProfile";
 import HelpCenter from "./pages/support/HelpCenter";
 import ContactSupport from "./pages/support/ContactSupport";
@@ -182,6 +183,7 @@ const App = () => (
             <Route path="/notifications" element={<Authed><Notifications /></Authed>} />
             <Route path="/legal/terms" element={<TermsOfService />} />
             <Route path="/legal/privacy" element={<PrivacyPolicy />} />
+            <Route path="/legal/cancellations" element={<CancellationsFAQ />} />
             <Route path="/profile/edit" element={<Authed><EditProfile /></Authed>} />
             <Route path="/support" element={<Authed><HelpCenter /></Authed>} />
             <Route path="/support/contact" element={<Authed><ContactSupport /></Authed>} />

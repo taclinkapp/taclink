@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MobileShell } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Calendar, MapPin, Clock, FileText, ShieldCheck, Loader2 } from 'lucide-react';
+import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
 
 type Course = {
   id: string;
@@ -34,6 +35,8 @@ const BookingSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [bookedAt, setBookedAt] = useState<string | null>(null);
+  const [cutoffHours, setCutoffHours] = useState<number | null>(null);
   const [signature, setSignature] = useState<Signature | null>(null);
 
   useEffect(() => {
@@ -48,17 +51,21 @@ const BookingSuccess = () => {
         .maybeSingle();
 
       let bId: string | null = null;
+      let bAt: string | null = null;
+      let cutoff: number | null = null;
       let sig: Signature | null = null;
       if (user && c) {
         const { data: b } = await supabase
           .from('bookings')
-          .select('id')
+          .select('id, booked_at, cancellation_cutoff_hours')
           .eq('student_id', user.id)
           .eq('course_id', c.id)
           .order('booked_at', { ascending: false })
           .limit(1)
           .maybeSingle();
         bId = b?.id ?? null;
+        bAt = (b as any)?.booked_at ?? null;
+        cutoff = (b as any)?.cancellation_cutoff_hours ?? null;
         if (bId) {
           const { data: s } = await supabase
             .from('waiver_signatures')
@@ -71,6 +78,8 @@ const BookingSuccess = () => {
       if (cancelled) return;
       setCourse((c as Course) ?? null);
       setBookingId(bId);
+      setBookedAt(bAt);
+      setCutoffHours(cutoff);
       setSignature(sig);
       setLoading(false);
     })();
@@ -127,6 +136,16 @@ const BookingSuccess = () => {
               </div>
             </>
           )}
+        </div>
+
+        {/* Cancellation grace deadline */}
+        <div className="text-left mb-6">
+          <CancelGraceBadge
+            startsAt={course?.starts_at ?? null}
+            bookedAt={bookedAt}
+            cutoffHours={cutoffHours}
+            variant="card"
+          />
         </div>
 
         {signature && (

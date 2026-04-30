@@ -87,20 +87,28 @@ export const CancelCourseDialog = ({
           {isTimely ? (
             <>
               <div className="font-bold uppercase tracking-wider text-[11px] text-success mb-1">
-                Timely cancellation (≥48h before start)
+                Timely cancellation — 48+ hours before start
               </div>
-              Students get a full refund and <strong>your deposit is released back to you</strong>. No strike.
+              <ul className="space-y-1 ml-3 list-disc">
+                <li>Every enrolled student is refunded in full (platform fee + 10% deposit) to their card.</li>
+                <li><strong>Your $25 listing deposit is released back to you</strong> within 48 hours.</li>
+                <li>No strike on your account.</li>
+              </ul>
             </>
           ) : (
             <>
               <div className="font-bold uppercase tracking-wider text-[11px] text-destructive mb-1">
-                Late cancellation (&lt;48h before start)
+                Late cancellation — less than 48 hours before start
               </div>
-              Students get a full refund and <strong>you forfeit your deposit on every booking</strong>. A strike will be added to your account.
+              <ul className="space-y-1 ml-3 list-disc">
+                <li>Every enrolled student is refunded in full (platform fee + 10% deposit) to their card.</li>
+                <li><strong>You forfeit your $25 listing deposit on every booking</strong> — it is not returned.</li>
+                <li>1 strike is added to your account. Repeated late cancellations may suspend your ability to publish.</li>
+              </ul>
             </>
           )}
           {hoursToStart !== null && (
-            <div className="text-[11px] text-muted-foreground mt-1">
+            <div className="text-[11px] text-muted-foreground mt-2">
               Course starts in {Math.max(0, Math.round(hoursToStart))} hour
               {Math.round(hoursToStart) === 1 ? '' : 's'}.
             </div>
