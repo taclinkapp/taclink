@@ -38,10 +38,20 @@ const NewCourse = () => {
   const { user, profile } = useAuth();
   const hasPM = !!profile?.payment_method_added;
   const subActive = profile?.subscription_status === 'active';
-  const connectActive = profile?.stripe_connect_status === 'active';
+  const [connectActive, setConnectActive] = useState(false);
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('stripe_connect_status')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setConnectActive((data as any)?.stripe_connect_status === 'active'));
+  }, [user?.id]);
 
   // form state
   const [title, setTitle] = useState('');
