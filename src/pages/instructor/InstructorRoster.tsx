@@ -72,6 +72,39 @@ const InstructorRoster = () => {
   const updateStatus = async (bookingId: string, next: BookingStatus) => {
     setUpdatingId(bookingId);
     const prev = rows;
+
+    // No-show triggers a 90/10 refund via RPC (student gets 90% of course price,
+    // instructor keeps 10%, TacLink keeps the $25 platform fee).
+    if (next === 'no_show') {
+      const ok = window.confirm(
+        'Mark this student as a no-show?\n\n' +
+          'This will refund the student 90% of the course price. ' +
+          'You keep 10% as compensation for the lost slot. ' +
+          'TacLink retains the $25 platform fee.\n\n' +
+          'This cannot be undone.',
+      );
+      if (!ok) {
+        setUpdatingId(null);
+        return;
+      }
+      setRows((rs) => rs.map((r) => (r.bookingId === bookingId ? { ...r, status: 'no_show' } : r)));
+      const { data, error } = await supabase.rpc('student_no_show_refund', {
+        _booking_id: bookingId,
+      });
+      setUpdatingId(null);
+      if (error) {
+        setRows(prev);
+        toast.error('Could not mark no-show', { description: error.message });
+        return;
+      }
+      const refunded = (data as any)?.student_refund_cents ?? 0;
+      const kept = (data as any)?.instructor_kept_cents ?? 0;
+      toast.success('Student marked no-show', {
+        description: `Refunded $${(refunded / 100).toFixed(2)} to student · you keep $${(kept / 100).toFixed(2)}`,
+      });
+      return;
+    }
+
     setRows((rs) => rs.map((r) => (r.bookingId === bookingId ? { ...r, status: next } : r)));
     const patch = {
       status: next,
