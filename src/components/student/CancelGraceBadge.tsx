@@ -65,7 +65,7 @@ export const CancelGraceBadge = ({
       >
         <Clock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
         <div className="text-xs text-muted-foreground leading-relaxed">
-          <strong className="text-foreground">Cancel for a full refund by</strong>{' '}
+          <strong className="text-foreground">Cancel for a 100% refund ($25 + full course price) by</strong>{' '}
           {deadline.toLocaleString([], {
             weekday: 'short',
             month: 'short',
@@ -74,6 +74,7 @@ export const CancelGraceBadge = ({
             minute: '2-digit',
           })}{' '}
           <span className="font-mono text-primary">({formatCountdown(deadline)})</span>.
+          After this, you'll receive 90% of the course price back; instructor keeps 10%; $25 fee non-refundable.
         </div>
       </div>
     );

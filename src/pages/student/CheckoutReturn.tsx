@@ -115,7 +115,7 @@ const CheckoutReturn = () => {
             <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground text-left flex gap-2">
               <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <span>
-                If your instructor cancels or no-shows, you'll be refunded in full within 48 hours.
+                If your instructor cancels or no-shows, you'll receive a <strong className="text-foreground">100% refund ($25 + full course price)</strong> within 48 hours.
               </span>
             </div>
             <Button
