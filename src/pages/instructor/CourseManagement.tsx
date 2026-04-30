@@ -613,7 +613,7 @@ const CourseManagement = () => {
                 setScanOutcome(outcome);
               } else {
                 setPending({ bookingId: resolvedBookingId, scannedAt: Date.now() });
-                setScanOutcome({ kind: 'pending_proximity', studentName });
+                setScanOutcome({ kind: 'pending_proximity', bookingId: resolvedBookingId, studentName });
               }
             } else {
               const outcome = await markAttended(resolvedBookingId, { source: 'qr' });
