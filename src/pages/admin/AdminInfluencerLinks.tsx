@@ -153,25 +153,53 @@ const AdminInfluencerLinks = () => {
     refresh();
   }, []);
 
-  // Live slug availability check (debounced)
+  // Live slug availability check (debounced) — uses structured RPC for format + collision validation.
   const previewSlug = useMemo(
     () => slugify(newSlug || newHandle || newName),
     [newSlug, newHandle, newName],
   );
+  const [slugError, setSlugError] = useState<string | null>(null);
   useEffect(() => {
     if (!creating) return;
     if (!previewSlug) {
       setSlugCheck('invalid');
+      setSlugError(null);
       return;
     }
     setSlugCheck('checking');
+    setSlugError(null);
     const t = setTimeout(async () => {
-      const { data, error } = await supabase.rpc('is_influencer_slug_available', { _slug: previewSlug });
-      if (error) {
+      try {
+        const { data, error } = await supabase.rpc('check_influencer_slug_available', { _slug: previewSlug });
+        if (error) {
+          setSlugCheck('idle');
+          setSlugError("Couldn't check availability — try again.");
+          return;
+        }
+        const result = data as { ok: boolean; normalized: string | null; reason: string } | null;
+        if (!result) {
+          setSlugCheck('idle');
+          setSlugError('Unexpected response from server.');
+          return;
+        }
+        if (result.ok) {
+          setSlugCheck('available');
+          return;
+        }
+        if (result.reason === 'taken') {
+          setSlugCheck('taken');
+          setSlugError(`"${result.normalized ?? previewSlug}" is already in use.`);
+        } else if (result.reason === 'invalid_format') {
+          setSlugCheck('invalid');
+          setSlugError('Slug must be 2–32 characters, letters/numbers/hyphens only, and not a reserved word (admin, api, login…).');
+        } else {
+          setSlugCheck('invalid');
+          setSlugError('Slug is empty.');
+        }
+      } catch {
         setSlugCheck('idle');
-        return;
+        setSlugError("Couldn't check availability — try again.");
       }
-      setSlugCheck(data === true ? 'available' : 'taken');
     }, 350);
     return () => clearTimeout(t);
   }, [previewSlug, creating]);
