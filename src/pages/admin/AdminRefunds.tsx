@@ -382,15 +382,19 @@ export const AdminRefunds = () => {
       setSubmitting(false);
       return;
     }
-    // Notify student — refunds are issued as in-app credit, not cash.
-    await supabase.from('notifications').insert({
-      recipient_id: picked.student_id,
-      type: 'refund_issued',
-      title: `In-app credit issued: ${fmt(cents)}`,
-      body: `${fmt(cents)} credit added to your account for ${picked.courseTitle}. Apply it to your next booking. Reason: ${reason.trim()}`,
-      link: `/student/booking/${picked.id}`,
-    });
-    toast.success('Refund credit issued — student notified');
+    if (cents > 0) {
+      // Notify student — refunds are issued as in-app credit, not cash.
+      await supabase.from('notifications').insert({
+        recipient_id: picked.student_id,
+        type: 'refund_issued',
+        title: `In-app credit issued: ${fmt(cents)}`,
+        body: `${fmt(cents)} credit added to your account for ${picked.courseTitle}. Apply it to your next booking. Reason: ${reason.trim()}`,
+        link: `/student/booking/${picked.id}`,
+      });
+      toast.success('Refund credit issued — student notified');
+    } else {
+      toast.success('Decision recorded — no credit issued');
+    }
     setSubmitting(false);
     setOpen(false);
     reset();
