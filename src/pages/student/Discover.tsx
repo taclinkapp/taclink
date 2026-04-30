@@ -213,38 +213,96 @@ const Discover = () => {
             </div>
           ) : (
             <div className="relative">
-              <div className="relative neu-inset">
-                <MapPin className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative neu-inset flex items-center pr-1">
+                <MapPin className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <Input
+                  ref={locationInputRef}
                   value={locationQuery}
-                  onChange={(e) => { setLocationQuery(e.target.value); setLocationOpen(true); }}
+                  onChange={(e) => { setLocationQuery(e.target.value); setLocationOpen(true); setShowAllLocations(false); }}
                   onFocus={() => setLocationOpen(true)}
-                  onBlur={() => setTimeout(() => setLocationOpen(false), 150)}
+                  onBlur={() => setTimeout(() => { setLocationOpen(false); setShowAllLocations(false); }, 150)}
+                  onKeyDown={handleLocationKeyDown}
                   placeholder="Where do you want to train?"
-                  className="bg-transparent border-0 pl-10 h-12 rounded-2xl shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  role="combobox"
+                  aria-expanded={locationOpen}
+                  aria-controls="location-listbox"
+                  aria-autocomplete="list"
+                  aria-activedescendant={
+                    locationOpen && locationSuggestions[activeLocationIndex]
+                      ? `loc-opt-${activeLocationIndex}`
+                      : undefined
+                  }
+                  className="bg-transparent border-0 pl-10 pr-2 h-12 rounded-2xl shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={toggleAllLocations}
+                  aria-label={
+                    locationOpen && showAllLocations
+                      ? 'Close all locations'
+                      : `Show all ${locationOptions.length} locations`
+                  }
+                  className="shrink-0 mr-1 h-9 px-2 rounded-md flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary"
+                >
+                  All
+                  <ChevronDown
+                    className={cn(
+                      'h-3.5 w-3.5 transition-transform',
+                      locationOpen && showAllLocations && 'rotate-180',
+                    )}
+                  />
+                </button>
               </div>
               {locationOpen && locationSuggestions.length > 0 && (
-                <div className="absolute z-40 left-0 right-0 mt-1 max-h-72 overflow-auto rounded-xl border border-border bg-card shadow-lg">
-                  {locationSuggestions.map((loc) => (
-                    <button
-                      key={loc.key}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => pickLocation(loc)}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="flex-1 text-sm font-medium truncate">{loc.label}</span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                        {loc.count} course{loc.count === 1 ? '' : 's'}
-                      </span>
-                    </button>
-                  ))}
+                <div
+                  ref={locationListRef}
+                  id="location-listbox"
+                  role="listbox"
+                  className="absolute z-40 left-0 right-0 mt-1 max-h-72 overflow-auto rounded-xl border border-border bg-card shadow-lg"
+                >
+                  {showAllLocations && (
+                    <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
+                      All locations · {locationSuggestions.length}
+                    </div>
+                  )}
+                  {locationSuggestions.map((loc, idx) => {
+                    const active = idx === activeLocationIndex;
+                    return (
+                      <button
+                        key={loc.key}
+                        id={`loc-opt-${idx}`}
+                        data-loc-index={idx}
+                        role="option"
+                        aria-selected={active}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onMouseEnter={() => setActiveLocationIndex(idx)}
+                        onClick={() => pickLocation(loc)}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-3 py-2 text-left',
+                          active
+                            ? 'bg-accent text-accent-foreground'
+                            : 'hover:bg-accent hover:text-accent-foreground',
+                        )}
+                      >
+                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="flex-1 text-sm font-medium truncate">{loc.label}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {loc.count} course{loc.count === 1 ? '' : 's'}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
               {locationOpen && locationQuery && locationSuggestions.length === 0 && (
                 <div className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-3 text-xs text-muted-foreground">
                   No courses found for that location yet.
+                </div>
+              )}
+              {locationOpen && !locationQuery && locationSuggestions.length === 0 && (
+                <div className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-3 text-xs text-muted-foreground">
+                  No locations available yet.
                 </div>
               )}
             </div>
