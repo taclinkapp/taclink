@@ -60,7 +60,7 @@ export const CancelCourseDialog = ({
     );
     onOpenChange(false);
     onCancelled?.();
-    navigate('/instructor/dashboard');
+    navigate('/instructor');
   };
 
   return (
