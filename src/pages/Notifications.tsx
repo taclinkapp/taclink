@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useIdentity } from "@/hooks/useIdentity";
-import { Bell, MessageSquare, Loader2, CheckCheck, X, MailOpen, Mail } from "lucide-react";
+import { Bell, MessageSquare, Loader2, CheckCheck, X, MailOpen, Mail, ClipboardCheck, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -20,13 +20,30 @@ const formatRelative = (iso: string) => {
   return new Date(iso).toLocaleDateString();
 };
 
+const isAttendanceType = (type: string) =>
+  type.startsWith("attendance_reminder") || type === "attendance_auto_approved";
+
 const iconFor = (type: string) => {
+  if (type === "attendance_auto_approved") return AlertCircle;
+  if (type.startsWith("attendance_reminder")) return ClipboardCheck;
   switch (type) {
     case "message":
       return MessageSquare;
     default:
       return Bell;
   }
+};
+
+const ctaFor = (type: string): string | null => {
+  if (type.startsWith("attendance_reminder")) return "Confirm attendance";
+  if (type === "attendance_auto_approved") return "Review";
+  return null;
+};
+
+const withFocus = (link: string | null, type: string): string | null => {
+  if (!link) return link;
+  if (!isAttendanceType(type)) return link;
+  return link.includes("?") ? `${link}&focus=attendance` : `${link}?focus=attendance`;
 };
 
 const Notifications = () => {
@@ -58,13 +75,14 @@ const Notifications = () => {
     setSelected(new Set());
   };
 
-  const handleClick = (id: string, link: string | null) => {
+  const handleClick = (id: string, link: string | null, type: string) => {
     if (selectMode) {
       toggle(id);
       return;
     }
     markRead(id);
-    if (link) nav(link);
+    const target = withFocus(link, type);
+    if (target) nav(target);
   };
 
   const bulkMark = async (read: boolean) => {
@@ -144,10 +162,12 @@ const Notifications = () => {
           const Icon = iconFor(n.type);
           const unread = !n.read_at;
           const isSelected = selected.has(n.id);
+          const cta = ctaFor(n.type);
+          const isAttendance = isAttendanceType(n.type);
           return (
             <button
               key={n.id}
-              onClick={() => handleClick(n.id, n.link)}
+              onClick={() => handleClick(n.id, n.link, n.type)}
               className={cn(
                 "w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-card/60 transition-colors",
                 unread && "bg-card/40",
@@ -166,7 +186,11 @@ const Notifications = () => {
               <div
                 className={cn(
                   "h-9 w-9 rounded-full grid place-items-center flex-shrink-0",
-                  unread ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+                  isAttendance
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    : unread
+                    ? "bg-primary/15 text-primary"
+                    : "bg-muted text-muted-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -181,9 +205,16 @@ const Notifications = () => {
                 {n.body && (
                   <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{n.body}</p>
                 )}
-                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider">
-                  {formatRelative(n.created_at)}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                    {formatRelative(n.created_at)}
+                  </p>
+                  {cta && !selectMode && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                      {cta} →
+                    </span>
+                  )}
+                </div>
               </div>
             </button>
           );

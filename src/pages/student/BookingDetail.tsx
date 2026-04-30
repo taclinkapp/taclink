@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,8 @@ type CourseRow = {
 const BookingDetail = () => {
   const { id } = useParams();
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
+  const attendanceRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [b, setB] = useState<BookingRow | null>(null);
   const [c, setC] = useState<CourseRow | null>(null);
@@ -104,6 +106,16 @@ const BookingDetail = () => {
   };
 
   useEffect(() => { reload(); /* eslint-disable-next-line */ }, [id]);
+
+  // Deep-link from notifications: ?focus=attendance scrolls to the claim card.
+  useEffect(() => {
+    if (loading || !b) return;
+    if (searchParams.get('focus') !== 'attendance') return;
+    const t = setTimeout(() => {
+      attendanceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [loading, b, searchParams]);
 
   // Auto-refresh the signed QR a minute before it expires.
   useEffect(() => {
@@ -197,7 +209,9 @@ const BookingDetail = () => {
           />
         )}
 
-        <AttendanceClaimResponse bookingId={b.id} />
+        <div ref={attendanceRef} id="attendance-claim" className="scroll-mt-24">
+          <AttendanceClaimResponse bookingId={b.id} />
+        </div>
 
         {upcoming && b.deposit_status === 'confirmed' && (
           <div className="tactical-card p-5 text-center">

@@ -1439,6 +1439,39 @@ export type Database = {
         }
         Relationships: []
       }
+      proximity_token_nonces: {
+        Row: {
+          booking_id: string
+          consumed_at: string | null
+          consumed_by_instructor: string | null
+          device_id: string
+          expires_at: string
+          issued_at: string
+          nonce: string
+          student_id: string
+        }
+        Insert: {
+          booking_id: string
+          consumed_at?: string | null
+          consumed_by_instructor?: string | null
+          device_id: string
+          expires_at: string
+          issued_at?: string
+          nonce: string
+          student_id: string
+        }
+        Update: {
+          booking_id?: string
+          consumed_at?: string | null
+          consumed_by_instructor?: string | null
+          device_id?: string
+          expires_at?: string
+          issued_at?: string
+          nonce?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
       referral_codes: {
         Row: {
           code: string
