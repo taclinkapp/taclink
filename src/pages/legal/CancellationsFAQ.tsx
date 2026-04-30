@@ -89,7 +89,7 @@ const CancellationsFAQ = () => (
             <div>
               <div className="font-semibold text-foreground">Within your grace window</div>
               <div className="text-muted-foreground">
-                Full refund of the $25 platform fee + 10% deposit, returned in cash to your card via Stripe within 48 hours.
+                <strong className="text-foreground">Full refund</strong> — $25 platform fee + 100% of the course price returned to your card via Stripe within 48 hours.
               </div>
             </div>
           </div>
@@ -98,7 +98,7 @@ const CancellationsFAQ = () => (
             <div>
               <div className="font-semibold text-foreground">After your grace window or no-show</div>
               <div className="text-muted-foreground">
-                No refund. You forfeit both the $25 platform fee and the 10% deposit. The 10% is released to the instructor 24 hours after the scheduled course time.
+                You receive <strong className="text-foreground">90% of the course price</strong> back. The instructor keeps the remaining 10% as compensation for the lost slot. The $25 platform fee is non-refundable.
               </div>
             </div>
           </div>
@@ -121,7 +121,7 @@ const CancellationsFAQ = () => (
                 48+ hours before start
               </div>
               <div className="text-muted-foreground">
-                Your $25 listing deposit is released back to you. No strike.
+                Students are fully refunded. No strike, no payout penalty.
               </div>
             </div>
             <div className="border border-destructive/40 bg-destructive/10 rounded-md p-3">
@@ -129,8 +129,8 @@ const CancellationsFAQ = () => (
                 Less than 48 hours before start
               </div>
               <div className="text-muted-foreground">
-                You forfeit your $25 listing deposit on every booking, and 1 strike is added to your
-                account. Repeated late cancellations may suspend your ability to publish courses.
+                Students are fully refunded, you receive no payout for the cancelled bookings, and 1 strike
+                is added to your account. Repeated late cancellations may suspend your ability to publish.
               </div>
             </div>
           </div>

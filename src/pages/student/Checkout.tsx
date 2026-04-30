@@ -254,18 +254,17 @@ const Checkout = () => {
           <div className="space-y-2 text-sm">
             <Row label="Course price" value={fmt(fees.coursePriceCents)} muted />
             <Row label="TacLink platform fee" value={fmt(fees.platformFeeCents)} />
-            <Row label="Deposit (10%) — held in escrow" value={fmt(fees.instructorDepositCents)} />
             <div className="border-t border-border pt-2 mt-2 flex justify-between">
-              <span className="font-bold">Charged today by Stripe</span>
+              <span className="font-bold">Total charged today by Stripe</span>
               <span className="font-black text-primary text-lg">{fmt(fees.onlineTotalCents)}</span>
             </div>
-            <div className="flex justify-between pt-3 border-t border-dashed border-border mt-2">
-              <span className="text-muted-foreground">Balance due in person</span>
-              <span className="font-semibold">{fmt(fees.dueInPersonCents)}</span>
+            <div className="flex justify-between pt-3 border-t border-dashed border-border mt-2 text-success">
+              <span className="font-semibold">Nothing due in person ✓</span>
+              <span className="font-bold">$0.00</span>
             </div>
           </div>
           <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground leading-relaxed">
-            TacLink charges <strong className="text-foreground">{fmt(fees.onlineTotalCents)}</strong> today through Stripe. We hold the 10% in escrow and release it to your instructor 24 hours after they scan you in at the course. If they cancel or no-show, you're refunded in full within 48 hours. Remaining balance is paid in person.
+            TacLink charges <strong className="text-foreground">{fmt(fees.onlineTotalCents)}</strong> today through Stripe. The full course price is held in secure escrow and released to your instructor 24 hours after they scan you in at the course. If they cancel or no-show, you're refunded in full within 48 hours. <strong className="text-foreground">No cash, no card readers — payment is fully handled by the app.</strong>
           </div>
         </div>
 
@@ -274,7 +273,7 @@ const Checkout = () => {
           <div className="flex items-start gap-2 mb-3">
             <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
             <div className="text-xs text-muted-foreground leading-relaxed">
-              The platform fee is <span className="text-foreground font-bold">non-refundable</span>. The 10% deposit is fully refundable if the instructor cancels or no-shows.
+              Cancel within your grace window for a <strong className="text-foreground">full refund</strong>. After the grace window, you receive 90% of the course price back (instructor keeps 10% for the lost slot, $25 platform fee non-refundable). Instructor cancel/no-show = 100% refund.
             </div>
           </div>
           <label className="flex items-start gap-3 cursor-pointer">
