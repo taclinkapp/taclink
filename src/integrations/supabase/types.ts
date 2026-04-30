@@ -283,7 +283,9 @@ export type Database = {
           release_eligible_at: string | null
           status: Database["public"]["Enums"]["booking_status"]
           stripe_charge_id: string | null
+          stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
+          stripe_transfer_id: string | null
           student_id: string
           updated_at: string
         }
@@ -315,7 +317,9 @@ export type Database = {
           release_eligible_at?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_charge_id?: string | null
+          stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_transfer_id?: string | null
           student_id: string
           updated_at?: string
         }
@@ -347,7 +351,9 @@ export type Database = {
           release_eligible_at?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_charge_id?: string | null
+          stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_transfer_id?: string | null
           student_id?: string
           updated_at?: string
         }
@@ -1353,6 +1359,8 @@ export type Database = {
           service_state: string | null
           state: string | null
           strike_points: number
+          stripe_connect_account_id: string | null
+          stripe_connect_status: string
           subscription_status: string
           subscription_updated_at: string | null
           updated_at: string
@@ -1372,6 +1380,8 @@ export type Database = {
           service_state?: string | null
           state?: string | null
           strike_points?: number
+          stripe_connect_account_id?: string | null
+          stripe_connect_status?: string
           subscription_status?: string
           subscription_updated_at?: string | null
           updated_at?: string
@@ -1391,6 +1401,8 @@ export type Database = {
           service_state?: string | null
           state?: string | null
           strike_points?: number
+          stripe_connect_account_id?: string | null
+          stripe_connect_status?: string
           subscription_status?: string
           subscription_updated_at?: string | null
           updated_at?: string
