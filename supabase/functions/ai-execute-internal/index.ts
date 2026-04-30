@@ -224,15 +224,15 @@ serve(async (req) => {
             {
               recipient_id: b.student_id,
               type: "refund_issued",
-              title: `In-app credit issued: $${(studentCredit / 100).toFixed(2)}`,
-              body: `A $${(studentCredit / 100).toFixed(2)} credit was added to your account. Apply it to your next booking.`,
+              title: `Cash refund issued: $${(studentCredit / 100).toFixed(2)}`,
+              body: `A $${(studentCredit / 100).toFixed(2)} refund is on its way to your original payment method via Stripe (typically within 48 hours).`,
               link: `/student/booking/${conv.booking_id}`,
             },
             {
               recipient_id: conv.instructor_id,
               type: "auto_refund_issued",
-              title: "Auto-credit issued — you have 24h to dispute",
-              body: `An automatic $${(studentCredit / 100).toFixed(2)} credit was issued (${reasonCategory}). If this isn't right, dispute it within 24h.`,
+              title: "Auto-refund issued — you have 24h to dispute",
+              body: `An automatic $${(studentCredit / 100).toFixed(2)} cash refund was issued (${reasonCategory}). If this isn't right, dispute it within 24h.`,
               link: `/instructor`,
             },
           ]);
