@@ -16,6 +16,7 @@ import {
   instructorNoShowConfirmMessage,
 } from '@/lib/refundCopy';
 import { toast } from 'sonner';
+import { stripeEnvironment } from '@/lib/stripe';
 
 type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
 
