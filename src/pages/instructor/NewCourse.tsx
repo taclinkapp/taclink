@@ -22,6 +22,7 @@ import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
 import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 import { AISuggestButton } from '@/components/instructor/AISuggestButton';
+import { usePrelaunch } from '@/hooks/usePrelaunch';
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
 
@@ -39,6 +40,8 @@ const NewCourse = () => {
   const hasPM = !!profile?.payment_method_added;
   const subActive = profile?.subscription_status === 'active';
   const [connectActive, setConnectActive] = useState(false);
+  const { data: prelaunch } = usePrelaunch();
+  const isPrelaunch = !!prelaunch?.enabled;
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -211,7 +214,7 @@ const NewCourse = () => {
     }
     if (step === 3) {
       if (!skillLevel) return 'Skill level is required — go back to Basics and pick a level';
-      if (!feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
+      if (!isPrelaunch && !feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
     }
     return null;
   };
@@ -221,17 +224,21 @@ const NewCourse = () => {
     if (err) { toast.error(err); return; }
     if (step < 3) { setStep(step + 1); return; }
     if (!user) { toast.error('You must be signed in'); return; }
-    if (!hasPM) {
-      toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
-      nav('/instructor/payment-methods');
-      return;
-    }
-    if (!connectActive) {
-      toast.error('Set up Stripe payouts before publishing', {
-        description: 'Students pay the full course price online — you need a payout account to receive funds.',
-      });
-      nav('/instructor/payout-methods');
-      return;
+    // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
+    // since nothing is being published or charged yet.
+    if (!isPrelaunch) {
+      if (!hasPM) {
+        toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
+        nav('/instructor/payment-methods');
+        return;
+      }
+      if (!connectActive) {
+        toast.error('Set up Stripe payouts before publishing', {
+          description: 'Students pay the full course price online — you need a payout account to receive funds.',
+        });
+        nav('/instructor/payout-methods');
+        return;
+      }
     }
 
     setSaving(true);
@@ -263,7 +270,7 @@ const NewCourse = () => {
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
         cover_image_url: coverUrl,
-        status: 'published',
+        status: isPrelaunch ? 'draft' : 'published',
       });
 
       // AI moderation — scan course text + cover photo for contact info or
@@ -286,6 +293,18 @@ const NewCourse = () => {
           authorId: user.id,
           authorRole: 'instructor',
         }).catch(() => {});
+      }
+
+      // Pre-launch: don't charge a listing fee — the course is saved as a
+      // draft and can't go live until the platform launches.
+      if (isPrelaunch) {
+        qc.invalidateQueries({ queryKey: ['courses'] });
+        localStorage.removeItem(DRAFT_KEY);
+        toast.success('Draft saved', {
+          description: "Pre-launch mode is on — your course is saved as a draft and will be publishable when TacLink goes live.",
+        });
+        nav('/instructor/courses');
+        return;
       }
 
       // Listing fee charge — flat 10% of course price, non-refundable.
@@ -519,81 +538,96 @@ const NewCourse = () => {
                 <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
               </div>
             </div>
-            {/* Free credit banner — auto-applied if available */}
-            {availableCredits > 0 && (
-              <div className="tactical-card border-success/40 bg-success/10 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">🎉</div>
-                  <div className="flex-1">
-                    <div className="text-xs uppercase tracking-wider font-bold text-success">Free Listing Credit</div>
-                    <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                      Your punch card credit will be auto-applied — <strong className="text-foreground">no listing fee</strong> for this course.
-                      You'll have <strong>{availableCredits - 1}</strong> credit{availableCredits - 1 === 1 ? '' : 's'} left after publishing.
+            {isPrelaunch ? (
+              <div className="tactical-card border-primary/40 bg-primary/10 p-4 space-y-2">
+                <div className="text-xs uppercase tracking-wider font-bold text-primary">Pre-launch mode</div>
+                <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  TacLink™ hasn't launched yet. You can finish this course and save it as a
+                  <strong className="text-foreground"> draft</strong> — the listing fee is <strong className="text-foreground">not</strong> charged
+                  during pre-launch, and your course will be publishable the moment we go live.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Free credit banner — auto-applied if available */}
+                {availableCredits > 0 && (
+                  <div className="tactical-card border-success/40 bg-success/10 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">🎉</div>
+                      <div className="flex-1">
+                        <div className="text-xs uppercase tracking-wider font-bold text-success">Free Listing Credit</div>
+                        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                          Your punch card credit will be auto-applied — <strong className="text-foreground">no listing fee</strong> for this course.
+                          You'll have <strong>{availableCredits - 1}</strong> credit{availableCredits - 1 === 1 ? '' : 's'} left after publishing.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Listing fee preview — non-refundable disclosure */}
+                <div className={cn(
+                  "tactical-card border-primary/40 bg-primary/10 p-4 space-y-3",
+                  availableCredits > 0 && "opacity-50"
+                )}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs uppercase tracking-wider font-bold">Instructor Booking Fee</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price · charged at publish</div>
+                    </div>
+                    <div className="text-2xl font-black text-primary">
+                      {availableCredits > 0 ? <span className="line-through text-muted-foreground">{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</span> : fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}
+                    </div>
+                  </div>
+                  <div className="border-t border-primary/20 pt-3 space-y-2 text-[11px] leading-relaxed text-muted-foreground">
+                    <p>
+                      When you tap <strong className="text-foreground">Publish</strong>, your card on file will be charged
+                      <strong className="text-foreground"> {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> ({Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0}).
+                    </p>
+                    <p className="text-destructive font-bold uppercase tracking-wider text-[10px]">
+                      ⚠ This fee is non-refundable.
+                    </p>
+                    <p>
+                      It will <strong className="text-foreground">not</strong> be returned if you cancel, edit, unpublish, or
+                      delete this course, or if no students book. It is the cost of listing your course on the platform.
                     </p>
                   </div>
+                  <label className="flex items-start gap-2 pt-2 border-t border-primary/20 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={feeAck}
+                      onChange={(e) => setFeeAck(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-primary shrink-0"
+                    />
+                    <span className="text-[11px] leading-relaxed">
+                      I understand the <strong>{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> listing fee is <strong className="text-destructive">non-refundable</strong> and will be charged immediately when I publish{availableCredits > 0 ? ' (waived this time by your free credit)' : ''}.
+                    </span>
+                  </label>
                 </div>
-              </div>
-            )}
-            {/* Listing fee preview — non-refundable disclosure */}
-            <div className={cn(
-              "tactical-card border-primary/40 bg-primary/10 p-4 space-y-3",
-              availableCredits > 0 && "opacity-50"
-            )}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs uppercase tracking-wider font-bold">Instructor Booking Fee</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price · charged at publish</div>
+                <div className="tactical-card border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs">
+                  <Check className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-muted-foreground">Publishing makes this course visible to students immediately.</span>
                 </div>
-                <div className="text-2xl font-black text-primary">
-                  {availableCredits > 0 ? <span className="line-through text-muted-foreground">{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</span> : fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}
-                </div>
-              </div>
-              <div className="border-t border-primary/20 pt-3 space-y-2 text-[11px] leading-relaxed text-muted-foreground">
-                <p>
-                  When you tap <strong className="text-foreground">Publish</strong>, your card on file will be charged
-                  <strong className="text-foreground"> {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> ({Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0}).
-                </p>
-                <p className="text-destructive font-bold uppercase tracking-wider text-[10px]">
-                  ⚠ This fee is non-refundable.
-                </p>
-                <p>
-                  It will <strong className="text-foreground">not</strong> be returned if you cancel, edit, unpublish, or
-                  delete this course, or if no students book. It is the cost of listing your course on the platform.
-                </p>
-              </div>
-              <label className="flex items-start gap-2 pt-2 border-t border-primary/20 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={feeAck}
-                  onChange={(e) => setFeeAck(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-primary shrink-0"
-                />
-                <span className="text-[11px] leading-relaxed">
-                  I understand the <strong>{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> listing fee is <strong className="text-destructive">non-refundable</strong> and will be charged immediately when I publish{availableCredits > 0 ? ' (waived this time by your free credit)' : ''}.
-                </span>
-              </label>
-            </div>
-            <div className="tactical-card border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs">
-              <Check className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-muted-foreground">Publishing makes this course visible to students immediately.</span>
-            </div>
-            {!hasPM && (
-              <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
-                <div className="font-bold text-destructive">Required to publish:</div>
-                <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
-              </div>
+                {!hasPM && (
+                  <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
+                    <div className="font-bold text-destructive">Required to publish:</div>
+                    <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
 
         <div className="flex gap-2 pt-4">
           {step > 0 && <Button variant="outline" onClick={back} disabled={saving} className="flex-1 h-12 bg-card border-border font-semibold">Back</Button>}
-          <Button onClick={next} disabled={saving || (step === 3 && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
+          <Button onClick={next} disabled={saving || (step === 3 && !isPrelaunch && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3
               ? 'Continue'
-              : availableCredits > 0
-                ? 'Publish · FREE 🎉'
-                : `Publish · Pay ${fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}`}
+              : isPrelaunch
+                ? 'Save Draft'
+                : availableCredits > 0
+                  ? 'Publish · FREE 🎉'
+                  : `Publish · Pay ${fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}`}
           </Button>
         </div>
         <div className="flex gap-2">

@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
+import { usePrelaunch } from '@/hooks/usePrelaunch';
 
 /**
- * Pre-launch countdown clock. Target launch date is configurable via
- * VITE_LAUNCH_DATE (ISO string). Defaults to 60 days from first render
- * if not set, so the UI always has something to show in dev.
+ * Pre-launch countdown clock. The launch date is read live from
+ * `platform_settings.launch_date` (admin-editable). Falls back to a stable
+ * default if the setting is missing so dev still shows something.
  */
-const LAUNCH_ISO =
-  (import.meta.env.VITE_LAUNCH_DATE as string | undefined) ||
-  // Fixed default so the countdown is stable across refreshes
-  '2026-07-04T12:00:00Z';
+const FALLBACK_ISO = '2026-07-04T12:00:00Z';
 
 type Parts = { days: number; hours: number; minutes: number; seconds: number };
 
@@ -35,14 +33,16 @@ const Cell = ({ value, label }: { value: number; label: string }) => (
 );
 
 export const CountdownClock = () => {
-  const target = new Date(LAUNCH_ISO);
-  const [parts, setParts] = useState<Parts>(() => diff(target));
+  const { data } = usePrelaunch();
+  const targetIso = data?.launchDateIso ?? FALLBACK_ISO;
+  const [parts, setParts] = useState<Parts>(() => diff(new Date(targetIso)));
 
   useEffect(() => {
+    const target = new Date(targetIso);
+    setParts(diff(target));
     const id = setInterval(() => setParts(diff(target)), 1000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [targetIso]);
 
   const launched = parts.days + parts.hours + parts.minutes + parts.seconds === 0;
 

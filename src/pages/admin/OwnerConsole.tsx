@@ -18,6 +18,7 @@ import { Link } from "react-router-dom";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import { PrelaunchControlCard } from "@/components/admin/PrelaunchControlCard";
 
 type Action = {
   id: string;
@@ -297,6 +298,8 @@ export default function OwnerConsole() {
           </Button>
         </div>
       </header>
+
+      <PrelaunchControlCard />
 
       {/* Filters */}
       <div className="flex gap-2 items-center flex-wrap">

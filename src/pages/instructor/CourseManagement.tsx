@@ -17,12 +17,15 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
+import { usePrelaunch } from '@/hooks/usePrelaunch';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
 const CourseManagement = () => {
   const { id } = useParams();
   const { profile } = useAuth();
+  const { data: prelaunch } = usePrelaunch();
+  const isPrelaunch = !!prelaunch?.enabled;
   const isSubscribed = profile?.subscription_status === 'active';
   const { data: course, isLoading } = useCourse(id);
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
@@ -356,12 +359,18 @@ const CourseManagement = () => {
                 Manage your students, track attendance, and run check-ins with the Pro subscription.
               </p>
             </div>
-            <Link
-              to="/instructor/subscription"
-              className="inline-block text-[11px] font-bold uppercase tracking-wider text-primary hover:underline"
-            >
-              Upgrade to Pro →
-            </Link>
+            {isPrelaunch ? (
+              <p className="text-[11px] text-muted-foreground">
+                Available when TacLink launches.
+              </p>
+            ) : (
+              <Link
+                to="/instructor/subscription"
+                className="inline-block text-[11px] font-bold uppercase tracking-wider text-primary hover:underline"
+              >
+                Upgrade to Pro →
+              </Link>
+            )}
           </div>
         ) : (
           <>

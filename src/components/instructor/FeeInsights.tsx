@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { fmt } from "@/lib/fees";
+import { usePrelaunch } from "@/hooks/usePrelaunch";
 
 type Insight = {
   totals: {
@@ -22,6 +23,8 @@ type Insight = {
 export const FeeInsights = () => {
   const { profile } = useAuth();
   const isSubscribed = profile?.subscription_status === "active";
+  const { data: prelaunch } = usePrelaunch();
+  const isPrelaunch = !!prelaunch?.enabled;
   const [data, setData] = useState<Insight | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -41,6 +44,9 @@ export const FeeInsights = () => {
   };
 
   useEffect(() => { if (isSubscribed) load(); }, [isSubscribed]);
+
+  // Hide the locked/upgrade teaser entirely while in pre-launch.
+  if (isPrelaunch && !isSubscribed) return null;
 
   if (!isSubscribed) {
     return (

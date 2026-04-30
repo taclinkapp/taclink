@@ -4,9 +4,12 @@ import { fetchPunchCardState, PUNCHES_PER_CREDIT, type PunchCardState } from "@/
 import { Crown, Stamp, Gift, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { usePrelaunch } from "@/hooks/usePrelaunch";
 
 export const PunchCard = () => {
   const { user, profile } = useAuth();
+  const { data: prelaunch } = usePrelaunch();
+  const isPrelaunch = !!prelaunch?.enabled;
   const isSubscribed = profile?.subscription_status === "active";
   const [state, setState] = useState<PunchCardState | null>(null);
 
@@ -14,6 +17,12 @@ export const PunchCard = () => {
     if (!user || !isSubscribed) return;
     fetchPunchCardState(user.id).then(setState).catch(() => {});
   }, [user, isSubscribed]);
+
+  // During pre-launch the monthly subscription is hidden — don't even show
+  // the locked teaser since users have no way to upgrade yet.
+  if (isPrelaunch && !isSubscribed) {
+    return null;
+  }
 
   if (!isSubscribed) {
     return (
