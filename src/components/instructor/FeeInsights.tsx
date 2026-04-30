@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { fmt } from "@/lib/fees";
+import { usePrelaunch } from "@/hooks/usePrelaunch";
 
 type Insight = {
   totals: {
