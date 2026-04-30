@@ -4,7 +4,7 @@ import {
   CreditCard,
   HandCoins,
   Info,
-  Smartphone,
+  ShieldCheck,
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,17 +18,15 @@ interface Props {
 }
 
 /**
- * How TacLink payments work — shown to students and instructors so the
- * direct-handoff model is never confusing.
+ * How TacLink payments work — escrow model.
  *
- *   1) Student pays the $25 platform fee to TacLink (card)
- *   2) Student sends the 10% deposit directly to the instructor
- *      (Cash App / Venmo / PayPal / Zelle)
- *   3) Instructor collects the remaining balance IN PERSON in whatever
- *      method they prefer (cash, card reader, their own app, etc.)
- *
- * TacLink never holds, routes, or takes a cut of the deposit or the in-person
- * balance.
+ *   1) Student pays TacLink: $25 platform fee + 10% deposit at checkout
+ *   2) TacLink holds the 10% in escrow until the instructor confirms
+ *      attendance via QR scan at the course
+ *   3) 24 hours after the course ends, the 10% is released to the instructor
+ *   4) Cancellations: instructor cancels → student refunded fully within 48h.
+ *      Student cancels after the 48h grace period → 10% goes to the instructor.
+ *   5) Student pays the remaining balance to the instructor in person.
  */
 export const HowPaymentsWorkCard = ({
   audience,
@@ -42,35 +40,35 @@ export const HowPaymentsWorkCard = ({
       ? [
           {
             icon: CreditCard,
-            title: "Pay TacLink the $25 platform fee",
-            body: "Charged to your card at checkout. This is the only money TacLink touches.",
+            title: "Pay $25 + 10% deposit at checkout",
+            body: "Charged to your card. TacLink holds the 10% safely in escrow — the instructor doesn't get it yet.",
           },
           {
-            icon: Smartphone,
-            title: "Send the 10% deposit straight to the instructor",
-            body: "One-tap deep link to their Cash App, Venmo, PayPal, or Zelle. 100% goes to the instructor — TacLink takes nothing. You have 24 hours.",
+            icon: ShieldCheck,
+            title: "Get scanned in at the course",
+            body: "The instructor scans your QR code on arrival. That's the trigger that releases your deposit to them 24 hours after the course ends.",
           },
           {
             icon: HandCoins,
             title: "Pay the remaining balance in person",
-            body: "The instructor collects the rest at the course using whatever method they prefer (cash, card reader, their own payment app). TacLink is not involved in this step.",
+            body: "Settle the rest with the instructor at the course in their preferred method (cash, card reader, their own app).",
           },
         ]
       : [
           {
             icon: CreditCard,
-            title: "TacLink collects a $25 platform fee from the student",
-            body: "Charged to their card when they book. This covers your listing on TacLink.",
+            title: "TacLink collects $25 + 10% deposit from the student",
+            body: "Held in escrow at checkout. The 10% is yours once you confirm the student attended.",
           },
           {
-            icon: Smartphone,
-            title: "Student sends the 10% deposit straight to you",
-            body: "They use the Cash App / Venmo / PayPal / Zelle handle you set under Deposit Payouts. You receive 100% of it. Tap 'Confirm received' on the roster to lock the seat.",
+            icon: ShieldCheck,
+            title: "Scan the student's QR code in person",
+            body: "Scan = proof of attendance. Funds auto-release to your payout method 24 hours after the course ends. Forgot to scan? File an attendance claim from the roster.",
           },
           {
             icon: HandCoins,
-            title: "You collect the rest in person, your way",
-            body: "Cash, card reader, your own payment app — whatever you prefer. TacLink does not process or hold the in-person balance.",
+            title: "Collect the balance in person, your way",
+            body: "Cash, card reader, your own app — whatever you prefer. TacLink only handles the 10% deposit.",
           },
         ];
 
@@ -96,8 +94,8 @@ export const HowPaymentsWorkCard = ({
           </div>
           <div className="text-xs text-muted-foreground truncate">
             {audience === "student"
-              ? "$25 platform fee → 10% deposit to instructor → balance in person"
-              : "Student pays $25 to TacLink → 10% deposit comes to you → balance in person"}
+              ? "$25 + 10% deposit held in escrow → released after attendance"
+              : "Student pays $25 + 10% to TacLink → released to you 24h after attendance"}
           </div>
         </div>
         <ChevronDown
@@ -141,17 +139,17 @@ export const HowPaymentsWorkCard = ({
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               {audience === "student" ? (
                 <>
-                  TacLink is <strong className="text-foreground">not</strong>{" "}
-                  the middleman for your instructor's payment. You're paying
-                  them directly, just like you would a private coach. Bring the
-                  balance ready in their preferred method.
+                  Cancellations: if the instructor cancels or no-shows, you're
+                  refunded the full $25 + 10% within 48 hours. If you cancel
+                  after the 48-hour grace period, the 10% deposit goes to the
+                  instructor.
                 </>
               ) : (
                 <>
-                  You're in control of how you collect the in-person balance.
-                  TacLink does <strong className="text-foreground">not</strong>{" "}
-                  process payouts for it — set up your deposit handles under
-                  Settings → Deposit Payouts so students can pay you directly.
+                  Cancellations: if you cancel or no-show, the student is
+                  refunded the full $25 + 10% within 48 hours. If the student
+                  cancels after the 48-hour grace period, the 10% deposit is
+                  released to you.
                 </>
               )}
             </p>
