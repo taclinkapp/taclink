@@ -1008,41 +1008,97 @@ const AdminInfluencerLinks = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">First %</Label>
-                  <Input
-                    type="number" min={0} max={100} step={0.1}
-                    value={editing.first_booking_pct ?? editing.commission_pct ?? ''}
-                    onChange={(e) => setEditing({ ...editing, first_booking_pct: e.target.value === '' ? null : Number(e.target.value), commission_pct: null })}
-                    placeholder={`${defaultFirstPct}`}
-                    className="bg-background border-border h-11 mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Recurring %</Label>
-                  <Input
-                    type="number" min={0} max={100} step={0.1}
-                    value={editing.recurring_pct ?? ''}
-                    onChange={(e) => setEditing({ ...editing, recurring_pct: e.target.value === '' ? null : Number(e.target.value) })}
-                    placeholder={`${defaultRecurringPct}`}
-                    className="bg-background border-border h-11 mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Window (days)</Label>
-                  <Input
-                    type="number" min={1} max={3650} step={1}
-                    value={editing.recurring_window_days ?? ''}
-                    onChange={(e) => setEditing({ ...editing, recurring_window_days: e.target.value === '' ? null : Number(e.target.value) })}
-                    placeholder={`${defaultWindowDays}`}
-                    className="bg-background border-border h-11 mt-1.5"
-                  />
-                </div>
+              <div className="rounded-md border border-border p-3">
+                <Tabs defaultValue="first">
+                  <TabsList className="grid grid-cols-2 w-full">
+                    <TabsTrigger value="first">First booking</TabsTrigger>
+                    <TabsTrigger value="recurring">Recurring</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="first" className="mt-3">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">First-booking %</Label>
+                    <div className="flex items-end gap-2 mt-1.5">
+                      <Input
+                        type="number" min={0} max={100} step={0.1}
+                        value={editing.first_booking_pct ?? editing.commission_pct ?? ''}
+                        onChange={(e) => setEditing({ ...editing, first_booking_pct: e.target.value === '' ? null : Number(e.target.value), commission_pct: null })}
+                        placeholder={`${defaultFirstPct}`}
+                        className="bg-background border-border h-11 w-32"
+                      />
+                      <span className="text-xs text-muted-foreground pb-3">% (blank = {defaultFirstPct}% default)</span>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="recurring" className="mt-3 space-y-3">
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Recurring %</Label>
+                      <div className="flex items-end gap-2 mt-1.5">
+                        <Input
+                          type="number" min={0} max={100} step={0.1}
+                          value={editing.recurring_pct ?? ''}
+                          onChange={(e) => setEditing({ ...editing, recurring_pct: e.target.value === '' ? null : Number(e.target.value) })}
+                          placeholder={`${defaultRecurringPct}`}
+                          className="bg-background border-border h-11 w-32"
+                        />
+                        <span className="text-xs text-muted-foreground pb-3">% (0 = disabled)</span>
+                      </div>
+                    </div>
+                    {(() => {
+                      const effectiveRec = editing.recurring_pct ?? defaultRecurringPct;
+                      const recurringDisabled = effectiveRec === 0;
+                      const winVal = editing.recurring_window_days;
+                      const winInvalid = winVal !== null && winVal !== undefined && (Number.isNaN(winVal) || winVal < 1 || winVal > 3650);
+                      return (
+                        <div>
+                          <Label className={`text-[10px] uppercase tracking-wider ${recurringDisabled ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
+                            Window (days)
+                          </Label>
+                          <div className="flex items-end gap-2 mt-1.5">
+                            <Input
+                              type="number" min={1} max={3650} step={1}
+                              value={editing.recurring_window_days ?? ''}
+                              onChange={(e) => setEditing({ ...editing, recurring_window_days: e.target.value === '' ? null : Number(e.target.value) })}
+                              placeholder={`${defaultWindowDays}`}
+                              disabled={recurringDisabled}
+                              className={`bg-background h-11 w-32 ${winInvalid ? 'border-destructive focus-visible:ring-destructive' : 'border-border'}`}
+                            />
+                            <span className="text-xs text-muted-foreground pb-3">
+                              {recurringDisabled ? 'Set Recurring % > 0 to enable' : `blank = ${defaultWindowDays}d default`}
+                            </span>
+                          </div>
+                          {winInvalid && (
+                            <p className="text-[11px] text-destructive mt-1">Must be between 1 and 3650 days.</p>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Per-link payout preview */}
+                    {(() => {
+                      const firstPct = editing.first_booking_pct ?? editing.commission_pct ?? defaultFirstPct;
+                      const recPct = editing.recurring_pct ?? defaultRecurringPct;
+                      const winDays = editing.recurring_window_days ?? defaultWindowDays;
+                      return (
+                        <div className="rounded bg-muted/40 border border-border px-3 py-2 text-[11px]">
+                          <div className="font-bold text-muted-foreground uppercase tracking-wider text-[10px] mb-1">
+                            Preview on ${previewBookingDollars.toFixed(0)} booking
+                          </div>
+                          <div>First: <span className="font-bold text-foreground">${(previewBookingDollars * firstPct / 100).toFixed(2)}</span> ({firstPct}%)</div>
+                          <div>
+                            Recurring:{' '}
+                            {recPct > 0 ? (
+                              <>
+                                <span className="font-bold text-foreground">${(previewBookingDollars * recPct / 100).toFixed(2)}</span>{' '}
+                                ({recPct}% · {winDays}d window)
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground">disabled</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </TabsContent>
+                </Tabs>
               </div>
-              <p className="text-[11px] text-muted-foreground -mt-1">
-                Blank = inherit platform default. Recurring % = 0 disables recurring for this link.
-              </p>
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
                 <Textarea
