@@ -238,6 +238,32 @@ const CourseManagement = () => {
             </div>
           );
         })()}
+
+        {/* Final-step instructor cancellation */}
+        {c.status !== 'cancelled' && (
+          <div className="tactical-card border-destructive/40 bg-destructive/5 p-3 mb-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] uppercase tracking-wider font-bold text-destructive">
+                  Cancel this course
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                  Cancel <strong>48+ hours</strong> before start to get your deposit back.
+                  Cancelling later refunds students in full and <strong>forfeits your deposit</strong>.
+                </p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="mt-2 h-8 text-[11px]"
+                  onClick={() => setCancelOpen(true)}
+                >
+                  Cancel course…
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
             { label: 'Enrolled', value: enrolled },
