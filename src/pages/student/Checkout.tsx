@@ -101,7 +101,17 @@ const Checkout = () => {
 
   const fees = useMemo(() => computeFees(course?.price_cents ?? 0), [course]);
 
-  const waiverReady = !waiver || (agreeWaiver && signedName.trim().length >= 3);
+  const minorReady = !isMinor || (
+    !!studentDob &&
+    guardianName.trim().length >= 3 &&
+    guardianRelationship.trim().length >= 2 &&
+    guardianConsent
+  );
+  const esignReady = !waiver || (
+    esignConsent &&
+    esignInitials.trim().length >= 2
+  );
+  const waiverReady = !waiver || (agreeWaiver && signedName.trim().length >= 3 && esignReady && minorReady);
   const canSubmit = !!user && !!course && agreeRisk && waiverReady && !submitting;
 
   const handleConfirm = async () => {
