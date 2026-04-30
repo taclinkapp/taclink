@@ -295,6 +295,18 @@ const NewCourse = () => {
         }).catch(() => {});
       }
 
+      // Pre-launch: don't charge a listing fee — the course is saved as a
+      // draft and can't go live until the platform launches.
+      if (isPrelaunch) {
+        qc.invalidateQueries({ queryKey: ['courses'] });
+        localStorage.removeItem(DRAFT_KEY);
+        toast.success('Draft saved', {
+          description: "Pre-launch mode is on — your course is saved as a draft and will be publishable when TacLink goes live.",
+        });
+        nav('/instructor/courses');
+        return;
+      }
+
       // Listing fee charge — flat 10% of course price, non-refundable.
       // Subscribers can redeem a punch-card credit to waive the fee on this course.
       const priceCents = Math.round(Number(price) * 100);
