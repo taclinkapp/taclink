@@ -16,6 +16,7 @@ import { useProximity } from '@/hooks/useProximity';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
+import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
 
 const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
 
@@ -32,6 +33,8 @@ const CourseManagement = () => {
   // proximity must then confirm in-range before the row is marked attended.
   const [pending, setPending] = useState<{ bookingId: string; scannedAt: number } | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  // Last scan outcome — drives the user-friendly retry dialog.
+  const [scanOutcome, setScanOutcome] = useState<ScanOutcome | null>(null);
   const PENDING_TTL_MS = 60_000;
   const qc = useQueryClient();
 
@@ -41,7 +44,7 @@ const CourseManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bookings')
-        .select('id, status, student_id, attended_at')
+        .select('id, status, student_id, attended_at, profiles:student_id(display_name)')
         .eq('course_id', id as string);
       if (error) throw error;
       return data ?? [];
@@ -49,23 +52,28 @@ const CourseManagement = () => {
     enabled: !!id,
   });
 
-  const markAttended = async (bookingId: string, opts?: { source: 'qr' | 'proximity' }) => {
+  const studentNameFor = (b: any): string | null =>
+    b?.profiles?.display_name || null;
+
+  const markAttended = async (
+    bookingId: string,
+    opts?: { source: 'qr' | 'proximity' },
+  ): Promise<ScanOutcome> => {
     const existing = bookings.find((b: any) => b.id === bookingId);
+    const studentName = existing ? studentNameFor(existing) : null;
     if (!existing) {
-      toast.error('That QR is not for this course.');
-      return;
+      return { kind: 'wrong_course' };
     }
     if (existing.status === 'attended') {
-      toast.info('Already checked in.');
-      return;
+      return { kind: 'already_attended', studentName };
     }
     if (existing.status === 'cancelled' || existing.status === 'no_show') {
-      toast.error(`Cannot check in — booking is ${existing.status}.`);
-      return;
+      return { kind: 'cannot_checkin', status: existing.status };
     }
     // Atomic guard: only flip 'reserved' → 'attended'. If another scan got here
     // first the row will already be 'attended' and the conditional update
-    // returns 0 rows, which we treat as a benign double-scan.
+    // returns 0 rows, which we surface as 'already_attended' so the instructor
+    // sees a clear retry-friendly message instead of an error.
     // Ordering note: attended_at is the column release-escrow-deposits filters on,
     // so attendance MUST commit before any payout eligibility update. The release
     // job also runs on a 24h delay, so there is no race with payout dispatch.
@@ -78,20 +86,15 @@ const CourseManagement = () => {
       .select('id')
       .maybeSingle();
     if (error) {
-      toast.error(error.message);
-      return;
+      return { kind: 'rpc_error', reason: error.message };
     }
-    if (!updated) {
-      toast.info('Already checked in.');
-      qc.invalidateQueries({ queryKey: ['course_bookings', id] });
-      return;
-    }
-    const label =
-      opts?.source === 'proximity'
-        ? 'Auto check-in confirmed (QR + proximity)'
-        : 'Checked in';
-    toast.success(label);
     qc.invalidateQueries({ queryKey: ['course_bookings', id] });
+    if (!updated) {
+      // Lost the race to another scan/admin update — treat as a benign
+      // double-scan so the instructor knows the student is still good to go.
+      return { kind: 'already_attended', studentName };
+    }
+    return { kind: 'success', studentName, source: opts?.source ?? 'qr' };
   };
 
 
@@ -141,7 +144,9 @@ const CourseManagement = () => {
         setPending(null);
         return;
       }
-      markAttended(pending.bookingId, { source: 'proximity' });
+      markAttended(pending.bookingId, { source: 'proximity' }).then((outcome) =>
+        setScanOutcome(outcome),
+      );
       setPending(null);
     },
   });
@@ -500,9 +505,12 @@ const CourseManagement = () => {
           onDecode={async (text) => {
             setScannerOpen(false);
 
-            // Resolve the booking ID — signed tokens go through server verification,
-            // legacy v1 tokens are still parsed but with a warning.
+            // Resolve the booking ID. Signed tokens go through server
+            // verification; legacy v1 tokens still resolve but trip the
+            // unsigned-warning outcome so the instructor knows to ask for a
+            // refreshed QR.
             let resolvedBookingId: string | null = null;
+            let unsigned = false;
 
             if (looksLikeSignedToken(text)) {
               try {
@@ -511,51 +519,82 @@ const CourseManagement = () => {
                 });
                 if (error) throw error;
                 if (!data?.ok) {
-                  toast.error(data?.reason ?? 'QR verification failed.');
+                  setScanOutcome({
+                    kind: 'verification_failed',
+                    reason: data?.reason ?? 'QR verification failed',
+                  });
                   return;
                 }
                 resolvedBookingId = data.bookingId;
               } catch (e: any) {
-                toast.error(e?.message ?? 'Could not verify QR.');
+                setScanOutcome({
+                  kind: 'verification_failed',
+                  reason: e?.message ?? 'Could not reach verification service',
+                });
                 return;
               }
             } else {
               const parsed = parseCheckinPayload(text);
               if (!parsed) {
-                toast.error('Not a valid TacLink check-in QR.');
+                setScanOutcome({
+                  kind: 'invalid_qr',
+                  reason: 'The scanned code is not a TacLink check-in QR.',
+                });
                 return;
               }
-              toast.warning('Unsigned QR detected — ask the student to refresh their booking page.');
+              unsigned = true;
               resolvedBookingId = parsed.bookingId;
             }
 
             if (!resolvedBookingId) return;
             const match = bookings.find((b: any) => b.id === resolvedBookingId);
             if (!match) {
-              toast.error('That QR is not for this course.');
+              setScanOutcome({ kind: 'wrong_course' });
               return;
             }
+            const studentName = studentNameFor(match);
+
+            // Surface unsigned-QR warning before attempting attendance so the
+            // instructor knows to follow up — but still proceed (single-source policy).
+            if (unsigned) {
+              setScanOutcome({ kind: 'unsigned_warning', studentName });
+              return;
+            }
+
             if (match.status === 'attended') {
-              toast.info('Already checked in.');
+              setScanOutcome({ kind: 'already_attended', studentName });
               return;
             }
+
             if (autoCheckin) {
               const inRange =
                 proximity.reading && proximity.reading.smoothedM <= PROXIMITY_TRIGGER_METERS;
               if (inRange) {
-                markAttended(resolvedBookingId, { source: 'proximity' });
+                const outcome = await markAttended(resolvedBookingId, { source: 'proximity' });
                 setPending(null);
+                setScanOutcome(outcome);
               } else {
                 setPending({ bookingId: resolvedBookingId, scannedAt: Date.now() });
-                toast.info('QR verified — waiting for proximity to confirm.');
+                setScanOutcome({ kind: 'pending_proximity', studentName });
               }
             } else {
-              markAttended(resolvedBookingId, { source: 'qr' });
+              const outcome = await markAttended(resolvedBookingId, { source: 'qr' });
+              setScanOutcome(outcome);
             }
           }}
           onClose={() => setScannerOpen(false)}
         />
       )}
+
+      <ScanResultDialog
+        outcome={scanOutcome}
+        onScanAnother={() => {
+          setScanOutcome(null);
+          setScannerOpen(true);
+        }}
+        onClose={() => setScanOutcome(null)}
+      />
+
 
       <CancelCourseDialog
         open={cancelOpen}
