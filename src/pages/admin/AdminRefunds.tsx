@@ -368,9 +368,15 @@ export const AdminRefunds = () => {
       issued_by: user.id,
       amount_cents: cents,
       refund_type: type,
+      refund_reason_category: reasonCategory,
+      instructor_forfeit_cents: split?.instructor_forfeit_cents ?? 0,
+      platform_absorbed_cents: split?.platform_absorbed_cents ?? 0,
+      hours_before_course: split?.hours_before_course ?? null,
       reason: reason.trim(),
       external_reference: externalRef.trim() || null,
-      notes: notes.trim() || null,
+      notes: manualOverride
+        ? `MANUAL OVERRIDE. ${notes.trim() || ''}`.trim()
+        : (notes.trim() || null),
       status: 'issued',
     });
     if (error) {
