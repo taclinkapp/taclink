@@ -96,6 +96,50 @@ async function handleAccountUpdated(account: any) {
     .eq("stripe_connect_account_id", account.id);
 }
 
+// ── Instructor Pro subscription handlers ───────────────────────────────────
+
+async function upsertSubscription(subscription: any, env: StripeEnv) {
+  const userId = subscription.metadata?.userId;
+  if (!userId) {
+    console.warn("subscription event without userId metadata", subscription.id);
+    return;
+  }
+  const item = subscription.items?.data?.[0];
+  const priceId = item?.price?.metadata?.lovable_external_id || item?.price?.id;
+  const productId = item?.price?.product;
+  const periodStart = item?.current_period_start ?? subscription.current_period_start;
+  const periodEnd = item?.current_period_end ?? subscription.current_period_end;
+
+  await getSupabase().from("subscriptions").upsert(
+    {
+      user_id: userId,
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: subscription.customer,
+      product_id: productId,
+      price_id: priceId,
+      status: subscription.status,
+      current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
+      current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+      cancel_at_period_end: subscription.cancel_at_period_end || false,
+      environment: env,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "stripe_subscription_id" },
+  );
+}
+
+async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
+  await getSupabase()
+    .from("subscriptions")
+    .update({
+      status: "canceled",
+      cancel_at_period_end: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_subscription_id", subscription.id)
+    .eq("environment", env);
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
