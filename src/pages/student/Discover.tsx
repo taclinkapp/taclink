@@ -88,8 +88,22 @@ const Discover = () => {
     const list = q
       ? locationOptions.filter((o) => o.label.toLowerCase().includes(q))
       : locationOptions;
-    return list.slice(0, 8);
-  }, [locationOptions, locationQuery]);
+    return showAllLocations || q ? list : list.slice(0, 8);
+  }, [locationOptions, locationQuery, showAllLocations]);
+
+  // Reset highlighted suggestion whenever the visible list changes.
+  useEffect(() => {
+    setActiveLocationIndex(0);
+  }, [locationQuery, locationOpen, showAllLocations]);
+
+  // Scroll the active suggestion into view as the user navigates with the keyboard.
+  useEffect(() => {
+    if (!locationOpen) return;
+    const el = locationListRef.current?.querySelector<HTMLButtonElement>(
+      `[data-loc-index="${activeLocationIndex}"]`,
+    );
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [activeLocationIndex, locationOpen]);
 
   const matchesSelectedLocation = (c: { city: string; state: string }) => {
     if (!selectedLocation) return true;
@@ -115,12 +129,48 @@ const Discover = () => {
     setSelectedLocation(loc);
     setLocationQuery('');
     setLocationOpen(false);
+    setShowAllLocations(false);
     setView('map');
   };
 
   const clearLocation = () => {
     setSelectedLocation(null);
     setView('list');
+  };
+
+  const toggleAllLocations = () => {
+    const next = !(locationOpen && showAllLocations);
+    setShowAllLocations(next);
+    setLocationOpen(next);
+    if (next) {
+      setLocationQuery('');
+      setTimeout(() => locationInputRef.current?.focus(), 0);
+    }
+  };
+
+  const handleLocationKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setLocationOpen(true);
+      setActiveLocationIndex((i) => Math.min(i + 1, Math.max(locationSuggestions.length - 1, 0)));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveLocationIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      if (locationOpen && locationSuggestions[activeLocationIndex]) {
+        e.preventDefault();
+        pickLocation(locationSuggestions[activeLocationIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setLocationOpen(false);
+      setShowAllLocations(false);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setActiveLocationIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setActiveLocationIndex(Math.max(locationSuggestions.length - 1, 0));
+    }
   };
 
   return (
