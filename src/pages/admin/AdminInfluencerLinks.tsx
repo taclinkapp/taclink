@@ -23,7 +23,10 @@ type InfluencerLink = {
   influencer_handle: string | null;
   influencer_email: string | null;
   audience: Audience;
-  commission_pct: number | null;
+  commission_pct: number | null; // legacy, used as fallback for first_booking_pct
+  first_booking_pct: number | null;
+  recurring_pct: number | null;
+  recurring_window_days: number | null;
   active: boolean;
   notes: string | null;
   created_at: string;
