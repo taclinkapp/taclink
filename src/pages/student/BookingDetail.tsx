@@ -3,11 +3,13 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCircle2, ShieldCheck, RefreshCw, XCircle, UserX } from 'lucide-react';
 import { fmt } from '@/lib/fees';
 import { QRCodeSVG } from 'qrcode.react';
 import { AttendanceClaimResponse } from '@/components/student/AttendanceClaimResponse';
 import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
+import { cancelDeadline } from '@/lib/cancellation';
+import { toast } from 'sonner';
 
 type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
 
@@ -128,6 +130,51 @@ const BookingDetail = () => {
     return () => clearTimeout(t);
   }, [b, tokenExpiresAt]);
 
+  const [cancelling, setCancelling] = useState(false);
+  const [reportingNoShow, setReportingNoShow] = useState(false);
+
+  const cancelBooking = async () => {
+    if (!b) return;
+    const inGrace = !!cancelDeadline(c?.starts_at ?? null, b.booked_at, b.cancellation_cutoff_hours);
+    const msg = inGrace
+      ? 'Cancel this booking?\n\nYou are within your grace window — you will receive a 100% refund ($25 platform fee + full course price) to your card within 48 hours.'
+      : 'Cancel this booking?\n\nYou are past your grace window. You will receive 90% of the course price back. The instructor keeps 10% as compensation for the lost slot, and the $25 platform fee is non-refundable.\n\nThis cannot be undone.';
+    if (!window.confirm(msg)) return;
+    setCancelling(true);
+    const { data, error } = await supabase.rpc('student_cancel_booking', { _booking_id: b.id });
+    setCancelling(false);
+    if (error) {
+      toast.error('Could not cancel booking', { description: error.message });
+      return;
+    }
+    const refund = (data as any)?.student_refund_cents ?? 0;
+    toast.success('Booking cancelled', {
+      description: `Refund of $${(refund / 100).toFixed(2)} on the way to your card.`,
+    });
+    reload();
+  };
+
+  const reportInstructorNoShow = async () => {
+    if (!b) return;
+    if (!window.confirm(
+      'Report that the instructor did not show up?\n\n' +
+      'This will cancel your booking, refund you 100% (course price + $25 fee), ' +
+      'and add a strike to the instructor\'s account. Only use this if the instructor truly did not appear.',
+    )) return;
+    setReportingNoShow(true);
+    const { data, error } = await supabase.rpc('instructor_no_show_refund', { _booking_id: b.id });
+    setReportingNoShow(false);
+    if (error) {
+      toast.error('Could not file report', { description: error.message });
+      return;
+    }
+    const refund = (data as any)?.student_refund_cents ?? 0;
+    toast.success('Report filed — full refund issued', {
+      description: `$${(refund / 100).toFixed(2)} on the way to your card.`,
+    });
+    reload();
+  };
+
   if (loading) {
     return (
       <MobileShell withTabBar={false}>
@@ -151,6 +198,9 @@ const BookingDetail = () => {
   const upcoming = b.status === 'reserved';
   const attended = b.status === 'attended';
   const dueInPerson = b.due_in_person_cents > 0 && !b.in_person_paid_at;
+  const courseStarted =
+    !!c.starts_at && new Date(c.starts_at).getTime() < Date.now();
+  const inGraceWindow = !!cancelDeadline(c.starts_at, b.booked_at, b.cancellation_cutoff_hours);
 
   return (
     <MobileShell withTabBar={false}>
@@ -271,9 +321,38 @@ const BookingDetail = () => {
         <div className="tactical-card border-primary/20 bg-primary/5 p-3 flex items-start gap-2">
           <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">Cancellation policy:</strong> Grace period is set when you book — longer leads earn more time. After the deadline, cancellations are not refunded. If the instructor cancels, you're refunded automatically.
+            <strong className="text-foreground">Cancellation policy:</strong>{' '}
+            Cancel within your grace window for a <strong className="text-foreground">100% refund</strong>{' '}
+            ($25 platform fee + full course price). After the grace window, you receive{' '}
+            <strong className="text-foreground">90% of the course price</strong> back — the
+            instructor keeps 10% for the lost slot, and the $25 platform fee is non-refundable.
+            If the instructor cancels or no-shows, you're refunded in full automatically within 48 hours.
           </div>
         </div>
+
+        {upcoming && (
+          <Button
+            onClick={cancelBooking}
+            disabled={cancelling}
+            variant="outline"
+            className="w-full h-12 font-bold border-destructive/40 text-destructive hover:bg-destructive/10"
+          >
+            {cancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
+            {inGraceWindow ? 'Cancel for full refund' : 'Cancel booking (90% refund)'}
+          </Button>
+        )}
+
+        {upcoming && courseStarted && (
+          <Button
+            onClick={reportInstructorNoShow}
+            disabled={reportingNoShow}
+            variant="outline"
+            className="w-full h-12 font-bold border-destructive/40 text-destructive hover:bg-destructive/10"
+          >
+            {reportingNoShow ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserX className="mr-2 h-4 w-4" />}
+            Report instructor no-show
+          </Button>
+        )}
 
         {attended && (
           <Button onClick={() => nav(`/student/review/${b.id}`)} className="w-full h-12 bg-primary text-primary-foreground font-bold">
