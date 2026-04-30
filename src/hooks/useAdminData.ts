@@ -333,6 +333,7 @@ export function useIssueRefund() {
         amount_cents: args.amountCents,
         reason: args.reason,
         refund_type: args.refundType,
+        refund_method: 'stripe_cash',
         notes: args.notes,
         issued_by: user?.id,
       });
@@ -342,7 +343,7 @@ export function useIssueRefund() {
         _target_type: 'booking',
         _target_id: args.bookingId,
         _before: null,
-        _after: { amount_cents: args.amountCents, type: args.refundType },
+        _after: { amount_cents: args.amountCents, type: args.refundType, method: 'stripe_cash' },
         _reason: args.reason,
         _source: 'admin_ui',
       });
@@ -350,9 +351,9 @@ export function useIssueRefund() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin_bookings'] });
       qc.invalidateQueries({ queryKey: ['admin_audit_log'] });
-      toast({ title: 'Refund credit issued' });
+      toast({ title: 'Cash refund issued via Stripe' });
     },
-    onError: (e: any) => toast({ title: 'Could not issue credit', description: e.message, variant: 'destructive' }),
+    onError: (e: any) => toast({ title: 'Could not issue refund', description: e.message, variant: 'destructive' }),
   });
 }
 

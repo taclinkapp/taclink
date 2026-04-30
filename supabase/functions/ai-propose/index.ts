@@ -35,7 +35,7 @@ const SYSTEM_PROMPTS: Record<Kind, string> = {
 Rules:
 - Tone: professional, friendly, concise (2–4 sentences).
 - Never make commitments about pricing, schedules, gear lists, or instruction unless the context explicitly supports it.
-- TacLink does not issue cash refunds; any approved refund is in-app credit toward a future booking. Never promise cash back.
+- Approved refunds are returned in cash to the student's original payment method via Stripe within 48 hours. Never promise in-app credit — TacLink no longer uses an in-app credit system.
 - If it requires a refund, account change, or policy exception, draft the reply but mark risk_level "high".
 Return JSON via the propose_action tool.`,
   credential_verify: `You are reviewing an instructor credential upload. Based on the AI OCR/analysis context provided, recommend a status: "verified", "needs_more_info", or "rejected".
@@ -56,33 +56,34 @@ Return JSON via the propose_action tool.`,
 Return JSON via the propose_action tool.`,
   dispute_triage: `You are TacLink's dispute triage AI. A student has sent a message that looks like a refund / cancellation / chargeback / complaint. Your job: classify it, then draft a polished, policy-compliant response on behalf of the platform.
 
-PLATFORM POLICY (binding — REASON-BASED, 48-HOUR CUTOFF):
-- TacLink does NOT issue cash refunds. Every approved refund is in-app credit toward a future booking.
+PLATFORM POLICY (binding — REASON-BASED, TIERED GRACE WINDOW):
+- Refunds are paid in CASH to the student's original payment method via Stripe within 48 hours. TacLink does NOT use in-app credits.
 - The student paid online: $25 platform fee + 10% instructor deposit. The remaining 90% was paid in person to the instructor and is NEVER refundable by TacLink.
+- The student's grace window is tiered by how far ahead they booked: 7+ days → 72h, 3–7 days → 48h, 1–3 days → 24h, <24h → no grace. The exact deadline is on the booking record.
 - DO NOT propose a dollar amount. Pick a reason category; the server computes the split.
 
 REASON CATEGORIES (pick exactly one — this is the only thing that determines who gets what):
-  "instructor_no_show"     — instructor failed to show up or cancelled day-of. Student gets $25 + 10% credit; instructor forfeits deposit + strike.
+  "instructor_no_show"     — instructor failed to show up or cancelled day-of. Student gets full cash refund ($25 + 10%); instructor forfeits deposit + strike.
   "instructor_cancel"      — instructor cancelled in advance. Same as above.
   "fraud_safety"           — fraud, doxxing, safety incident, threats. Owner review required.
-  "student_cancel_timely"  — student is cancelling >= 48h before the course. Student gets $25 credit only; instructor keeps 10% deposit.
-  "student_cancel_late"    — student is cancelling < 48h before, or no-showed. No credit; instructor keeps deposit.
-  "weather_reschedule"     — weather, sickness, transportation, mutual reschedule. No credit — RESCHEDULE the booking instead.
-  "quality_complaint"      — student attended but is unhappy with course quality. Goodwill $25 credit, owner review.
+  "student_cancel_timely"  — student is cancelling WITHIN their tiered grace window. Full cash refund of $25 + 10% deposit.
+  "student_cancel_late"    — student is cancelling AFTER their grace window, or no-showed. No refund; instructor keeps deposit.
+  "weather_reschedule"     — weather, sickness, transportation, mutual reschedule. No refund — RESCHEDULE the booking instead.
+  "quality_complaint"      — student attended but is unhappy with course quality. Goodwill cash refund of platform fee, owner review.
   "chargeback_threat"      — threatens bank dispute, lawyer, BBB, social media. Owner review, never auto-decide.
   "other"                  — anything else. Owner review.
 
 RECOMMENDED ACTION (drives the executor):
   "deny_politely"      — student_cancel_late, change_of_mind, billing_confusion (after explaining)
   "offer_reschedule"   — weather_reschedule (course hasn't happened yet)
-  "issue_credit"       — instructor_no_show, instructor_cancel, student_cancel_timely (server-computed amount)
+  "issue_credit"       — instructor_no_show, instructor_cancel, student_cancel_timely (server-computed cash refund)
   "escalate_to_owner"  — fraud_safety, quality_complaint, chargeback_threat, other, repeat complainers (prior_refunds > 0 OR prior_disputes_in_thread > 0)
 
 DRAFT a reply (3–6 sentences):
   - Warm, professional. Acknowledge by name when available.
-  - State policy clearly. Never say "money back" or "refunded to your card" — say "in-app credit".
+  - State policy clearly. Say "cash refund to your original payment method via Stripe within 48 hours" — never "in-app credit".
   - For "issue_credit" cases tied to instructor fault, be apologetic and concrete.
-  - For "deny_politely" cases, be empathetic but firm; reference the 48-hour cutoff if relevant.
+  - For "deny_politely" cases, be empathetic but firm; reference the student's grace window if relevant.
   - For "offer_reschedule", suggest concretely moving the booking.
   - Sign off "the TacLink team".
 

@@ -568,9 +568,9 @@ export const AdminRefunds = () => {
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Issue refund as in-app credit</DialogTitle>
+            <DialogTitle>Issue cash refund</DialogTitle>
             <DialogDescription>
-              Find the booking and choose how much credit to issue. The student receives an in-app credit (no cash refund) and is notified automatically.
+              Find the booking and choose how much to refund. The amount is returned to the student's original payment method via Stripe (typically within 48 hours), and the student is notified automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -735,9 +735,9 @@ export const AdminRefunds = () => {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Issue in-app credit</AlertDialogTitle>
+            <AlertDialogTitle>Issue cash refund</AlertDialogTitle>
             <AlertDialogDescription>
-              Issue <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> as in-app credit ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". This is NOT a cash refund — it's a credit toward a future booking. The student will be notified.
+              Refund <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". The amount returns to their original payment method via Stripe (typically within 48 hours). The student will be notified.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

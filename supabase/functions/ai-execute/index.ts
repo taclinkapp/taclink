@@ -212,7 +212,7 @@ serve(async (req) => {
             });
           }
 
-          // If a full refund was approved, issue it as in-app credit (no cash refunds).
+          // If a full refund was approved, issue it as a cash refund via Stripe.
           if (
             payload.recommended_action === "approve_full_refund" &&
             conv.booking_id &&
@@ -224,27 +224,27 @@ serve(async (req) => {
               .eq("id", conv.booking_id)
               .single();
             if (b) {
-              // Insert refund — DB trigger auto-creates a matching student_credits row.
               await admin.from("refunds").insert({
                 booking_id: conv.booking_id,
                 student_id: b.student_id,
                 amount_cents: payload.refund_amount_cents,
                 reason: payload.internal_note ?? "Approved by owner — instructor no-show / dispute exception",
                 refund_type: "full",
+                refund_method: "stripe_cash",
                 issued_by: user.id,
-                notes: `Dispute classification: ${payload.classification} (issued as in-app credit)`,
+                notes: `Dispute classification: ${payload.classification} (cash refund via Stripe)`,
               });
               await admin.from("notifications").insert({
                 recipient_id: b.student_id,
                 type: "refund_issued",
-                title: `In-app credit issued: $${(payload.refund_amount_cents / 100).toFixed(2)}`,
-                body: `A $${(payload.refund_amount_cents / 100).toFixed(2)} credit has been added to your account. Apply it to your next booking.`,
+                title: `Cash refund issued: $${(payload.refund_amount_cents / 100).toFixed(2)}`,
+                body: `A $${(payload.refund_amount_cents / 100).toFixed(2)} refund is on its way to your original payment method via Stripe (typically within 48 hours).`,
                 link: `/student/booking/${conv.booking_id}`,
               });
             }
           }
 
-          // If app credit was offered (goodwill), issue a refund-style credit too.
+          // Goodwill cash refund (e.g. quality complaints handled by owner).
           if (payload.recommended_action === "offer_app_credit" && conv.student_id && conv.booking_id) {
             const amount = payload.credit_amount_cents ?? 0;
             if (amount > 0) {
@@ -258,33 +258,21 @@ serve(async (req) => {
                   booking_id: conv.booking_id,
                   student_id: b.student_id,
                   amount_cents: amount,
-                  reason: payload.internal_note ?? `Goodwill credit (dispute: ${payload.classification})`,
+                  reason: payload.internal_note ?? `Goodwill cash refund (dispute: ${payload.classification})`,
                   refund_type: "goodwill",
+                  refund_method: "stripe_cash",
                   issued_by: user.id,
-                  notes: `Dispute classification: ${payload.classification} (goodwill in-app credit)`,
+                  notes: `Dispute classification: ${payload.classification} (goodwill cash refund via Stripe)`,
+                });
+                await admin.from("notifications").insert({
+                  recipient_id: b.student_id,
+                  type: "refund_issued",
+                  title: `Cash refund issued: $${(amount / 100).toFixed(2)}`,
+                  body: `A $${(amount / 100).toFixed(2)} goodwill refund is on its way to your original payment method via Stripe (typically within 48 hours).`,
+                  link: `/student/booking/${conv.booking_id}`,
                 });
               }
-            } else {
-              // Fallback: free-booking entitlement when no dollar amount was set.
-              await admin.from("student_credits").insert({
-                student_id: conv.student_id,
-                credit_type: "free_booking",
-                source: "dispute_resolution",
-                note:
-                  payload.internal_note ??
-                  `Goodwill credit toward next course (dispute: ${payload.classification})`,
-              });
             }
-            await admin.from("notifications").insert({
-              recipient_id: conv.student_id,
-              type: "credit_issued",
-              title: "Course credit added to your account",
-              body:
-                amount > 0
-                  ? `A $${(amount / 100).toFixed(2)} in-app credit has been added toward your next course.`
-                  : `A free-booking credit has been added toward your next course.`,
-              link: `/student/bookings`,
-            });
           }
           break;
         }
