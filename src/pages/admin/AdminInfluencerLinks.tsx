@@ -996,7 +996,15 @@ const AdminInfluencerLinks = () => {
             <Button variant="outline" onClick={() => { setCreating(false); resetCreateForm(); }}>Cancel</Button>
             <Button
               onClick={handleCreate}
-              disabled={slugCheck === 'taken' || slugCheck === 'invalid' || slugCheck === 'checking' || !newName.trim()}
+              disabled={(() => {
+                if (slugCheck === 'taken' || slugCheck === 'invalid' || slugCheck === 'checking' || !newName.trim()) return true;
+                const winRaw = newWindowDays.trim();
+                if (winRaw !== '') {
+                  const n = Number(winRaw);
+                  if (Number.isNaN(n) || n < 1 || n > 3650) return true;
+                }
+                return false;
+              })()}
               className="bg-primary text-primary-foreground font-bold"
             >
               Create link
