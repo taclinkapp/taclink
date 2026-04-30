@@ -568,9 +568,9 @@ export const AdminRefunds = () => {
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Issue refund as in-app credit</DialogTitle>
+            <DialogTitle>Issue cash refund</DialogTitle>
             <DialogDescription>
-              Find the booking and choose how much credit to issue. The student receives an in-app credit (no cash refund) and is notified automatically.
+              Find the booking and choose how much to refund. The amount is returned to the student's original payment method via Stripe (typically within 48 hours), and the student is notified automatically.
             </DialogDescription>
           </DialogHeader>
 
