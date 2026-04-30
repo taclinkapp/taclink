@@ -123,7 +123,10 @@ const StudentSignUp = () => {
           <div className="flex items-start gap-3 pt-2">
             <Checkbox id="age" checked={agree} onCheckedChange={(v) => setAgree(!!v)} className="mt-0.5" />
             <label htmlFor="age" className="text-xs text-muted-foreground leading-relaxed">
-              I confirm I am 18 or older and agree to the <span className="text-primary">Terms of Service</span> and <span className="text-primary">Privacy Policy</span>.
+              I confirm I am 18 or older and agree to the{' '}
+              <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Terms of Service</a>
+              {' '}and{' '}
+              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Privacy Policy</a>.
             </label>
           </div>
           <Button type="submit" disabled={loading} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold mt-4">
