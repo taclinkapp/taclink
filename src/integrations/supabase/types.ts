@@ -204,12 +204,20 @@ export type Database = {
           deposit_sent_at: string | null
           deposit_status: string
           due_in_person_cents: number
+          escrow_held_at: string | null
+          escrow_released_at: string | null
+          escrow_status: string
           id: string
           in_person_paid_at: string | null
           instructor_deposit_cents: number
+          instructor_payout_cents: number
           online_total_cents: number
           platform_fee_cents: number
+          refund_due_at: string | null
+          release_eligible_at: string | null
           status: Database["public"]["Enums"]["booking_status"]
+          stripe_charge_id: string | null
+          stripe_payment_intent_id: string | null
           student_id: string
           updated_at: string
         }
@@ -228,12 +236,20 @@ export type Database = {
           deposit_sent_at?: string | null
           deposit_status?: string
           due_in_person_cents?: number
+          escrow_held_at?: string | null
+          escrow_released_at?: string | null
+          escrow_status?: string
           id?: string
           in_person_paid_at?: string | null
           instructor_deposit_cents?: number
+          instructor_payout_cents?: number
           online_total_cents?: number
           platform_fee_cents?: number
+          refund_due_at?: string | null
+          release_eligible_at?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
           student_id: string
           updated_at?: string
         }
@@ -252,12 +268,20 @@ export type Database = {
           deposit_sent_at?: string | null
           deposit_status?: string
           due_in_person_cents?: number
+          escrow_held_at?: string | null
+          escrow_released_at?: string | null
+          escrow_status?: string
           id?: string
           in_person_paid_at?: string | null
           instructor_deposit_cents?: number
+          instructor_payout_cents?: number
           online_total_cents?: number
           platform_fee_cents?: number
+          refund_due_at?: string | null
+          release_eligible_at?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
           student_id?: string
           updated_at?: string
         }
@@ -919,39 +943,6 @@ export type Database = {
         }
         Relationships: []
       }
-      instructor_credits: {
-        Row: {
-          credit_type: string
-          earned_at: string
-          id: string
-          instructor_id: string
-          note: string | null
-          redeemed_at: string | null
-          redeemed_course_id: string | null
-          source: string
-        }
-        Insert: {
-          credit_type?: string
-          earned_at?: string
-          id?: string
-          instructor_id: string
-          note?: string | null
-          redeemed_at?: string | null
-          redeemed_course_id?: string | null
-          source?: string
-        }
-        Update: {
-          credit_type?: string
-          earned_at?: string
-          id?: string
-          instructor_id?: string
-          note?: string | null
-          redeemed_at?: string | null
-          redeemed_course_id?: string | null
-          source?: string
-        }
-        Relationships: []
-      }
       instructor_payout_methods: {
         Row: {
           created_at: string
@@ -979,30 +970,6 @@ export type Database = {
           is_preferred?: boolean
           method_type?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      instructor_punches: {
-        Row: {
-          booking_id: string
-          course_id: string
-          earned_at: string
-          id: string
-          instructor_id: string
-        }
-        Insert: {
-          booking_id: string
-          course_id: string
-          earned_at?: string
-          id?: string
-          instructor_id: string
-        }
-        Update: {
-          booking_id?: string
-          course_id?: string
-          earned_at?: string
-          id?: string
-          instructor_id?: string
         }
         Relationships: []
       }
@@ -1448,11 +1415,15 @@ export type Database = {
           notes: string | null
           platform_absorbed_cents: number
           reason: string
+          refund_method: string
           refund_reason_category: string | null
           refund_type: string
           risk_factors: Json | null
           risk_score: number | null
           status: string
+          stripe_refund_id: string | null
+          stripe_refund_status: string | null
+          student_cash_refund_cents: number
           student_id: string
           updated_at: string
         }
@@ -1473,11 +1444,15 @@ export type Database = {
           notes?: string | null
           platform_absorbed_cents?: number
           reason: string
+          refund_method?: string
           refund_reason_category?: string | null
           refund_type: string
           risk_factors?: Json | null
           risk_score?: number | null
           status?: string
+          stripe_refund_id?: string | null
+          stripe_refund_status?: string | null
+          student_cash_refund_cents?: number
           student_id: string
           updated_at?: string
         }
@@ -1498,11 +1473,15 @@ export type Database = {
           notes?: string | null
           platform_absorbed_cents?: number
           reason?: string
+          refund_method?: string
           refund_reason_category?: string | null
           refund_type?: string
           risk_factors?: Json | null
           risk_score?: number | null
           status?: string
+          stripe_refund_id?: string | null
+          stripe_refund_status?: string | null
+          student_cash_refund_cents?: number
           student_id?: string
           updated_at?: string
         }
@@ -1557,45 +1536,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      student_credits: {
-        Row: {
-          amount_cents: number
-          credit_type: string
-          earned_at: string
-          id: string
-          note: string | null
-          redeemed_at: string | null
-          redeemed_booking_id: string | null
-          refund_id: string | null
-          source: string
-          student_id: string
-        }
-        Insert: {
-          amount_cents?: number
-          credit_type?: string
-          earned_at?: string
-          id?: string
-          note?: string | null
-          redeemed_at?: string | null
-          redeemed_booking_id?: string | null
-          refund_id?: string | null
-          source?: string
-          student_id: string
-        }
-        Update: {
-          amount_cents?: number
-          credit_type?: string
-          earned_at?: string
-          id?: string
-          note?: string | null
-          redeemed_at?: string | null
-          redeemed_booking_id?: string | null
-          refund_id?: string | null
-          source?: string
-          student_id?: string
-        }
-        Relationships: []
       }
       support_ticket_messages: {
         Row: {
@@ -1875,7 +1815,7 @@ export type Database = {
           rationale: string
           reason_category: string
           requires_owner: boolean
-          student_credit_cents: number
+          student_cash_refund_cents: number
         }[]
       }
       compute_student_risk_score: {
@@ -1905,6 +1845,16 @@ export type Database = {
       instructor_dispute_refund: {
         Args: { _reason: string; _refund_id: string }
         Returns: Json
+      }
+      list_releasable_deposits: {
+        Args: never
+        Returns: {
+          booking_id: string
+          course_ended_at: string
+          course_id: string
+          deposit_amount_cents: number
+          instructor_id: string
+        }[]
       }
       log_admin_action: {
         Args: {
