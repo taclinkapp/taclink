@@ -87,6 +87,7 @@ type CommissionRow = {
   pct_at_time: number;
   amount_cents: number;
   status: 'accrued' | 'paid' | 'void';
+  commission_kind: 'first' | 'recurring';
   created_at: string;
   updated_at: string;
 };
