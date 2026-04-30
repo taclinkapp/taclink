@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Map as MapIcon, List, Gift, X, MapPin } from 'lucide-react';
+import { Search, Map as MapIcon, List, Gift, X, MapPin, ChevronDown } from 'lucide-react';
 import { usePublishedCourses } from '@/hooks/useCourses';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
