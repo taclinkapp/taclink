@@ -202,9 +202,14 @@ const Notifications = () => {
                   </p>
                   {unread && <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />}
                 </div>
-                {n.body && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{n.body}</p>
-                )}
+                {(() => {
+                  const cleanBody = n.body
+                    ? n.body.replace(/^(undefined|null)\s*[—\-:]?\s*/i, "").trim()
+                    : "";
+                  return cleanBody ? (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{cleanBody}</p>
+                  ) : null;
+                })()}
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                     {formatRelative(n.created_at)}
