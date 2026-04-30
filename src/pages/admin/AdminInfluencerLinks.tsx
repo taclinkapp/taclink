@@ -458,6 +458,155 @@ const AdminInfluencerLinks = () => {
             </table>
           )}
         </div>
+
+        {/* Commission accrual history */}
+        <div className="tactical-card">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5 pb-3">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-primary" />
+              <h2 className="font-bold">Commission accruals</h2>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Accrued <span className="font-bold text-foreground">${(totalAccruedCents / 100).toFixed(2)}</span>
+              {' · '}
+              Paid <span className="font-bold text-foreground">${(totalPaidCents / 100).toFixed(2)}</span>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            {commissions.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                No commissions yet. They appear automatically when an attributed booking is marked attended.
+              </div>
+            ) : (
+              <table className="w-full min-w-[760px] text-sm">
+                <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-bold">Influencer</th>
+                    <th className="text-left px-4 py-3 font-bold">Booking</th>
+                    <th className="text-left px-4 py-3 font-bold">Course price</th>
+                    <th className="text-left px-4 py-3 font-bold">% at time</th>
+                    <th className="text-left px-4 py-3 font-bold">Amount</th>
+                    <th className="text-left px-4 py-3 font-bold">Status</th>
+                    <th className="text-left px-4 py-3 font-bold">Accrued</th>
+                    <th className="text-left px-4 py-3 font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {commissions.map((c) => (
+                    <tr key={c.id} className="hover:bg-muted/30 align-top">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">{linkNameById[c.link_id] ?? '—'}</div>
+                        <div className="text-[11px] text-muted-foreground">/i/{linkSlugById[c.link_id] ?? '—'}</div>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[11px]">{c.booking_id.slice(0, 8)}…</td>
+                      <td className="px-4 py-3">${(c.course_price_cents / 100).toFixed(2)}</td>
+                      <td className="px-4 py-3">{Number(c.pct_at_time)}%</td>
+                      <td className="px-4 py-3 font-bold">${(c.amount_cents / 100).toFixed(2)}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-[10px] uppercase tracking-wider font-bold ${
+                            c.status === 'paid' ? 'text-success' : c.status === 'void' ? 'text-muted-foreground' : 'text-primary'
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {format(new Date(c.created_at), 'MMM d, yyyy h:mm a')}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          {c.status !== 'paid' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              onClick={() => handleUpdateCommissionStatus(c.id, 'paid')}
+                            >
+                              <CheckCircle2 className="h-3 w-3 mr-1" /> Mark paid
+                            </Button>
+                          )}
+                          {c.status !== 'void' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs text-destructive"
+                              onClick={() => handleUpdateCommissionStatus(c.id, 'void')}
+                            >
+                              <XCircle className="h-3 w-3 mr-1" /> Void
+                            </Button>
+                          )}
+                          {c.status !== 'accrued' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs"
+                              onClick={() => handleUpdateCommissionStatus(c.id, 'accrued')}
+                            >
+                              Reset
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* Commission % audit log */}
+        <div className="tactical-card">
+          <div className="flex items-center gap-2 px-5 pt-5 pb-3">
+            <History className="h-4 w-4 text-primary" />
+            <h2 className="font-bold">Commission % change history</h2>
+          </div>
+          <div className="overflow-x-auto">
+            {pctAudit.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                No commission rate changes recorded yet.
+              </div>
+            ) : (
+              <table className="w-full min-w-[640px] text-sm">
+                <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-bold">Scope</th>
+                    <th className="text-left px-4 py-3 font-bold">Target</th>
+                    <th className="text-left px-4 py-3 font-bold">Old %</th>
+                    <th className="text-left px-4 py-3 font-bold">New %</th>
+                    <th className="text-left px-4 py-3 font-bold">Effective</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {pctAudit.map((row) => (
+                    <tr key={row.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-primary">
+                          {row.scope === 'global_default' ? 'Global default' : 'Per-link'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {row.scope === 'link' && row.link_id
+                          ? `${linkNameById[row.link_id] ?? 'Deleted link'} (/i/${linkSlugById[row.link_id] ?? '—'})`
+                          : 'Platform default'}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {row.old_pct === null ? '—' : `${Number(row.old_pct)}%`}
+                      </td>
+                      <td className="px-4 py-3 font-bold">
+                        {row.new_pct === null ? 'unset' : `${Number(row.new_pct)}%`}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {format(new Date(row.effective_at), 'MMM d, yyyy h:mm a')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Create dialog */}
