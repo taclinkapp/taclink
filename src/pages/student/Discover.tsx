@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Map as MapIcon, List, Gift, X, MapPin } from 'lucide-react';
+import { Search, Map as MapIcon, List, Gift, X, MapPin, ChevronDown } from 'lucide-react';
 import { usePublishedCourses } from '@/hooks/useCourses';
 import { CourseCard } from '@/components/CourseCard';
 import { CourseMap } from '@/components/CourseMap';
@@ -43,7 +43,11 @@ const Discover = () => {
   // Location lookup state
   const [locationQuery, setLocationQuery] = useState('');
   const [locationOpen, setLocationOpen] = useState(false);
+  const [showAllLocations, setShowAllLocations] = useState(false);
+  const [activeLocationIndex, setActiveLocationIndex] = useState(0);
   const [selectedLocation, setSelectedLocation] = useState<LocationOption | null>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  const locationListRef = useRef<HTMLDivElement>(null);
   const [bannerDismissed, setBannerDismissed] = useState(
     () => typeof window !== 'undefined' && sessionStorage.getItem('invite-banner-dismissed') === '1',
   );
@@ -84,8 +88,22 @@ const Discover = () => {
     const list = q
       ? locationOptions.filter((o) => o.label.toLowerCase().includes(q))
       : locationOptions;
-    return list.slice(0, 8);
-  }, [locationOptions, locationQuery]);
+    return showAllLocations || q ? list : list.slice(0, 8);
+  }, [locationOptions, locationQuery, showAllLocations]);
+
+  // Reset highlighted suggestion whenever the visible list changes.
+  useEffect(() => {
+    setActiveLocationIndex(0);
+  }, [locationQuery, locationOpen, showAllLocations]);
+
+  // Scroll the active suggestion into view as the user navigates with the keyboard.
+  useEffect(() => {
+    if (!locationOpen) return;
+    const el = locationListRef.current?.querySelector<HTMLButtonElement>(
+      `[data-loc-index="${activeLocationIndex}"]`,
+    );
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [activeLocationIndex, locationOpen]);
 
   const matchesSelectedLocation = (c: { city: string; state: string }) => {
     if (!selectedLocation) return true;
@@ -111,12 +129,48 @@ const Discover = () => {
     setSelectedLocation(loc);
     setLocationQuery('');
     setLocationOpen(false);
+    setShowAllLocations(false);
     setView('map');
   };
 
   const clearLocation = () => {
     setSelectedLocation(null);
     setView('list');
+  };
+
+  const toggleAllLocations = () => {
+    const next = !(locationOpen && showAllLocations);
+    setShowAllLocations(next);
+    setLocationOpen(next);
+    if (next) {
+      setLocationQuery('');
+      setTimeout(() => locationInputRef.current?.focus(), 0);
+    }
+  };
+
+  const handleLocationKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setLocationOpen(true);
+      setActiveLocationIndex((i) => Math.min(i + 1, Math.max(locationSuggestions.length - 1, 0)));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveLocationIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      if (locationOpen && locationSuggestions[activeLocationIndex]) {
+        e.preventDefault();
+        pickLocation(locationSuggestions[activeLocationIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setLocationOpen(false);
+      setShowAllLocations(false);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setActiveLocationIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setActiveLocationIndex(Math.max(locationSuggestions.length - 1, 0));
+    }
   };
 
   return (
@@ -159,38 +213,96 @@ const Discover = () => {
             </div>
           ) : (
             <div className="relative">
-              <div className="relative neu-inset">
-                <MapPin className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative neu-inset flex items-center pr-1">
+                <MapPin className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <Input
+                  ref={locationInputRef}
                   value={locationQuery}
-                  onChange={(e) => { setLocationQuery(e.target.value); setLocationOpen(true); }}
+                  onChange={(e) => { setLocationQuery(e.target.value); setLocationOpen(true); setShowAllLocations(false); }}
                   onFocus={() => setLocationOpen(true)}
-                  onBlur={() => setTimeout(() => setLocationOpen(false), 150)}
+                  onBlur={() => setTimeout(() => { setLocationOpen(false); setShowAllLocations(false); }, 150)}
+                  onKeyDown={handleLocationKeyDown}
                   placeholder="Where do you want to train?"
-                  className="bg-transparent border-0 pl-10 h-12 rounded-2xl shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  role="combobox"
+                  aria-expanded={locationOpen}
+                  aria-controls="location-listbox"
+                  aria-autocomplete="list"
+                  aria-activedescendant={
+                    locationOpen && locationSuggestions[activeLocationIndex]
+                      ? `loc-opt-${activeLocationIndex}`
+                      : undefined
+                  }
+                  className="bg-transparent border-0 pl-10 pr-2 h-12 rounded-2xl shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={toggleAllLocations}
+                  aria-label={
+                    locationOpen && showAllLocations
+                      ? 'Close all locations'
+                      : `Show all ${locationOptions.length} locations`
+                  }
+                  className="shrink-0 mr-1 h-9 px-2 rounded-md flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary"
+                >
+                  All
+                  <ChevronDown
+                    className={cn(
+                      'h-3.5 w-3.5 transition-transform',
+                      locationOpen && showAllLocations && 'rotate-180',
+                    )}
+                  />
+                </button>
               </div>
               {locationOpen && locationSuggestions.length > 0 && (
-                <div className="absolute z-40 left-0 right-0 mt-1 max-h-72 overflow-auto rounded-xl border border-border bg-card shadow-lg">
-                  {locationSuggestions.map((loc) => (
-                    <button
-                      key={loc.key}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => pickLocation(loc)}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="flex-1 text-sm font-medium truncate">{loc.label}</span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                        {loc.count} course{loc.count === 1 ? '' : 's'}
-                      </span>
-                    </button>
-                  ))}
+                <div
+                  ref={locationListRef}
+                  id="location-listbox"
+                  role="listbox"
+                  className="absolute z-40 left-0 right-0 mt-1 max-h-72 overflow-auto rounded-xl border border-border bg-card shadow-lg"
+                >
+                  {showAllLocations && (
+                    <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
+                      All locations · {locationSuggestions.length}
+                    </div>
+                  )}
+                  {locationSuggestions.map((loc, idx) => {
+                    const active = idx === activeLocationIndex;
+                    return (
+                      <button
+                        key={loc.key}
+                        id={`loc-opt-${idx}`}
+                        data-loc-index={idx}
+                        role="option"
+                        aria-selected={active}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onMouseEnter={() => setActiveLocationIndex(idx)}
+                        onClick={() => pickLocation(loc)}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-3 py-2 text-left',
+                          active
+                            ? 'bg-accent text-accent-foreground'
+                            : 'hover:bg-accent hover:text-accent-foreground',
+                        )}
+                      >
+                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="flex-1 text-sm font-medium truncate">{loc.label}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {loc.count} course{loc.count === 1 ? '' : 's'}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
               {locationOpen && locationQuery && locationSuggestions.length === 0 && (
                 <div className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-3 text-xs text-muted-foreground">
                   No courses found for that location yet.
+                </div>
+              )}
+              {locationOpen && !locationQuery && locationSuggestions.length === 0 && (
+                <div className="absolute z-40 left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg p-3 text-xs text-muted-foreground">
+                  No locations available yet.
                 </div>
               )}
             </div>
