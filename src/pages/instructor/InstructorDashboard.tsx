@@ -207,7 +207,7 @@ const InstructorDashboard = () => {
                       </SheetDescription>
                     </div>
                     {!drillCourse && (
-                      <div className="flex items-center gap-1 print:hidden">
+                      <div className="flex items-center gap-1 print:hidden mr-8">
                         <button onClick={handlePrint} className="p-2 rounded-md border border-border hover:border-primary/50 transition" aria-label="Print">
                           <Printer className="h-4 w-4" />
                         </button>
