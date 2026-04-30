@@ -113,7 +113,7 @@ export const Inbox = ({ variant, basePath, TabBar }: Props) => {
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground truncate">
-                    {c.last_message ?? "Start the conversation"}
+                    {sanitizePreview(c.last_message) ?? "Start the conversation"}
                   </p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
