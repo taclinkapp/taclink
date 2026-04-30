@@ -10,15 +10,15 @@ import {
 } from '@/components/ui/dialog';
 
 export type ScanOutcome =
-  | { kind: 'success'; studentName?: string | null; source: 'qr' | 'proximity' }
-  | { kind: 'already_attended'; studentName?: string | null }
-  | { kind: 'wrong_course' }
+  | { kind: 'success'; bookingId: string; studentName?: string | null; source: 'qr' | 'proximity' }
+  | { kind: 'already_attended'; bookingId?: string; studentName?: string | null }
+  | { kind: 'wrong_course'; bookingId?: string }
   | { kind: 'invalid_qr'; reason: string }
   | { kind: 'verification_failed'; reason: string }
-  | { kind: 'unsigned_warning'; studentName?: string | null }
-  | { kind: 'pending_proximity'; studentName?: string | null }
-  | { kind: 'cannot_checkin'; status: string }
-  | { kind: 'rpc_error'; reason: string };
+  | { kind: 'unsigned_warning'; bookingId?: string; studentName?: string | null }
+  | { kind: 'pending_proximity'; bookingId: string; studentName?: string | null }
+  | { kind: 'cannot_checkin'; bookingId: string; status: string }
+  | { kind: 'rpc_error'; bookingId?: string; reason: string };
 
 type Props = {
   outcome: ScanOutcome | null;
