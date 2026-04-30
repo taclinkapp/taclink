@@ -505,9 +505,12 @@ const CourseManagement = () => {
           onDecode={async (text) => {
             setScannerOpen(false);
 
-            // Resolve the booking ID — signed tokens go through server verification,
-            // legacy v1 tokens are still parsed but with a warning.
+            // Resolve the booking ID. Signed tokens go through server
+            // verification; legacy v1 tokens still resolve but trip the
+            // unsigned-warning outcome so the instructor knows to ask for a
+            // refreshed QR.
             let resolvedBookingId: string | null = null;
+            let unsigned = false;
 
             if (looksLikeSignedToken(text)) {
               try {
@@ -516,51 +519,82 @@ const CourseManagement = () => {
                 });
                 if (error) throw error;
                 if (!data?.ok) {
-                  toast.error(data?.reason ?? 'QR verification failed.');
+                  setScanOutcome({
+                    kind: 'verification_failed',
+                    reason: data?.reason ?? 'QR verification failed',
+                  });
                   return;
                 }
                 resolvedBookingId = data.bookingId;
               } catch (e: any) {
-                toast.error(e?.message ?? 'Could not verify QR.');
+                setScanOutcome({
+                  kind: 'verification_failed',
+                  reason: e?.message ?? 'Could not reach verification service',
+                });
                 return;
               }
             } else {
               const parsed = parseCheckinPayload(text);
               if (!parsed) {
-                toast.error('Not a valid TacLink check-in QR.');
+                setScanOutcome({
+                  kind: 'invalid_qr',
+                  reason: 'The scanned code is not a TacLink check-in QR.',
+                });
                 return;
               }
-              toast.warning('Unsigned QR detected — ask the student to refresh their booking page.');
+              unsigned = true;
               resolvedBookingId = parsed.bookingId;
             }
 
             if (!resolvedBookingId) return;
             const match = bookings.find((b: any) => b.id === resolvedBookingId);
             if (!match) {
-              toast.error('That QR is not for this course.');
+              setScanOutcome({ kind: 'wrong_course' });
               return;
             }
+            const studentName = studentNameFor(match);
+
+            // Surface unsigned-QR warning before attempting attendance so the
+            // instructor knows to follow up — but still proceed (single-source policy).
+            if (unsigned) {
+              setScanOutcome({ kind: 'unsigned_warning', studentName });
+              return;
+            }
+
             if (match.status === 'attended') {
-              toast.info('Already checked in.');
+              setScanOutcome({ kind: 'already_attended', studentName });
               return;
             }
+
             if (autoCheckin) {
               const inRange =
                 proximity.reading && proximity.reading.smoothedM <= PROXIMITY_TRIGGER_METERS;
               if (inRange) {
-                markAttended(resolvedBookingId, { source: 'proximity' });
+                const outcome = await markAttended(resolvedBookingId, { source: 'proximity' });
                 setPending(null);
+                setScanOutcome(outcome);
               } else {
                 setPending({ bookingId: resolvedBookingId, scannedAt: Date.now() });
-                toast.info('QR verified — waiting for proximity to confirm.');
+                setScanOutcome({ kind: 'pending_proximity', studentName });
               }
             } else {
-              markAttended(resolvedBookingId, { source: 'qr' });
+              const outcome = await markAttended(resolvedBookingId, { source: 'qr' });
+              setScanOutcome(outcome);
             }
           }}
           onClose={() => setScannerOpen(false)}
         />
       )}
+
+      <ScanResultDialog
+        outcome={scanOutcome}
+        onScanAnother={() => {
+          setScanOutcome(null);
+          setScannerOpen(true);
+        }}
+        onClose={() => setScanOutcome(null)}
+      />
+
 
       <CancelCourseDialog
         open={cancelOpen}
