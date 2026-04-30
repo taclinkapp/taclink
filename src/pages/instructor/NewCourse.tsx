@@ -188,6 +188,11 @@ const NewCourse = () => {
     if (step === 1) {
       if (!date || !startTime || !endTime) return 'Date and times are required';
       if (!city || !state) return 'City and state are required';
+      const startsAt = new Date(`${date}T${startTime}:00`);
+      const minStart = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      if (startsAt < minStart) {
+        return 'Course must start at least 7 days from today so students have time to find and book it.';
+      }
     }
     if (step === 2) {
       if (!capacity || Number(capacity) < 1) return 'Capacity must be at least 1';
@@ -425,7 +430,18 @@ const NewCourse = () => {
         )}
         {step === 1 && (
           <>
-            <Field label="Date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-card border-border h-11" /></Field>
+            <Field label="Date">
+              <Input
+                type="date"
+                value={date}
+                min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
+                onChange={(e) => setDate(e.target.value)}
+                className="bg-card border-border h-11"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Earliest start: <strong className="text-foreground">7 days from today</strong> — gives students time to discover and book.
+              </p>
+            </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Start Time"><Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="bg-card border-border h-11" /></Field>
               <Field label="End Time"><Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="bg-card border-border h-11" /></Field>

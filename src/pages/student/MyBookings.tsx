@@ -8,6 +8,7 @@ import { QrCode, Calendar, MapPin, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
+import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
 
 const MyBookings = () => {
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
