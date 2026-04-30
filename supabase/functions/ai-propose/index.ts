@@ -326,5 +326,9 @@ function normalizePayload(kind: string, args: any): Record<string, any> {
       base[f] = args[f];
     }
   }
+  // Mirror classification → refund_reason_category if AI forgot to set both.
+  if (kind === "dispute_triage" && !base.refund_reason_category && base.classification) {
+    base.refund_reason_category = base.classification;
+  }
   return base;
 }
