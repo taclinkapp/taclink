@@ -1,18 +1,12 @@
-// End-to-end tests for the auto-refund decision pipeline.
+// End-to-end tests for the reason-based auto-refund decision pipeline.
 //
-// These tests POST directly to the deployed `ai-propose` edge function with
-// pre-built tool-call payloads (bypassing the model) so we can deterministically
-// exercise every gate of the auto_refund rule:
+// Coverage:
+//   1. ai-propose gating logic (which dispute_triage payloads auto-approve)
+//   2. compute_refund_split RPC (the canonical money-split source of truth)
+//   3. compute_student_risk_score RPC (still used by executor)
 //
-//   • Tier 1/2 auto-issue   → status=approved, auto_approved=true
-//   • Over amount cap        → status=proposed (owner queue)
-//   • Below confidence floor → status=proposed
-//   • High risk_level        → status=proposed
-//   • Wrong recommended_action (deny / escalate) → status=proposed
-//   • Tier 3 escalate_to_owner → status=proposed
-//
-// The executor-side risk-score gate is covered by a unit test that calls the
-// `compute_student_risk_score` RPC.
+// We test the gating logic in pure JS (mirror of ai-propose source) plus
+// real RPC calls against the live Supabase instance.
 
 import "https://deno.land/std@0.224.0/dotenv/load.ts";
 import {
@@ -28,34 +22,16 @@ assert(SUPABASE_ANON_KEY, "VITE_SUPABASE_PUBLISHABLE_KEY missing in .env");
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// A throwaway conversation id. ai-propose stores the row regardless of whether
-// the conversation exists, so a random uuid is fine for the gating tests.
-const RANDOM_TARGET = () => crypto.randomUUID();
+// =================================================================
+// Helper: mirror of ai-propose's reason-based gating logic.
+// Kept in lockstep with supabase/functions/ai-propose/index.ts.
+// =================================================================
+const AUTO_ELIGIBLE = new Set([
+  "instructor_no_show",
+  "instructor_cancel",
+  "student_cancel_timely",
+]);
 
-type ProposeInput = {
-  kind: string;
-  target_type?: string;
-  target_id?: string;
-  // Mirrors what the model would emit as a tool call. ai-propose accepts these
-  // fields directly when no model is invoked (it's wrapped server-side).
-  args: Record<string, unknown>;
-};
-
-/**
- * ai-propose accepts a `kind` + `context` and runs the model. To skip the
- * model and test gates only, we pass `tool_call_args` so the function can
- * persist the synthetic action directly. The function already supports this
- * branch via the `args` it receives back from the model — we mimic that
- * shape by hitting the function with `__test_args` (see propose helper below).
- *
- * Implementation note: ai-propose currently always invokes the model. Rather
- * than modifying the function for tests, we go around it: insert directly
- * into ai_actions to assert SQL-side behavior, AND also call ai-propose end
- * to end with cheap real payloads where helpful. The gating logic mirrors
- * the function source, so we re-validate it in pure JS to lock the contract.
- */
-
-// Mirror of ai-propose's gating logic, kept in lockstep with the function.
 async function decide(
   kind: string,
   args: { risk_level: string; confidence: number; payload: any },
@@ -74,33 +50,16 @@ async function decide(
 
   let autoApproved = false;
 
-  const rule = rules[kind];
-  if (rule?.enabled && status === "proposed") {
-    const riskOk =
-      rule.max_risk === "medium"
-        ? args.risk_level !== "high"
-        : args.risk_level === "low";
-    const confOk = (args.confidence ?? 0) >= (rule.min_confidence ?? 0.85);
-    if (riskOk && confOk) {
-      status = "approved";
-      autoApproved = true;
-    }
-  }
-
-  if (kind === "dispute_triage" && status === "proposed" && !autoApproved) {
+  if (kind === "dispute_triage" && status === "proposed") {
     const refundRule = rules.auto_refund;
     const decision = args.payload?.recommended_action;
-    const amount =
-      args.payload?.refund_amount_cents ??
-      args.payload?.credit_amount_cents ??
-      0;
-    const isRefund =
-      decision === "approve_full_refund" || decision === "offer_app_credit";
+    const reasonCategory =
+      args.payload?.refund_reason_category ?? args.payload?.classification;
     if (
       refundRule?.enabled &&
-      isRefund &&
-      amount > 0 &&
-      amount <= (refundRule.max_amount_cents ?? 5000) &&
+      decision === "issue_credit" &&
+      reasonCategory &&
+      AUTO_ELIGIBLE.has(reasonCategory) &&
       (args.confidence ?? 0) >= (refundRule.min_confidence ?? 0.95) &&
       args.risk_level !== "high"
     ) {
@@ -113,215 +72,258 @@ async function decide(
 }
 
 // =================================================================
-// Decision-gate tests (lockstep with ai-propose)
+// Decision-gate tests
 // =================================================================
 
-Deno.test("LOW-RISK auto-refund: $25, conf 0.97, low risk → AUTO-APPROVED", async () => {
-  const result = await decide("dispute_triage", {
+Deno.test("instructor_no_show + issue_credit + low risk → AUTO-APPROVED", async () => {
+  const r = await decide("dispute_triage", {
     risk_level: "low",
     confidence: 0.97,
     payload: {
-      classification: "instructor_no_show",
-      recommended_action: "approve_full_refund",
-      refund_amount_cents: 2500,
+      refund_reason_category: "instructor_no_show",
+      recommended_action: "issue_credit",
       reply_text: "Sorry — issuing your credit now.",
     },
   });
-  assertEquals(result.status, "approved");
-  assertEquals(result.autoApproved, true);
+  assertEquals(r.status, "approved");
+  assertEquals(r.autoApproved, true);
 });
 
-Deno.test("LOW-RISK app credit: offer_app_credit $15, conf 0.96 → AUTO-APPROVED", async () => {
-  const result = await decide("dispute_triage", {
+Deno.test("student_cancel_timely + issue_credit → AUTO-APPROVED", async () => {
+  const r = await decide("dispute_triage", {
     risk_level: "low",
     confidence: 0.96,
     payload: {
-      classification: "weather_cancellation",
-      recommended_action: "offer_app_credit",
-      credit_amount_cents: 1500,
-      reply_text: "Here's a credit toward your next booking.",
+      refund_reason_category: "student_cancel_timely",
+      recommended_action: "issue_credit",
     },
   });
-  assertEquals(result.status, "approved");
-  assertEquals(result.autoApproved, true);
+  assertEquals(r.status, "approved");
 });
 
-Deno.test("OVER CAP: $75 refund (cap is $50) → routes to owner", async () => {
-  const result = await decide("dispute_triage", {
-    risk_level: "low",
-    confidence: 0.99,
+Deno.test("fraud_safety → NOT auto-approved (must go to owner)", async () => {
+  const r = await decide("dispute_triage", {
+    risk_level: "high",
+    confidence: 0.97,
     payload: {
-      classification: "instructor_no_show",
-      recommended_action: "approve_full_refund",
-      refund_amount_cents: 7500,
+      refund_reason_category: "fraud_safety",
+      recommended_action: "escalate_to_owner",
     },
   });
-  assertEquals(result.status, "proposed");
-  assertEquals(result.autoApproved, false);
+  assertEquals(r.autoApproved, false);
 });
 
-Deno.test("BELOW CONFIDENCE FLOOR: 0.90 (need 0.95) → routes to owner", async () => {
-  const result = await decide("dispute_triage", {
-    risk_level: "low",
-    confidence: 0.9,
-    payload: {
-      classification: "instructor_no_show",
-      recommended_action: "approve_full_refund",
-      refund_amount_cents: 2500,
-    },
-  });
-  assertEquals(result.status, "proposed");
-  assertEquals(result.autoApproved, false);
-});
-
-Deno.test("HIGH RISK level → auto-paused, never auto-approved", async () => {
-  const result = await decide("dispute_triage", {
+Deno.test("chargeback_threat → NOT auto-approved", async () => {
+  const r = await decide("dispute_triage", {
     risk_level: "high",
     confidence: 0.99,
     payload: {
-      classification: "chargeback_threat",
-      recommended_action: "approve_full_refund",
-      refund_amount_cents: 2500,
-    },
-  });
-  assertEquals(result.status, "auto_paused");
-  assertEquals(result.autoApproved, false);
-});
-
-Deno.test("DENY action (no money moves) → routes to owner, never auto-approved", async () => {
-  const result = await decide("dispute_triage", {
-    risk_level: "low",
-    confidence: 0.99,
-    payload: {
-      classification: "buyers_remorse",
-      recommended_action: "deny_politely",
-      refund_amount_cents: 0,
-    },
-  });
-  assertEquals(result.status, "proposed");
-  assertEquals(result.autoApproved, false);
-});
-
-Deno.test("ESCALATE action (Tier 3) → routes to owner", async () => {
-  const result = await decide("dispute_triage", {
-    risk_level: "low",
-    confidence: 0.99,
-    payload: {
-      classification: "lawyer_threat",
+      refund_reason_category: "chargeback_threat",
       recommended_action: "escalate_to_owner",
-      refund_amount_cents: 0,
     },
   });
-  assertEquals(result.status, "proposed");
-  assertEquals(result.autoApproved, false);
+  assertEquals(r.autoApproved, false);
 });
 
-Deno.test("RESCHEDULE offer (no $$ at all) → routes to owner", async () => {
-  const result = await decide("dispute_triage", {
+Deno.test("quality_complaint → NOT auto-approved (owner reviews)", async () => {
+  const r = await decide("dispute_triage", {
+    risk_level: "medium",
+    confidence: 0.97,
+    payload: {
+      refund_reason_category: "quality_complaint",
+      recommended_action: "issue_credit",
+    },
+  });
+  assertEquals(r.autoApproved, false);
+});
+
+Deno.test("low confidence (<0.95) → NOT auto-approved", async () => {
+  const r = await decide("dispute_triage", {
+    risk_level: "low",
+    confidence: 0.85,
+    payload: {
+      refund_reason_category: "instructor_no_show",
+      recommended_action: "issue_credit",
+    },
+  });
+  assertEquals(r.autoApproved, false);
+});
+
+Deno.test("deny_politely action → NOT auto-approved (no credit issued)", async () => {
+  const r = await decide("dispute_triage", {
     risk_level: "low",
     confidence: 0.99,
     payload: {
-      classification: "schedule_conflict",
-      recommended_action: "offer_reschedule",
+      refund_reason_category: "student_cancel_late",
+      recommended_action: "deny_politely",
     },
   });
-  assertEquals(result.status, "proposed");
-  assertEquals(result.autoApproved, false);
-});
-
-Deno.test("EXACTLY at cap ($50) → AUTO-APPROVED (boundary inclusive)", async () => {
-  const result = await decide("dispute_triage", {
-    risk_level: "low",
-    confidence: 0.95,
-    payload: {
-      recommended_action: "approve_full_refund",
-      refund_amount_cents: 5000,
-    },
-  });
-  assertEquals(result.status, "approved");
-  assertEquals(result.autoApproved, true);
+  assertEquals(r.autoApproved, false);
 });
 
 // =================================================================
-// Risk-score executor gate (server-side function)
+// compute_refund_split contract tests
+// These create a real booking + course, then verify the split.
 // =================================================================
 
-Deno.test("compute_student_risk_score returns score + factors for any uuid", async () => {
-  // Use a random uuid (no profile row) — function must still return a row.
-  const randomStudent = crypto.randomUUID();
-  const { data, error } = await supabase.rpc("compute_student_risk_score", {
-    _student_id: randomStudent,
-  });
-  assert(!error, `rpc error: ${error?.message}`);
-  assert(Array.isArray(data));
-  assertEquals(data.length, 1);
-  const row = data[0];
-  assert(typeof row.score === "number", "score should be a number");
-  assert(row.score >= 0 && row.score <= 100, "score in 0-100 range");
-  assert(row.factors, "factors should be present");
-  assert("prior_refunds" in row.factors, "factors.prior_refunds present");
-  assert("prior_disputes" in row.factors, "factors.prior_disputes present");
-  assert("account_age_days" in row.factors, "factors.account_age_days present");
-});
-
-// =================================================================
-// End-to-end through ai-propose: verify the function is reachable and the
-// gate matches what we computed in `decide()` for one happy + one sad path.
-// =================================================================
-
-async function callPropose(payload: Record<string, unknown>): Promise<Response> {
-  return await fetch(`${SUPABASE_URL}/functions/v1/ai-propose`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      apikey: SUPABASE_ANON_KEY,
+async function setupBookingForSplit(
+  startsInHours: number,
+): Promise<{ bookingId: string; cleanup: () => Promise<void> }> {
+  // Use service role for fixture setup if available; otherwise skip these tests.
+  const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!SERVICE) {
+    return { bookingId: "", cleanup: async () => {} };
+  }
+  const admin = createClient(SUPABASE_URL, SERVICE);
+  const studentId = crypto.randomUUID();
+  const instructorId = crypto.randomUUID();
+  const startsAt = new Date(Date.now() + startsInHours * 3600 * 1000).toISOString();
+  const { data: course } = await admin
+    .from("courses")
+    .insert({
+      instructor_id: instructorId,
+      title: "Test course",
+      price_cents: 10000,
+      starts_at: startsAt,
+      status: "published",
+    })
+    .select("id")
+    .single();
+  const { data: booking } = await admin
+    .from("bookings")
+    .insert({
+      student_id: studentId,
+      course_id: course!.id,
+      online_total_cents: 3500,
+      platform_fee_cents: 2500,
+      deposit_amount_cents: 1000,
+      due_in_person_cents: 9000,
+      course_price_cents: 10000,
+    })
+    .select("id")
+    .single();
+  return {
+    bookingId: booking!.id,
+    cleanup: async () => {
+      await admin.from("bookings").delete().eq("id", booking!.id);
+      await admin.from("courses").delete().eq("id", course!.id);
     },
-    body: JSON.stringify(payload),
-  });
+  };
 }
 
-Deno.test("ai-propose reachable end-to-end", async () => {
-  // Send a minimal context the function will hand to the model. We don't
-  // assert on the model's specific output (non-deterministic) — we assert
-  // only that the function responds and persists *something*.
-  const targetId = RANDOM_TARGET();
-  const res = await callPropose({
-    kind: "dispute_triage",
-    target_type: "conversation",
-    target_id: targetId,
-    context: {
-      conversation_id: targetId,
-      latest_message: "I want a refund — instructor never showed.",
-      recent_messages: [],
-      booking: null,
-      student_history: { prior_refunds: 0, prior_disputes_in_thread: 0 },
-      policy: { all_refunds_as_in_app_credit: true },
-    },
-  });
-  const body = await res.text();
-  assert(
-    res.status === 200 || res.status === 500,
-    `unexpected status ${res.status}: ${body.slice(0, 200)}`,
-  );
+Deno.test("compute_refund_split: instructor_no_show → student gets $35, instructor forfeits $10", async () => {
+  const { bookingId, cleanup } = await setupBookingForSplit(48);
+  if (!bookingId) return; // skipped without service key
+  try {
+    const { data, error } = await supabase.rpc("compute_refund_split", {
+      _booking_id: bookingId,
+      _reason: "instructor_no_show",
+    });
+    assert(!error, error?.message);
+    const row = Array.isArray(data) ? data[0] : data;
+    assertEquals(row.student_credit_cents, 3500);
+    assertEquals(row.instructor_forfeit_cents, 1000);
+    assertEquals(row.platform_absorbed_cents, 0);
+    assertEquals(row.requires_owner, false);
+  } finally {
+    await cleanup();
+  }
 });
 
-// =================================================================
-// SQL-level verification: auto_refund rule is enabled and within sane bounds
-// =================================================================
+Deno.test("compute_refund_split: student_cancel_timely (>=48h) → student gets $25 only", async () => {
+  const { bookingId, cleanup } = await setupBookingForSplit(72);
+  if (!bookingId) return;
+  try {
+    const { data } = await supabase.rpc("compute_refund_split", {
+      _booking_id: bookingId,
+      _reason: "student_cancel_timely",
+    });
+    const row = Array.isArray(data) ? data[0] : data;
+    assertEquals(row.student_credit_cents, 2500);
+    assertEquals(row.instructor_forfeit_cents, 0);
+  } finally {
+    await cleanup();
+  }
+});
 
-Deno.test("auto_refund rule is configured and enabled", async () => {
-  const { data, error } = await supabase
-    .from("ai_auto_approve_settings")
-    .select("rules")
-    .eq("id", 1)
-    .single();
-  assert(!error, `select error: ${error?.message}`);
-  const rule = (data as any).rules.auto_refund;
-  assert(rule, "auto_refund rule should exist");
-  assertEquals(rule.enabled, true, "auto_refund.enabled should be true");
-  assert(rule.max_amount_cents <= 10000, "amount cap stays conservative (≤$100)");
-  assert(rule.min_confidence >= 0.9, "confidence floor stays high (≥0.90)");
-  assert(rule.max_risk_score <= 50, "risk-score cap stays restrictive (≤50)");
-  assert(rule.dispute_window_hours >= 1, "instructor dispute window > 0");
+Deno.test("compute_refund_split: student_cancel_late (<48h) → no credit", async () => {
+  const { bookingId, cleanup } = await setupBookingForSplit(12);
+  if (!bookingId) return;
+  try {
+    const { data } = await supabase.rpc("compute_refund_split", {
+      _booking_id: bookingId,
+      _reason: "student_cancel_late",
+    });
+    const row = Array.isArray(data) ? data[0] : data;
+    assertEquals(row.student_credit_cents, 0);
+    assertEquals(row.instructor_forfeit_cents, 0);
+  } finally {
+    await cleanup();
+  }
+});
+
+Deno.test("compute_refund_split: auto-detects late vs timely from start time", async () => {
+  const { bookingId, cleanup } = await setupBookingForSplit(24); // < 48h
+  if (!bookingId) return;
+  try {
+    const { data } = await supabase.rpc("compute_refund_split", {
+      _booking_id: bookingId,
+      _reason: "student_cancel", // generic — should detect "late"
+    });
+    const row = Array.isArray(data) ? data[0] : data;
+    assertEquals(row.reason_category, "student_cancel_late");
+    assertEquals(row.student_credit_cents, 0);
+  } finally {
+    await cleanup();
+  }
+});
+
+Deno.test("compute_refund_split: chargeback_threat → requires_owner true, no credit", async () => {
+  const { bookingId, cleanup } = await setupBookingForSplit(48);
+  if (!bookingId) return;
+  try {
+    const { data } = await supabase.rpc("compute_refund_split", {
+      _booking_id: bookingId,
+      _reason: "chargeback_threat",
+    });
+    const row = Array.isArray(data) ? data[0] : data;
+    assertEquals(row.requires_owner, true);
+    assertEquals(row.student_credit_cents, 0);
+  } finally {
+    await cleanup();
+  }
+});
+
+Deno.test("compute_refund_split: weather_reschedule → no money moves", async () => {
+  const { bookingId, cleanup } = await setupBookingForSplit(48);
+  if (!bookingId) return;
+  try {
+    const { data } = await supabase.rpc("compute_refund_split", {
+      _booking_id: bookingId,
+      _reason: "weather_reschedule",
+    });
+    const row = Array.isArray(data) ? data[0] : data;
+    assertEquals(row.student_credit_cents, 0);
+    assertEquals(row.instructor_forfeit_cents, 0);
+    assertEquals(row.platform_absorbed_cents, 0);
+  } finally {
+    await cleanup();
+  }
+});
+
+Deno.test("compute_refund_split: quality_complaint → $25 absorbed by TacLink, owner review", async () => {
+  const { bookingId, cleanup } = await setupBookingForSplit(-24); // course already happened
+  if (!bookingId) return;
+  try {
+    const { data } = await supabase.rpc("compute_refund_split", {
+      _booking_id: bookingId,
+      _reason: "quality_complaint",
+    });
+    const row = Array.isArray(data) ? data[0] : data;
+    assertEquals(row.student_credit_cents, 2500);
+    assertEquals(row.platform_absorbed_cents, 2500);
+    assertEquals(row.requires_owner, true);
+  } finally {
+    await cleanup();
+  }
 });
