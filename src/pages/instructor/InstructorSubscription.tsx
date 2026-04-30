@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
@@ -7,13 +8,28 @@ import { CheckCircle2, Loader2, Crown, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { fmt, INSTRUCTOR_SUBSCRIPTION_CENTS } from '@/lib/fees';
+import { usePrelaunch } from '@/hooks/usePrelaunch';
 
 const InstructorSubscription = () => {
   const { user, profile, refreshProfile } = useAuth();
+  const { data: prelaunch, isLoading: prelaunchLoading } = usePrelaunch();
   const [busy, setBusy] = useState<null | 'free' | 'active'>(null);
   const status = profile?.subscription_status ?? 'free';
   const isActive = status === 'active';
   const isFree = status === 'free' || status === 'inactive';
+
+  // Hide the monthly subscription entirely while the platform is in pre-launch.
+  if (prelaunchLoading) {
+    return (
+      <MobileShell withTabBar={false}>
+        <PageHeader title="Subscription" back />
+        <div className="p-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+      </MobileShell>
+    );
+  }
+  if (prelaunch?.enabled) {
+    return <Navigate to="/instructor" replace />;
+  }
 
   const switchTo = async (next: 'active' | 'free') => {
     if (!user) return;
