@@ -50,6 +50,18 @@ const Checkout = () => {
   const [signedName, setSignedName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // ESIGN / UETA explicit electronic-sign intent
+  const ESIGN_DISCLOSURE_VERSION = 'v1.0';
+  const [esignConsent, setEsignConsent] = useState(false);
+  const [esignInitials, setEsignInitials] = useState('');
+
+  // Minor / parent-or-guardian flow
+  const [isMinor, setIsMinor] = useState(false);
+  const [studentDob, setStudentDob] = useState('');
+  const [guardianName, setGuardianName] = useState('');
+  const [guardianRelationship, setGuardianRelationship] = useState('');
+  const [guardianConsent, setGuardianConsent] = useState(false);
+
   // Created booking + Stripe Embedded Checkout takeover
   const [bookingId, setBookingId] = useState<string | null>(null);
 
