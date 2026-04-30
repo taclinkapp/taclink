@@ -50,6 +50,8 @@ serve(async (req) => {
             .eq("id", conversationId)
             .single();
           if (!conv) throw new Error("conversation not found");
+          const replyText = (payload.reply_text ?? "").toString().trim();
+          if (!replyText) throw new Error("missing reply_text");
           const senderRole = payload.sender_role ?? "instructor";
           const senderId =
             payload.sender_id ??
@@ -58,7 +60,7 @@ serve(async (req) => {
             conversation_id: conversationId,
             sender_id: senderId,
             sender_role: senderRole,
-            body: `${payload.reply_text}\n\n— sent on behalf of the team`,
+            body: `${replyText}\n\n— sent on behalf of the team`,
           });
           break;
         }
