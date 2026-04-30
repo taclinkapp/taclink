@@ -321,11 +321,7 @@ const BookingDetail = () => {
           <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground leading-relaxed">
             <strong className="text-foreground">Cancellation policy:</strong>{' '}
-            Cancel within your grace window for a <strong className="text-foreground">100% refund</strong>{' '}
-            ($25 platform fee + full course price). After the grace window, you receive{' '}
-            <strong className="text-foreground">90% of the course price</strong> back — the
-            instructor keeps 10% for the lost slot, and the $25 platform fee is non-refundable.
-            If the instructor cancels or no-shows, you're refunded in full automatically within 48 hours.
+            {REFUND_POLICY_BLURB}
           </div>
         </div>
 
@@ -337,7 +333,7 @@ const BookingDetail = () => {
             className="w-full h-12 font-bold border-destructive/40 text-destructive hover:bg-destructive/10"
           >
             {cancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
-            {inGraceWindow ? 'Cancel for full refund' : 'Cancel booking (90% refund)'}
+            {cancelButtonLabel(inGraceWindow)}
           </Button>
         )}
 
