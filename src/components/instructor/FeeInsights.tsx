@@ -22,6 +22,8 @@ type Insight = {
 export const FeeInsights = () => {
   const { profile } = useAuth();
   const isSubscribed = profile?.subscription_status === "active";
+  const { data: prelaunch } = require("@/hooks/usePrelaunch").usePrelaunch() as { data: { enabled: boolean } | undefined };
+  const isPrelaunch = !!prelaunch?.enabled;
   const [data, setData] = useState<Insight | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -41,6 +43,9 @@ export const FeeInsights = () => {
   };
 
   useEffect(() => { if (isSubscribed) load(); }, [isSubscribed]);
+
+  // Hide the locked/upgrade teaser entirely while in pre-launch.
+  if (isPrelaunch && !isSubscribed) return null;
 
   if (!isSubscribed) {
     return (
