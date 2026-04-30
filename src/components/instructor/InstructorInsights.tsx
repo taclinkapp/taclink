@@ -6,9 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
+import { usePrelaunch } from "@/hooks/usePrelaunch";
+import { Link } from "react-router-dom";
 import { US_STATES, CATEGORIES } from "@/lib/mockData";
 import { toast } from "sonner";
-import { Sparkles, MapPin, TrendingUp, Loader2, Calendar, Clock, RefreshCw } from "lucide-react";
+import { Sparkles, MapPin, TrendingUp, Loader2, Calendar, Clock, RefreshCw, Lock } from "lucide-react";
 
 const TEACHABLE = CATEGORIES.filter((c) => c !== "All");
 
