@@ -690,14 +690,14 @@ const AdminInfluencerLinks = () => {
                 onChange={(e) => setNewSlug(e.target.value)}
                 placeholder={slugify(newHandle || newName) || 'auto'}
                 className={`bg-background h-11 mt-1.5 font-mono ${
-                  slugCheck === 'taken'
+                  slugCheck === 'taken' || slugCheck === 'invalid'
                     ? 'border-destructive focus-visible:ring-destructive'
                     : slugCheck === 'available'
                     ? 'border-success'
                     : 'border-border'
                 }`}
               />
-              <p className="text-[11px] mt-1 flex items-center gap-1.5">
+              <p className="text-[11px] mt-1 flex items-center gap-1.5 flex-wrap">
                 <span className="text-muted-foreground">URL:</span>
                 <code>/i/{previewSlug || 'slug'}</code>
                 {previewSlug && slugCheck === 'checking' && (
@@ -709,7 +709,13 @@ const AdminInfluencerLinks = () => {
                 {previewSlug && slugCheck === 'taken' && (
                   <span className="text-destructive font-bold">· already in use</span>
                 )}
+                {slugCheck === 'invalid' && (
+                  <span className="text-destructive font-bold">· invalid format</span>
+                )}
               </p>
+              {slugError && (
+                <p className="text-[11px] mt-1 text-destructive">{slugError}</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
