@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useIdentity } from "@/hooks/useIdentity";
-import { Bell, MessageSquare, Loader2, CheckCheck, X, MailOpen, Mail } from "lucide-react";
+import { Bell, MessageSquare, Loader2, CheckCheck, X, MailOpen, Mail, ClipboardCheck, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -20,13 +20,30 @@ const formatRelative = (iso: string) => {
   return new Date(iso).toLocaleDateString();
 };
 
+const isAttendanceType = (type: string) =>
+  type.startsWith("attendance_reminder") || type === "attendance_auto_approved";
+
 const iconFor = (type: string) => {
+  if (type === "attendance_auto_approved") return AlertCircle;
+  if (type.startsWith("attendance_reminder")) return ClipboardCheck;
   switch (type) {
     case "message":
       return MessageSquare;
     default:
       return Bell;
   }
+};
+
+const ctaFor = (type: string): string | null => {
+  if (type.startsWith("attendance_reminder")) return "Confirm attendance";
+  if (type === "attendance_auto_approved") return "Review";
+  return null;
+};
+
+const withFocus = (link: string | null, type: string): string | null => {
+  if (!link) return link;
+  if (!isAttendanceType(type)) return link;
+  return link.includes("?") ? `${link}&focus=attendance` : `${link}?focus=attendance`;
 };
 
 const Notifications = () => {
