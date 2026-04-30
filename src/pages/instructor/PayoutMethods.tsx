@@ -152,13 +152,14 @@ const PayoutMethods = () => {
         <HowPaymentsWorkCard audience="instructor" />
         <div className="tactical-card p-4 border-primary/30 bg-primary/5">
           <div className="text-xs uppercase tracking-wider text-primary font-bold mb-1">
-            Where students send your 10% deposit
+            Where TacLink sends your 10% deposit
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Students pay TacLink the $25 booking fee, then send the 10% deposit
-            <strong className="text-foreground"> directly to you</strong> via
-            Cash App, Venmo, PayPal, or Zelle. Add at least one handle so
-            bookings can be confirmed.
+            Students pay the $25 fee + 10% deposit to TacLink at checkout. We
+            <strong className="text-foreground"> hold the 10% in escrow</strong>{" "}
+            and release it to your payout handle (Cash App, Venmo, PayPal, or
+            Zelle) 24 hours after you've scanned the student in at the course.
+            Add at least one handle so we know where to send your funds.
           </p>
         </div>
 
