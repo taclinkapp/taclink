@@ -104,6 +104,10 @@ export const AdminRefunds = () => {
   const [searching, setSearching] = useState(false);
   const [picked, setPicked] = useState<BookingLite | null>(null);
   const [type, setType] = useState<RefundType>('platform_fee');
+  const [reasonCategory, setReasonCategory] = useState<ReasonCategory>('student_cancel_timely');
+  const [split, setSplit] = useState<SplitPreview | null>(null);
+  const [splitLoading, setSplitLoading] = useState(false);
+  const [manualOverride, setManualOverride] = useState(false);
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [externalRef, setExternalRef] = useState('');
