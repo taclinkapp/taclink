@@ -53,7 +53,7 @@ const REASON_LABELS: Record<ReasonCategory, string> = {
 };
 
 type SplitPreview = {
-  student_credit_cents: number;
+  student_cash_refund_cents: number;
   instructor_forfeit_cents: number;
   platform_absorbed_cents: number;
   requires_owner: boolean;
@@ -296,16 +296,15 @@ export const AdminRefunds = () => {
         const row = Array.isArray(data) ? data[0] : data;
         if (!row) return;
         setSplit({
-          student_credit_cents: row.student_credit_cents,
+          student_cash_refund_cents: row.student_cash_refund_cents,
           instructor_forfeit_cents: row.instructor_forfeit_cents,
           platform_absorbed_cents: row.platform_absorbed_cents,
           requires_owner: row.requires_owner,
           hours_before_course: row.hours_before_course,
           rationale: row.rationale,
         });
-        setAmount((row.student_credit_cents / 100).toFixed(2));
-        // Map reason → refund_type for legacy column
-        if (row.student_credit_cents === 0) {
+        setAmount((row.student_cash_refund_cents / 100).toFixed(2));
+        if (row.student_cash_refund_cents === 0) {
           setType('other');
         } else if (
           reasonCategory === 'instructor_no_show' ||
