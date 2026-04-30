@@ -437,6 +437,13 @@ export const AdminRefunds = () => {
     }
     load();
   };
+
+  return (
+    <div className="p-8 space-y-6">
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <DollarSign className="h-6 w-6 text-primary" /> Refunds (Cash via Stripe)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Refunds are returned <span className="font-semibold text-foreground">in cash to the student's payment method via Stripe</span> within 48 hours.
