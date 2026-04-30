@@ -8,6 +8,10 @@ export const stripeEnvironment: StripeEnv = clientToken?.startsWith("pk_test_")
   ? "sandbox"
   : "live";
 
+export function getStripeEnvironment(): StripeEnv {
+  return stripeEnvironment;
+}
+
 let stripePromise: Promise<Stripe | null> | null = null;
 
 export function getStripe(): Promise<Stripe | null> {

@@ -6,9 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
+import { usePrelaunch } from "@/hooks/usePrelaunch";
+import { Link } from "react-router-dom";
 import { US_STATES, CATEGORIES } from "@/lib/mockData";
 import { toast } from "sonner";
-import { Sparkles, MapPin, TrendingUp, Loader2, Calendar, Clock, RefreshCw } from "lucide-react";
+import { Sparkles, MapPin, TrendingUp, Loader2, Calendar, Clock, RefreshCw, Lock } from "lucide-react";
 
 const TEACHABLE = CATEGORIES.filter((c) => c !== "All");
 
@@ -38,6 +41,34 @@ const demandColor = (level: string) =>
 
 export const InstructorInsights = () => {
   const { user } = useAuth();
+  const { isActive } = useSubscription();
+  const { data: prelaunch } = usePrelaunch();
+  const isPrelaunch = !!prelaunch?.enabled;
+
+  if (!isActive) {
+    if (isPrelaunch) return null;
+    return (
+      <div className="tactical-card border-primary/30 bg-primary/5 p-4">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
+            <Lock className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-bold flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" /> Local Demand & AI Projections
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+              City-level demand insights and posting-time recommendations. Available with Pro.
+            </p>
+            <Link to="/instructor/subscription" className="inline-block mt-2 text-[11px] font-bold uppercase tracking-wider text-primary hover:underline">
+              Upgrade to unlock →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [serviceState, setServiceState] = useState("");
   const [serviceCity, setServiceCity] = useState("");
   const [serviceCategories, setServiceCategories] = useState<string[]>([]);

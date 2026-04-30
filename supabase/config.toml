@@ -68,3 +68,9 @@ verify_jwt = false
 
 [functions.process-refund]
 verify_jwt = false
+
+[functions.create-subscription-checkout]
+verify_jwt = false
+
+[functions.create-portal-session]
+verify_jwt = false

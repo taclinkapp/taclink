@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { suggestCourseField, type CourseAIField, type CourseAIContext } from '@/lib/courseAI';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface Props {
   field: CourseAIField;
@@ -14,6 +16,25 @@ interface Props {
 
 export const AISuggestButton = ({ field, context, onApply, className, label }: Props) => {
   const [busy, setBusy] = useState(false);
+  const { isActive } = useSubscription();
+
+  if (!isActive) {
+    return (
+      <Link
+        to="/instructor/subscription"
+        className={cn(
+          'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider',
+          'bg-muted text-muted-foreground hover:bg-muted/70 border border-border transition',
+          className,
+        )}
+        aria-label="AI suggest is a Pro feature"
+        title="Upgrade to Pro to use AI suggestions"
+      >
+        <Lock className="h-3 w-3" />
+        {label ?? 'AI suggest'} · Pro
+      </Link>
+    );
+  }
 
   const run = async () => {
     setBusy(true);

@@ -9,6 +9,7 @@ import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 import { FeeInsights } from '@/components/instructor/FeeInsights';
 // PunchCard import removed — credit system retired
 import { AutoRefundDisputes } from '@/components/instructor/AutoRefundDisputes';
+import { LapsedSubscriptionBanner } from '@/components/instructor/LapsedSubscriptionBanner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
@@ -103,6 +104,9 @@ const InstructorDashboard = () => {
 
         {/* Auto-issued refund credits awaiting instructor review (24h dispute window) */}
         <AutoRefundDisputes />
+
+        {/* Lapsed Pro subscription banner */}
+        <LapsedSubscriptionBanner />
 
         {/* Credentials shortcut */}
         <Link
