@@ -382,17 +382,18 @@ export const AdminRefunds = () => {
       return;
     }
     if (cents > 0) {
-      // Notify student — refunds are issued as in-app credit, not cash.
       await supabase.from('notifications').insert({
         recipient_id: picked.student_id,
         type: 'refund_issued',
-        title: `In-app credit issued: ${fmt(cents)}`,
-        body: `${fmt(cents)} credit added to your account for ${picked.courseTitle}. Apply it to your next booking. Reason: ${reason.trim()}`,
+        title: `Cash refund: ${fmt(cents)}`,
+        body: `${fmt(cents)} refunded to your payment method for ${picked.courseTitle}. Allow up to 5–10 business days to appear on your statement. Reason: ${reason.trim()}`,
         link: `/student/booking/${picked.id}`,
       });
-      toast.success('Refund credit issued — student notified');
+      toast.success('Cash refund queued — student notified', {
+        description: 'The Stripe refund will be processed by the next refund worker run.',
+      });
     } else {
-      toast.success('Decision recorded — no credit issued');
+      toast.success('Decision recorded — no refund issued');
     }
     setSubmitting(false);
     setOpen(false);
@@ -401,7 +402,7 @@ export const AdminRefunds = () => {
   };
 
   const reverse = async (id: string) => {
-    if (!confirm('Mark this refund credit as reversed? This cancels the in-app credit if the student hasn\'t already redeemed it.')) return;
+    if (!confirm('Mark this refund as reversed? This is for accounting only — it will NOT pull money back from the student\'s bank.')) return;
     const { error } = await supabase
       .from('refunds')
       .update({ status: 'reversed' })
@@ -410,7 +411,7 @@ export const AdminRefunds = () => {
       toast.error('Could not reverse', { description: error.message });
       return;
     }
-    toast.success('Refund credit marked reversed');
+    toast.success('Refund marked reversed');
     load();
   };
 
@@ -419,10 +420,11 @@ export const AdminRefunds = () => {
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-primary" /> Refunds (App Credit)
+            <DollarSign className="h-6 w-6 text-primary" /> Refunds (Cash via Stripe)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            All booking-fee refunds are issued as <span className="font-semibold text-foreground">in-app credit</span> the student can apply to a future course. No cash is returned. The student is notified automatically.
+            Refunds are returned <span className="font-semibold text-foreground">in cash to the student's payment method via Stripe</span> within 48 hours.
+            Per policy: instructor-fault cancellations refund $25 + 10%; student cancellations forfeit both.
           </p>
         </div>
         <div className="flex gap-2">
@@ -431,14 +433,14 @@ export const AdminRefunds = () => {
             Refresh
           </Button>
           <Button onClick={() => setOpen(true)}>
-            <DollarSign className="h-4 w-4 mr-2" /> Issue refund credit
+            <DollarSign className="h-4 w-4 mr-2" /> Issue cash refund
           </Button>
         </div>
       </header>
 
       <div className="grid grid-cols-3 gap-4">
-        <Stat label="Credits issued" value={String(totals.count)} />
-        <Stat label="Total credit issued" value={fmt(totals.issued)} />
+        <Stat label="Refunds issued" value={String(totals.count)} />
+        <Stat label="Total refunded" value={fmt(totals.issued)} />
         <Stat label="Last 200 records" value={String(refunds.length)} />
       </div>
 
