@@ -8,6 +8,7 @@ import { QrCode, Calendar, MapPin, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
+import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
 
 const MyBookings = () => {
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -36,7 +37,11 @@ const MyBookings = () => {
       <div className="px-4 py-4 space-y-3">
         {list.length === 0 ? (
           <div className="text-center text-muted-foreground text-sm py-12">No {tab} bookings yet.</div>
-        ) : list.map((b) => (
+        ) : list.map((b) => {
+          const startsAt = b.course?.date && b.course?.startTime
+            ? new Date(`${b.course.date}T${b.course.startTime}:00`).toISOString()
+            : null;
+          return (
           <Link key={b.id} to={`/student/booking/${b.id}`} className="block tactical-card p-4 hover:border-primary/40 transition">
             <div className="flex items-start gap-3">
               <WatermarkedAvatar src={b.course.instructorPhoto} size={48} className="border border-border" alt={b.course.instructorName} />
@@ -47,6 +52,11 @@ const MyBookings = () => {
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(b.course.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                   <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{b.course.city}</span>
                 </div>
+                {tab === 'upcoming' && (
+                  <div className="mt-1.5">
+                    <CancelGraceBadge startsAt={startsAt} bookedAt={b.bookedAt} />
+                  </div>
+                )}
               </div>
               {tab === 'upcoming' ? (
                 <div className="h-10 w-10 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center">
@@ -61,7 +71,8 @@ const MyBookings = () => {
               )}
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
       <StudentTabBar />
     </MobileShell>
