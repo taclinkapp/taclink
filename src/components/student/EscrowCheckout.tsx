@@ -13,9 +13,9 @@ interface Props {
 
 /**
  * Embedded Stripe Checkout for the TacLink escrow charge.
- * Charges $25 platform fee + 10% deposit. The 10% is held in TacLink's
- * Stripe balance; release-escrow-deposits transfers it to the instructor's
- * Connect account 24h after the course ends.
+ * Charges $25 platform fee + 100% course price upfront. The course price is
+ * held in TacLink's Stripe balance; release-escrow-deposits transfers it to
+ * the instructor's Connect account 24h after the course ends.
  */
 export const EscrowCheckout = ({ bookingId, returnUrl }: Props) => {
   const fetchClientSecret = useCallback(async () => {
