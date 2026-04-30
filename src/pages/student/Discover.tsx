@@ -159,11 +159,18 @@ const Discover = () => {
   }, [selectedLocation, mapboxToken]);
 
   const locationSuggestions = useMemo(() => {
-    const q = locationQuery.trim().toLowerCase();
-    const list = q
-      ? locationOptions.filter((o) => o.label.toLowerCase().includes(q))
+    // Strip diacritics + lowercase so "São Paulo" matches "sao paulo".
+    const norm = (s: string) =>
+      s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const tokens = norm(locationQuery).split(/\s+/).filter(Boolean);
+    const list = tokens.length
+      ? locationOptions.filter((o) => {
+          const haystack = norm(o.label);
+          // Every typed token must appear somewhere — order-independent partial match.
+          return tokens.every((t) => haystack.includes(t));
+        })
       : locationOptions;
-    return showAllLocations || q ? list : list.slice(0, 8);
+    return showAllLocations || tokens.length ? list : list.slice(0, 8);
   }, [locationOptions, locationQuery, showAllLocations]);
 
   // Reset highlighted suggestion whenever the visible list changes.
