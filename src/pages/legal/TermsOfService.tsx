@@ -7,8 +7,12 @@ const SECTIONS = [
     body: 'By using TacLink™, you agree to these Terms of Service. TacLink™ is a booking and scheduling platform connecting students with independent tactical training instructors. We do not conduct training ourselves.',
   },
   {
-    title: '2. Booking Fee',
-    body: 'A non-refundable $25 TacLink booking fee is charged per course reservation. This fee secures your seat and is separate from the course price charged by the instructor. Course fees are paid directly to the instructor per their stated payment instructions.',
+    title: '2. Booking Fee & Online Payment',
+    body: 'TacLink charges the student online at booking for the FULL course price plus a $25 TacLink platform fee. The $25 platform fee is non-refundable outside the cancellation grace window. No payment is owed in person — all course fees flow through TacLink and are paid out to the instructor via Stripe Connect 24 hours after course completion.',
+  },
+  {
+    title: '2a. Instructional Services Only',
+    body: 'TacLink is a marketplace exclusively for instructional services related to firearms safety, defensive training, and tactical education. Instructors agree to use TacLink only for offering and accepting bookings for instructional services. Sale of merchandise — including but not limited to firearms, ammunition, magazines, optics, holsters, apparel, or any physical goods — through TacLink checkout, listings, or messaging is strictly prohibited. Violations may result in immediate account termination, forfeiture of held funds pending investigation, and removal from the platform.',
   },
   {
     title: '3. Instructor Responsibility',
