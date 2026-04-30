@@ -144,7 +144,9 @@ const CourseManagement = () => {
         setPending(null);
         return;
       }
-      markAttended(pending.bookingId, { source: 'proximity' });
+      markAttended(pending.bookingId, { source: 'proximity' }).then((outcome) =>
+        setScanOutcome(outcome),
+      );
       setPending(null);
     },
   });
