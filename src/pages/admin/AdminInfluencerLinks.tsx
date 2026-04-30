@@ -124,13 +124,20 @@ const AdminInfluencerLinks = () => {
     const [
       { data: linkRows },
       { data: signupRows },
-      { data: setting },
+      { data: settingsRows },
       { data: auditRows },
       { data: commissionRows },
     ] = await Promise.all([
       supabase.from('influencer_links').select('*').order('created_at', { ascending: false }),
       supabase.from('influencer_link_signups').select('link_id'),
-      supabase.from('platform_settings').select('value').eq('key', 'default_influencer_commission_pct').maybeSingle(),
+      supabase
+        .from('platform_settings')
+        .select('key,value')
+        .in('key', [
+          'default_influencer_first_booking_pct',
+          'default_influencer_recurring_pct',
+          'default_influencer_recurring_window_days',
+        ]),
       supabase
         .from('influencer_commission_pct_audit')
         .select('*')
@@ -148,10 +155,13 @@ const AdminInfluencerLinks = () => {
       counts[r.link_id] = (counts[r.link_id] ?? 0) + 1;
     });
     setSignupCounts(counts);
-    if (setting?.value !== undefined && setting?.value !== null) {
-      const n = Number(setting.value);
-      if (!Number.isNaN(n)) setDefaultPct(n);
-    }
+    (settingsRows ?? []).forEach((row: any) => {
+      const n = Number(row.value);
+      if (Number.isNaN(n)) return;
+      if (row.key === 'default_influencer_first_booking_pct') setDefaultFirstPct(n);
+      if (row.key === 'default_influencer_recurring_pct') setDefaultRecurringPct(n);
+      if (row.key === 'default_influencer_recurring_window_days') setDefaultWindowDays(n);
+    });
     setPctAudit((auditRows as PctAuditRow[]) ?? []);
     setCommissions((commissionRows as CommissionRow[]) ?? []);
     setLoading(false);
