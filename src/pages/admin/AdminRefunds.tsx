@@ -636,7 +636,7 @@ export const AdminRefunds = () => {
                 {!manualOverride && split && (
                   <div className="rounded-md border border-border bg-muted/40 p-3 text-xs space-y-1">
                     <div className="font-semibold text-sm">Computed split</div>
-                    <div>Student credit: <span className="font-mono">{fmt(split.student_credit_cents)}</span></div>
+                    <div>Student cash refund (Stripe): <span className="font-mono">{fmt(split.student_cash_refund_cents)}</span></div>
                     <div>Instructor forfeit: <span className="font-mono">{fmt(split.instructor_forfeit_cents)}</span></div>
                     <div>TacLink absorbs: <span className="font-mono">{fmt(split.platform_absorbed_cents)}</span></div>
                     {split.requires_owner && (
