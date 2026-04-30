@@ -275,7 +275,9 @@ const Discover = () => {
             <div className="flex items-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 px-3 h-12">
               <MapPin className="h-4 w-4 text-primary shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-primary">Training near</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                  {geocoding ? 'Locating…' : 'Training near'}
+                </div>
                 <div className="text-sm font-semibold truncate">{selectedLocation.label}</div>
               </div>
               <button
