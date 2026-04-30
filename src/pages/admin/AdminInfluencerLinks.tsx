@@ -919,33 +919,52 @@ const AdminInfluencerLinks = () => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Audience</Label>
+                <Select value={editing.audience} onValueChange={(v) => setEditing({ ...editing, audience: v as Audience })}>
+                  <SelectTrigger className="bg-background border-border h-11 mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">Both (chooser)</SelectItem>
+                    <SelectItem value="student">Students only</SelectItem>
+                    <SelectItem value="instructor">Instructors only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Audience</Label>
-                  <Select value={editing.audience} onValueChange={(v) => setEditing({ ...editing, audience: v as Audience })}>
-                    <SelectTrigger className="bg-background border-border h-11 mt-1.5"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="both">Both (chooser)</SelectItem>
-                      <SelectItem value="student">Students only</SelectItem>
-                      <SelectItem value="instructor">Instructors only</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">First %</Label>
+                  <Input
+                    type="number" min={0} max={100} step={0.1}
+                    value={editing.first_booking_pct ?? editing.commission_pct ?? ''}
+                    onChange={(e) => setEditing({ ...editing, first_booking_pct: e.target.value === '' ? null : Number(e.target.value), commission_pct: null })}
+                    placeholder={`${defaultFirstPct}`}
+                    className="bg-background border-border h-11 mt-1.5"
+                  />
                 </div>
                 <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Commission % <span className="normal-case text-[10px]">(blank = default)</span>
-                  </Label>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Recurring %</Label>
                   <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    value={editing.commission_pct ?? ''}
-                    onChange={(e) => setEditing({ ...editing, commission_pct: e.target.value === '' ? null : Number(e.target.value) })}
+                    type="number" min={0} max={100} step={0.1}
+                    value={editing.recurring_pct ?? ''}
+                    onChange={(e) => setEditing({ ...editing, recurring_pct: e.target.value === '' ? null : Number(e.target.value) })}
+                    placeholder={`${defaultRecurringPct}`}
+                    className="bg-background border-border h-11 mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Window (days)</Label>
+                  <Input
+                    type="number" min={1} max={3650} step={1}
+                    value={editing.recurring_window_days ?? ''}
+                    onChange={(e) => setEditing({ ...editing, recurring_window_days: e.target.value === '' ? null : Number(e.target.value) })}
+                    placeholder={`${defaultWindowDays}`}
                     className="bg-background border-border h-11 mt-1.5"
                   />
                 </div>
               </div>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                Blank = inherit platform default. Recurring % = 0 disables recurring for this link.
+              </p>
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
                 <Textarea
