@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
@@ -197,7 +197,9 @@ const BookingDetail = () => {
           />
         )}
 
-        <AttendanceClaimResponse bookingId={b.id} />
+        <div ref={attendanceRef} id="attendance-claim" className="scroll-mt-24">
+          <AttendanceClaimResponse bookingId={b.id} />
+        </div>
 
         {upcoming && b.deposit_status === 'confirmed' && (
           <div className="tactical-card p-5 text-center">
