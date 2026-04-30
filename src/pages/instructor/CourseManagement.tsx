@@ -526,6 +526,15 @@ const CourseManagement = () => {
           onClose={() => setScannerOpen(false)}
         />
       )}
+
+      <CancelCourseDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        courseId={c.id}
+        courseTitle={c.title}
+        startsAt={c.startsAt ?? null}
+        onCancelled={() => qc.invalidateQueries({ queryKey: ['course', c.id] })}
+      />
     </MobileShell>
   );
 };
