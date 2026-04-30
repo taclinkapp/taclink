@@ -98,7 +98,7 @@ const BookingDetail = () => {
         .eq('id', row.course_id)
         .maybeSingle();
       setC((course as CourseRow) ?? null);
-      if (row.status === 'reserved' && row.deposit_status === 'confirmed') {
+      if (row.status === 'reserved' && (row.deposit_status === 'held_in_escrow' || row.deposit_status === 'confirmed')) {
         fetchSignedToken(row.id);
       }
     }
