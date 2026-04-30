@@ -187,6 +187,23 @@ const Discover = () => {
     el?.scrollIntoView({ block: 'nearest' });
   }, [activeLocationIndex, locationOpen]);
 
+  // Close the dropdown only when the user interacts outside the combobox or list,
+  // so clicking an option / dragging the scrollbar keeps it open.
+  const locationContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!locationOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (locationContainerRef.current?.contains(target)) return;
+      if (locationListRef.current?.contains(target)) return;
+      setLocationOpen(false);
+      setShowAllLocations(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [locationOpen]);
+
   const matchesSelectedLocation = (c: { city: string; state: string }) => {
     if (!selectedLocation) return true;
     return (
