@@ -40,6 +40,8 @@ const NewCourse = () => {
   const hasPM = !!profile?.payment_method_added;
   const subActive = profile?.subscription_status === 'active';
   const [connectActive, setConnectActive] = useState(false);
+  const { data: prelaunch } = usePrelaunch();
+  const isPrelaunch = !!prelaunch?.enabled;
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
