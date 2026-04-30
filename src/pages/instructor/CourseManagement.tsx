@@ -532,7 +532,7 @@ const CourseManagement = () => {
         onOpenChange={setCancelOpen}
         courseId={c.id}
         courseTitle={c.title}
-        startsAt={c.startsAt ?? null}
+        startsAt={c.date && c.startTime ? `${c.date}T${c.startTime}` : null}
         onCancelled={() => qc.invalidateQueries({ queryKey: ['course', c.id] })}
       />
     </MobileShell>
