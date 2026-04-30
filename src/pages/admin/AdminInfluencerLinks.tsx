@@ -820,34 +820,52 @@ const AdminInfluencerLinks = () => {
                 <p className="text-[11px] mt-1 text-destructive">{slugError}</p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Audience</Label>
+              <Select value={newAudience} onValueChange={(v) => setNewAudience(v as Audience)}>
+                <SelectTrigger className="bg-background border-border h-11 mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="both">Both (chooser)</SelectItem>
+                  <SelectItem value="student">Students only</SelectItem>
+                  <SelectItem value="instructor">Instructors only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
               <div>
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Audience</Label>
-                <Select value={newAudience} onValueChange={(v) => setNewAudience(v as Audience)}>
-                  <SelectTrigger className="bg-background border-border h-11 mt-1.5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="both">Both (chooser)</SelectItem>
-                    <SelectItem value="student">Students only</SelectItem>
-                    <SelectItem value="instructor">Instructors only</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">First %</Label>
+                <Input
+                  type="number" min={0} max={100} step={0.1}
+                  value={newFirstPct}
+                  onChange={(e) => setNewFirstPct(e.target.value)}
+                  placeholder={`${defaultFirstPct}`}
+                  className="bg-background border-border h-11 mt-1.5"
+                />
               </div>
               <div>
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Commission % <span className="normal-case text-[10px]">(blank = {defaultPct}%)</span>
-                </Label>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Recurring %</Label>
                 <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  value={newPct}
-                  onChange={(e) => setNewPct(e.target.value)}
-                  placeholder={`${defaultPct}`}
+                  type="number" min={0} max={100} step={0.1}
+                  value={newRecurringPct}
+                  onChange={(e) => setNewRecurringPct(e.target.value)}
+                  placeholder={`${defaultRecurringPct}`}
+                  className="bg-background border-border h-11 mt-1.5"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Window (days)</Label>
+                <Input
+                  type="number" min={1} max={3650} step={1}
+                  value={newWindowDays}
+                  onChange={(e) => setNewWindowDays(e.target.value)}
+                  placeholder={`${defaultWindowDays}`}
                   className="bg-background border-border h-11 mt-1.5"
                 />
               </div>
             </div>
+            <p className="text-[11px] text-muted-foreground -mt-1">
+              Leave blank to inherit the platform defaults. Set Recurring % to 0 to disable recurring for this link.
+            </p>
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
               <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="bg-background border-border min-h-20 mt-1.5" />
