@@ -276,11 +276,62 @@ export const AdminRefunds = () => {
     if (picked) setAmount((suggestedAmount(t, picked) / 100).toFixed(2));
   };
 
+  // Recompute the canonical refund split whenever the booking or reason changes.
+  useEffect(() => {
+    if (!picked || manualOverride) {
+      setSplit(null);
+      return;
+    }
+    let cancelled = false;
+    setSplitLoading(true);
+    supabase
+      .rpc('compute_refund_split', { _booking_id: picked.id, _reason: reasonCategory })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setSplitLoading(false);
+        if (error) {
+          setSplit(null);
+          return;
+        }
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row) return;
+        setSplit({
+          student_credit_cents: row.student_credit_cents,
+          instructor_forfeit_cents: row.instructor_forfeit_cents,
+          platform_absorbed_cents: row.platform_absorbed_cents,
+          requires_owner: row.requires_owner,
+          hours_before_course: row.hours_before_course,
+          rationale: row.rationale,
+        });
+        setAmount((row.student_credit_cents / 100).toFixed(2));
+        // Map reason → refund_type for legacy column
+        if (row.student_credit_cents === 0) {
+          setType('other');
+        } else if (
+          reasonCategory === 'instructor_no_show' ||
+          reasonCategory === 'instructor_cancel' ||
+          reasonCategory === 'fraud_safety'
+        ) {
+          setType('full');
+        } else if (reasonCategory === 'student_cancel_timely') {
+          setType('platform_fee');
+        } else {
+          setType('goodwill');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [picked, reasonCategory, manualOverride]);
+
   const reset = () => {
     setBookingQuery('');
     setBookingResults([]);
     setPicked(null);
     setType('platform_fee');
+    setReasonCategory('student_cancel_timely');
+    setSplit(null);
+    setManualOverride(false);
     setAmount('');
     setReason('');
     setExternalRef('');
