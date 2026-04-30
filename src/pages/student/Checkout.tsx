@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CreditCard, Lock, AlertTriangle, FileText, Loader2, ShieldCheck, Wallet } from 'lucide-react';
+import { AlertTriangle, FileText, Loader2, ShieldCheck, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { computeFees, fmt } from '@/lib/fees';
-import { Link } from 'react-router-dom';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 import { sendAppEmail } from '@/lib/appEmail';
+import { EscrowCheckout } from '@/components/student/EscrowCheckout';
+import { PaymentTestModeBanner } from '@/components/PaymentTestModeBanner';
 
 type Course = {
   id: string;
@@ -47,6 +48,9 @@ const Checkout = () => {
   const [agreeWaiver, setAgreeWaiver] = useState(false);
   const [signedName, setSignedName] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Created booking + Stripe Embedded Checkout takeover
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -83,24 +87,17 @@ const Checkout = () => {
   }, [profile?.display_name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fees = useMemo(() => computeFees(course?.price_cents ?? 0), [course]);
-  const hasPaymentMethod = !!profile?.payment_method_added;
 
   const waiverReady = !waiver || (agreeWaiver && signedName.trim().length >= 3);
-  const canSubmit = !!user && !!course && agreeRisk && waiverReady && hasPaymentMethod && !submitting;
+  const canSubmit = !!user && !!course && agreeRisk && waiverReady && !submitting;
 
   const handleConfirm = async () => {
     if (!user) { toast.error('Please sign in to book'); return; }
     if (!course) return;
     setSubmitting(true);
     try {
-      // 1) Create the booking with fee snapshot.
-      // NEW: TacLink only charges the $25 platform fee online. The 10% deposit
-      // is owed directly to the instructor (Cash App / Venmo / PayPal / Zelle)
-      // within 24 hours, then balance in person.
-      const onlineNowCents = fees.platformFeeCents; // $25 only
-      const depositToInstructorCents = fees.instructorDepositCents; // 10%, paid direct
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
+      // Create the booking record up-front in pending_payment state.
+      // The Stripe webhook flips it to held_in_escrow once payment lands.
       const { data: booking, error: bErr } = await supabase
         .from('bookings')
         .insert({
@@ -109,18 +106,16 @@ const Checkout = () => {
           status: 'reserved',
           course_price_cents: fees.coursePriceCents,
           platform_fee_cents: fees.platformFeeCents,
-          instructor_deposit_cents: depositToInstructorCents,
+          instructor_deposit_cents: fees.instructorDepositCents,
           due_in_person_cents: fees.dueInPersonCents,
-          online_total_cents: onlineNowCents,
-          deposit_status: depositToInstructorCents > 0 ? 'pending_send' : 'not_required',
-          deposit_amount_cents: depositToInstructorCents,
-          deposit_expires_at: depositToInstructorCents > 0 ? expiresAt : null,
+          online_total_cents: fees.onlineTotalCents,
+          deposit_status: 'pending_payment',
+          deposit_amount_cents: fees.instructorDepositCents,
         })
         .select('id')
         .single();
       if (bErr) throw bErr;
 
-      // 2) Ledger entry for AI insights / instructor reporting
       await supabase.from('booking_fees').insert({
         booking_id: booking.id,
         course_id: course.id,
@@ -128,12 +123,11 @@ const Checkout = () => {
         instructor_id: course.instructor_id,
         course_price_cents: fees.coursePriceCents,
         platform_fee_cents: fees.platformFeeCents,
-        instructor_deposit_cents: depositToInstructorCents,
+        instructor_deposit_cents: fees.instructorDepositCents,
         due_in_person_cents: fees.dueInPersonCents,
-        online_total_cents: onlineNowCents,
+        online_total_cents: fees.onlineTotalCents,
       });
 
-      // 3) If a published waiver exists, store the signature. Roll back on failure.
       if (waiver) {
         const { error: sErr } = await supabase.from('waiver_signatures').insert({
           booking_id: booking.id,
@@ -151,7 +145,7 @@ const Checkout = () => {
         }
       }
 
-      // 4) Send booking confirmation email (fire-and-forget)
+      // Best-effort confirmation email after payment lands.
       if (user.email) {
         const { data: instructor } = await supabase
           .from('profiles')
@@ -180,10 +174,10 @@ const Checkout = () => {
         });
       }
 
-      toast.success('Booking confirmed');
-      nav(`/student/booking-success/${course.id}`);
+      // Hand off to Stripe Embedded Checkout.
+      setBookingId(booking.id);
     } catch (e: any) {
-      toast.error(e?.message ?? 'Could not complete booking');
+      toast.error(e?.message ?? 'Could not start checkout');
     } finally {
       setSubmitting(false);
     }
@@ -210,11 +204,28 @@ const Checkout = () => {
     );
   }
 
+  // Stripe Embedded Checkout takeover after the booking is created.
+  if (bookingId) {
+    const returnUrl = `${window.location.origin}/student/booking/${bookingId}?checkout=success`;
+    return (
+      <MobileShell withTabBar={false}>
+        <PaymentTestModeBanner />
+        <PageHeader title="Secure Payment" back />
+        <div className="px-4 py-4 space-y-3">
+          <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Lock className="h-3.5 w-3.5 text-primary" /> Charged securely by Stripe — your card never touches our servers.
+          </div>
+          <EscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
+        </div>
+      </MobileShell>
+    );
+  }
+
   return (
     <MobileShell withTabBar={false}>
+      <PaymentTestModeBanner />
       <PageHeader title="Confirm Booking" back />
       <div className="px-4 py-4 space-y-4">
-        {/* Summary */}
         <div className="tactical-card p-4">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Course</div>
           <h2 className="font-bold">{course.title}</h2>
@@ -226,62 +237,32 @@ const Checkout = () => {
 
         <HowPaymentsWorkCard audience="student" />
 
-        {/* Price breakdown — checkout shows full math */}
         <div className="tactical-card p-4">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Price Breakdown</div>
           <div className="space-y-2 text-sm">
             <Row label="Course price" value={fmt(fees.coursePriceCents)} muted />
             <Row label="TacLink platform fee" value={fmt(fees.platformFeeCents)} />
+            <Row label="Deposit (10%) — held in escrow" value={fmt(fees.instructorDepositCents)} />
             <div className="border-t border-border pt-2 mt-2 flex justify-between">
-              <span className="font-bold">Charged today</span>
-              <span className="font-black text-primary text-lg">{fmt(fees.platformFeeCents)}</span>
+              <span className="font-bold">Charged today by Stripe</span>
+              <span className="font-black text-primary text-lg">{fmt(fees.onlineTotalCents)}</span>
             </div>
             <div className="flex justify-between pt-3 border-t border-dashed border-border mt-2">
-              <span className="text-muted-foreground">Deposit (10%) — held in escrow until attendance</span>
-              <span className="font-semibold">{fmt(fees.instructorDepositCents)}</span>
-            </div>
-            <div className="flex justify-between">
               <span className="text-muted-foreground">Balance due in person</span>
               <span className="font-semibold">{fmt(fees.dueInPersonCents)}</span>
             </div>
           </div>
           <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground leading-relaxed">
-            TacLink charges <strong className="text-foreground">{fmt(fees.platformFeeCents)} + {fmt(fees.instructorDepositCents)} deposit</strong> today. We hold the 10% in escrow and release it to your instructor 24 hours after they scan you in at the course. If they cancel or no-show, you're refunded in full within 48 hours. Remaining balance is paid in person.
+            TacLink charges <strong className="text-foreground">{fmt(fees.onlineTotalCents)}</strong> today through Stripe. We hold the 10% in escrow and release it to your instructor 24 hours after they scan you in at the course. If they cancel or no-show, you're refunded in full within 48 hours. Remaining balance is paid in person.
           </div>
         </div>
 
-        {/* Payment method gate */}
-        {hasPaymentMethod ? (
-          <div className="tactical-card p-4">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">
-              <CreditCard className="h-3.5 w-3.5" /> Payment Method
-              <span className="ml-auto text-[10px] flex items-center gap-1"><Lock className="h-3 w-3" /> Secure</span>
-            </div>
-            <div className="text-sm flex items-center justify-between">
-              <span>Card on file will be charged {fmt(fees.platformFeeCents)}</span>
-              <Link to="/student/payment-methods" className="text-xs text-primary font-bold uppercase">Change</Link>
-            </div>
-          </div>
-        ) : (
-          <Link
-            to="/student/payment-methods"
-            className="tactical-card border-primary/40 bg-primary/5 p-4 flex items-center gap-3 hover:border-primary transition"
-          >
-            <Wallet className="h-5 w-5 text-primary shrink-0" />
-            <div className="flex-1">
-              <div className="text-sm font-bold">Add a payment method to continue</div>
-              <div className="text-xs text-muted-foreground mt-0.5">Required to charge the platform fee.</div>
-            </div>
-            <span className="text-xs text-primary font-bold uppercase">Add</span>
-          </Link>
-        )}
-
-        {/* Risk acknowledgement (always shown) */}
+        {/* Risk acknowledgement */}
         <div className="tactical-card p-4 border-primary/30 bg-primary/5">
           <div className="flex items-start gap-2 mb-3">
             <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
             <div className="text-xs text-muted-foreground leading-relaxed">
-              Booking fees are <span className="text-foreground font-bold">non-refundable</span>. Training involves inherent risks.
+              The platform fee is <span className="text-foreground font-bold">non-refundable</span>. The 10% deposit is fully refundable if the instructor cancels or no-shows.
             </div>
           </div>
           <label className="flex items-start gap-3 cursor-pointer">
@@ -292,7 +273,6 @@ const Checkout = () => {
           </label>
         </div>
 
-        {/* Course-specific waiver — required when published */}
         {waiver ? (
           <div className="tactical-card p-4 border-primary/40">
             <div className="flex items-center gap-2 mb-2">
@@ -336,11 +316,8 @@ const Checkout = () => {
           className="w-full h-13 bg-primary text-primary-foreground hover:bg-primary/90 font-bold py-4 disabled:opacity-40"
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-          Confirm & Pay {fmt(fees.platformFeeCents)}
+          Continue to Secure Payment · {fmt(fees.onlineTotalCents)}
         </Button>
-        {!hasPaymentMethod && (
-          <p className="text-[11px] text-center text-muted-foreground">Add a payment method above to enable booking.</p>
-        )}
         {waiver && !waiverReady && (
           <p className="text-[11px] text-center text-muted-foreground">Sign the waiver above to enable booking.</p>
         )}
