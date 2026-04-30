@@ -7,6 +7,7 @@ import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCir
 import { fmt } from '@/lib/fees';
 import { QRCodeSVG } from 'qrcode.react';
 import { AttendanceClaimResponse } from '@/components/student/AttendanceClaimResponse';
+import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
 
 type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
 
@@ -23,6 +24,8 @@ type BookingRow = {
   deposit_status: DepositStatus;
   deposit_amount_cents: number;
   deposit_expires_at: string | null;
+  booked_at: string | null;
+  cancellation_cutoff_hours: number | null;
 };
 
 type CourseRow = {
@@ -73,7 +76,7 @@ const BookingDetail = () => {
     setLoading(true);
     const { data: booking } = await supabase
       .from('bookings')
-      .select('id, status, course_price_cents, platform_fee_cents, instructor_deposit_cents, due_in_person_cents, online_total_cents, in_person_paid_at, course_id, deposit_status, deposit_amount_cents, deposit_expires_at')
+      .select('id, status, course_price_cents, platform_fee_cents, instructor_deposit_cents, due_in_person_cents, online_total_cents, in_person_paid_at, course_id, deposit_status, deposit_amount_cents, deposit_expires_at, booked_at, cancellation_cutoff_hours')
       .eq('id', id)
       .maybeSingle();
     if (booking) {
@@ -256,10 +259,19 @@ const BookingDetail = () => {
           </div>
         )}
 
+        {upcoming && (
+          <CancelGraceBadge
+            variant="card"
+            startsAt={c.starts_at}
+            bookedAt={b.booked_at}
+            cutoffHours={b.cancellation_cutoff_hours}
+          />
+        )}
+
         <div className="tactical-card border-primary/20 bg-primary/5 p-3 flex items-start gap-2">
           <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">Cancellation policy:</strong> Booking fees are non-refundable. If the instructor cancels, refunds are handled by them directly.
+            <strong className="text-foreground">Cancellation policy:</strong> Grace period is set when you book — longer leads earn more time. After the deadline, cancellations are not refunded. If the instructor cancels, you're refunded automatically.
           </div>
         </div>
 
