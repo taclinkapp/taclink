@@ -2197,10 +2197,18 @@ export type Database = {
           booking_id: string
           course_id: string
           created_at: string
+          esign_consent_acknowledged: boolean
+          esign_consent_initials: string | null
+          esign_disclosure_version: string | null
+          guardian_full_name: string | null
+          guardian_relationship: string | null
+          guardian_signed_at: string | null
           id: string
           ip_hint: string | null
+          is_minor: boolean
           signed_at: string
           signed_full_name: string
+          student_date_of_birth: string | null
           student_id: string
           user_agent: string | null
           waiver_content_snapshot: string
@@ -2211,10 +2219,18 @@ export type Database = {
           booking_id: string
           course_id: string
           created_at?: string
+          esign_consent_acknowledged?: boolean
+          esign_consent_initials?: string | null
+          esign_disclosure_version?: string | null
+          guardian_full_name?: string | null
+          guardian_relationship?: string | null
+          guardian_signed_at?: string | null
           id?: string
           ip_hint?: string | null
+          is_minor?: boolean
           signed_at?: string
           signed_full_name: string
+          student_date_of_birth?: string | null
           student_id: string
           user_agent?: string | null
           waiver_content_snapshot: string
@@ -2225,10 +2241,18 @@ export type Database = {
           booking_id?: string
           course_id?: string
           created_at?: string
+          esign_consent_acknowledged?: boolean
+          esign_consent_initials?: string | null
+          esign_disclosure_version?: string | null
+          guardian_full_name?: string | null
+          guardian_relationship?: string | null
+          guardian_signed_at?: string | null
           id?: string
           ip_hint?: string | null
+          is_minor?: boolean
           signed_at?: string
           signed_full_name?: string
+          student_date_of_birth?: string | null
           student_id?: string
           user_agent?: string | null
           waiver_content_snapshot?: string

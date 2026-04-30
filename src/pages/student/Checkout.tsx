@@ -50,6 +50,18 @@ const Checkout = () => {
   const [signedName, setSignedName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // ESIGN / UETA explicit electronic-sign intent
+  const ESIGN_DISCLOSURE_VERSION = 'v1.0';
+  const [esignConsent, setEsignConsent] = useState(false);
+  const [esignInitials, setEsignInitials] = useState('');
+
+  // Minor / parent-or-guardian flow
+  const [isMinor, setIsMinor] = useState(false);
+  const [studentDob, setStudentDob] = useState('');
+  const [guardianName, setGuardianName] = useState('');
+  const [guardianRelationship, setGuardianRelationship] = useState('');
+  const [guardianConsent, setGuardianConsent] = useState(false);
+
   // Created booking + Stripe Embedded Checkout takeover
   const [bookingId, setBookingId] = useState<string | null>(null);
 
@@ -89,7 +101,17 @@ const Checkout = () => {
 
   const fees = useMemo(() => computeFees(course?.price_cents ?? 0), [course]);
 
-  const waiverReady = !waiver || (agreeWaiver && signedName.trim().length >= 3);
+  const minorReady = !isMinor || (
+    !!studentDob &&
+    guardianName.trim().length >= 3 &&
+    guardianRelationship.trim().length >= 2 &&
+    guardianConsent
+  );
+  const esignReady = !waiver || (
+    esignConsent &&
+    esignInitials.trim().length >= 2
+  );
+  const waiverReady = !waiver || (agreeWaiver && signedName.trim().length >= 3 && esignReady && minorReady);
   const canSubmit = !!user && !!course && agreeRisk && waiverReady && !submitting;
 
   const handleConfirm = async () => {
@@ -139,6 +161,14 @@ const Checkout = () => {
           waiver_content_snapshot: waiver.content,
           signed_full_name: signedName.trim(),
           user_agent: navigator.userAgent,
+          esign_consent_acknowledged: esignConsent,
+          esign_disclosure_version: ESIGN_DISCLOSURE_VERSION,
+          esign_consent_initials: esignInitials.trim().toUpperCase(),
+          is_minor: isMinor,
+          student_date_of_birth: isMinor && studentDob ? studentDob : null,
+          guardian_full_name: isMinor ? guardianName.trim() : null,
+          guardian_relationship: isMinor ? guardianRelationship.trim() : null,
+          guardian_signed_at: isMinor ? new Date().toISOString() : null,
         });
         if (sErr) {
           await supabase.from('bookings').delete().eq('id', booking.id);
@@ -313,6 +343,81 @@ const Checkout = () => {
               <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
                 <ShieldCheck className="h-3 w-3" /> Your signature is recorded with a timestamped snapshot of this waiver.
               </p>
+            </div>
+
+            {/* ESIGN / UETA explicit consent */}
+            <div className="mt-4 rounded-md border border-border bg-background p-3 space-y-2">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                Electronic Signature Consent (ESIGN / UETA)
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Under the federal ESIGN Act and the Uniform Electronic Transactions Act (UETA), you have the right to receive and sign this waiver on paper instead of electronically. By checking the box below and typing your initials, you (a) consent to use an electronic signature, (b) agree the electronic record has the same legal effect as a handwritten signature, (c) confirm you have the hardware and software needed to access and retain a copy (a modern web browser and email), and (d) understand you may withdraw consent at any time before signing by closing this page. A copy of this signed waiver will be available in your account and emailed to you.
+              </p>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox checked={esignConsent} onCheckedChange={(v) => setEsignConsent(!!v)} className="mt-0.5" />
+                <span className="text-[11px] text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">I intend to sign electronically</strong> and consent to the ESIGN/UETA disclosures above.
+                </span>
+              </label>
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Type your initials</Label>
+                <Input
+                  value={esignInitials}
+                  onChange={(e) => setEsignInitials(e.target.value.toUpperCase().slice(0, 6))}
+                  placeholder="e.g. JD"
+                  maxLength={6}
+                  className="bg-card border-border h-9 mt-1 font-mono text-sm uppercase tracking-widest w-32"
+                />
+              </div>
+            </div>
+
+            {/* Minor / parent-or-guardian co-signature */}
+            <div className="mt-4 rounded-md border border-border bg-background p-3 space-y-2">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox checked={isMinor} onCheckedChange={(v) => setIsMinor(!!v)} className="mt-0.5" />
+                <span className="text-[11px] text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">The student is under 18 years of age.</strong> A parent or legal guardian must co-sign.
+                </span>
+              </label>
+
+              {isMinor && (
+                <div className="pt-2 mt-2 border-t border-border space-y-3">
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Student date of birth</Label>
+                    <Input
+                      type="date"
+                      value={studentDob}
+                      onChange={(e) => setStudentDob(e.target.value)}
+                      className="bg-card border-border h-9 mt-1 text-sm"
+                      max={new Date().toISOString().slice(0, 10)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Parent/guardian full legal name</Label>
+                    <Input
+                      value={guardianName}
+                      onChange={(e) => setGuardianName(e.target.value)}
+                      placeholder="Parent or legal guardian"
+                      className="bg-card border-border h-11 mt-1 font-serif italic text-base"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Relationship to student</Label>
+                    <Input
+                      value={guardianRelationship}
+                      onChange={(e) => setGuardianRelationship(e.target.value)}
+                      placeholder="e.g. Mother, Father, Legal Guardian"
+                      className="bg-card border-border h-9 mt-1 text-sm"
+                    />
+                  </div>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <Checkbox checked={guardianConsent} onCheckedChange={(v) => setGuardianConsent(!!v)} className="mt-0.5" />
+                    <span className="text-[11px] text-muted-foreground leading-relaxed">
+                      <strong className="text-foreground">As the parent or legal guardian</strong>, I have read this waiver, accept its terms on behalf of the minor student, and authorize their participation in this training.
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
           </div>
         ) : (
