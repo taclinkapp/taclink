@@ -8,6 +8,7 @@ import { fmt } from '@/lib/fees';
 import { QRCodeSVG } from 'qrcode.react';
 import { AttendanceClaimResponse } from '@/components/student/AttendanceClaimResponse';
 import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
+import { WaiverAuditTrail } from '@/components/student/WaiverAuditTrail';
 import { cancelDeadline } from '@/lib/cancellation';
 import {
   REFUND_POLICY_BLURB,
@@ -279,6 +280,8 @@ const BookingDetail = () => {
         <div ref={attendanceRef} id="attendance-claim" className="scroll-mt-24">
           <AttendanceClaimResponse bookingId={b.id} />
         </div>
+
+        <WaiverAuditTrail bookingId={b.id} />
 
         {upcoming && (b.deposit_status === 'held_in_escrow' || b.deposit_status === 'confirmed') && (
           <div className="tactical-card p-5 text-center">
