@@ -75,13 +75,14 @@ const Notifications = () => {
     setSelected(new Set());
   };
 
-  const handleClick = (id: string, link: string | null) => {
+  const handleClick = (id: string, link: string | null, type: string) => {
     if (selectMode) {
       toggle(id);
       return;
     }
     markRead(id);
-    if (link) nav(link);
+    const target = withFocus(link, type);
+    if (target) nav(target);
   };
 
   const bulkMark = async (read: boolean) => {
