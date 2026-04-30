@@ -109,6 +109,9 @@ const AdminInfluencerLinks = () => {
   const [pctAudit, setPctAudit] = useState<PctAuditRow[]>([]);
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
 
+  // Live payout preview — sample booking amount admins can tweak
+  const [previewBookingDollars, setPreviewBookingDollars] = useState<number>(150);
+
   const [newName, setNewName] = useState('');
   const [newHandle, setNewHandle] = useState('');
   const [newEmail, setNewEmail] = useState('');
