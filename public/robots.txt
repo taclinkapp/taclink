@@ -1,14 +1,11 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+
+# Disallow private app surfaces from indexing
+Disallow: /admin
+Disallow: /student
+Disallow: /instructor
+Disallow: /auth
+Disallow: /notifications
+
+Sitemap: https://taclink.app/sitemap.xml
