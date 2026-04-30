@@ -51,18 +51,21 @@ export const PrelaunchControlCard = () => {
 
   const save = async () => {
     setSaving(true);
-    const updates: Array<Promise<any>> = [
-      supabase.from('platform_settings').update({ value: enabled }).eq('key', 'prelaunch_mode'),
-    ];
+    const modeRes = await supabase
+      .from('platform_settings')
+      .update({ value: enabled })
+      .eq('key', 'prelaunch_mode');
+    let dateErr: { message: string } | null = null;
     if (launchDate) {
       const iso = new Date(launchDate).toISOString();
-      updates.push(
-        supabase.from('platform_settings').update({ value: iso }).eq('key', 'launch_date'),
-      );
+      const dateRes = await supabase
+        .from('platform_settings')
+        .update({ value: iso })
+        .eq('key', 'launch_date');
+      dateErr = dateRes.error;
     }
-    const results = await Promise.all(updates);
     setSaving(false);
-    const firstError = results.find((r) => r.error)?.error;
+    const firstError = modeRes.error ?? dateErr;
     if (firstError) {
       toast.error(firstError.message);
       return;
