@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { suggestCourseField, type CourseAIField, type CourseAIContext } from '@/lib/courseAI';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface Props {
   field: CourseAIField;
