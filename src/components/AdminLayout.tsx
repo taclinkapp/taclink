@@ -17,6 +17,7 @@ type Item = {
 const items: Item[] = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/owner-console', icon: Sparkles, label: 'Owner Console' },
+  { to: '/admin/influencers', icon: Megaphone, label: 'Influencer Links' },
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/instructors', icon: Shield, label: 'Instructors' },
   { to: '/admin/courses', icon: BookOpen, label: 'Courses' },
