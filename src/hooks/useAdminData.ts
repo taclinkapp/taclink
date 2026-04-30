@@ -298,50 +298,20 @@ export function useAdminBookings() {
   });
 }
 
+// Credit system was removed in favor of Stripe cash refunds. This hook is
+// kept as a stub so legacy callers compile; it surfaces a toast explaining
+// the change instead of touching the dropped tables.
 export function useGrantCredit() {
-  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      userType,
-      userId,
-      note,
-    }: {
+    mutationFn: async (_args: {
       userType: 'student' | 'instructor';
       userId: string;
       note?: string;
     }) => {
-      if (userType === 'student') {
-        const { error } = await supabase.from('student_credits').insert({
-          student_id: userId,
-          credit_type: 'free_booking',
-          source: 'admin_grant',
-          note: note ?? 'Manual credit by admin',
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('instructor_credits').insert({
-          instructor_id: userId,
-          credit_type: 'free_listing_fee',
-          source: 'admin_grant',
-          note: note ?? 'Manual credit by admin',
-        });
-        if (error) throw error;
-      }
-      await supabase.rpc('log_admin_action', {
-        _action: 'grant_credit',
-        _target_type: userType,
-        _target_id: userId,
-        _before: null,
-        _after: { type: userType, note },
-        _reason: note ?? null,
-        _source: 'admin_ui',
-      });
+      throw new Error('In-app credits were removed. Issue a cash refund via Stripe instead.');
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin_audit_log'] });
-      toast({ title: 'Credit granted' });
-    },
-    onError: (e: any) => toast({ title: 'Grant failed', description: e.message, variant: 'destructive' }),
+    onError: (e: any) =>
+      toast({ title: 'Credits removed', description: e.message, variant: 'destructive' }),
   });
 }
 
