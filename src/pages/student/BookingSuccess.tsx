@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MobileShell } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Calendar, MapPin, Clock, FileText, ShieldCheck, Loader2 } from 'lucide-react';
+import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
 
 type Course = {
   id: string;
