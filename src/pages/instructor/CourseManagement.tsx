@@ -587,7 +587,7 @@ const CourseManagement = () => {
             if (!resolvedBookingId) return;
             const match = bookings.find((b: any) => b.id === resolvedBookingId);
             if (!match) {
-              setScanOutcome({ kind: 'wrong_course' });
+              setScanOutcome({ kind: 'wrong_course', bookingId: resolvedBookingId });
               return;
             }
             const studentName = studentNameFor(match);
@@ -595,12 +595,12 @@ const CourseManagement = () => {
             // Surface unsigned-QR warning before attempting attendance so the
             // instructor knows to follow up — but still proceed (single-source policy).
             if (unsigned) {
-              setScanOutcome({ kind: 'unsigned_warning', studentName });
+              setScanOutcome({ kind: 'unsigned_warning', bookingId: resolvedBookingId, studentName });
               return;
             }
 
             if (match.status === 'attended') {
-              setScanOutcome({ kind: 'already_attended', studentName });
+              setScanOutcome({ kind: 'already_attended', bookingId: resolvedBookingId, studentName });
               return;
             }
 
