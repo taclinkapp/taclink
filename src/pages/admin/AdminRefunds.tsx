@@ -79,6 +79,8 @@ type RefundRow = {
   dispute_window_until?: string | null;
   instructor_disputed_at?: string | null;
   instructor_dispute_reason?: string | null;
+  stripe_refund_id?: string | null;
+  stripe_refund_status?: string | null;
   studentName?: string;
   courseTitle?: string;
 };
