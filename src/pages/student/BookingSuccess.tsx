@@ -51,17 +51,21 @@ const BookingSuccess = () => {
         .maybeSingle();
 
       let bId: string | null = null;
+      let bAt: string | null = null;
+      let cutoff: number | null = null;
       let sig: Signature | null = null;
       if (user && c) {
         const { data: b } = await supabase
           .from('bookings')
-          .select('id')
+          .select('id, booked_at, cancellation_cutoff_hours')
           .eq('student_id', user.id)
           .eq('course_id', c.id)
           .order('booked_at', { ascending: false })
           .limit(1)
           .maybeSingle();
         bId = b?.id ?? null;
+        bAt = (b as any)?.booked_at ?? null;
+        cutoff = (b as any)?.cancellation_cutoff_hours ?? null;
         if (bId) {
           const { data: s } = await supabase
             .from('waiver_signatures')
@@ -74,6 +78,8 @@ const BookingSuccess = () => {
       if (cancelled) return;
       setCourse((c as Course) ?? null);
       setBookingId(bId);
+      setBookedAt(bAt);
+      setCutoffHours(cutoff);
       setSignature(sig);
       setLoading(false);
     })();
