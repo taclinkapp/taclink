@@ -39,7 +39,7 @@ const slugify = (raw: string) =>
     .slice(0, 32);
 
 const downloadQrPng = (slug: string, displayName: string) => {
-  const svg = document.getElementById(`qr-${slug}`) as SVGSVGElement | null;
+  const svg = document.getElementById(`qr-${slug}`) as unknown as SVGSVGElement | null;
   if (!svg) return;
   const xml = new XMLSerializer().serializeToString(svg);
   const svg64 = btoa(unescape(encodeURIComponent(xml)));
