@@ -23,7 +23,7 @@ type Insight = {
 export const FeeInsights = () => {
   const { profile } = useAuth();
   const isSubscribed = profile?.subscription_status === "active";
-  const { data: prelaunch } = require("@/hooks/usePrelaunch").usePrelaunch() as { data: { enabled: boolean } | undefined };
+  const { data: prelaunch } = usePrelaunch();
   const isPrelaunch = !!prelaunch?.enabled;
   const [data, setData] = useState<Insight | null>(null);
   const [loading, setLoading] = useState(false);
