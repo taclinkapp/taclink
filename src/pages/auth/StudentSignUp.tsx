@@ -11,11 +11,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { validatePassword } from '@/lib/passwordRules';
 import { PasswordRequirements } from '@/components/PasswordRequirements';
+import { readInfluencerSlug } from '@/lib/influencer';
 
 const StudentSignUp = () => {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const referralCode = (params.get('ref') ?? '').trim().toUpperCase();
+  const influencerSlug = readInfluencerSlug();
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
