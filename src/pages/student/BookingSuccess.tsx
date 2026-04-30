@@ -138,6 +138,16 @@ const BookingSuccess = () => {
           )}
         </div>
 
+        {/* Cancellation grace deadline */}
+        <div className="text-left mb-6">
+          <CancelGraceBadge
+            startsAt={course?.starts_at ?? null}
+            bookedAt={bookedAt}
+            cutoffHours={cutoffHours}
+            variant="card"
+          />
+        </div>
+
         {signature && (
           <div className="tactical-card p-5 text-left mb-6 border-primary/40">
             <div className="flex items-center gap-2 mb-3">
