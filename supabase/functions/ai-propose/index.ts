@@ -306,11 +306,10 @@ function normalizePayload(kind: string, args: any): Record<string, any> {
   const KNOWN_FIELDS_BY_KIND: Record<string, string[]> = {
     dispute_triage: [
       "classification",
+      "refund_reason_category",
       "recommended_action",
       "reply_text",
       "internal_note",
-      "refund_amount_cents",
-      "credit_amount_cents",
     ],
     message_reply: ["reply_text", "sender_role", "sender_id"],
     support_reply: ["reply_text"],
