@@ -656,7 +656,12 @@ const AdminInfluencerLinks = () => {
                       </td>
                       <td className="px-4 py-3 font-mono text-[11px]">{c.booking_id.slice(0, 8)}…</td>
                       <td className="px-4 py-3">${(c.course_price_cents / 100).toFixed(2)}</td>
-                      <td className="px-4 py-3">{Number(c.pct_at_time)}%</td>
+                      <td className="px-4 py-3">
+                        {Number(c.pct_at_time)}%
+                        <span className={`ml-1.5 inline-block px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold ${c.commission_kind === 'first' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                          {c.commission_kind ?? 'first'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 font-bold">${(c.amount_cents / 100).toFixed(2)}</td>
                       <td className="px-4 py-3">
                         <span
