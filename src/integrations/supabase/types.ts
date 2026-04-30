@@ -143,6 +143,72 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_claims: {
+        Row: {
+          ai_confidence: number | null
+          ai_decision: string | null
+          ai_reasoning: string | null
+          auto_approve_at: string
+          booking_id: string
+          course_id: string
+          created_at: string
+          evidence: Json
+          id: string
+          instructor_id: string
+          instructor_note: string | null
+          last_reminder_at: string | null
+          reminder_count: number
+          resolved_at: string | null
+          status: string
+          student_id: string
+          student_responded_at: string | null
+          student_response_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_decision?: string | null
+          ai_reasoning?: string | null
+          auto_approve_at?: string
+          booking_id: string
+          course_id: string
+          created_at?: string
+          evidence?: Json
+          id?: string
+          instructor_id: string
+          instructor_note?: string | null
+          last_reminder_at?: string | null
+          reminder_count?: number
+          resolved_at?: string | null
+          status?: string
+          student_id: string
+          student_responded_at?: string | null
+          student_response_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_decision?: string | null
+          ai_reasoning?: string | null
+          auto_approve_at?: string
+          booking_id?: string
+          course_id?: string
+          created_at?: string
+          evidence?: Json
+          id?: string
+          instructor_id?: string
+          instructor_note?: string | null
+          last_reminder_at?: string | null
+          reminder_count?: number
+          resolved_at?: string | null
+          status?: string
+          student_id?: string
+          student_responded_at?: string | null
+          student_response_note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_fees: {
         Row: {
           booking_id: string
@@ -1331,6 +1397,48 @@ export type Database = {
         }
         Relationships: []
       }
+      proximity_events: {
+        Row: {
+          accuracy_m: number | null
+          booking_id: string
+          course_id: string
+          created_at: string
+          distance_m: number | null
+          id: string
+          metadata: Json
+          smoothed_m: number | null
+          source: string
+          student_id: string
+          verified: boolean
+        }
+        Insert: {
+          accuracy_m?: number | null
+          booking_id: string
+          course_id: string
+          created_at?: string
+          distance_m?: number | null
+          id?: string
+          metadata?: Json
+          smoothed_m?: number | null
+          source?: string
+          student_id: string
+          verified?: boolean
+        }
+        Update: {
+          accuracy_m?: number | null
+          booking_id?: string
+          course_id?: string
+          created_at?: string
+          distance_m?: number | null
+          id?: string
+          metadata?: Json
+          smoothed_m?: number | null
+          source?: string
+          student_id?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
       referral_codes: {
         Row: {
           code: string
@@ -1845,6 +1953,15 @@ export type Database = {
       instructor_dispute_refund: {
         Args: { _reason: string; _refund_id: string }
         Returns: Json
+      }
+      list_due_attendance_claims: {
+        Args: never
+        Returns: {
+          booking_id: string
+          claim_id: string
+          instructor_id: string
+          student_id: string
+        }[]
       }
       list_releasable_deposits: {
         Args: never

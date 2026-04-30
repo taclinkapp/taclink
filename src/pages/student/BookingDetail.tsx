@@ -7,6 +7,7 @@ import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCir
 import { fmt } from '@/lib/fees';
 import { QRCodeSVG } from 'qrcode.react';
 import { SendDepositCard } from '@/components/student/SendDepositCard';
+import { AttendanceClaimResponse } from '@/components/student/AttendanceClaimResponse';
 import type { DepositStatus } from '@/lib/payouts';
 
 type BookingRow = {
@@ -195,6 +196,8 @@ const BookingDetail = () => {
             onChanged={reload}
           />
         )}
+
+        <AttendanceClaimResponse bookingId={b.id} />
 
         {upcoming && b.deposit_status === 'confirmed' && (
           <div className="tactical-card p-5 text-center">

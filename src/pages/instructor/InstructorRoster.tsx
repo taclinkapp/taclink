@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CourseWaiverDialog } from '@/components/instructor/CourseWaiverDialog';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
+import { AttendanceClaimButton } from '@/components/instructor/AttendanceClaimButton';
 
 type BookingStatus = 'reserved' | 'attended' | 'cancelled' | 'no_show';
 
@@ -478,6 +479,18 @@ const InstructorRoster = () => {
                           </button>
                         )}
                       </div>
+                      {r.status !== 'attended' && r.status !== 'cancelled' && r.startsAt && new Date(r.startsAt).getTime() < Date.now() && (
+                        <div className="pl-12">
+                          <AttendanceClaimButton
+                            bookingId={r.bookingId}
+                            courseId={r.courseId}
+                            studentId={r.studentId}
+                            studentName={r.studentName}
+                            instructorId={user!.id}
+                            bookingStatus={r.status}
+                          />
+                        </div>
+                      )}
                     </li>
                   );
                 })}
