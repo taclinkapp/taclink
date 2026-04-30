@@ -161,6 +161,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="owner-console" element={<OwnerConsole />} />
+              <Route path="influencers" element={<AdminInfluencerLinks />} />
               <Route path="cockpit" element={<OwnerConsole />} />
               <Route path="brief" element={<WeeklyBrief />} />
               <Route path="users" element={<AdminUsersReal />} />
