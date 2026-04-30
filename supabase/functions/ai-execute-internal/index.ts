@@ -87,7 +87,7 @@ serve(async (req) => {
             type: "ai_nudge",
             title: "Quick tip from TacLink",
             body: payload.message,
-            link: payload.link ?? "/instructor/dashboard",
+            link: payload.link ?? "/instructor",
           });
           break;
         }
@@ -233,7 +233,7 @@ serve(async (req) => {
               type: "auto_refund_issued",
               title: "Auto-credit issued — you have 24h to dispute",
               body: `An automatic $${(studentCredit / 100).toFixed(2)} credit was issued (${reasonCategory}). If this isn't right, dispute it within 24h.`,
-              link: `/instructor/dashboard`,
+              link: `/instructor`,
             },
           ]);
           break;

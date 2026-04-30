@@ -186,7 +186,7 @@ serve(async (req) => {
             type: "ai_nudge",
             title: "Quick tip from TacLink",
             body: payload.message,
-            link: payload.link ?? "/instructor/dashboard",
+            link: payload.link ?? "/instructor",
           });
           break;
         }
