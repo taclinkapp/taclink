@@ -313,7 +313,7 @@ const Discover = () => {
               </button>
             </div>
           ) : (
-            <div className="relative">
+            <div className="relative" ref={locationContainerRef}>
               <div className="relative neu-inset flex items-center pr-1">
                 <MapPin className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <Input
@@ -321,7 +321,6 @@ const Discover = () => {
                   value={locationQuery}
                   onChange={(e) => { setLocationQuery(e.target.value); setLocationOpen(true); setShowAllLocations(false); }}
                   onFocus={() => setLocationOpen(true)}
-                  onBlur={() => setTimeout(() => { setLocationOpen(false); setShowAllLocations(false); }, 150)}
                   onKeyDown={handleLocationKeyDown}
                   placeholder="Where do you want to train?"
                   role="combobox"
