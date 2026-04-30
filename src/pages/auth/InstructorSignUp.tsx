@@ -64,6 +64,7 @@ const InstructorSignUp = () => {
           bio,
           role: 'instructor',
           ...(referralCode ? { referral_code: referralCode } : {}),
+          ...(influencerSlug ? { influencer_slug: influencerSlug } : {}),
         },
       },
     });
