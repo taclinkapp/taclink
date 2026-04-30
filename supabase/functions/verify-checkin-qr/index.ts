@@ -95,8 +95,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    let providedSig: Uint8Array;
+    try {
+      providedSig = fromB64url(sigB64);
+    } catch {
+      return new Response(JSON.stringify({ ok: false, reason: "Malformed token signature" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     const expectedSig = await hmac(payloadB64);
-    const providedSig = fromB64url(sigB64);
     if (!constantTimeEqual(expectedSig, providedSig)) {
       return new Response(JSON.stringify({ ok: false, reason: "Invalid signature — QR cannot be trusted" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
