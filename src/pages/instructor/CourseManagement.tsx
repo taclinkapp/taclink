@@ -359,14 +359,18 @@ const CourseManagement = () => {
                 Manage your students, track attendance, and run check-ins with the Pro subscription.
               </p>
             </div>
-            <Link
-              to="/instructor/subscription"
-              className="inline-block text-[11px] font-bold uppercase tracking-wider text-primary hover:underline"
-            >
-              Upgrade to Pro →
-            </Link>
-          </div>
-        ) : (
+            {isPrelaunch ? (
+              <p className="text-[11px] text-muted-foreground">
+                Available when TacLink launches.
+              </p>
+            ) : (
+              <Link
+                to="/instructor/subscription"
+                className="inline-block text-[11px] font-bold uppercase tracking-wider text-primary hover:underline"
+              >
+                Upgrade to Pro →
+              </Link>
+            )}
           <>
             {tab === 'Roster' && mockRoster.map((s) => (
               <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
