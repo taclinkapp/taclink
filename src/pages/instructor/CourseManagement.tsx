@@ -162,36 +162,24 @@ const CourseManagement = () => {
   // of the course, so a tampered client can't poison another instructor's log.
   useEffect(() => {
     if (!scanOutcome || !id) return;
-    const bookingId =
-      'studentName' in scanOutcome ? undefined : undefined; // outcome carries name, booking is on `pending`/match
-    // Map outcome kinds to enum values accepted by the DB CHECK constraint.
-    const outcomeMap: Record<string, string> = {
-      success: 'success',
-      already_attended: 'already_attended',
-      wrong_course: 'wrong_course',
-      verification_failed: 'verification_failed',
-      unsigned_warning: 'unsigned_warning',
-      cannot_checkin: 'cannot_checkin',
-      pending_proximity: 'pending_proximity',
-      invalid_qr: 'invalid_qr',
-      rpc_error: 'rpc_error',
-    };
-    const outcomeStr = outcomeMap[scanOutcome.kind];
-    if (!outcomeStr) return;
-    const source = scanOutcome.kind === 'success' ? scanOutcome.source : 'qr';
+    const o = scanOutcome;
+    const bookingId = 'bookingId' in o ? o.bookingId ?? null : null;
+    const source: 'qr' | 'proximity' = o.kind === 'success' ? o.source : 'qr';
     const reason =
-      scanOutcome.kind === 'verification_failed' || scanOutcome.kind === 'invalid_qr'
-        ? scanOutcome.reason
-        : scanOutcome.kind === 'cannot_checkin'
-          ? `status=${scanOutcome.status}`
+      o.kind === 'verification_failed' || o.kind === 'invalid_qr' || o.kind === 'rpc_error'
+        ? o.reason
+        : o.kind === 'cannot_checkin'
+          ? `status=${o.status}`
           : null;
-    supabase.rpc('record_checkin_attempt', {
-      _course_id: id,
-      _outcome: outcomeStr,
-      _booking_id: bookingId ?? null,
-      _source: source,
-      _reason: reason,
-    }).then(() => { /* fire-and-forget */ });
+    supabase
+      .rpc('record_checkin_attempt', {
+        _course_id: id,
+        _outcome: o.kind,
+        _booking_id: bookingId,
+        _source: source,
+        _reason: reason,
+      })
+      .then(() => { /* fire-and-forget */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanOutcome, id]);
 
