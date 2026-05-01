@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Upload, Clock, ShieldCheck } from 'lucide-react';
+import { Upload, Clock, ShieldCheck, Camera, ImageIcon, FileText, X } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const options = [
   { id: 'nra', label: 'NRA Certified Instructor' },
