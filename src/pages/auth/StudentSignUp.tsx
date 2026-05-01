@@ -49,7 +49,7 @@ const StudentSignUp = () => {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/student`,
         data: {
           display_name: `${first} ${last}`.trim(),
           role: 'student',
@@ -63,10 +63,8 @@ const StudentSignUp = () => {
       toast.error(error.message);
       return;
     }
-    toast.success('Check your email', {
-      description: 'We sent you a confirmation link to verify your account.',
-    });
-    nav('/auth/signin');
+    toast.success('Welcome to TacLink™!');
+    nav('/student', { replace: true });
   };
 
   return (
