@@ -84,6 +84,7 @@ import AdminInfluencerLinks from "./pages/admin/AdminInfluencerLinks";
 import WeeklyBrief from "./pages/admin/WeeklyBrief";
 import AdminTestAccounts from "./pages/admin/AdminTestAccounts";
 import AdminWarriorQuotes from "./pages/admin/AdminWarriorQuotes";
+import AdminSecurity from "./pages/admin/AdminSecurity";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -186,6 +187,7 @@ const App = () => (
               <Route path="flags" element={<AdminFeatureFlags />} />
               <Route path="test-accounts" element={<AdminTestAccounts />} />
               <Route path="warrior-quotes" element={<AdminWarriorQuotes />} />
+              <Route path="security" element={<AdminSecurity />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
 
