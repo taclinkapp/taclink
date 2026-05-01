@@ -63,7 +63,7 @@ export const ProtectedRoute = ({ children, requireRole }: Props) => {
       roles,
       primaryRole,
     });
-    return <Navigate to={homeForRole(primaryRole)} state={{ blockedFrom: requestedPath, requiredRole }} replace />;
+    return <Navigate to={homeForRole(primaryRole)} state={{ blockedFrom: requestedPath, requiredRole: requireRole }} replace />;
   }
 
   // Admins skip the acknowledgment gate so moderation tooling stays accessible.
