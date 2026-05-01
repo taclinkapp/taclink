@@ -84,6 +84,7 @@ import AdminInfluencerLinks from "./pages/admin/AdminInfluencerLinks";
 import WeeklyBrief from "./pages/admin/WeeklyBrief";
 import AdminTestAccounts from "./pages/admin/AdminTestAccounts";
 import AdminWarriorQuotes from "./pages/admin/AdminWarriorQuotes";
+import AdminSecurity from "./pages/admin/AdminSecurity";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
