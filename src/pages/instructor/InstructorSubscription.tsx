@@ -31,7 +31,10 @@ const InstructorSubscription = () => {
       </MobileShell>
     );
   }
-  if (prelaunch?.enabled) return <Navigate to="/instructor" replace />;
+  const isPrelaunch = !!prelaunch?.enabled;
+  const launchDateStr = prelaunch?.launchDateIso
+    ? new Date(prelaunch.launchDateIso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
 
   const openPortal = async () => {
     setPortalBusy(true);
