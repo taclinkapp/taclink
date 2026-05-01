@@ -39,6 +39,10 @@ const Splash = () => {
           TacLink™ is in pre-launch. Sign up now to reserve your spot for launch day,
           browse the app, and help shape what's coming. Your info is collected by our
           team to get you onboarded the moment we go live.
+          <span className="block mt-2 text-foreground/80 font-semibold">
+            Heads up: during pre-launch, students can't book courses and instructors can't
+            accept bookings or payments yet. Everything unlocks on launch day.
+          </span>
         </p>
 
         <div className="mt-8 w-full">
