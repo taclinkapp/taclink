@@ -128,14 +128,32 @@ export const AdminUsersReal = () => {
                           onConfirm={(reason) => grant.mutate({ userType: isInstructor ? 'instructor' : 'student', userId: u.id, note: reason })}
                         />
                         {currentUser?.id !== u.id && (
-                          <ConfirmAction
-                            label="Delete account"
-                            destructive
-                            icon={<Trash2 className="h-3 w-3" />}
-                            confirmText="Permanently delete"
-                            description="This permanently deletes the auth user, profile, roles, and related data. This CANNOT be undone."
-                            onConfirm={(reason) => del.mutate({ userId: u.id, reason })}
-                          />
+                          <>
+                            {u.account_status === 'disabled' ? (
+                              <ConfirmAction
+                                label="Restore"
+                                icon={<Undo2 className="h-3 w-3" />}
+                                description="Re-enable login for this account and clear the disabled flag."
+                                onConfirm={(reason) => soft.mutate({ userId: u.id, reason, mode: 'restore' })}
+                              />
+                            ) : (
+                              <ConfirmAction
+                                label="Disable login"
+                                destructive
+                                icon={<Ban className="h-3 w-3" />}
+                                description="Soft-delete: blocks the user from signing in and marks the account as disabled. Reversible — no data is removed."
+                                onConfirm={(reason) => soft.mutate({ userId: u.id, reason, mode: 'disable' })}
+                              />
+                            )}
+                            <ConfirmAction
+                              label="Delete account"
+                              destructive
+                              icon={<Trash2 className="h-3 w-3" />}
+                              confirmText="Permanently delete"
+                              description="HARD DELETE: permanently removes the auth user, profile, roles, and related data. This CANNOT be undone. Prefer 'Disable login' if you may want to restore later."
+                              onConfirm={(reason) => del.mutate({ userId: u.id, reason })}
+                            />
+                          </>
                         )}
                       </td>
                     </tr>
