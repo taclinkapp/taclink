@@ -18,6 +18,17 @@ const SignIn = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Surface "account disabled" toast pushed from AuthContext after a forced sign-out
+  useEffect(() => {
+    try {
+      const msg = sessionStorage.getItem('auth_signin_error');
+      if (msg) {
+        sessionStorage.removeItem('auth_signin_error');
+        toast.error('Login disabled', { description: msg });
+      }
+    } catch {}
+  }, []);
+
   // Redirect authenticated users away from sign-in
   useEffect(() => {
     if (user && primaryRole) {
@@ -33,11 +44,16 @@ const SignIn = () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      if (error.message.toLowerCase().includes('email not confirmed')) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes('banned') || msg.includes('user is banned') || msg.includes('disabled')) {
+        toast.error('Login disabled', {
+          description: 'This account has been disabled by an administrator. Please contact support.',
+        });
+      } else if (msg.includes('email not confirmed')) {
         toast.error('Please verify your email first', {
           description: 'Check your inbox for the confirmation link.',
         });
-      } else if (error.message.toLowerCase().includes('invalid')) {
+      } else if (msg.includes('invalid')) {
         toast.error('Invalid email or password');
       } else {
         toast.error(error.message);

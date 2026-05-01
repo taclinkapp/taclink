@@ -13,7 +13,7 @@ export type Profile = {
   bio: string | null;
   payment_method_added?: boolean | null;
   subscription_status?: string | null;
-  account_status?: 'active' | 'warned' | 'suspended' | string | null;
+  account_status?: 'active' | 'warned' | 'suspended' | 'disabled' | string | null;
   strike_points?: number | null;
 };
 
@@ -55,6 +55,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (profErr && profErr.code !== "PGRST116") throw profErr;
       const nextRoles = ((roleRows as { role: AppRole }[]) ?? []).map((r) => r.role);
       if (!nextRoles.length) throw new Error("No account role has been assigned yet.");
+
+      // Defensive guard: if an admin soft-deleted this user, force sign-out.
+      // The auth user is also banned server-side, but this catches any stale session.
+      if ((prof as Profile | null)?.account_status === 'disabled') {
+        try {
+          sessionStorage.setItem(
+            'auth_signin_error',
+            'This account has been disabled by an administrator. Please contact support.'
+          );
+        } catch {}
+        await supabase.auth.signOut();
+        return;
+      }
+
       setProfile((prof as Profile) ?? null);
       setRoles(nextRoles);
       setRolesError(null);
