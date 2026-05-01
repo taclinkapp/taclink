@@ -199,6 +199,34 @@ export default function AdminTestAccounts() {
         subtitle="Create reusable instructor & student accounts to QA the onboarding flow"
       />
       <div className="p-4 sm:p-8 space-y-6">
+        {/* Admin View-As — jump straight into student/instructor UIs while staying signed in as admin */}
+        <div className="tactical-card p-4 sm:p-5 space-y-3 border-primary/40">
+          <div>
+            <div className="text-xs uppercase tracking-wider font-bold text-primary flex items-center gap-2">
+              <ExternalLink className="h-3.5 w-3.5" />
+              View as student / instructor
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Open the student or instructor app in your admin session to validate every step of
+              the flow. A banner at the top of those views lets you jump back to the admin panel.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button asChild className="bg-primary text-primary-foreground">
+              <Link to="/student">
+                <GraduationCap className="h-4 w-4" />
+                Open Student app
+              </Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link to="/instructor">
+                <ShieldCheck className="h-4 w-4" />
+                Open Instructor app
+              </Link>
+            </Button>
+          </div>
+        </div>
+
         {/* Signup credentials generator — does NOT create an auth user.
             Use these to walk through the real signup form yourself. */}
         <div className="tactical-card p-4 sm:p-5 space-y-3 border-primary/40">
