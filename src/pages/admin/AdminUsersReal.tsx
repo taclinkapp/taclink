@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { AdminHeader } from './AdminDashboard';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldCheck, ShieldOff, RotateCcw } from 'lucide-react';
+import { Search, Loader2, ShieldCheck, ShieldOff, RotateCcw, Trash2 } from 'lucide-react';
 import { useAdminUsers, useAdminUserAction, useGrantCredit } from '@/hooks/useAdminData';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,11 +20,33 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+function useDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) => {
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId, reason },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin_users'] });
+      qc.invalidateQueries({ queryKey: ['admin_audit_log'] });
+      toast({ title: 'Account permanently deleted' });
+    },
+    onError: (e: any) =>
+      toast({ title: 'Delete failed', description: e.message, variant: 'destructive' }),
+  });
+}
+
 export const AdminUsersReal = () => {
   const [search, setSearch] = useState('');
   const { data: users = [], isLoading } = useAdminUsers(search);
   const action = useAdminUserAction();
   const grant = useGrantCredit();
+  const del = useDeleteAccount();
+  const { user: currentUser } = useAuth();
 
   return (
     <>
@@ -79,6 +105,16 @@ export const AdminUsersReal = () => {
                           label={isInstructor ? "Free listing" : "Free booking"}
                           onConfirm={(reason) => grant.mutate({ userType: isInstructor ? 'instructor' : 'student', userId: u.id, note: reason })}
                         />
+                        {currentUser?.id !== u.id && (
+                          <ConfirmAction
+                            label="Delete account"
+                            destructive
+                            icon={<Trash2 className="h-3 w-3" />}
+                            confirmText="Permanently delete"
+                            description="This permanently deletes the auth user, profile, roles, and related data. This CANNOT be undone."
+                            onConfirm={(reason) => del.mutate({ userId: u.id, reason })}
+                          />
+                        )}
                       </td>
                     </tr>
                   );
@@ -100,7 +136,16 @@ function ConfirmAction({
   onConfirm,
   destructive,
   icon,
-}: { label: string; onConfirm: (reason: string) => void; destructive?: boolean; icon?: React.ReactNode }) {
+  confirmText,
+  description,
+}: {
+  label: string;
+  onConfirm: (reason: string) => void;
+  destructive?: boolean;
+  icon?: React.ReactNode;
+  confirmText?: string;
+  description?: string;
+}) {
   const [reason, setReason] = useState('');
   return (
     <AlertDialog>
@@ -112,12 +157,19 @@ function ConfirmAction({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{label}</AlertDialogTitle>
-          <AlertDialogDescription>Optional reason (logged to audit log).</AlertDialogDescription>
+          <AlertDialogDescription>
+            {description ?? 'Optional reason (logged to audit log).'}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason…" />
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={() => onConfirm(reason)}>{label}</AlertDialogAction>
+          <AlertDialogAction
+            onClick={() => onConfirm(reason)}
+            className={destructive ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : undefined}
+          >
+            {confirmText ?? label}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
