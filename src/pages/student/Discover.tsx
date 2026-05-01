@@ -275,7 +275,7 @@ const Discover = () => {
 
   return (
     <MobileShell>
-      <WarriorQuoteBackdrop />
+      <WarriorQuoteBackdrop audience="student" />
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
         <PageHeader
           brand
