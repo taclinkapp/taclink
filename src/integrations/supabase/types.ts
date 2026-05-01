@@ -278,6 +278,7 @@ export type Database = {
           instructor_deposit_cents: number
           instructor_payout_cents: number
           online_total_cents: number
+          payment_provider: Database["public"]["Enums"]["payment_provider"]
           platform_fee_cents: number
           refund_due_at: string | null
           release_attempted_at: string | null
@@ -314,6 +315,7 @@ export type Database = {
           instructor_deposit_cents?: number
           instructor_payout_cents?: number
           online_total_cents?: number
+          payment_provider?: Database["public"]["Enums"]["payment_provider"]
           platform_fee_cents?: number
           refund_due_at?: string | null
           release_attempted_at?: string | null
@@ -350,6 +352,7 @@ export type Database = {
           instructor_deposit_cents?: number
           instructor_payout_cents?: number
           online_total_cents?: number
+          payment_provider?: Database["public"]["Enums"]["payment_provider"]
           platform_fee_cents?: number
           refund_due_at?: string | null
           release_attempted_at?: string | null
@@ -1319,6 +1322,127 @@ export type Database = {
         }
         Relationships: []
       }
+      instructor_ledger: {
+        Row: {
+          amount_cents: number
+          available_at: string | null
+          booking_id: string | null
+          created_at: string
+          currency: string
+          entry_type: string
+          external_payout_id: string | null
+          id: string
+          instructor_id: string
+          notes: string | null
+          paid_at: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+        }
+        Insert: {
+          amount_cents: number
+          available_at?: string | null
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          entry_type: string
+          external_payout_id?: string | null
+          id?: string
+          instructor_id: string
+          notes?: string | null
+          paid_at?: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+        }
+        Update: {
+          amount_cents?: number
+          available_at?: string | null
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          entry_type?: string
+          external_payout_id?: string | null
+          id?: string
+          instructor_id?: string
+          notes?: string | null
+          paid_at?: string | null
+          provider?: Database["public"]["Enums"]["payment_provider"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_ledger_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_ledger_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_ledger_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instructor_payout_accounts: {
+        Row: {
+          charges_enabled: boolean
+          created_at: string
+          external_account_id: string | null
+          id: string
+          instructor_id: string
+          metadata: Json
+          payouts_enabled: boolean
+          provider: Database["public"]["Enums"]["payment_provider"]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          charges_enabled?: boolean
+          created_at?: string
+          external_account_id?: string | null
+          id?: string
+          instructor_id: string
+          metadata?: Json
+          payouts_enabled?: boolean
+          provider: Database["public"]["Enums"]["payment_provider"]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          charges_enabled?: boolean
+          created_at?: string
+          external_account_id?: string | null
+          id?: string
+          instructor_id?: string
+          metadata?: Json
+          payouts_enabled?: boolean
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_payout_accounts_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_payout_accounts_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instructor_payout_methods: {
         Row: {
           created_at: string
@@ -1587,6 +1711,45 @@ export type Database = {
           method_type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      payment_provider_settings: {
+        Row: {
+          active_provider: Database["public"]["Enums"]["payment_provider"]
+          authorize_net_configured: boolean
+          failover_mode: string
+          fallback_provider:
+            | Database["public"]["Enums"]["payment_provider"]
+            | null
+          id: boolean
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active_provider?: Database["public"]["Enums"]["payment_provider"]
+          authorize_net_configured?: boolean
+          failover_mode?: string
+          fallback_provider?:
+            | Database["public"]["Enums"]["payment_provider"]
+            | null
+          id?: boolean
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active_provider?: Database["public"]["Enums"]["payment_provider"]
+          authorize_net_configured?: boolean
+          failover_mode?: string
+          fallback_provider?:
+            | Database["public"]["Enums"]["payment_provider"]
+            | null
+          id?: boolean
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -2035,6 +2198,7 @@ export type Database = {
           current_period_start: string | null
           environment: string
           id: string
+          payment_provider: Database["public"]["Enums"]["payment_provider"]
           price_id: string
           product_id: string
           status: string
@@ -2050,6 +2214,7 @@ export type Database = {
           current_period_start?: string | null
           environment?: string
           id?: string
+          payment_provider?: Database["public"]["Enums"]["payment_provider"]
           price_id: string
           product_id: string
           status?: string
@@ -2065,6 +2230,7 @@ export type Database = {
           current_period_start?: string | null
           environment?: string
           id?: string
+          payment_provider?: Database["public"]["Enums"]["payment_provider"]
           price_id?: string
           product_id?: string
           status?: string
@@ -2582,6 +2748,10 @@ export type Database = {
         Returns: number
       }
       generate_referral_code: { Args: never; Returns: string }
+      get_active_payment_provider: {
+        Args: never
+        Returns: Database["public"]["Enums"]["payment_provider"]
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
@@ -2611,6 +2781,13 @@ export type Database = {
       instructor_no_show_refund: {
         Args: { _booking_id: string; _reason?: string }
         Returns: Json
+      }
+      instructor_owed_balance_cents: {
+        Args: {
+          _instructor_id: string
+          _provider: Database["public"]["Enums"]["payment_provider"]
+        }
+        Returns: number
       }
       is_influencer_slug_available: {
         Args: { _slug: string }
@@ -2695,6 +2872,7 @@ export type Database = {
     Enums: {
       app_role: "student" | "instructor" | "admin"
       booking_status: "reserved" | "attended" | "cancelled" | "no_show"
+      payment_provider: "stripe" | "authorize_net"
       support_message_sender: "user" | "ai" | "admin"
       support_ticket_status: "open" | "awaiting_human" | "resolved" | "closed"
       training_goal_type:
@@ -2831,6 +3009,7 @@ export const Constants = {
     Enums: {
       app_role: ["student", "instructor", "admin"],
       booking_status: ["reserved", "attended", "cancelled", "no_show"],
+      payment_provider: ["stripe", "authorize_net"],
       support_message_sender: ["user", "ai", "admin"],
       support_ticket_status: ["open", "awaiting_human", "resolved", "closed"],
       training_goal_type: [
