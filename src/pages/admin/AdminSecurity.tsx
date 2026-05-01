@@ -205,6 +205,9 @@ const AdminSecurity = () => {
                 : (<><KeyRound className="h-4 w-4 mr-2" /> Update & Re-authenticate</>)}
         </Button>
       </form>
+
+      {/* Backup payment processor in case Stripe deplatforms TacLink */}
+      <PaymentFailoverCard />
     </div>
   );
 };
