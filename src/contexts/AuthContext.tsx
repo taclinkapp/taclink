@@ -24,11 +24,15 @@ type AuthCtx = {
   roles: AppRole[];
   primaryRole: AppRole | null;
   loading: boolean;
+  rolesError: string | null;
+  retryRoles: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
 
 const Ctx = createContext<AuthCtx | undefined>(undefined);
+
+const MAX_ROLE_RETRIES = 3;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,14 +40,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rolesError, setRolesError] = useState<string | null>(null);
 
-  const loadProfileAndRoles = async (uid: string) => {
-    const [{ data: prof }, { data: roleRows }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid),
-    ]);
-    setProfile((prof as Profile) ?? null);
-    setRoles(((roleRows as { role: AppRole }[]) ?? []).map((r) => r.role));
+  const loadProfileAndRoles = async (uid: string, attempt = 0): Promise<void> => {
+    try {
+      const [{ data: prof, error: profErr }, { data: roleRows, error: roleErr }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", uid),
+      ]);
+      if (roleErr) throw roleErr;
+      if (profErr && profErr.code !== "PGRST116") throw profErr;
+      setProfile((prof as Profile) ?? null);
+      setRoles(((roleRows as { role: AppRole }[]) ?? []).map((r) => r.role));
+      setRolesError(null);
+    } catch (err: any) {
+      console.error(`[auth] role load failed (attempt ${attempt + 1})`, err);
+      if (attempt < MAX_ROLE_RETRIES) {
+        const delay = 600 * Math.pow(2, attempt); // 600ms, 1.2s, 2.4s
+        await new Promise((r) => setTimeout(r, delay));
+        return loadProfileAndRoles(uid, attempt + 1);
+      }
+      setRolesError(err?.message ?? "Failed to load your account roles.");
+    }
+  };
+
+  const retryRoles = async () => {
+    if (!user) return;
+    setRolesError(null);
+    setLoading(true);
+    await loadProfileAndRoles(user.id);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -62,6 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setProfile(null);
         setRoles([]);
+        setRolesError(null);
         setLoading(false);
       }
     });
@@ -94,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <Ctx.Provider
-      value={{ session, user, profile, roles, primaryRole, loading, signOut, refreshProfile }}
+      value={{ session, user, profile, roles, primaryRole, loading, rolesError, retryRoles, signOut, refreshProfile }}
     >
       {children}
     </Ctx.Provider>
