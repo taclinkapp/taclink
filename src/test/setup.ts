@@ -13,3 +13,20 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: () => {},
   }),
 });
+
+// jsdom lacks ResizeObserver / IntersectionObserver — Radix UI primitives need it.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+// @ts-expect-error - test polyfill
+globalThis.ResizeObserver = globalThis.ResizeObserver ?? ResizeObserverStub;
+// @ts-expect-error - test polyfill
+globalThis.IntersectionObserver = globalThis.IntersectionObserver ?? class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() { return []; }
+  root = null; rootMargin = ''; thresholds = [];
+};
