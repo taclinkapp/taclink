@@ -51,6 +51,14 @@ export const PrelaunchControlCard = () => {
 
   const save = async () => {
     setSaving(true);
+    // Snapshot prior state to detect ON→OFF transition.
+    const { data: priorRows } = await supabase
+      .from('platform_settings')
+      .select('key,value')
+      .eq('key', 'prelaunch_mode');
+    const priorRaw = priorRows?.[0]?.value;
+    const wasEnabled = priorRaw === true || priorRaw === 'true';
+
     const modeRes = await supabase
       .from('platform_settings')
       .update({ value: enabled })
@@ -71,6 +79,23 @@ export const PrelaunchControlCard = () => {
       return;
     }
     toast.success('Pre-launch settings saved');
+
+    // Fire instructor unlock notification on ON→OFF transition.
+    if (wasEnabled && !enabled) {
+      toast.info('Notifying instructors that Pro is unlocked…');
+      const { data, error } = await supabase.functions.invoke(
+        'notify-prelaunch-unlock',
+        { body: {} },
+      );
+      if (error) {
+        toast.error(`Notification failed: ${error.message}`);
+      } else if ((data as any)?.skipped) {
+        toast.message('Instructors were already notified for this launch.');
+      } else {
+        const queued = (data as any)?.queued ?? 0;
+        toast.success(`Queued unlock email for ${queued} instructor(s).`);
+      }
+    }
     refresh();
   };
 
