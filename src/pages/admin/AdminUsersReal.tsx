@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AdminHeader } from './AdminDashboard';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, ShieldCheck, ShieldOff, RotateCcw, Trash2 } from 'lucide-react';
+import { Search, Loader2, ShieldCheck, ShieldOff, RotateCcw, Trash2, Ban, Undo2 } from 'lucide-react';
 import { useAdminUsers, useAdminUserAction, useGrantCredit } from '@/hooks/useAdminData';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,12 +40,34 @@ function useDeleteAccount() {
   });
 }
 
+function useSoftDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, reason, mode }: { userId: string; reason?: string; mode: 'disable' | 'restore' }) => {
+      const { data, error } = await supabase.functions.invoke('admin-soft-delete-user', {
+        body: { userId, reason, mode },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['admin_users'] });
+      qc.invalidateQueries({ queryKey: ['admin_audit_log'] });
+      toast({ title: data?.mode === 'restore' ? 'Account restored' : 'Account disabled (login blocked)' });
+    },
+    onError: (e: any) =>
+      toast({ title: 'Action failed', description: e.message, variant: 'destructive' }),
+  });
+}
+
 export const AdminUsersReal = () => {
   const [search, setSearch] = useState('');
   const { data: users = [], isLoading } = useAdminUsers(search);
   const action = useAdminUserAction();
   const grant = useGrantCredit();
   const del = useDeleteAccount();
+  const soft = useSoftDeleteAccount();
   const { user: currentUser } = useAuth();
 
   return (
@@ -106,14 +128,32 @@ export const AdminUsersReal = () => {
                           onConfirm={(reason) => grant.mutate({ userType: isInstructor ? 'instructor' : 'student', userId: u.id, note: reason })}
                         />
                         {currentUser?.id !== u.id && (
-                          <ConfirmAction
-                            label="Delete account"
-                            destructive
-                            icon={<Trash2 className="h-3 w-3" />}
-                            confirmText="Permanently delete"
-                            description="This permanently deletes the auth user, profile, roles, and related data. This CANNOT be undone."
-                            onConfirm={(reason) => del.mutate({ userId: u.id, reason })}
-                          />
+                          <>
+                            {u.account_status === 'disabled' ? (
+                              <ConfirmAction
+                                label="Restore"
+                                icon={<Undo2 className="h-3 w-3" />}
+                                description="Re-enable login for this account and clear the disabled flag."
+                                onConfirm={(reason) => soft.mutate({ userId: u.id, reason, mode: 'restore' })}
+                              />
+                            ) : (
+                              <ConfirmAction
+                                label="Disable login"
+                                destructive
+                                icon={<Ban className="h-3 w-3" />}
+                                description="Soft-delete: blocks the user from signing in and marks the account as disabled. Reversible — no data is removed."
+                                onConfirm={(reason) => soft.mutate({ userId: u.id, reason, mode: 'disable' })}
+                              />
+                            )}
+                            <ConfirmAction
+                              label="Delete account"
+                              destructive
+                              icon={<Trash2 className="h-3 w-3" />}
+                              confirmText="Permanently delete"
+                              description="HARD DELETE: permanently removes the auth user, profile, roles, and related data. This CANNOT be undone. Prefer 'Disable login' if you may want to restore later."
+                              onConfirm={(reason) => del.mutate({ userId: u.id, reason })}
+                            />
+                          </>
                         )}
                       </td>
                     </tr>
