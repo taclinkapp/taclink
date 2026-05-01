@@ -157,9 +157,14 @@ const InstructorSubscription = () => {
           {!isActive ? (
             <Button
               onClick={() => setCheckoutOpen(true)}
-              className="w-full h-11 bg-primary text-primary-foreground font-bold"
+              disabled={isPrelaunch}
+              className="w-full h-11 bg-primary text-primary-foreground font-bold disabled:opacity-100"
             >
-              Upgrade to Pro · {fmt(INSTRUCTOR_SUBSCRIPTION_CENTS)}/mo
+              {isPrelaunch ? (
+                <><Lock className="h-4 w-4 mr-1.5" />Available {launchDateStr ?? 'at launch'}</>
+              ) : (
+                <>Upgrade to Pro · {fmt(INSTRUCTOR_SUBSCRIPTION_CENTS)}/mo</>
+              )}
             </Button>
           ) : (
             <Button
