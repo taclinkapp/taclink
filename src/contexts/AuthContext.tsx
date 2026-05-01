@@ -54,13 +54,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
+        setLoading(true);
         // Defer DB calls to avoid deadlocks inside the auth callback
-        setTimeout(() => loadProfileAndRoles(newSession.user.id), 0);
+        setTimeout(() => {
+          loadProfileAndRoles(newSession.user.id).finally(() => setLoading(false));
+        }, 0);
       } else {
         setProfile(null);
         setRoles([]);
+        setLoading(false);
       }
     });
+
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) loadProfileAndRoles(s.user.id).finally(() => setLoading(false));
+      else setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
