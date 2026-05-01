@@ -3,7 +3,15 @@ import { AdminHeader } from "./AdminDashboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, Copy, Check, GraduationCap, ShieldCheck } from "lucide-react";
+import {
+  Loader2,
+  Trash2,
+  Copy,
+  Check,
+  GraduationCap,
+  ShieldCheck,
+  RefreshCw,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,10 +25,17 @@ type TestAccount = {
   created_at: string;
 };
 
+type Limits = {
+  per_role_per_day: number;
+  today: { instructor: number; student: number };
+};
+
 export default function AdminTestAccounts() {
   const [accounts, setAccounts] = useState<TestAccount[]>([]);
+  const [limits, setLimits] = useState<Limits | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState<null | "instructor" | "student">(null);
+  const [rotating, setRotating] = useState(false);
   const [label, setLabel] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [tab, setTab] = useState<"instructor" | "student">("instructor");
@@ -36,6 +51,7 @@ export default function AdminTestAccounts() {
       return;
     }
     setAccounts(data.accounts ?? []);
+    setLimits(data.limits ?? null);
   };
 
   useEffect(() => {
@@ -54,7 +70,7 @@ export default function AdminTestAccounts() {
     }
     setLabel("");
     toast.success(`Created fake ${role} account`);
-    setAccounts((prev) => [data.account, ...prev]);
+    await load();
   };
 
   const remove = async (id: string) => {
@@ -70,6 +86,28 @@ export default function AdminTestAccounts() {
     toast.success("Deleted");
   };
 
+  const rotate = async () => {
+    if (
+      !confirm(
+        "Rotate ALL fake test accounts? Every existing account will be deleted and re-created with fresh emails and passwords. Anyone signed in to an old account will be logged out.",
+      )
+    )
+      return;
+    setRotating(true);
+    const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
+      body: { action: "rotate" },
+    });
+    setRotating(false);
+    if (error || data?.error) {
+      toast.error(error?.message ?? data?.error ?? "Rotate failed");
+      return;
+    }
+    toast.success(
+      `Rotated test accounts: ${data.deleted ?? 0} removed, ${data.created ?? 0} re-created`,
+    );
+    await load();
+  };
+
   const copy = async (acc: TestAccount) => {
     await navigator.clipboard.writeText(`${acc.email} / ${acc.password}`);
     setCopiedId(acc.id);
@@ -78,6 +116,11 @@ export default function AdminTestAccounts() {
   };
 
   const filtered = accounts.filter((a) => a.role === tab);
+  const cap = limits?.per_role_per_day ?? 10;
+  const usedInstructor = limits?.today.instructor ?? 0;
+  const usedStudent = limits?.today.student ?? 0;
+  const instructorBlocked = usedInstructor >= cap;
+  const studentBlocked = usedStudent >= cap;
 
   return (
     <>
@@ -87,9 +130,26 @@ export default function AdminTestAccounts() {
       />
       <div className="p-4 sm:p-8 space-y-6">
         <div className="tactical-card p-4 sm:p-5 space-y-3">
-          <div className="text-xs uppercase tracking-wider font-bold text-primary">
-            Create new fake account
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-xs uppercase tracking-wider font-bold text-primary">
+              Create new fake account
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={rotate}
+              disabled={rotating || accounts.length === 0}
+              title="Delete all existing fake accounts and re-create them with fresh credentials"
+            >
+              {rotating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Rotate all ({accounts.length})
+            </Button>
           </div>
+
           <div className="flex flex-col sm:flex-row gap-2">
             <Input
               value={label}
@@ -99,32 +159,43 @@ export default function AdminTestAccounts() {
             />
             <Button
               onClick={() => create("instructor")}
-              disabled={creating !== null}
+              disabled={creating !== null || instructorBlocked}
               className="bg-primary text-primary-foreground"
+              title={
+                instructorBlocked
+                  ? `Daily limit reached (${cap}/day). Resets 00:00 UTC.`
+                  : undefined
+              }
             >
               {creating === "instructor" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <ShieldCheck className="h-4 w-4" />
               )}
-              New Instructor
+              New Instructor ({usedInstructor}/{cap})
             </Button>
             <Button
               onClick={() => create("student")}
-              disabled={creating !== null}
+              disabled={creating !== null || studentBlocked}
               variant="secondary"
+              title={
+                studentBlocked
+                  ? `Daily limit reached (${cap}/day). Resets 00:00 UTC.`
+                  : undefined
+              }
             >
               {creating === "student" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <GraduationCap className="h-4 w-4" />
               )}
-              New Student
+              New Student ({usedStudent}/{cap})
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Accounts are auto-confirmed. Sign out, then sign in with the credentials below to
-            re-test the onboarding flow as that role.
+            Accounts are auto-confirmed. Limit: <strong>{cap} per role per day</strong> (per
+            admin, resets at 00:00 UTC). Use <strong>Rotate all</strong> to wipe and refresh
+            every fake account in one click for a clean test run.
           </p>
         </div>
 
