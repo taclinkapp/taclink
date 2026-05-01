@@ -10,7 +10,7 @@
  *   3. Best-effort POSTed to the `bug-triage` edge function as breadcrumbs
  *      so the admin Bug Triage view sees them — failure is swallowed.
  */
-import { supabase } from "@/integrations/supabase/client";
+
 
 export type SignupRedirectEvent = {
   role: "student" | "instructor";
@@ -42,14 +42,10 @@ export const logSignupRedirect = (
   // eslint-disable-next-line no-console
   console.info("[signup]", event);
   persist(event);
-  // Fire-and-forget breadcrumb to the edge logger so we have it in prod
-  try {
-    void supabase.functions.invoke("bug-triage", {
-      body: { type: "signup_redirect", event },
-    });
-  } catch {
-    /* never let logging break signup */
-  }
+  // Note: we intentionally do NOT POST these to an edge function.
+  // The signup flow runs as anonymous/student users, and admin-only
+  // endpoints (like bug-triage) would 401/403 and surface as runtime
+  // errors. Console + sessionStorage is enough for in-browser debugging.
 };
 
 export const getRecentSignupEvents = (): SignupRedirectEvent[] => {
