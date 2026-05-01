@@ -11,9 +11,32 @@ import {
   GraduationCap,
   ShieldCheck,
   RefreshCw,
+  Sparkles,
+  ExternalLink,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+type GeneratedCreds = {
+  email: string;
+  password: string;
+  role: "instructor" | "student";
+  generatedAt: number;
+};
+
+const STORAGE_KEY = "qa_signup_generated_creds";
+
+function generateEmail(role: "instructor" | "student") {
+  const stamp = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  return `qa+${role}-signup-${stamp}@taclink.test`;
+}
+
+function generatePassword() {
+  // Meets typical strength rules: upper, lower, digit, symbol, 14+ chars
+  const base = crypto.randomUUID().replace(/-/g, "").slice(0, 10);
+  return `Qa!${base}A1`;
+}
 
 type TestAccount = {
   id: string;
