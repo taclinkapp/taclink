@@ -65,6 +65,18 @@ const InstructorSubscription = () => {
           Pro unlocks AI tools and instructor analytics. Publishing courses is always free.
         </p>
 
+        {isPrelaunch && (
+          <div className="tactical-card border-primary/40 bg-primary/10 p-3 flex items-start gap-2">
+            <Lock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <div className="font-bold">Pro unlocks at launch</div>
+              <p className="text-muted-foreground mt-0.5">
+                We're in pre-launch — the Free tier is fully active. Pro subscriptions go live{launchDateStr ? ` on ${launchDateStr}` : ' on launch day'}.
+              </p>
+            </div>
+          </div>
+        )}
+
         {isPastDue && (
           <div className="tactical-card border-amber-500/40 bg-amber-500/10 p-3 flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
