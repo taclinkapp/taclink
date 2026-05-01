@@ -37,6 +37,7 @@ const items: Item[] = [
   { to: '/admin/flags', icon: ToggleLeft, label: 'Feature Flags' },
   { to: '/admin/test-accounts', icon: FlaskConical, label: 'Fake Onboarding Testing Accounts' },
   { to: '/admin/warrior-quotes', icon: Sword, label: 'Warrior Quotes' },
+  { to: '/admin/security', icon: KeyRound, label: 'Security' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
