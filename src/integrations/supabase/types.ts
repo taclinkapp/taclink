@@ -2359,6 +2359,75 @@ export type Database = {
           },
         ]
       }
+      warrior_quote_settings: {
+        Row: {
+          display_style: string
+          enabled: boolean
+          id: number
+          opacity: number
+          rotation: string
+          show_to_instructors: boolean
+          show_to_students: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          display_style?: string
+          enabled?: boolean
+          id?: number
+          opacity?: number
+          rotation?: string
+          show_to_instructors?: boolean
+          show_to_students?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          display_style?: string
+          enabled?: boolean
+          id?: number
+          opacity?: number
+          rotation?: string
+          show_to_instructors?: boolean
+          show_to_students?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      warrior_quotes: {
+        Row: {
+          author: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          source_note: string | null
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          source_note?: string | null
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          source_note?: string | null
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
