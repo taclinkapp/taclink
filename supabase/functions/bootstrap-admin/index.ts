@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
         email: ADMIN_EMAIL,
         password: ADMIN_PASSWORD,
         email_confirm: true,
-        user_metadata: { display_name: ADMIN_DISPLAY },
+        user_metadata: { display_name: ADMIN_DISPLAY, role: "instructor" },
       });
       if (createErr) throw createErr;
       user = created.user;
