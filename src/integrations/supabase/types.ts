@@ -991,6 +991,13 @@ export type Database = {
             referencedRelation: "influencer_links"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "influencer_commission_pct_audit_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       influencer_commissions: {
@@ -1045,6 +1052,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "influencer_commissions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "influencer_commissions_signup_id_fkey"
             columns: ["signup_id"]
             isOneToOne: false
@@ -1095,6 +1109,13 @@ export type Database = {
             referencedRelation: "influencer_links"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "influencer_link_redirect_log_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       influencer_link_signups: {
@@ -1125,6 +1146,13 @@ export type Database = {
             columns: ["link_id"]
             isOneToOne: false
             referencedRelation: "influencer_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_link_signups_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2430,7 +2458,72 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      influencer_links_public: {
+        Row: {
+          active: boolean | null
+          audience: string | null
+          commission_pct: number | null
+          created_at: string | null
+          id: string | null
+          influencer_handle: string | null
+          influencer_name: string | null
+          slug: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          audience?: string | null
+          commission_pct?: number | null
+          created_at?: string | null
+          id?: string | null
+          influencer_handle?: string | null
+          influencer_name?: string | null
+          slug?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          audience?: string | null
+          commission_pct?: number | null
+          created_at?: string | null
+          id?: string | null
+          influencer_handle?: string | null
+          influencer_name?: string | null
+          slug?: string | null
+        }
+        Relationships: []
+      }
+      profiles_public: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          photo_url: string | null
+          service_categories: string[] | null
+          service_city: string | null
+          service_state: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          photo_url?: string | null
+          service_categories?: string[] | null
+          service_city?: string | null
+          service_state?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          photo_url?: string | null
+          service_categories?: string[] | null
+          service_city?: string | null
+          service_state?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       audit_booking_action: {
@@ -2582,6 +2675,7 @@ export type Database = {
         }
         Returns: string
       }
+      referral_code_exists: { Args: { _code: string }; Returns: boolean }
       student_cancel_booking: {
         Args: { _booking_id: string; _reason?: string }
         Returns: Json
