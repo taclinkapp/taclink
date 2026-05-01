@@ -105,6 +105,16 @@ export const AdminUsersReal = () => {
                           label={isInstructor ? "Free listing" : "Free booking"}
                           onConfirm={(reason) => grant.mutate({ userType: isInstructor ? 'instructor' : 'student', userId: u.id, note: reason })}
                         />
+                        {currentUser?.id !== u.id && (
+                          <ConfirmAction
+                            label="Delete account"
+                            destructive
+                            icon={<Trash2 className="h-3 w-3" />}
+                            confirmText="Permanently delete"
+                            description="This permanently deletes the auth user, profile, roles, and related data. This CANNOT be undone."
+                            onConfirm={(reason) => del.mutate({ userId: u.id, reason })}
+                          />
+                        )}
                       </td>
                     </tr>
                   );
