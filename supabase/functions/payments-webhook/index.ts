@@ -133,6 +133,7 @@ async function upsertSubscription(subscription: any, env: StripeEnv) {
       current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
       cancel_at_period_end: subscription.cancel_at_period_end || false,
       environment: env,
+      payment_provider: "stripe",
       updated_at: new Date().toISOString(),
     },
     { onConflict: "stripe_subscription_id" },
