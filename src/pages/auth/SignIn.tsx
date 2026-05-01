@@ -18,6 +18,17 @@ const SignIn = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Surface "account disabled" toast pushed from AuthContext after a forced sign-out
+  useEffect(() => {
+    try {
+      const msg = sessionStorage.getItem('auth_signin_error');
+      if (msg) {
+        sessionStorage.removeItem('auth_signin_error');
+        toast.error('Login disabled', { description: msg });
+      }
+    } catch {}
+  }, []);
+
   // Redirect authenticated users away from sign-in
   useEffect(() => {
     if (user && primaryRole) {
