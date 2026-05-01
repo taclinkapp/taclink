@@ -74,9 +74,9 @@ const InstructorSignUp = () => {
       return;
     }
     toast.success('Account created', {
-      description: 'Next: complete credential verification.',
+      description: 'Choose your plan to get started.',
     });
-    nav('/auth/credential-verification', { replace: true });
+    nav('/instructor/subscription?onboarding=1', { replace: true });
   };
 
   return (
