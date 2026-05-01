@@ -1624,6 +1624,9 @@ export type Database = {
           account_status: string
           bio: string | null
           created_at: string
+          disabled_at: string | null
+          disabled_by: string | null
+          disabled_reason: string | null
           display_name: string | null
           final_warning_sent_at: string | null
           id: string
@@ -1645,6 +1648,9 @@ export type Database = {
           account_status?: string
           bio?: string | null
           created_at?: string
+          disabled_at?: string | null
+          disabled_by?: string | null
+          disabled_reason?: string | null
           display_name?: string | null
           final_warning_sent_at?: string | null
           id: string
@@ -1666,6 +1672,9 @@ export type Database = {
           account_status?: string
           bio?: string | null
           created_at?: string
+          disabled_at?: string | null
+          disabled_by?: string | null
+          disabled_reason?: string | null
           display_name?: string | null
           final_warning_sent_at?: string | null
           id?: string
