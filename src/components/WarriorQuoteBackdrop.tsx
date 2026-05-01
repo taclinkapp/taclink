@@ -37,6 +37,8 @@ export const WarriorQuoteBackdrop = ({ audience }: Props) => {
 
   const style = settings.display_style as DisplayStyle;
 
+  const label = labelForRotation(settings.rotation);
+
   if (style === 'watermark') {
     return (
       <div
@@ -44,6 +46,9 @@ export const WarriorQuoteBackdrop = ({ audience }: Props) => {
         className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center px-8 select-none"
       >
         <div className="max-w-md text-center" style={{ opacity: settings.opacity }}>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-foreground mb-2">
+            {label}
+          </p>
           <p className="font-stencil text-2xl sm:text-3xl leading-snug italic text-foreground">
             “{quote.text}”
           </p>
@@ -61,6 +66,9 @@ export const WarriorQuoteBackdrop = ({ audience }: Props) => {
         <div className="neu-sm px-4 py-3 flex items-start gap-3">
           <div className="text-primary text-lg leading-none mt-0.5">❝</div>
           <div className="flex-1 min-w-0">
+            <p className="text-[9px] uppercase tracking-[0.25em] text-primary font-bold mb-1">
+              {label}
+            </p>
             <p className="text-sm italic text-foreground/90 leading-snug">{quote.text}</p>
             <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
               — {quote.author}
@@ -83,8 +91,11 @@ export const WarriorQuoteBackdrop = ({ audience }: Props) => {
           >
             <X className="h-3.5 w-3.5" />
           </button>
+          <p className="text-[9px] uppercase tracking-[0.25em] text-primary font-bold mb-1">
+            {label}
+          </p>
           <p className="text-xs italic text-foreground/90 leading-snug">“{quote.text}”</p>
-          <p className="mt-1.5 text-[9px] uppercase tracking-[0.25em] text-primary font-bold">
+          <p className="mt-1.5 text-[9px] uppercase tracking-[0.25em] text-muted-foreground font-bold">
             — {quote.author}
           </p>
         </div>
@@ -93,17 +104,23 @@ export const WarriorQuoteBackdrop = ({ audience }: Props) => {
   }
 
   if (style === 'ticker') {
-    return <Ticker text={quote.text} author={quote.author} />;
+    return <Ticker text={quote.text} author={quote.author} label={label} />;
   }
 
   return null;
 };
 
-const Ticker = ({ text, author }: { text: string; author: string }) => {
+const labelForRotation = (rotation: 'daily' | 'hourly' | 'per_visit') => {
+  if (rotation === 'hourly') return 'Quote of the Hour';
+  if (rotation === 'per_visit') return 'Warrior Quote';
+  return 'Quote of the Day';
+};
+
+const Ticker = ({ text, author, label }: { text: string; author: string; label: string }) => {
   const [k, setK] = useState(0);
   // remount keyframes on text change so the marquee restarts cleanly
   useEffect(() => setK((n) => n + 1), [text]);
-  const line = `${text}   —   ${author}`;
+  const line = `${label}:   ${text}   —   ${author}`;
   return (
     <div className="sticky top-14 z-20 overflow-hidden border-y border-border bg-background/80 backdrop-blur">
       <div
