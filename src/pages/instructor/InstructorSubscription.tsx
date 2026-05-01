@@ -19,6 +19,9 @@ const PRICE_ID = 'instructor_pro_monthly';
 
 const InstructorSubscription = () => {
   const { user } = useAuth();
+  const nav = useNavigate();
+  const [params] = useSearchParams();
+  const isOnboarding = params.get('onboarding') === '1';
   const { data: prelaunch, isLoading: prelaunchLoading } = usePrelaunch();
   const { subscription, isActive, isCanceledGrace, isPastDue, loading: subLoading, refetch } = useSubscription();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
