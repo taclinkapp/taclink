@@ -22,11 +22,12 @@ class ResizeObserverStub {
 }
 // @ts-expect-error - test polyfill
 globalThis.ResizeObserver = globalThis.ResizeObserver ?? ResizeObserverStub;
-// @ts-expect-error - test polyfill
-globalThis.IntersectionObserver = globalThis.IntersectionObserver ?? class {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-  takeRecords() { return []; }
-  root = null; rootMargin = ''; thresholds = [];
-};
+if (!(globalThis as any).IntersectionObserver) {
+  (globalThis as any).IntersectionObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() { return []; }
+    root = null; rootMargin = ''; thresholds = [];
+  };
+}
