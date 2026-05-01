@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Loader2, Crown, Sparkles, ExternalLink, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Loader2, Crown, Sparkles, ExternalLink, AlertTriangle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { fmt, INSTRUCTOR_SUBSCRIPTION_CENTS } from '@/lib/fees';
