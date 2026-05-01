@@ -20,8 +20,9 @@ class ResizeObserverStub {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error - test polyfill
-globalThis.ResizeObserver = globalThis.ResizeObserver ?? ResizeObserverStub;
+if (!(globalThis as any).ResizeObserver) {
+  (globalThis as any).ResizeObserver = ResizeObserverStub;
+}
 if (!(globalThis as any).IntersectionObserver) {
   (globalThis as any).IntersectionObserver = class {
     observe() {}
