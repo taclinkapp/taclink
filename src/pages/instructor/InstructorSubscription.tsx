@@ -205,7 +205,7 @@ const InstructorSubscription = () => {
               Continue with Free · Verify Credentials
             </Button>
             <p className="text-[10px] text-muted-foreground text-center">
-              You can upgrade to Pro any time from Settings.
+              You'll be able to upgrade to Pro from Settings once we go live.
             </p>
           </div>
         )}
