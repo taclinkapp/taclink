@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,19 +41,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [rolesError, setRolesError] = useState<string | null>(null);
+  const activeUserIdRef = useRef<string | null>(null);
 
   const loadProfileAndRoles = async (uid: string, attempt = 0): Promise<void> => {
     try {
+      if (activeUserIdRef.current !== uid) return;
       const [{ data: prof, error: profErr }, { data: roleRows, error: roleErr }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", uid),
       ]);
+      if (activeUserIdRef.current !== uid) return;
       if (roleErr) throw roleErr;
       if (profErr && profErr.code !== "PGRST116") throw profErr;
+      const nextRoles = ((roleRows as { role: AppRole }[]) ?? []).map((r) => r.role);
+      if (!nextRoles.length) throw new Error("No account role has been assigned yet.");
       setProfile((prof as Profile) ?? null);
-      setRoles(((roleRows as { role: AppRole }[]) ?? []).map((r) => r.role));
+      setRoles(nextRoles);
       setRolesError(null);
     } catch (err: any) {
+      if (activeUserIdRef.current !== uid) return;
       console.error(`[auth] role load failed (attempt ${attempt + 1})`, err);
       if (attempt < MAX_ROLE_RETRIES) {
         const delay = 600 * Math.pow(2, attempt); // 600ms, 1.2s, 2.4s
@@ -66,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const retryRoles = async () => {
     if (!user) return;
+    activeUserIdRef.current = user.id;
     setRolesError(null);
     setLoading(true);
     await loadProfileAndRoles(user.id);
@@ -77,13 +84,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      const nextUserId = newSession?.user?.id ?? null;
+      activeUserIdRef.current = nextUserId;
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
         setLoading(true);
         // Defer DB calls to avoid deadlocks inside the auth callback
         setTimeout(() => {
-          loadProfileAndRoles(newSession.user.id).finally(() => setLoading(false));
+          const uid = newSession.user.id;
+          loadProfileAndRoles(uid).finally(() => {
+            if (activeUserIdRef.current === uid) setLoading(false);
+          });
         }, 0);
       } else {
         setProfile(null);
@@ -94,9 +106,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
+      const nextUserId = s?.user?.id ?? null;
+      activeUserIdRef.current = nextUserId;
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) loadProfileAndRoles(s.user.id).finally(() => setLoading(false));
+      if (s?.user) {
+        const uid = s.user.id;
+        loadProfileAndRoles(uid).finally(() => {
+          if (activeUserIdRef.current === uid) setLoading(false);
+        });
+      }
       else setLoading(false);
     });
 

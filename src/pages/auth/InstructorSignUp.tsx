@@ -52,13 +52,17 @@ const InstructorSignUp = () => {
       logBypassAttempt({ userRole: 'instructor', fieldName: 'instructor_bio', originalContent: bio, detections: bioHits, actionTaken: 'blocked' });
       return toast.error('Remove contact info from your bio before submitting.');
     }
+    const { data: existing } = await supabase.auth.getSession();
+    if (existing.session) {
+      await supabase.auth.signOut();
+    }
     setLoading(true);
     logSignupRedirect({ role: 'instructor', intendedPath: '/instructor/subscription?onboarding=1', status: 'submitted', email });
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/credential-verification`,
+        emailRedirectTo: `${window.location.origin}/instructor/subscription?onboarding=1`,
         data: {
           display_name: `${first} ${last}`.trim(),
           phone,

@@ -56,7 +56,14 @@ export const ProtectedRoute = ({ children, requireRole }: Props) => {
   }
 
   if (requireRole && !roles.includes(requireRole)) {
-    return <Navigate to={homeForRole(primaryRole)} replace />;
+    const requestedPath = `${location.pathname}${location.search}`;
+    console.warn("[auth] role route mismatch", {
+      requestedPath,
+      requiredRole: requireRole,
+      roles,
+      primaryRole,
+    });
+    return <Navigate to={homeForRole(primaryRole)} state={{ blockedFrom: requestedPath, requiredRole: requireRole }} replace />;
   }
 
   // Admins skip the acknowledgment gate so moderation tooling stays accessible.

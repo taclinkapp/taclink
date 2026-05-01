@@ -45,6 +45,10 @@ const StudentSignUp = () => {
       toast.error('You must agree to the terms');
       return;
     }
+    const { data: existing } = await supabase.auth.getSession();
+    if (existing.session) {
+      await supabase.auth.signOut();
+    }
     setLoading(true);
     logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'submitted', email });
     const { error } = await supabase.auth.signUp({
