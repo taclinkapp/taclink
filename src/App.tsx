@@ -186,6 +186,7 @@ const App = () => (
               <Route path="flags" element={<AdminFeatureFlags />} />
               <Route path="test-accounts" element={<AdminTestAccounts />} />
               <Route path="warrior-quotes" element={<AdminWarriorQuotes />} />
+              <Route path="security" element={<AdminSecurity />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
 
