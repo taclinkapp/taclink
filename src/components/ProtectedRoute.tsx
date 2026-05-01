@@ -55,7 +55,11 @@ export const ProtectedRoute = ({ children, requireRole }: Props) => {
     );
   }
 
-  if (requireRole && !roles.includes(requireRole)) {
+  // Admins are allowed to view student/instructor routes for QA / validation.
+  // We surface a small banner via <AdminViewAsBanner /> so it's obvious.
+  const isAdmin = roles.includes("admin");
+
+  if (requireRole && !roles.includes(requireRole) && !isAdmin) {
     const requestedPath = `${location.pathname}${location.search}`;
     console.warn("[auth] role route mismatch", {
       requestedPath,
@@ -66,10 +70,33 @@ export const ProtectedRoute = ({ children, requireRole }: Props) => {
     return <Navigate to={homeForRole(primaryRole)} state={{ blockedFrom: requestedPath, requiredRole: requireRole }} replace />;
   }
 
-  // Admins skip the acknowledgment gate so moderation tooling stays accessible.
-  if (requireRole === "admin" || roles.includes("admin")) {
-    return <>{children}</>;
+  // Admins skip the acknowledgment gate so moderation/QA tooling stays accessible.
+  if (requireRole === "admin" || isAdmin) {
+    return (
+      <>
+        {isAdmin && requireRole && requireRole !== "admin" && (
+          <AdminViewAsBanner role={requireRole} />
+        )}
+        {children}
+      </>
+    );
   }
 
   return <PolicyAcknowledgmentGate>{children}</PolicyAcknowledgmentGate>;
+};
+
+const AdminViewAsBanner = ({ role }: { role: AppRole }) => {
+  return (
+    <div className="sticky top-0 z-[60] w-full bg-primary text-primary-foreground text-xs font-bold px-3 py-2 flex items-center justify-between gap-3 shadow">
+      <span className="uppercase tracking-wider truncate">
+        Admin view · browsing as <span className="underline">{role}</span>
+      </span>
+      <a
+        href="/admin"
+        className="shrink-0 rounded-md bg-primary-foreground/15 hover:bg-primary-foreground/25 px-2 py-1 transition"
+      >
+        Exit to Admin
+      </a>
+    </div>
+  );
 };
