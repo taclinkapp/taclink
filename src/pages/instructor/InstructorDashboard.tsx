@@ -70,7 +70,7 @@ const InstructorDashboard = () => {
 
   return (
     <MobileShell>
-      <WarriorQuoteBackdrop />
+      <WarriorQuoteBackdrop audience="instructor" />
       <PageHeader brand right={<NotificationsBell className="-mr-2" />} />
       <div className="px-4 pt-2">
         <div className="flex items-center gap-3">
