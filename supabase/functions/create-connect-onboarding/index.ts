@@ -61,6 +61,8 @@ Deno.serve(async (req) => {
         metadata: { instructorId: user.id },
       });
       accountId = account.id;
+      // Keep both legacy column on profiles AND the new provider-agnostic
+      // table in sync so the failover layer sees this account.
       await supabase
         .from("profiles")
         .update({
@@ -68,6 +70,14 @@ Deno.serve(async (req) => {
           stripe_connect_status: "onboarding",
         })
         .eq("id", user.id);
+      await supabase
+        .from("instructor_payout_accounts")
+        .upsert({
+          instructor_id: user.id,
+          provider: "stripe",
+          external_account_id: accountId,
+          status: "onboarding",
+        }, { onConflict: "instructor_id,provider" });
     }
 
     const link = await stripe.accountLinks.create({

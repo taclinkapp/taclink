@@ -47,6 +47,21 @@ Deno.serve(async (req) => {
       return json({ error: "bookingId, returnUrl, environment required" }, 400);
     }
 
+    // Payment-provider gate: this edge function is the Stripe-specific
+    // escrow path. If the platform has been failed-over to another rail
+    // (e.g. authorize_net), the matching adapter must be used instead.
+    const { data: providerSettings } = await supabase
+      .from("payment_provider_settings")
+      .select("active_provider")
+      .eq("id", true)
+      .maybeSingle();
+    const activeProvider = (providerSettings?.active_provider as string | undefined) ?? "stripe";
+    if (activeProvider !== "stripe") {
+      return json({
+        error: `Stripe checkout is disabled — platform is currently routing through ${activeProvider}. Contact support.`,
+      }, 503);
+    }
+
     const { data: booking, error: bErr } = await supabase
       .from("bookings")
       .select("id, student_id, course_id, online_total_cents, platform_fee_cents, instructor_deposit_cents, deposit_status, courses!inner(title, instructor_id)")
@@ -106,6 +121,7 @@ Deno.serve(async (req) => {
       .update({
         stripe_checkout_session_id: session.id,
         deposit_status: "pending_payment",
+        payment_provider: "stripe",
       })
       .eq("id", booking.id);
 

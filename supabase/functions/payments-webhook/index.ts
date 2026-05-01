@@ -94,6 +94,17 @@ async function handleAccountUpdated(account: any) {
     .from("profiles")
     .update({ stripe_connect_status: status })
     .eq("stripe_connect_account_id", account.id);
+
+  // Mirror into the provider-agnostic table.
+  await getSupabase()
+    .from("instructor_payout_accounts")
+    .update({
+      status,
+      payouts_enabled: !!account.payouts_enabled,
+      charges_enabled: !!account.charges_enabled,
+    })
+    .eq("provider", "stripe")
+    .eq("external_account_id", account.id);
 }
 
 // ── Instructor Pro subscription handlers ───────────────────────────────────
@@ -122,6 +133,7 @@ async function upsertSubscription(subscription: any, env: StripeEnv) {
       current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
       cancel_at_period_end: subscription.cancel_at_period_end || false,
       environment: env,
+      payment_provider: "stripe",
       updated_at: new Date().toISOString(),
     },
     { onConflict: "stripe_subscription_id" },
