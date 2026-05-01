@@ -56,7 +56,7 @@ const InstructorSignUp = () => {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/auth/credential-verification`,
         data: {
           display_name: `${first} ${last}`.trim(),
           phone,
@@ -73,10 +73,10 @@ const InstructorSignUp = () => {
       toast.error(error.message);
       return;
     }
-    toast.success('Check your email', {
-      description: 'Verify your email, then complete credential verification.',
+    toast.success('Account created', {
+      description: 'Next: complete credential verification.',
     });
-    nav('/auth/credential-verification');
+    nav('/auth/credential-verification', { replace: true });
   };
 
   return (
