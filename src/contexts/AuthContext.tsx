@@ -54,11 +54,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
+        setLoading(true);
         // Defer DB calls to avoid deadlocks inside the auth callback
-        setTimeout(() => loadProfileAndRoles(newSession.user.id), 0);
+        setTimeout(() => {
+          loadProfileAndRoles(newSession.user.id).finally(() => setLoading(false));
+        }, 0);
       } else {
         setProfile(null);
         setRoles([]);
+        setLoading(false);
       }
     });
 

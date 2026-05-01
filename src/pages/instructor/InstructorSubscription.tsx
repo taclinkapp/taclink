@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
@@ -18,6 +19,9 @@ const PRICE_ID = 'instructor_pro_monthly';
 
 const InstructorSubscription = () => {
   const { user } = useAuth();
+  const nav = useNavigate();
+  const [params] = useSearchParams();
+  const isOnboarding = params.get('onboarding') === '1';
   const { data: prelaunch, isLoading: prelaunchLoading } = usePrelaunch();
   const { subscription, isActive, isCanceledGrace, isPastDue, loading: subLoading, refetch } = useSubscription();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -190,6 +194,20 @@ const InstructorSubscription = () => {
           <p className="text-[10px] text-muted-foreground text-center">
             {isCanceledGrace ? 'Access ends' : 'Renews'} {periodEndStr}
           </p>
+        )}
+
+        {isOnboarding && (
+          <div className="pt-2 space-y-2">
+            <Button
+              onClick={() => nav('/auth/credential-verification', { replace: true })}
+              className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
+            >
+              Continue with Free · Verify Credentials
+            </Button>
+            <p className="text-[10px] text-muted-foreground text-center">
+              You can upgrade to Pro any time from Settings.
+            </p>
+          </div>
         )}
       </div>
 
