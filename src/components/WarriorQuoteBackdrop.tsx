@@ -116,7 +116,7 @@ const labelForRotation = (rotation: 'daily' | 'hourly' | 'per_visit') => {
   return 'Quote of the Day';
 };
 
-const Ticker = ({ text, author }: { text: string; author: string }) => {
+const Ticker = ({ text, author, label }: { text: string; author: string; label: string }) => {
   const [k, setK] = useState(0);
   // remount keyframes on text change so the marquee restarts cleanly
   useEffect(() => setK((n) => n + 1), [text]);
