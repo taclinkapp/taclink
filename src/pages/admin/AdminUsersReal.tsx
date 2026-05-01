@@ -136,7 +136,16 @@ function ConfirmAction({
   onConfirm,
   destructive,
   icon,
-}: { label: string; onConfirm: (reason: string) => void; destructive?: boolean; icon?: React.ReactNode }) {
+  confirmText,
+  description,
+}: {
+  label: string;
+  onConfirm: (reason: string) => void;
+  destructive?: boolean;
+  icon?: React.ReactNode;
+  confirmText?: string;
+  description?: string;
+}) {
   const [reason, setReason] = useState('');
   return (
     <AlertDialog>
@@ -148,12 +157,19 @@ function ConfirmAction({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{label}</AlertDialogTitle>
-          <AlertDialogDescription>Optional reason (logged to audit log).</AlertDialogDescription>
+          <AlertDialogDescription>
+            {description ?? 'Optional reason (logged to audit log).'}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason…" />
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={() => onConfirm(reason)}>{label}</AlertDialogAction>
+          <AlertDialogAction
+            onClick={() => onConfirm(reason)}
+            className={destructive ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : undefined}
+          >
+            {confirmText ?? label}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
