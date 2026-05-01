@@ -2142,6 +2142,39 @@ export type Database = {
         }
         Relationships: []
       }
+      test_accounts: {
+        Row: {
+          created_at: string
+          created_by: string
+          email: string
+          id: string
+          label: string | null
+          password: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          email: string
+          id?: string
+          label?: string | null
+          password: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          email?: string
+          id?: string
+          label?: string | null
+          password?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       training_goal_events: {
         Row: {
           created_at: string
