@@ -18,6 +18,7 @@ import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 import { validatePassword } from '@/lib/passwordRules';
 import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
+import { logSignupRedirect } from '@/lib/signupLogging';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
@@ -52,6 +53,7 @@ const InstructorSignUp = () => {
       return toast.error('Remove contact info from your bio before submitting.');
     }
     setLoading(true);
+    logSignupRedirect({ role: 'instructor', intendedPath: '/instructor/subscription?onboarding=1', status: 'submitted', email });
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -70,12 +72,14 @@ const InstructorSignUp = () => {
     });
     setLoading(false);
     if (error) {
+      logSignupRedirect({ role: 'instructor', intendedPath: '/instructor/subscription?onboarding=1', status: 'error', email, message: error.message });
       toast.error(error.message);
       return;
     }
     toast.success('Account created', {
       description: 'Choose your plan to get started.',
     });
+    logSignupRedirect({ role: 'instructor', intendedPath: '/instructor/subscription?onboarding=1', status: 'redirected', email });
     nav('/instructor/subscription?onboarding=1', { replace: true });
   };
 
