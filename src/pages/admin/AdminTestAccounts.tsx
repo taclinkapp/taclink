@@ -62,6 +62,53 @@ export default function AdminTestAccounts() {
   const [label, setLabel] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [tab, setTab] = useState<"instructor" | "student">("instructor");
+  const [generated, setGenerated] = useState<GeneratedCreds[]>(() => {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as GeneratedCreds[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const persistGenerated = (next: GeneratedCreds[]) => {
+    setGenerated(next);
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const generate = (role: "instructor" | "student") => {
+    const creds: GeneratedCreds = {
+      email: generateEmail(role),
+      password: generatePassword(),
+      role,
+      generatedAt: Date.now(),
+    };
+    persistGenerated([creds, ...generated].slice(0, 20));
+    toast.success(`Generated ${role} signup credentials`);
+  };
+
+  const copyGenerated = async (g: GeneratedCreds) => {
+    await navigator.clipboard.writeText(`${g.email} / ${g.password}`);
+    const key = `${g.email}-${g.generatedAt}`;
+    setCopiedKey(key);
+    toast.success("Copied — paste into the signup form");
+    setTimeout(() => setCopiedKey(null), 1500);
+  };
+
+  const removeGenerated = (g: GeneratedCreds) => {
+    persistGenerated(generated.filter((x) => x.generatedAt !== g.generatedAt));
+  };
+
+  const clearGenerated = () => {
+    if (!generated.length) return;
+    if (!confirm("Clear all generated signup credentials from this list?")) return;
+    persistGenerated([]);
+  };
 
   const load = async () => {
     setLoading(true);
