@@ -94,6 +94,17 @@ async function handleAccountUpdated(account: any) {
     .from("profiles")
     .update({ stripe_connect_status: status })
     .eq("stripe_connect_account_id", account.id);
+
+  // Mirror into the provider-agnostic table.
+  await getSupabase()
+    .from("instructor_payout_accounts")
+    .update({
+      status,
+      payouts_enabled: !!account.payouts_enabled,
+      charges_enabled: !!account.charges_enabled,
+    })
+    .eq("provider", "stripe")
+    .eq("external_account_id", account.id);
 }
 
 // ── Instructor Pro subscription handlers ───────────────────────────────────
