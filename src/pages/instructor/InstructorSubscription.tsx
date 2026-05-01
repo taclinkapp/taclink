@@ -165,6 +165,7 @@ const InstructorSubscription = () => {
             <Button
               onClick={() => setCheckoutOpen(true)}
               disabled={isPrelaunch}
+              data-testid="pro-upgrade-button"
               className="w-full h-11 bg-primary text-primary-foreground font-bold disabled:opacity-100"
             >
               {isPrelaunch ? (
