@@ -136,7 +136,8 @@ describe('Signup redirects', () => {
     fillCommon();
     fireEvent.click(screen.getByRole('button', { name: /Apply as Instructor/i }));
     await waitFor(() => screen.getByText('LANDED:instructor-sub'));
-    expect(signOutMock).toHaveBeenCalledBefore(signUpMock);
+    expect(signOutMock).toHaveBeenCalled();
+    expect(signOutMock.mock.invocationCallOrder[0]).toBeLessThan(signUpMock.mock.invocationCallOrder[0]);
   });
 
   it('Instructor signup redirects correctly under StrictMode', async () => {
