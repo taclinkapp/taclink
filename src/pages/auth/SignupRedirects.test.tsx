@@ -5,13 +5,19 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 // --- Mocks ---------------------------------------------------------------
 const signUpMock = vi.fn();
+const getSessionMock = vi.fn();
+const signOutMock = vi.fn();
 const invokeMock = vi.fn().mockResolvedValue({ data: null, error: null });
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    auth: { signUp: (...a: any[]) => signUpMock(...a) },
+    auth: {
+      getSession: (...a: any[]) => getSessionMock(...a),
+      signOut: (...a: any[]) => signOutMock(...a),
+      signUp: (...a: any[]) => signUpMock(...a),
+    },
     functions: { invoke: (...a: any[]) => invokeMock(...a) },
   },
 }));
@@ -81,6 +87,10 @@ beforeEach(() => {
   cleanup();
   signUpMock.mockReset();
   signUpMock.mockResolvedValue({ data: {}, error: null });
+  getSessionMock.mockReset();
+  getSessionMock.mockResolvedValue({ data: { session: null }, error: null });
+  signOutMock.mockReset();
+  signOutMock.mockResolvedValue({ error: null });
   invokeMock.mockClear();
   toastSuccess.mockClear();
   toastError.mockClear();
@@ -94,6 +104,8 @@ describe('Signup redirects', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create Student Account/i }));
     await waitFor(() => screen.getByText('LANDED:student'));
     expect(signUpMock).toHaveBeenCalled();
+    expect(signUpMock.mock.calls[0][0].options.data.role).toBe('student');
+    expect(signUpMock.mock.calls[0][0].options.emailRedirectTo).toContain('/student');
     const log = JSON.parse(sessionStorage.getItem('taclink:signupRedirectLog') || '[]');
     expect(log.some((e: any) => e.role === 'student' && e.status === 'redirected')).toBe(true);
   });
@@ -112,8 +124,19 @@ describe('Signup redirects', () => {
     // state select + bio are optional; submit straight away
     fireEvent.click(screen.getByRole('button', { name: /Apply as Instructor/i }));
     await waitFor(() => screen.getByText('LANDED:instructor-sub'));
+    expect(signUpMock.mock.calls[0][0].options.data.role).toBe('instructor');
+    expect(signUpMock.mock.calls[0][0].options.emailRedirectTo).toContain('/instructor/subscription?onboarding=1');
     const log = JSON.parse(sessionStorage.getItem('taclink:signupRedirectLog') || '[]');
     expect(log.some((e: any) => e.role === 'instructor' && e.status === 'redirected')).toBe(true);
+  });
+
+  it('Instructor signup first clears an existing student session before creating the account', async () => {
+    getSessionMock.mockResolvedValueOnce({ data: { session: { user: { id: 'student-session' } } }, error: null });
+    renderWith(InstructorSignUp);
+    fillCommon();
+    fireEvent.click(screen.getByRole('button', { name: /Apply as Instructor/i }));
+    await waitFor(() => screen.getByText('LANDED:instructor-sub'));
+    expect(signOutMock).toHaveBeenCalledBefore(signUpMock);
   });
 
   it('Instructor signup redirects correctly under StrictMode', async () => {
