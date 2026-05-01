@@ -10,7 +10,7 @@
  *   3. Best-effort POSTed to the `bug-triage` edge function as breadcrumbs
  *      so the admin Bug Triage view sees them — failure is swallowed.
  */
-import { supabase } from "@/integrations/supabase/client";
+
 
 export type SignupRedirectEvent = {
   role: "student" | "instructor";
