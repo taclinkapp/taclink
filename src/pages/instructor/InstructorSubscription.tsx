@@ -12,6 +12,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { SubscriptionEmbeddedCheckout } from '@/components/SubscriptionEmbeddedCheckout';
 import { getStripeEnvironment } from '@/lib/stripe';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CountdownClock } from '@/components/CountdownClock';
 
 const PRICE_ID = 'instructor_pro_monthly';
 
@@ -153,6 +154,12 @@ const InstructorSubscription = () => {
             <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> AI-powered fee insights & payout summaries</li>
             <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> Local demand & instructor analytics</li>
           </ul>
+
+          {isPrelaunch && !isActive && (
+            <div className="border-t border-primary/20 pt-3" data-testid="pro-prelaunch-countdown">
+              <CountdownClock />
+            </div>
+          )}
 
           {!isActive ? (
             <Button
