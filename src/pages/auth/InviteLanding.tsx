@@ -19,23 +19,15 @@ const InviteLanding = () => {
         setLoading(false);
         return;
       }
-      const { data: codeRow } = await supabase
-        .from('referral_codes')
-        .select('user_id, user_role')
-        .eq('code', code)
-        .maybeSingle();
+      const { data: rows } = await supabase
+        .rpc('lookup_referral_code', { _code: code });
       if (cancelled) return;
-      if (!codeRow) {
+      const row = Array.isArray(rows) ? rows[0] : rows;
+      if (!row) {
         setLoading(false);
         return;
       }
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', codeRow.user_id)
-        .maybeSingle();
-      if (cancelled) return;
-      setReferrer({ name: profile?.display_name ?? 'A TacLink™ user', role: codeRow.user_role });
+      setReferrer({ name: row.display_name ?? 'A TacLink™ user', role: row.user_role });
       setLoading(false);
     })();
     return () => {
