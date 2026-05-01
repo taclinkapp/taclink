@@ -42,7 +42,8 @@ export function useSubscription() {
 
   useEffect(() => { refetch(); }, [refetch]);
 
-  // Realtime updates
+  // Realtime updates — depend only on user.id so refetch identity changes don't
+  // cause us to re-add listeners to an already-subscribed channel.
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -54,7 +55,8 @@ export function useSubscription() {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, refetch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const now = Date.now();
   const periodEnd = subscription?.current_period_end ? new Date(subscription.current_period_end).getTime() : null;
