@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { validatePassword } from '@/lib/passwordRules';
 import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
+import { logSignupRedirect } from '@/lib/signupLogging';
 
 const StudentSignUp = () => {
   const nav = useNavigate();
@@ -45,6 +46,7 @@ const StudentSignUp = () => {
       return;
     }
     setLoading(true);
+    logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'submitted', email });
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -60,10 +62,12 @@ const StudentSignUp = () => {
     });
     setLoading(false);
     if (error) {
+      logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'error', email, message: error.message });
       toast.error(error.message);
       return;
     }
     toast.success('Welcome to TacLink™!');
+    logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'redirected', email });
     nav('/student', { replace: true });
   };
 
