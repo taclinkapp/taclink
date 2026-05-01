@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { AdminHeader } from './AdminDashboard';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldCheck, ShieldOff, RotateCcw } from 'lucide-react';
+import { Search, Loader2, ShieldCheck, ShieldOff, RotateCcw, Trash2 } from 'lucide-react';
 import { useAdminUsers, useAdminUserAction, useGrantCredit } from '@/hooks/useAdminData';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,11 +20,33 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+function useDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) => {
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId, reason },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin_users'] });
+      qc.invalidateQueries({ queryKey: ['admin_audit_log'] });
+      toast({ title: 'Account permanently deleted' });
+    },
+    onError: (e: any) =>
+      toast({ title: 'Delete failed', description: e.message, variant: 'destructive' }),
+  });
+}
+
 export const AdminUsersReal = () => {
   const [search, setSearch] = useState('');
   const { data: users = [], isLoading } = useAdminUsers(search);
   const action = useAdminUserAction();
   const grant = useGrantCredit();
+  const del = useDeleteAccount();
+  const { user: currentUser } = useAuth();
 
   return (
     <>
