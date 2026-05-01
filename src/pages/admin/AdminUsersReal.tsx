@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AdminHeader } from './AdminDashboard';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, ShieldCheck, ShieldOff, RotateCcw, Trash2 } from 'lucide-react';
+import { Search, Loader2, ShieldCheck, ShieldOff, RotateCcw, Trash2, Ban, Undo2 } from 'lucide-react';
 import { useAdminUsers, useAdminUserAction, useGrantCredit } from '@/hooks/useAdminData';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
