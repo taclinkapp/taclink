@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Loader2, Crown, Sparkles, ExternalLink, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Loader2, Crown, Sparkles, ExternalLink, AlertTriangle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { fmt, INSTRUCTOR_SUBSCRIPTION_CENTS } from '@/lib/fees';
@@ -31,7 +30,10 @@ const InstructorSubscription = () => {
       </MobileShell>
     );
   }
-  if (prelaunch?.enabled) return <Navigate to="/instructor" replace />;
+  const isPrelaunch = !!prelaunch?.enabled;
+  const launchDateStr = prelaunch?.launchDateIso
+    ? new Date(prelaunch.launchDateIso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
 
   const openPortal = async () => {
     setPortalBusy(true);
@@ -62,6 +64,18 @@ const InstructorSubscription = () => {
         <p className="text-xs text-muted-foreground">
           Pro unlocks AI tools and instructor analytics. Publishing courses is always free.
         </p>
+
+        {isPrelaunch && (
+          <div className="tactical-card border-primary/40 bg-primary/10 p-3 flex items-start gap-2">
+            <Lock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <div className="font-bold">Pro unlocks at launch</div>
+              <p className="text-muted-foreground mt-0.5">
+                We're in pre-launch — the Free tier is fully active. Pro subscriptions go live{launchDateStr ? ` on ${launchDateStr}` : ' on launch day'}.
+              </p>
+            </div>
+          </div>
+        )}
 
         {isPastDue && (
           <div className="tactical-card border-amber-500/40 bg-amber-500/10 p-3 flex items-start gap-2">
@@ -110,9 +124,15 @@ const InstructorSubscription = () => {
 
         {/* Pro tier */}
         <div className={cn(
-          "tactical-card p-5 space-y-3 transition-all",
-          isActive ? "border-primary/60 bg-primary/10" : "border-primary/30"
+          "tactical-card p-5 space-y-3 transition-all relative",
+          isActive ? "border-primary/60 bg-primary/10" : "border-primary/30",
+          isPrelaunch && !isActive && "opacity-60"
         )}>
+          {isPrelaunch && !isActive && (
+            <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-sm flex items-center gap-1">
+              <Lock className="h-3 w-3" /> Locked
+            </span>
+          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center">
@@ -137,9 +157,14 @@ const InstructorSubscription = () => {
           {!isActive ? (
             <Button
               onClick={() => setCheckoutOpen(true)}
-              className="w-full h-11 bg-primary text-primary-foreground font-bold"
+              disabled={isPrelaunch}
+              className="w-full h-11 bg-primary text-primary-foreground font-bold disabled:opacity-100"
             >
-              Upgrade to Pro · {fmt(INSTRUCTOR_SUBSCRIPTION_CENTS)}/mo
+              {isPrelaunch ? (
+                <><Lock className="h-4 w-4 mr-1.5" />Available {launchDateStr ?? 'at launch'}</>
+              ) : (
+                <>Upgrade to Pro · {fmt(INSTRUCTOR_SUBSCRIPTION_CENTS)}/mo</>
+              )}
             </Button>
           ) : (
             <Button
