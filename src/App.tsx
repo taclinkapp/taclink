@@ -83,6 +83,7 @@ import OwnerConsole from "./pages/admin/OwnerConsole";
 import AdminInfluencerLinks from "./pages/admin/AdminInfluencerLinks";
 import WeeklyBrief from "./pages/admin/WeeklyBrief";
 import AdminTestAccounts from "./pages/admin/AdminTestAccounts";
+import AdminWarriorQuotes from "./pages/admin/AdminWarriorQuotes";
 import { DevRoleSwitcher } from "./components/DevRoleSwitcher";
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -184,6 +185,7 @@ const App = () => (
               <Route path="activity" element={<AdminAuditLog />} />
               <Route path="flags" element={<AdminFeatureFlags />} />
               <Route path="test-accounts" element={<AdminTestAccounts />} />
+              <Route path="warrior-quotes" element={<AdminWarriorQuotes />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
 
