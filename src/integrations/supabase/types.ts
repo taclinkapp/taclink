@@ -2647,6 +2647,13 @@ export type Database = {
         }
         Returns: string
       }
+      lookup_referral_code: {
+        Args: { _code: string }
+        Returns: {
+          display_name: string
+          user_role: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
