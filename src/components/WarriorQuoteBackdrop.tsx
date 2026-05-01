@@ -120,7 +120,7 @@ const Ticker = ({ text, author, label }: { text: string; author: string; label: 
   const [k, setK] = useState(0);
   // remount keyframes on text change so the marquee restarts cleanly
   useEffect(() => setK((n) => n + 1), [text]);
-  const line = `${text}   —   ${author}`;
+  const line = `${label}:   ${text}   —   ${author}`;
   return (
     <div className="sticky top-14 z-20 overflow-hidden border-y border-border bg-background/80 backdrop-blur">
       <div
