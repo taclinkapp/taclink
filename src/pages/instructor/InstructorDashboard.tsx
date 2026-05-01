@@ -5,6 +5,7 @@ import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { mockCourses, mockRoster, mockReviews } from '@/lib/mockData';
 import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, ShieldCheck, Plus, Star, Printer, Download, ArrowLeft } from 'lucide-react';
 import { NotificationsBell } from '@/components/NotificationsBell';
+import { WarriorQuoteBackdrop } from '@/components/WarriorQuoteBackdrop';
 import { InstructorInsights } from '@/components/instructor/InstructorInsights';
 import { FeeInsights } from '@/components/instructor/FeeInsights';
 // PunchCard import removed — credit system retired
@@ -69,6 +70,7 @@ const InstructorDashboard = () => {
 
   return (
     <MobileShell>
+      <WarriorQuoteBackdrop />
       <PageHeader brand right={<NotificationsBell className="-mr-2" />} />
       <div className="px-4 pt-2">
         <div className="flex items-center gap-3">

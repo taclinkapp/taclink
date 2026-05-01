@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
+import { WarriorQuoteBackdrop } from '@/components/WarriorQuoteBackdrop';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { cn } from '@/lib/utils';
 
@@ -274,6 +275,7 @@ const Discover = () => {
 
   return (
     <MobileShell>
+      <WarriorQuoteBackdrop />
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
         <PageHeader
           brand
