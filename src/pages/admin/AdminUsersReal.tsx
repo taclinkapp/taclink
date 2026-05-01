@@ -40,12 +40,34 @@ function useDeleteAccount() {
   });
 }
 
+function useSoftDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, reason, mode }: { userId: string; reason?: string; mode: 'disable' | 'restore' }) => {
+      const { data, error } = await supabase.functions.invoke('admin-soft-delete-user', {
+        body: { userId, reason, mode },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['admin_users'] });
+      qc.invalidateQueries({ queryKey: ['admin_audit_log'] });
+      toast({ title: data?.mode === 'restore' ? 'Account restored' : 'Account disabled (login blocked)' });
+    },
+    onError: (e: any) =>
+      toast({ title: 'Action failed', description: e.message, variant: 'destructive' }),
+  });
+}
+
 export const AdminUsersReal = () => {
   const [search, setSearch] = useState('');
   const { data: users = [], isLoading } = useAdminUsers(search);
   const action = useAdminUserAction();
   const grant = useGrantCredit();
   const del = useDeleteAccount();
+  const soft = useSoftDeleteAccount();
   const { user: currentUser } = useAuth();
 
   return (
