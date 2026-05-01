@@ -121,6 +121,7 @@ Deno.serve(async (req) => {
       .update({
         stripe_checkout_session_id: session.id,
         deposit_status: "pending_payment",
+        payment_provider: "stripe",
       })
       .eq("id", booking.id);
 
