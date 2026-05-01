@@ -124,9 +124,15 @@ const InstructorSubscription = () => {
 
         {/* Pro tier */}
         <div className={cn(
-          "tactical-card p-5 space-y-3 transition-all",
-          isActive ? "border-primary/60 bg-primary/10" : "border-primary/30"
+          "tactical-card p-5 space-y-3 transition-all relative",
+          isActive ? "border-primary/60 bg-primary/10" : "border-primary/30",
+          isPrelaunch && !isActive && "opacity-60"
         )}>
+          {isPrelaunch && !isActive && (
+            <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-sm flex items-center gap-1">
+              <Lock className="h-3 w-3" /> Locked
+            </span>
+          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center">
