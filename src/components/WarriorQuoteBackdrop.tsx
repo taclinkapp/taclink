@@ -104,10 +104,16 @@ export const WarriorQuoteBackdrop = ({ audience }: Props) => {
   }
 
   if (style === 'ticker') {
-    return <Ticker text={quote.text} author={quote.author} />;
+    return <Ticker text={quote.text} author={quote.author} label={label} />;
   }
 
   return null;
+};
+
+const labelForRotation = (rotation: 'daily' | 'hourly' | 'per_visit') => {
+  if (rotation === 'hourly') return 'Quote of the Hour';
+  if (rotation === 'per_visit') return 'Warrior Quote';
+  return 'Quote of the Day';
 };
 
 const Ticker = ({ text, author }: { text: string; author: string }) => {
