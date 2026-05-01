@@ -17,6 +17,31 @@ const options = [
 const CredentialVerification = () => {
   const nav = useNavigate();
   const [submitted, setSubmitted] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const MAX_BYTES = 10 * 1024 * 1024;
+  const handleFile = (f: File | null | undefined) => {
+    setPickerOpen(false);
+    if (!f) return;
+    if (f.size > MAX_BYTES) {
+      toast({ title: 'File too large', description: 'Please choose a file under 10MB.', variant: 'destructive' });
+      return;
+    }
+    setFile(f);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) {
+      toast({ title: 'Document required', description: 'Please attach a photo or PDF of your credential.', variant: 'destructive' });
+      return;
+    }
+    setSubmitted(true);
+  };
 
   if (submitted) {
     return (
