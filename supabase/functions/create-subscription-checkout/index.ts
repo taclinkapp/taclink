@@ -1,5 +1,6 @@
 // Creates an embedded Stripe Checkout session for the Instructor Pro subscription.
 import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
+import { isPrelaunchEnabled } from "../_shared/prelaunch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,6 +35,16 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Hard server-side block during pre-launch. The UI also disables the
+    // upgrade button, but this guarantees no client (curl, replay, race)
+    // can create a Pro subscription before launch day.
+    if (await isPrelaunchEnabled()) {
+      return new Response(
+        JSON.stringify({ error: "Pro subscriptions are not yet available — we're still in pre-launch." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const env: StripeEnv = environment;
