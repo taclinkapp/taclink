@@ -87,7 +87,7 @@ const InstructorSubscription = () => {
             <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
             <div className="text-xs">
               <div className="font-bold text-amber-700 dark:text-amber-400">Payment failed</div>
-              <p className="text-muted-foreground mt-0.5">Stripe is retrying your payment. Update your card to keep Pro features.</p>
+              <p className="text-muted-foreground mt-0.5">We're retrying your payment. Update your card to keep Pro features.</p>
             </div>
           </div>
         )}

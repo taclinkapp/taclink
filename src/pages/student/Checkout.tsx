@@ -62,7 +62,7 @@ const Checkout = () => {
   const [guardianRelationship, setGuardianRelationship] = useState('');
   const [guardianConsent, setGuardianConsent] = useState(false);
 
-  // Created booking + Stripe Embedded Checkout takeover
+  // Created booking + Embedded Checkout takeover
   const [bookingId, setBookingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -120,7 +120,7 @@ const Checkout = () => {
     setSubmitting(true);
     try {
       // Create the booking record up-front in pending_payment state.
-      // The Stripe webhook flips it to held_in_escrow once payment lands.
+      // The payment webhook flips it to held_in_escrow once payment lands.
       const { data: booking, error: bErr } = await supabase
         .from('bookings')
         .insert({
@@ -216,7 +216,7 @@ const Checkout = () => {
         });
       }
 
-      // Hand off to Stripe Embedded Checkout.
+      // Hand off to Embedded Checkout.
       setBookingId(booking.id);
     } catch (e: any) {
       toast.error(e?.message ?? 'Could not start checkout');
@@ -246,7 +246,7 @@ const Checkout = () => {
     );
   }
 
-  // Stripe Embedded Checkout takeover after the booking is created.
+  // Embedded Checkout takeover after the booking is created.
   if (bookingId) {
     const returnUrl = `${window.location.origin}/student/checkout/${bookingId}/return`;
     return (
@@ -255,7 +255,7 @@ const Checkout = () => {
         <PageHeader title="Secure Payment" back />
         <div className="px-4 py-4 space-y-3">
           <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Lock className="h-3.5 w-3.5 text-primary" /> Charged securely by Stripe — your card never touches our servers.
+            <Lock className="h-3.5 w-3.5 text-primary" /> Charged securely by our PCI-compliant payment processor — your card never touches our servers.
           </div>
           <EscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
         </div>
@@ -285,7 +285,7 @@ const Checkout = () => {
             <Row label="Course price" value={fmt(fees.coursePriceCents)} muted />
             <Row label="TacLink platform fee" value={fmt(fees.platformFeeCents)} />
             <div className="border-t border-border pt-2 mt-2 flex justify-between">
-              <span className="font-bold">Total charged today by Stripe</span>
+              <span className="font-bold">Total charged today</span>
               <span className="font-black text-primary text-lg">{fmt(fees.onlineTotalCents)}</span>
             </div>
             <div className="flex justify-between pt-3 border-t border-dashed border-border mt-2 text-success">
@@ -294,7 +294,7 @@ const Checkout = () => {
             </div>
           </div>
           <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground leading-relaxed">
-            TacLink charges <strong className="text-foreground">{fmt(fees.onlineTotalCents)}</strong> today through Stripe. The full course price is held in secure escrow and released to your instructor 24 hours after they scan you in at the course. If they cancel or no-show, you're refunded in full within 48 hours. <strong className="text-foreground">No cash, no card readers — payment is fully handled by the app.</strong>
+            TacLink charges <strong className="text-foreground">{fmt(fees.onlineTotalCents)}</strong> today via secure card processing. The full course price is held in secure escrow and released to your instructor 24 hours after they scan you in at the course. If they cancel or no-show, you're refunded in full within 48 hours. <strong className="text-foreground">No cash, no card readers — payment is fully handled by the app.</strong>
           </div>
         </div>
 

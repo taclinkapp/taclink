@@ -34,9 +34,9 @@ const POLL_MS = 2000;
 const MAX_WAIT_MS = 60_000;
 
 /**
- * Post-Stripe-Checkout return page.
+ * Post-checkout return page.
  *
- * Stripe redirects here right after the buyer submits payment. The webhook
+ * The payment processor redirects here right after the buyer submits payment. The webhook
  * (`payments-webhook`) flips the booking to `held_in_escrow` asynchronously,
  * so we poll the booking row until the status updates (or we time out).
  */
@@ -128,7 +128,7 @@ const CheckoutReturn = () => {
         ) : timedOut ? (
           <div className="tactical-card p-6 text-center space-y-3 border-amber-500/40">
             <Clock className="h-10 w-10 text-amber-500 mx-auto" />
-            <h2 className="font-bold">Still confirming with Stripe…</h2>
+            <h2 className="font-bold">Still confirming your payment…</h2>
             <p className="text-sm text-muted-foreground">
               Your payment was submitted but the confirmation hasn't reached us yet. This usually
               clears within a minute. Your booking will update automatically.
@@ -149,8 +149,8 @@ const CheckoutReturn = () => {
             <Loader2 className="h-10 w-10 text-primary mx-auto animate-spin" />
             <h2 className="font-bold">Confirming your payment…</h2>
             <p className="text-sm text-muted-foreground">
-              Stripe is finalizing the charge and moving your deposit into escrow. Don't close this
-              page.
+              Our payment processor is finalizing the charge and moving your deposit into escrow.
+              Don't close this page.
             </p>
             <p className="text-[11px] text-muted-foreground">
               Status: <span className="font-mono">{status ?? 'loading'}</span>
