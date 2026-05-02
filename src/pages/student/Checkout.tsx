@@ -15,7 +15,9 @@ import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 import { sendAppEmail } from '@/lib/appEmail';
 import { cancelDeadline } from '@/lib/cancellation';
 import { EscrowCheckout } from '@/components/student/EscrowCheckout';
+import { HelcimEscrowCheckout } from '@/components/student/HelcimEscrowCheckout';
 import { PaymentTestModeBanner } from '@/components/PaymentTestModeBanner';
+import { useActivePaymentProvider } from '@/hooks/useActivePaymentProvider';
 
 type Course = {
   id: string;
