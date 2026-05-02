@@ -10,7 +10,6 @@ import { Loader2 } from 'lucide-react';
 type LinkRow = {
   id: string;
   slug: string;
-  influencer_name: string;
   audience: 'student' | 'instructor' | 'both';
   active: boolean;
 };
@@ -182,7 +181,7 @@ const InfluencerLanding = () => {
         <Logo showTagline widthPx={160} />
         <div>
           <div className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Invited by</div>
-          <div className="text-lg font-bold">{link?.influencer_name}</div>
+          <div className="text-lg font-bold">@{link?.slug}</div>
         </div>
         <p className="text-sm text-muted-foreground">
           Pick how you want to join TacLink. You can always switch later.
