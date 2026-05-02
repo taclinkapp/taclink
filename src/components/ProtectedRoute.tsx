@@ -40,7 +40,7 @@ export const ProtectedRoute = ({ children, requireRole }: Props) => {
             <p className="text-sm text-muted-foreground mt-1">
               Your sign-in succeeded, but we hit a hiccup loading your role. You won’t lose your spot — try again.
             </p>
-            <p className="text-[11px] text-muted-foreground/80 mt-2 font-mono break-all">{rolesError}</p>
+            {/* Intentionally omit the raw error to avoid leaking schema details to end users. Full error is logged in the browser console. */}
           </div>
           <div className="flex flex-col gap-2">
             <Button onClick={retryRoles} className="w-full">
