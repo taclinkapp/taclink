@@ -958,6 +958,54 @@ export type Database = {
         }
         Relationships: []
       }
+      helcim_webhook_events: {
+        Row: {
+          attempt_count: number
+          booking_id: string | null
+          created_at: string
+          environment: string
+          event_id: string
+          event_type: string
+          helcim_transaction_id: string | null
+          id: string
+          last_attempted_at: string | null
+          last_error: string | null
+          payload: Json
+          processing_status: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          booking_id?: string | null
+          created_at?: string
+          environment: string
+          event_id: string
+          event_type: string
+          helcim_transaction_id?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          last_error?: string | null
+          payload: Json
+          processing_status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          booking_id?: string | null
+          created_at?: string
+          environment?: string
+          event_id?: string
+          event_type?: string
+          helcim_transaction_id?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          last_error?: string | null
+          payload?: Json
+          processing_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       influencer_commission_pct_audit: {
         Row: {
           changed_by: string | null
