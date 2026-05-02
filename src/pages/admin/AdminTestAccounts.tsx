@@ -42,7 +42,9 @@ type TestAccount = {
   id: string;
   user_id: string;
   email: string;
-  password: string;
+  // Password is only available immediately after creation (returned from the
+  // edge function). It is never persisted to the database.
+  password?: string;
   role: "instructor" | "student";
   label: string | null;
   created_at: string;
@@ -179,6 +181,10 @@ export default function AdminTestAccounts() {
   };
 
   const copy = async (acc: TestAccount) => {
+    if (!acc.password) {
+      toast.error("Password is only available right after creation. Rotate this account to get a new one.");
+      return;
+    }
     await navigator.clipboard.writeText(`${acc.email} / ${acc.password}`);
     setCopiedId(acc.id);
     toast.success("Credentials copied");
@@ -433,7 +439,7 @@ export default function AdminTestAccounts() {
                       {filtered.map((a) => (
                         <tr key={a.id} className="hover:bg-muted/30">
                           <td className="px-4 py-3 font-mono text-xs">{a.email}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{a.password}</td>
+                          <td className="px-4 py-3 font-mono text-xs">{a.password ?? <span className="text-muted-foreground">—</span>}</td>
                           <td className="px-4 py-3">{a.label ?? "—"}</td>
                           <td className="px-4 py-3 text-xs text-muted-foreground">
                             {new Date(a.created_at).toLocaleString()}

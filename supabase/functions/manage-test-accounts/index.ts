@@ -81,7 +81,6 @@ async function provisionAccount(
     .insert({
       user_id: created.user.id,
       email,
-      password,
       role,
       label,
       created_by: adminId,
@@ -92,7 +91,8 @@ async function provisionAccount(
     await admin.auth.admin.deleteUser(created.user.id).catch(() => {});
     throw insertErr;
   }
-  return row;
+  // IMPORTANT: password is returned ONLY at creation time and never persisted.
+  return { ...row, password };
 }
 
 Deno.serve(async (req) => {
