@@ -77,8 +77,8 @@ const InfluencerLanding = () => {
       }
 
       const { data, error: e } = await supabase
-        .from('influencer_links')
-        .select('id, slug, influencer_name, audience, active')
+        .from('influencer_links_public')
+        .select('id, slug, audience, active')
         .eq('slug', cleanSlug)
         .maybeSingle();
       if (cancelled) return;
