@@ -322,7 +322,7 @@ const DetailSheet = ({
     },
     revenue: {
       title: 'Revenue',
-      description: 'Platform fees collected from bookings ($25 student platform fee + 10% deposit accounting). Refunds are paid in cash via Stripe.',
+      description: 'Platform fees collected from bookings ($25 student platform fee + 10% deposit accounting). Refunds are paid in cash to the original card via our payment processor.',
       link: '/admin/financials',
       rows: [
         { label: 'Platform fees this month', value: fmt(totals.revenueCentsMonth) },

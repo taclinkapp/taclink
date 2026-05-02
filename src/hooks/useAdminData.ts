@@ -308,7 +308,7 @@ export function useGrantCredit() {
       userId: string;
       note?: string;
     }) => {
-      throw new Error('In-app credits were removed. Issue a cash refund via Stripe instead.');
+      throw new Error('In-app credits were removed. Issue a cash refund to the original card instead.');
     },
     onError: (e: any) =>
       toast({ title: 'Credits removed', description: e.message, variant: 'destructive' }),
@@ -351,7 +351,7 @@ export function useIssueRefund() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin_bookings'] });
       qc.invalidateQueries({ queryKey: ['admin_audit_log'] });
-      toast({ title: 'Cash refund issued via Stripe' });
+      toast({ title: 'Cash refund issued' });
     },
     onError: (e: any) => toast({ title: 'Could not issue refund', description: e.message, variant: 'destructive' }),
   });

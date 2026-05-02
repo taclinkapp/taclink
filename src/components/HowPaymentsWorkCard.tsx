@@ -25,7 +25,7 @@ interface Props {
  *   2) TacLink holds the full course price in escrow until the instructor
  *      confirms attendance via QR scan at the course.
  *   3) 24 hours after the course ends, the full course price is transferred
- *      to the instructor's Stripe payout account.
+ *      to the instructor's connected payout account.
  *   4) Refunds: instructor cancels/no-shows → student gets 100% back within 48h.
  *      Student cancels within grace window → 100% back. Late student cancel →
  *      90% back to student, 10% to instructor for the lost slot.
@@ -70,7 +70,7 @@ export const HowPaymentsWorkCard = ({
           {
             icon: Banknote,
             title: "Full course price paid out 24h after course ends",
-            body: "Transferred straight to your Stripe payout account. TacLink keeps only the $25 platform fee — you keep 100% of your course price.",
+            body: "Transferred straight to your connected payout account. TacLink keeps only the $25 platform fee — you keep 100% of your course price.",
           },
         ];
 

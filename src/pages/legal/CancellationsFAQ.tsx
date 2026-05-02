@@ -89,7 +89,7 @@ const CancellationsFAQ = () => (
             <div>
               <div className="font-semibold text-foreground">Within your grace window</div>
               <div className="text-muted-foreground">
-                <strong className="text-foreground">Full refund</strong> — $25 platform fee + 100% of the course price returned to your card via Stripe within 48 hours.
+                <strong className="text-foreground">Full refund</strong> — $25 platform fee + 100% of the course price returned to your card within 48 hours.
               </div>
             </div>
           </div>

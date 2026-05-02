@@ -1,8 +1,8 @@
 // Booking fee math — single source of truth.
 // FULL-ONLINE MODEL: Student pays $25 platform fee + 100% of course price at checkout.
-// Nothing is paid in person. The full course price is held in TacLink's Stripe
-// balance and transferred to the instructor's Connect account 24h after the
-// course ends. TacLink keeps the $25 platform fee.
+// Nothing is paid in person. The full course price is held in TacLink's
+// merchant balance and transferred to the instructor's connected payout
+// account 24h after the course ends. TacLink keeps the $25 platform fee.
 
 export const PLATFORM_FEE_CENTS = 2500; // $25 fixed
 export const INSTRUCTOR_LISTING_FEE_PCT = 0.10; // 10% of course price, charged at publish, non-refundable
