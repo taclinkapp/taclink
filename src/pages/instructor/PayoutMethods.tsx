@@ -15,12 +15,12 @@ const STATUS_META: Record<ConnectStatus, { label: string; tone: string; descript
   not_started: {
     label: "Required to publish",
     tone: "border-destructive/40 bg-destructive/5",
-    description: "Connect a Stripe payout account to receive the full course price (paid 24h after each completed course). You cannot publish courses until this is set up.",
+    description: "Connect a payout account to receive the full course price (paid 24h after each completed course). You cannot publish courses until this is set up.",
   },
   onboarding: {
     label: "Setup in progress",
     tone: "border-amber-500/40 bg-amber-500/5",
-    description: "Finish onboarding with Stripe — they need a few more details to enable payouts. Course publishing stays locked until this is complete.",
+    description: "Finish onboarding with our payout processor — they need a few more details to enable payouts. Course publishing stays locked until this is complete.",
   },
   active: {
     label: "Payouts enabled",
@@ -30,7 +30,7 @@ const STATUS_META: Record<ConnectStatus, { label: string; tone: string; descript
   restricted: {
     label: "Action required",
     tone: "border-destructive/40 bg-destructive/5",
-    description: "Stripe needs additional information before payouts can resume. Click below to fix.",
+    description: "Our payout processor needs additional information before payouts can resume. Click below to fix.",
   },
 };
 
@@ -76,10 +76,10 @@ const PayoutMethods = () => {
           },
         },
       );
-      if (error || !data?.url) throw new Error(error?.message ?? "Could not start Stripe onboarding");
+      if (error || !data?.url) throw new Error(error?.message ?? "Could not start payout onboarding");
       window.location.href = data.url;
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not start Stripe onboarding");
+      toast.error(e?.message ?? "Could not start payout onboarding");
       setLaunching(false);
     }
   };
@@ -124,16 +124,17 @@ const PayoutMethods = () => {
               <ExternalLink className="h-4 w-4 mr-2" />
             )}
             {status === "active"
-              ? "Manage Stripe account"
+              ? "Manage payout account"
               : status === "not_started"
-                ? "Connect with Stripe"
-                : "Continue Stripe setup"}
+                ? "Connect payout account"
+                : "Continue payout setup"}
           </Button>
         )}
 
         <div className="tactical-card p-4 border-primary/20 bg-primary/5 text-[11px] text-muted-foreground leading-relaxed">
-          Powered by Stripe Connect. Stripe handles identity verification and bank
-          payouts so TacLink never stores your financial details.
+          Powered by our PCI-compliant payout partner. They handle identity
+          verification and bank payouts so TacLink never stores your financial
+          details.
         </div>
       </div>
     </MobileShell>
