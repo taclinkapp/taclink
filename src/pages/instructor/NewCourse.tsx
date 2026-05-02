@@ -233,7 +233,7 @@ const NewCourse = () => {
         return;
       }
       if (!connectActive) {
-        toast.error('Set up Stripe payouts before publishing', {
+        toast.error('Set up payouts before publishing', {
           description: 'Students pay the full course price online — you need a payout account to receive funds.',
         });
         nav('/instructor/payout-methods');
