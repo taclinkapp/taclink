@@ -273,6 +273,8 @@ export type Database = {
           escrow_held_at: string | null
           escrow_released_at: string | null
           escrow_status: string
+          helcim_checkout_token: string | null
+          helcim_transaction_id: string | null
           id: string
           in_person_paid_at: string | null
           instructor_deposit_cents: number
@@ -310,6 +312,8 @@ export type Database = {
           escrow_held_at?: string | null
           escrow_released_at?: string | null
           escrow_status?: string
+          helcim_checkout_token?: string | null
+          helcim_transaction_id?: string | null
           id?: string
           in_person_paid_at?: string | null
           instructor_deposit_cents?: number
@@ -347,6 +351,8 @@ export type Database = {
           escrow_held_at?: string | null
           escrow_released_at?: string | null
           escrow_status?: string
+          helcim_checkout_token?: string | null
+          helcim_transaction_id?: string | null
           id?: string
           in_person_paid_at?: string | null
           instructor_deposit_cents?: number
@@ -2197,6 +2203,7 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           environment: string
+          helcim_subscription_id: string | null
           id: string
           payment_provider: Database["public"]["Enums"]["payment_provider"]
           price_id: string
@@ -2213,6 +2220,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           environment?: string
+          helcim_subscription_id?: string | null
           id?: string
           payment_provider?: Database["public"]["Enums"]["payment_provider"]
           price_id: string
@@ -2229,6 +2237,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           environment?: string
+          helcim_subscription_id?: string | null
           id?: string
           payment_provider?: Database["public"]["Enums"]["payment_provider"]
           price_id?: string
