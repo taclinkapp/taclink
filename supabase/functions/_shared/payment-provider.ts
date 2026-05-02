@@ -1,9 +1,10 @@
 // =====================================================================
 // PaymentProvider abstraction
 // ---------------------------------------------------------------------
-// Single interface every payment rail must implement. Today only Stripe
-// is wired up; Authorize.Net (or any other 2A-friendly processor) can
-// drop in without touching the rest of the codebase.
+// Single interface every payment rail must implement. Helcim is the
+// designated PRIMARY processor going forward; Stripe stays as the
+// active default until the Helcim adapter is wired in (HelcimPay.js
+// modal + ledger-based payouts) and HELCIM_API_TOKEN is provisioned.
 //
 // Edge functions should ONLY talk to the active provider through
 // `getActivePaymentProvider()` — never import a specific adapter
@@ -13,7 +14,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, createStripeClient } from "./stripe.ts";
 
-export type ProviderName = "stripe" | "authorize_net";
+export type ProviderName = "stripe" | "helcim";
 
 export interface CheckoutSessionInput {
   bookingId?: string;
@@ -25,16 +26,17 @@ export interface CheckoutSessionInput {
   returnUrl: string;
   mode: "payment" | "subscription";
   // Marketplace split (instructor payout) — only honored when the
-  // provider supports native splits. Authorize.Net path will record
-  // an "owed" ledger entry instead.
+  // provider supports native splits. Helcim path will record an
+  // "owed" ledger entry instead (TacLink-side ledger model).
   instructorPayoutAccountId?: string;
   instructorPayoutCents?: number;
   metadata?: Record<string, string>;
 }
 
 export interface CheckoutSessionResult {
-  clientSecret?: string;     // embedded checkout (Stripe)
-  hostedUrl?: string;        // hosted-redirect fallback (Authorize.Net Accept Hosted)
+  clientSecret?: string;     // Stripe embedded checkout
+  helcimCheckoutToken?: string; // HelcimPay.js modal token
+  hostedUrl?: string;        // hosted-redirect fallback
   externalSessionId: string;
   provider: ProviderName;
 }
@@ -70,7 +72,7 @@ export interface PaymentProvider {
   // Embedded checkout (escrow charges, subscription signup, etc.)
   createCheckoutSession(input: CheckoutSessionInput): Promise<CheckoutSessionResult>;
 
-  // Connect / payout-account onboarding
+  // Payout-account onboarding (Stripe Connect / Helcim payee record)
   createPayoutOnboarding(input: PayoutOnboardingInput): Promise<PayoutOnboardingResult>;
 
   // Issue refund
@@ -83,14 +85,15 @@ export interface PaymentProvider {
   verifyWebhook(req: Request): Promise<{ type: string; data: { object: any } }>;
 
   // True if this provider can split payouts to instructor accounts at
-  // charge time. Stripe Connect = true. Authorize.Net = false (we use
-  // the instructor_ledger table to track owed balances instead).
+  // charge time. Stripe Connect = true. Helcim = false (we use the
+  // instructor_ledger table to track owed balances and run weekly
+  // ACH payout batches instead).
   readonly supportsNativeSplit: boolean;
 }
 
 // ---------------------------------------------------------------------
 // Stripe adapter — thin wrapper around the existing _shared/stripe.ts
-// utilities. No behavior change vs. today.
+// utilities. Stays as the active default + designated backup rail.
 // ---------------------------------------------------------------------
 
 class StripeProvider implements PaymentProvider {
@@ -102,7 +105,6 @@ class StripeProvider implements PaymentProvider {
   async createCheckoutSession(input: CheckoutSessionInput): Promise<CheckoutSessionResult> {
     const stripe = createStripeClient(this.env);
 
-    // Resolve human-readable priceId via lookup_keys for subscriptions.
     let lineItem: any;
     if (input.mode === "subscription" && input.priceId) {
       const prices = await stripe.prices.list({ lookup_keys: [input.priceId] });
@@ -208,20 +210,34 @@ class StripeProvider implements PaymentProvider {
 }
 
 // ---------------------------------------------------------------------
-// Authorize.Net adapter — STUB. Throws clearly until secrets are wired
-// in Phase 2. The shape is locked so adding the real implementation
-// later is a drop-in.
+// Helcim adapter — STUB. Throws clearly until merchant account is
+// approved and HELCIM_API_TOKEN + HELCIM_WEBHOOK_VERIFIER_TOKEN are
+// added as edge function secrets. The shape is locked so the real
+// implementation drops in without touching callers.
+//
+// Phase 2 implementation plan (when credentials land):
+//   • createCheckoutSession → POST /v2/helcim-pay/initialize
+//       returns { checkoutToken, secretToken } for HelcimPay.js modal
+//   • createPayoutOnboarding → noop / record in instructor_payout_accounts;
+//       Helcim has no marketplace API — payouts run weekly via the
+//       instructor_ledger ACH batch, not at charge time
+//   • issueRefund → POST /v2/payment/refund with original transactionId
+//   • createPortalSession → not supported; redirect to in-app
+//       subscription page (cancel/update via our own UI + Helcim
+//       Recurring API server-side)
+//   • verifyWebhook → HMAC-SHA256 of raw body using
+//       HELCIM_WEBHOOK_VERIFIER_TOKEN, compared to webhook-signature header
 // ---------------------------------------------------------------------
 
-class AuthorizeNetProvider implements PaymentProvider {
-  readonly name: ProviderName = "authorize_net";
+class HelcimProvider implements PaymentProvider {
+  readonly name: ProviderName = "helcim";
   readonly supportsNativeSplit = false; // marketplace splits handled via instructor_ledger
 
   private notConfigured(method: string): never {
     throw new Error(
-      `Authorize.Net adapter not yet configured (${method}). ` +
-      `Add AUTHNET_API_LOGIN_ID, AUTHNET_TRANSACTION_KEY, AUTHNET_SIGNATURE_KEY ` +
-      `and implement Phase 2 of the failover plan.`
+      `Helcim adapter not yet configured (${method}). ` +
+      `Add HELCIM_API_TOKEN and HELCIM_WEBHOOK_VERIFIER_TOKEN secrets, ` +
+      `then complete Phase 2 of the failover plan and set helcim_configured = true.`,
     );
   }
 
@@ -260,7 +276,7 @@ function getServiceClient() {
 export function getProviderByName(name: ProviderName, env: StripeEnv): PaymentProvider {
   switch (name) {
     case "stripe": return new StripeProvider(env);
-    case "authorize_net": return new AuthorizeNetProvider();
+    case "helcim": return new HelcimProvider();
     default: throw new Error(`Unknown payment provider: ${name}`);
   }
 }
