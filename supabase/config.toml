@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.helcim-webhook]
 verify_jwt = false
+
+[functions.create-helcim-checkout]
+verify_jwt = false

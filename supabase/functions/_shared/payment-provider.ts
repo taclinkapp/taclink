@@ -241,9 +241,52 @@ class HelcimProvider implements PaymentProvider {
     );
   }
 
-  createCheckoutSession(_input: CheckoutSessionInput): Promise<CheckoutSessionResult> {
-    return Promise.reject(this.notConfigured("createCheckoutSession"));
+  async createCheckoutSession(input: CheckoutSessionInput): Promise<CheckoutSessionResult> {
+    if (!input.amountCents) {
+      throw new Error("Helcim checkout requires amountCents (priceId-based subscriptions are TODO)");
+    }
+    const apiToken = Deno.env.get("HELCIM_API_TOKEN");
+    if (!apiToken) {
+      // STUB MODE — keeps the failover toggle usable end-to-end.
+      const checkoutToken = `stub_${input.bookingId ?? "session"}_${crypto.randomUUID()}`;
+      return {
+        helcimCheckoutToken: checkoutToken,
+        externalSessionId: checkoutToken,
+        provider: "helcim",
+      };
+    }
+
+    const res = await fetch("https://api.helcim.com/v2/helcim-pay/initialize", {
+      method: "POST",
+      headers: {
+        "api-token": apiToken,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        paymentType: "purchase",
+        amount: input.amountCents / 100,
+        currency: (input.currency ?? "usd").toUpperCase(),
+        customerCode: input.bookingId ?? input.userId ?? "anon",
+        invoiceNumber: input.bookingId ?? undefined,
+        paymentMethod: "cc-ach",
+        hasConvenienceFee: 0,
+        description: input.metadata?.productName ?? "TacLink charge",
+        customerRequest: input.customerEmail ? { email: input.customerEmail } : undefined,
+      }),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`Helcim initialize failed (${res.status}): ${text}`);
+    }
+    const body = await res.json();
+    return {
+      helcimCheckoutToken: body.checkoutToken,
+      externalSessionId: body.checkoutToken,
+      provider: "helcim",
+    };
   }
+
   createPayoutOnboarding(_input: PayoutOnboardingInput): Promise<PayoutOnboardingResult> {
     return Promise.reject(this.notConfigured("createPayoutOnboarding"));
   }
