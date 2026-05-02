@@ -37,6 +37,13 @@ const json = (body: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
+  // Authorization: only allow callers presenting the shared CRON_SECRET.
+  const expectedSecret = Deno.env.get("CRON_SECRET");
+  const providedSecret = req.headers.get("x-cron-secret");
+  if (!expectedSecret || providedSecret !== expectedSecret) {
+    return json({ error: "Forbidden" }, 403);
+  }
+
   const rawEnv = new URL(req.url).searchParams.get("env") ?? "sandbox";
   if (rawEnv !== "sandbox" && rawEnv !== "live") {
     return json({ error: "invalid env" }, 400);
