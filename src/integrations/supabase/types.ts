@@ -2929,7 +2929,7 @@ export type Database = {
     Enums: {
       app_role: "student" | "instructor" | "admin"
       booking_status: "reserved" | "attended" | "cancelled" | "no_show"
-      payment_provider: "stripe" | "authorize_net"
+      payment_provider: "stripe" | "authorize_net" | "helcim"
       support_message_sender: "user" | "ai" | "admin"
       support_ticket_status: "open" | "awaiting_human" | "resolved" | "closed"
       training_goal_type:
@@ -3066,7 +3066,7 @@ export const Constants = {
     Enums: {
       app_role: ["student", "instructor", "admin"],
       booking_status: ["reserved", "attended", "cancelled", "no_show"],
-      payment_provider: ["stripe", "authorize_net"],
+      payment_provider: ["stripe", "authorize_net", "helcim"],
       support_message_sender: ["user", "ai", "admin"],
       support_ticket_status: ["open", "awaiting_human", "resolved", "closed"],
       training_goal_type: [
