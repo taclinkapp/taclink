@@ -9,20 +9,20 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type Provider = "stripe" | "authorize_net";
+type Provider = "stripe" | "helcim";
 
 type Settings = {
   active_provider: Provider;
   fallback_provider: Provider | null;
   failover_mode: "manual" | "auto" | "segment";
-  authorize_net_configured: boolean;
+  helcim_configured: boolean;
   notes: string | null;
   updated_at: string;
 };
 
 const PROVIDER_LABEL: Record<Provider, string> = {
-  stripe: "Stripe",
-  authorize_net: "Authorize.Net (2A-friendly)",
+  stripe: "Stripe (backup rail)",
+  helcim: "Helcim (2A-friendly, primary target)",
 };
 
 export function PaymentFailoverCard() {
@@ -52,7 +52,7 @@ export function PaymentFailoverCard() {
         .from("payment_provider_settings")
         .update({
           active_provider: provider,
-          fallback_provider: provider === "stripe" ? "authorize_net" : "stripe",
+          fallback_provider: provider === "stripe" ? "helcim" : "stripe",
           updated_at: new Date().toISOString(),
         })
         .eq("id", true);
@@ -84,9 +84,9 @@ export function PaymentFailoverCard() {
 
   const active = settings.active_provider;
   const isStripeActive = active === "stripe";
-  const targetProvider: Provider = isStripeActive ? "authorize_net" : "stripe";
-  const canSwitchToAuthnet = settings.authorize_net_configured;
-  const switchDisabled = busy || (targetProvider === "authorize_net" && !canSwitchToAuthnet);
+  const targetProvider: Provider = isStripeActive ? "helcim" : "stripe";
+  const canSwitchToHelcim = settings.helcim_configured;
+  const switchDisabled = busy || (targetProvider === "helcim" && !canSwitchToHelcim);
 
   return (
     <section className="tactical-card p-5 space-y-4">
@@ -95,9 +95,11 @@ export function PaymentFailoverCard() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Backup payment rail in case Stripe deplatforms TacLink. Switch flips all
-        future checkouts and subscriptions; in-flight payments on the old rail
-        finish on that rail.
+        Helcim is the planned <strong>primary</strong> processor (2A-friendly,
+        merchant account in underwriting). Stripe stays active as the backup
+        rail until Helcim credentials are added and the adapter is marked
+        configured. Switching flips all future checkouts and subscriptions;
+        in-flight payments on the old rail finish on that rail.
       </p>
 
       {/* Status row */}
@@ -110,14 +112,14 @@ export function PaymentFailoverCard() {
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Backup Configured</Label>
-          {canSwitchToAuthnet ? (
+          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Helcim Configured</Label>
+          {canSwitchToHelcim ? (
             <span className="inline-flex items-center gap-1.5 text-xs text-green-500">
-              <CheckCircle2 className="h-3 w-3" /> Authorize.Net ready
+              <CheckCircle2 className="h-3 w-3" /> Helcim ready
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 text-xs text-amber-500">
-              <AlertTriangle className="h-3 w-3" /> Not yet configured
+              <AlertTriangle className="h-3 w-3" /> Awaiting credentials
             </span>
           )}
         </div>
@@ -127,20 +129,21 @@ export function PaymentFailoverCard() {
         </div>
       </div>
 
-      {!canSwitchToAuthnet && (
+      {!canSwitchToHelcim && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs space-y-2">
           <div className="flex items-center gap-2 font-bold text-amber-500">
             <ShieldAlert className="h-3.5 w-3.5" /> Phase 2 setup required
           </div>
           <p className="text-muted-foreground leading-relaxed">
-            Before this switch will work, complete the Authorize.Net setup:
+            Before this switch will work, complete the Helcim setup:
           </p>
           <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-            <li>Get a 2A-friendly merchant account approved (Easy Pay Direct, CardConnect, etc. — 1–3 weeks underwriting).</li>
-            <li>Connect it through Authorize.Net's gateway.</li>
-            <li>Add <code className="font-mono">AUTHNET_API_LOGIN_ID</code>, <code className="font-mono">AUTHNET_TRANSACTION_KEY</code>, and <code className="font-mono">AUTHNET_SIGNATURE_KEY</code> as backend secrets.</li>
-            <li>Implement the <code className="font-mono">AuthorizeNetProvider</code> adapter (stub already in place).</li>
-            <li>Mark this card as configured.</li>
+            <li>Finish Helcim merchant account application (firearms-friendly underwriting, ~1–2 weeks).</li>
+            <li>Generate an API token in Helcim dashboard → Integrations → API Access (with HelcimPay scope).</li>
+            <li>Add <code className="font-mono">HELCIM_API_TOKEN</code> and <code className="font-mono">HELCIM_WEBHOOK_VERIFIER_TOKEN</code> as backend secrets.</li>
+            <li>Implement the <code className="font-mono">HelcimProvider</code> adapter (stub already wired) — HelcimPay.js modal for checkout, ledger-based weekly ACH for instructor payouts.</li>
+            <li>Configure the Helcim webhook to point at <code className="font-mono">/functions/v1/helcim-webhook?env=live</code>.</li>
+            <li>Flip <code className="font-mono">helcim_configured = true</code> in <code className="font-mono">payment_provider_settings</code>, then switch active processor here.</li>
           </ol>
         </div>
       )}
