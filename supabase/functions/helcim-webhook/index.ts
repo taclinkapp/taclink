@@ -80,11 +80,31 @@ async function claimEvent(
       event_type: eventType,
       environment: env,
       payload: payload as any,
+      processing_status: "processing",
+      attempt_count: 1,
+      last_attempted_at: new Date().toISOString(),
     });
   if (!error) return true;
   if ((error as any).code === "23505") return false;
   console.error("Failed to claim Helcim event", eventId, error);
   throw error;
+}
+
+async function markEventStatus(
+  eventId: string,
+  status: "succeeded" | "failed",
+  patch: { last_error?: string | null; helcim_transaction_id?: string | null; booking_id?: string | null } = {},
+) {
+  await getSupabase()
+    .from("helcim_webhook_events")
+    .update({
+      processing_status: status,
+      last_error: patch.last_error ?? null,
+      helcim_transaction_id: patch.helcim_transaction_id ?? null,
+      booking_id: patch.booking_id ?? null,
+      last_attempted_at: new Date().toISOString(),
+    })
+    .eq("event_id", eventId);
 }
 
 async function handleTransactionSuccess(_payload: any, _env: HelcimEnv) {
@@ -103,10 +123,94 @@ async function handleSubscriptionEvent(_payload: any, _env: HelcimEnv) {
   throw new Error("Helcim subscription.* handler not yet implemented");
 }
 
+async function dispatch(eventType: string, data: any, env: HelcimEnv) {
+  switch (eventType) {
+    case "transaction.success":
+    case "cardTransaction.success":
+      return handleTransactionSuccess(data, env);
+    case "transaction.refunded":
+    case "cardTransaction.refunded":
+      return handleTransactionRefunded(data, env);
+    case "subscription.created":
+    case "subscription.updated":
+    case "subscription.cancelled":
+    case "subscription.payment_succeeded":
+    case "subscription.payment_failed":
+      return handleSubscriptionEvent(data, env);
+    default:
+      console.log("Unhandled Helcim event:", eventType);
+  }
+}
+
+/**
+ * Admin-triggered retry path. Re-runs the dispatcher against the stored
+ * payload of an existing event row, then updates processing_status.
+ * Auth: requires a verified admin user. We do NOT verify the Helcim
+ * signature here because the payload was already verified at original
+ * intake time.
+ */
+async function handleAdminRetry(req: Request, body: { event_id: string; environment: HelcimEnv }) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Missing authorization" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const sb = getSupabase();
+  const { data: { user } } = await sb.auth.getUser(authHeader.replace("Bearer ", ""));
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const { data: isAdmin } = await sb.rpc("has_role", { _user_id: user.id, _role: "admin" });
+  if (!isAdmin) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const { data: row, error: rowErr } = await sb
+    .from("helcim_webhook_events")
+    .select("event_id, event_type, payload, attempt_count")
+    .eq("event_id", body.event_id)
+    .maybeSingle();
+  if (rowErr || !row) {
+    return new Response(JSON.stringify({ error: "Event not found" }), {
+      status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const payload = row.payload as { data?: any };
+  try {
+    await dispatch(row.event_type as string, payload?.data, body.environment);
+    await markEventStatus(row.event_id as string, "succeeded");
+    return new Response(JSON.stringify({ retried: true, status: "succeeded" }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    await markEventStatus(row.event_id as string, "failed", { last_error: String((e as Error)?.message ?? e) });
+    return new Response(JSON.stringify({ retried: true, status: "failed", error: String((e as Error)?.message ?? e) }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
+  }
+
+  // Admin retry path uses an authenticated JSON body with __retry: true.
+  // We branch BEFORE signature verification because there's no Helcim
+  // signature on a manually-replayed event.
+  const peek = await req.clone().text();
+  let asJson: any = null;
+  try { asJson = JSON.parse(peek); } catch { /* not JSON, fall through */ }
+  if (asJson && asJson.__retry === true && typeof asJson.event_id === "string") {
+    const env: HelcimEnv = asJson.environment === "live" ? "live" : "sandbox";
+    return await handleAdminRetry(req, { event_id: asJson.event_id, environment: env });
   }
 
   const rawEnv = new URL(req.url).searchParams.get("env");
@@ -119,7 +223,7 @@ Deno.serve(async (req) => {
   }
   const env: HelcimEnv = rawEnv;
 
-  const rawBody = await req.text();
+  const rawBody = peek;
   const signature = req.headers.get("webhook-signature");
 
   const valid = await verifyHelcimSignature(rawBody, signature);
@@ -154,25 +258,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    switch (eventType) {
-      case "transaction.success":
-      case "cardTransaction.success":
-        await handleTransactionSuccess(event.data, env);
-        break;
-      case "transaction.refunded":
-      case "cardTransaction.refunded":
-        await handleTransactionRefunded(event.data, env);
-        break;
-      case "subscription.created":
-      case "subscription.updated":
-      case "subscription.cancelled":
-      case "subscription.payment_succeeded":
-      case "subscription.payment_failed":
-        await handleSubscriptionEvent(event.data, env);
-        break;
-      default:
-        console.log("Unhandled Helcim event:", eventType);
-    }
+    await dispatch(eventType, event.data, env);
+    if (eventId) await markEventStatus(eventId, "succeeded");
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -180,7 +267,8 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error("Helcim handler error:", e);
     if (eventId) {
-      await getSupabase().from("helcim_webhook_events").delete().eq("event_id", eventId);
+      // Keep the row so admins can inspect + retry from the dashboard.
+      await markEventStatus(eventId, "failed", { last_error: String((e as Error)?.message ?? e) });
     }
     return new Response("Handler error", { status: 500, headers: corsHeaders });
   }

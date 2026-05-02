@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, RotateCcw, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -10,6 +10,9 @@ interface Props {
 }
 
 const HELCIM_PAY_SCRIPT = "https://secure.helcim.app/helcim-pay/services/start.js";
+// If we don't see a SUCCESS / ABORTED / HIDE postMessage within this
+// window, treat the modal as stuck and let the user retry.
+const POSTMESSAGE_TIMEOUT_MS = 5 * 60 * 1000;
 
 declare global {
   interface Window {
@@ -18,47 +21,78 @@ declare global {
   }
 }
 
+type Phase = "loading" | "ready" | "waiting" | "error" | "aborted";
+type ErrorKind =
+  | "init_failed"        // create-helcim-checkout returned an error
+  | "script_failed"      // HelcimPay.js failed to load
+  | "modal_unavailable"  // script loaded but global hook missing
+  | "timeout"            // user didn't complete the modal in time
+  | "user_aborted"       // user dismissed the modal
+  | "unknown";
+
+interface ErrorState {
+  kind: ErrorKind;
+  message: string;
+}
+
+const ERROR_COPY: Record<ErrorKind, { title: string; help: string }> = {
+  init_failed: {
+    title: "Couldn't start secure payment",
+    help: "Our payment processor refused the request. Tap retry — if it keeps failing, your booking is safe and you can try again later.",
+  },
+  script_failed: {
+    title: "Payment module didn't load",
+    help: "We couldn't reach the secure payment service. Check your connection and tap retry.",
+  },
+  modal_unavailable: {
+    title: "Payment module is misconfigured",
+    help: "The payment script loaded but the checkout entry point is missing. Tap retry to reload it.",
+  },
+  timeout: {
+    title: "Payment timed out",
+    help: "We didn't hear back from the payment window. Your card was not charged. Tap retry to reopen it.",
+  },
+  user_aborted: {
+    title: "Payment cancelled",
+    help: "You dismissed the secure payment window. Your booking is still pending — tap retry when you're ready to pay.",
+  },
+  unknown: {
+    title: "Something went wrong",
+    help: "An unexpected error happened during checkout. Tap retry, or go back and try again from your booking.",
+  },
+};
+
 /**
  * HelcimPay.js modal wrapper for the TacLink escrow charge.
  *
- * Mirrors EscrowCheckout (Stripe Embedded) but uses Helcim's hosted
- * modal instead. We:
- *   1. POST to create-helcim-checkout to get a `checkoutToken`.
- *   2. Inject the HelcimPay script if not already loaded.
- *   3. Call appendHelcimPayIframe(token) to open the modal.
- *   4. Listen for the postMessage success event, then route to returnUrl.
- *
- * The payments-webhook flips deposit_status to held_in_escrow async,
- * exactly like the Stripe path — the return page polls and waits.
+ * Surfaces specific errors (init failed, script failed, postMessage
+ * timeout, user-cancelled) and offers an in-place retry so the student
+ * doesn't have to navigate away.
  */
 export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
   const nav = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>("loading");
+  const [error, setError] = useState<ErrorState | null>(null);
   const [stub, setStub] = useState(false);
-  const opened = useRef(false);
+  const [attempt, setAttempt] = useState(0);
 
-  useEffect(() => {
-    if (opened.current) return;
-    opened.current = true;
+  const messageHandlerRef = useRef<((e: MessageEvent) => void) | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
-    let cancelled = false;
+  const cleanup = useCallback(() => {
+    if (messageHandlerRef.current) {
+      window.removeEventListener("message", messageHandlerRef.current);
+      messageHandlerRef.current = null;
+    }
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    try { window.removeHelcimPayIframe?.(); } catch { /* noop */ }
+  }, []);
 
-    const onMessage = (event: MessageEvent) => {
-      // Helcim emits messages whose `data.eventName` starts with the
-      // checkoutToken. Status is in `data.eventStatus`.
-      const payload = event.data;
-      if (!payload || typeof payload !== "object") return;
-      const status = payload.eventStatus ?? payload.status;
-      if (status === "SUCCESS" || status === "ABORTED" || status === "HIDE") {
-        try { window.removeHelcimPayIframe?.(); } catch { /* noop */ }
-        if (status === "SUCCESS") {
-          window.location.href = returnUrl;
-        }
-      }
-    };
-
-    const ensureScript = (): Promise<void> =>
+  const ensureScript = useCallback(
+    (): Promise<void> =>
       new Promise((resolve, reject) => {
         if (window.appendHelcimPayIframe) return resolve();
         const existing = document.querySelector(
@@ -66,78 +100,148 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
         ) as HTMLScriptElement | null;
         if (existing) {
           existing.addEventListener("load", () => resolve());
-          existing.addEventListener("error", () => reject(new Error("Failed to load HelcimPay.js")));
+          existing.addEventListener("error", () => reject(new Error("script_failed")));
           return;
         }
         const s = document.createElement("script");
         s.src = HELCIM_PAY_SCRIPT;
         s.async = true;
         s.onload = () => resolve();
-        s.onerror = () => reject(new Error("Failed to load HelcimPay.js"));
+        s.onerror = () => reject(new Error("script_failed"));
         document.head.appendChild(s);
-      });
+      }),
+    [],
+  );
 
-    (async () => {
-      try {
-        const { data, error: invokeErr } = await supabase.functions.invoke(
-          "create-helcim-checkout",
-          { body: { bookingId, returnUrl } },
-        );
-        if (cancelled) return;
-        if (invokeErr || !data?.checkoutToken) {
-          throw new Error(invokeErr?.message ?? "Failed to start Helcim checkout");
-        }
-        setStub(Boolean(data.stub));
+  const start = useCallback(async () => {
+    cleanup();
+    setError(null);
+    setPhase("loading");
 
-        await ensureScript();
-        if (cancelled) return;
-
-        window.addEventListener("message", onMessage);
-        if (typeof window.appendHelcimPayIframe !== "function") {
-          throw new Error("HelcimPay.js loaded but appendHelcimPayIframe is unavailable");
-        }
-        window.appendHelcimPayIframe(data.checkoutToken);
-        setLoading(false);
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Could not open Helcim checkout");
-        setLoading(false);
+    try {
+      const { data, error: invokeErr } = await supabase.functions.invoke(
+        "create-helcim-checkout",
+        { body: { bookingId, returnUrl } },
+      );
+      if (invokeErr || !data?.checkoutToken) {
+        throw new Error(`init_failed:${invokeErr?.message ?? "no checkoutToken in response"}`);
       }
-    })();
+      setStub(Boolean(data.stub));
 
-    return () => {
-      cancelled = true;
-      window.removeEventListener("message", onMessage);
-      try { window.removeHelcimPayIframe?.(); } catch { /* noop */ }
-    };
+      try {
+        await ensureScript();
+      } catch (e: any) {
+        throw new Error(`script_failed:${e?.message ?? "could not load HelcimPay.js"}`);
+      }
+
+      if (typeof window.appendHelcimPayIframe !== "function") {
+        throw new Error("modal_unavailable:appendHelcimPayIframe is undefined");
+      }
+
+      const onMessage = (event: MessageEvent) => {
+        const payload = event.data;
+        if (!payload || typeof payload !== "object") return;
+        const status = payload.eventStatus ?? payload.status;
+        if (status === "SUCCESS") {
+          cleanup();
+          window.location.href = returnUrl;
+        } else if (status === "ABORTED") {
+          cleanup();
+          setError({ kind: "user_aborted", message: "User dismissed the payment modal" });
+          setPhase("aborted");
+        } else if (status === "HIDE") {
+          // HIDE alone (without SUCCESS) typically means the user closed
+          // the modal manually — Helcim emits ABORTED for that, but if we
+          // only see HIDE we treat it as an abort too.
+          cleanup();
+          setError({ kind: "user_aborted", message: "Payment window was closed" });
+          setPhase("aborted");
+        }
+      };
+      messageHandlerRef.current = onMessage;
+      window.addEventListener("message", onMessage);
+
+      // Timeout watchdog — if no terminal event arrives, surface a retry.
+      timeoutRef.current = window.setTimeout(() => {
+        cleanup();
+        setError({
+          kind: "timeout",
+          message: `No response from the payment window after ${POSTMESSAGE_TIMEOUT_MS / 60000} minutes`,
+        });
+        setPhase("error");
+      }, POSTMESSAGE_TIMEOUT_MS);
+
+      window.appendHelcimPayIframe(data.checkoutToken);
+      setPhase("waiting");
+    } catch (e: any) {
+      const raw = String(e?.message ?? e ?? "");
+      const [kindRaw, ...rest] = raw.split(":");
+      const known: ErrorKind[] = [
+        "init_failed",
+        "script_failed",
+        "modal_unavailable",
+        "timeout",
+        "user_aborted",
+      ];
+      const kind = (known as string[]).includes(kindRaw) ? (kindRaw as ErrorKind) : "unknown";
+      setError({ kind, message: rest.join(":").trim() || raw });
+      setPhase("error");
+    }
+  }, [bookingId, returnUrl, cleanup, ensureScript]);
+
+  useEffect(() => {
+    start();
+    return () => cleanup();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingId]);
+  }, [bookingId, attempt]);
 
-  if (error) {
+  const retry = () => setAttempt((n) => n + 1);
+
+  if (phase === "error" || phase === "aborted") {
+    const e = error ?? { kind: "unknown" as ErrorKind, message: "" };
+    const copy = ERROR_COPY[e.kind];
+    const Icon = e.kind === "user_aborted" ? X : e.kind === "timeout" ? Clock : AlertTriangle;
     return (
       <div className="tactical-card p-4 border-destructive/40 bg-destructive/5 space-y-3">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-          <div className="text-sm">
-            <div className="font-bold">Couldn't open checkout</div>
-            <p className="text-muted-foreground text-xs mt-0.5">{error}</p>
+          <Icon className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+          <div className="text-sm flex-1">
+            <div className="font-bold">{copy.title}</div>
+            <p className="text-muted-foreground text-xs mt-0.5">{copy.help}</p>
+            {e.message && (
+              <p className="text-[11px] text-muted-foreground/80 mt-2 font-mono break-all">
+                {e.message}
+              </p>
+            )}
           </div>
         </div>
-        <Button variant="outline" className="w-full" onClick={() => nav(-1)}>
-          Go back
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={retry} className="flex-1">
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Retry payment
+          </Button>
+          <Button variant="outline" onClick={() => nav(-1)}>
+            Go back
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div id="helcim-pay-mount" className="rounded-md overflow-hidden min-h-[200px]">
-      {loading && (
+      {phase === "loading" && (
         <div className="flex flex-col items-center justify-center py-10 text-muted-foreground text-sm">
           <Loader2 className="h-5 w-5 animate-spin mb-2" />
           Opening secure payment…
         </div>
       )}
-      {stub && !loading && (
+      {phase === "waiting" && (
+        <div className="text-xs text-muted-foreground text-center py-2">
+          Complete payment in the secure window above. We'll redirect you when it's done.
+        </div>
+      )}
+      {stub && phase !== "loading" && (
         <div className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-md px-3 py-2 mt-3">
           Helcim is in <strong>setup mode</strong> (no API token yet). The modal will load but the
           payment itself won't process until a merchant account is connected.
