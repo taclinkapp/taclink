@@ -42,6 +42,7 @@ const Checkout = () => {
   const { id } = useParams();
   const nav = useNavigate();
   const { user, profile } = useAuth();
+  const { provider: activeProvider } = useActivePaymentProvider();
 
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
