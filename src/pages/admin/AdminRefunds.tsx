@@ -393,7 +393,7 @@ export const AdminRefunds = () => {
         link: `/student/booking/${picked.id}`,
       });
       toast.success('Cash refund queued — student notified', {
-        description: 'The Stripe refund will be processed by the next refund worker run.',
+        description: 'The refund will be processed by the next refund worker run.',
       });
     } else {
       toast.success('Decision recorded — no refund issued');
@@ -424,14 +424,14 @@ export const AdminRefunds = () => {
       { body: { refund_id: refundId } },
     );
     if (error) {
-      toast.error('Stripe refund failed', { description: error.message });
+      toast.error('Refund failed', { description: error.message });
       return;
     }
     const result = (data as any)?.results?.[0];
     if (result?.error) {
-      toast.error('Stripe refund failed', { description: result.error });
+      toast.error('Refund failed', { description: result.error });
     } else if (result?.stripe_refund_id) {
-      toast.success('Stripe refund issued', { description: result.stripe_refund_id });
+      toast.success('Refund issued', { description: result.stripe_refund_id });
     } else {
       toast.success('Refund queue swept');
     }
@@ -443,10 +443,10 @@ export const AdminRefunds = () => {
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-primary" /> Refunds (Cash via Stripe)
+            <DollarSign className="h-6 w-6 text-primary" /> Refunds (Cash to original card)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Refunds are returned <span className="font-semibold text-foreground">in cash to the student's payment method via Stripe</span> within 48 hours.
+            Refunds are returned <span className="font-semibold text-foreground">in cash to the student's original payment method</span> within 48 hours.
             Per policy: instructor-fault cancellations refund $25 + 10%; student cancellations forfeit both.
           </p>
         </div>
@@ -568,11 +568,11 @@ export const AdminRefunds = () => {
                       )}
                       {r.stripe_refund_id ? (
                         <span className="text-[10px] text-emerald-600 font-mono truncate max-w-[160px]" title={r.stripe_refund_id}>
-                          Stripe: {r.stripe_refund_status ?? 'sent'}
+                          Refund: {r.stripe_refund_status ?? 'sent'}
                         </span>
                       ) : (
                         <span className="text-[10px] text-amber-600">
-                          Stripe: {r.stripe_refund_status ?? 'not sent'}
+                          Refund: {r.stripe_refund_status ?? 'not sent'}
                         </span>
                       )}
                     </div>
@@ -585,7 +585,7 @@ export const AdminRefunds = () => {
                           variant="outline"
                           onClick={() => retryStripeRefund(r.id)}
                           className="text-xs"
-                          title="Send / retry refund via Stripe"
+                          title="Send / retry refund"
                         >
                           <RefreshCw className="h-3 w-3 mr-1" /> Send
                         </Button>
@@ -615,7 +615,7 @@ export const AdminRefunds = () => {
           <DialogHeader>
             <DialogTitle>Issue cash refund</DialogTitle>
             <DialogDescription>
-              Find the booking and choose how much to refund. The amount is returned to the student's original payment method via Stripe (typically within 48 hours), and the student is notified automatically.
+              Find the booking and choose how much to refund. The amount is returned to the student's original payment method (typically within 48 hours), and the student is notified automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -683,7 +683,7 @@ export const AdminRefunds = () => {
                 {!manualOverride && split && (
                   <div className="rounded-md border border-border bg-muted/40 p-3 text-xs space-y-1">
                     <div className="font-semibold text-sm">Computed split</div>
-                    <div>Student cash refund (Stripe): <span className="font-mono">{fmt(split.student_cash_refund_cents)}</span></div>
+                    <div>Student cash refund: <span className="font-mono">{fmt(split.student_cash_refund_cents)}</span></div>
                     <div>Instructor forfeit: <span className="font-mono">{fmt(split.instructor_forfeit_cents)}</span></div>
                     <div>TacLink absorbs: <span className="font-mono">{fmt(split.platform_absorbed_cents)}</span></div>
                     {split.requires_owner && (
@@ -735,7 +735,7 @@ export const AdminRefunds = () => {
                     <Input
                       value={externalRef}
                       onChange={(e) => setExternalRef(e.target.value)}
-                      placeholder="Stripe re_… or check #"
+                      placeholder="re_… or check #"
                     />
                   </div>
                   <div className="space-y-1">
@@ -782,7 +782,7 @@ export const AdminRefunds = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Issue cash refund</AlertDialogTitle>
             <AlertDialogDescription>
-              Refund <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". The amount returns to their original payment method via Stripe (typically within 48 hours). The student will be notified.
+              Refund <span className="font-bold">{fmt(Math.round(parseFloat(amount || '0') * 100))}</span> ({type.replace('_', ' ')}) to {picked?.studentName} for "{picked?.courseTitle}". The amount returns to their original payment method (typically within 48 hours). The student will be notified.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
