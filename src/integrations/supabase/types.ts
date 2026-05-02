@@ -2409,7 +2409,6 @@ export type Database = {
           email: string
           id: string
           label: string | null
-          password: string
           role: string
           user_id: string
         }
@@ -2419,7 +2418,6 @@ export type Database = {
           email: string
           id?: string
           label?: string | null
-          password: string
           role: string
           user_id: string
         }
@@ -2429,7 +2427,6 @@ export type Database = {
           email?: string
           id?: string
           label?: string | null
-          password?: string
           role?: string
           user_id?: string
         }
@@ -2685,31 +2682,22 @@ export type Database = {
         Row: {
           active: boolean | null
           audience: string | null
-          commission_pct: number | null
           created_at: string | null
           id: string | null
-          influencer_handle: string | null
-          influencer_name: string | null
           slug: string | null
         }
         Insert: {
           active?: boolean | null
           audience?: string | null
-          commission_pct?: number | null
           created_at?: string | null
           id?: string | null
-          influencer_handle?: string | null
-          influencer_name?: string | null
           slug?: string | null
         }
         Update: {
           active?: boolean | null
           audience?: string | null
-          commission_pct?: number | null
           created_at?: string | null
           id?: string | null
-          influencer_handle?: string | null
-          influencer_name?: string | null
           slug?: string | null
         }
         Relationships: []
