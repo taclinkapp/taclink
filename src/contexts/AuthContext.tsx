@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await new Promise((r) => setTimeout(r, delay));
         return loadProfileAndRoles(uid, attempt + 1);
       }
-      setRolesError(err?.message ?? "Failed to load your account roles.");
+      setRolesError("We couldn't load your account. Please try again or contact support.");
     }
   };
 
