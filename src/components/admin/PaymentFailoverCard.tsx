@@ -32,13 +32,13 @@ export function PaymentFailoverCard() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("payment_provider_settings")
       .select("*")
       .eq("id", true)
       .maybeSingle();
     if (error) toast.error("Failed to load failover settings");
-    setSettings(data as Settings | null);
+    setSettings((data as Settings | null) ?? null);
     setLoading(false);
   };
 
@@ -48,7 +48,7 @@ export function PaymentFailoverCard() {
     if (!settings) return;
     setBusy(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("payment_provider_settings")
         .update({
           active_provider: provider,
