@@ -260,7 +260,11 @@ const Checkout = () => {
           <div className="text-xs text-muted-foreground flex items-center gap-1.5">
             <Lock className="h-3.5 w-3.5 text-primary" /> Charged securely by our PCI-compliant payment processor — your card never touches our servers.
           </div>
-          <EscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
+          {activeProvider === 'helcim' ? (
+            <HelcimEscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
+          ) : (
+            <EscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
+          )}
         </div>
       </MobileShell>
     );
