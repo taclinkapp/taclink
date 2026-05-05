@@ -152,16 +152,16 @@ const PayoutMethods = () => {
           <p className="text-xs text-muted-foreground leading-relaxed">{meta.description}</p>
         </div>
 
-        {loading || providerLoading ? (
+        {loading ? (
           <div className="text-center text-muted-foreground text-sm py-8">
             <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Loading…
           </div>
-        ) : provider === 'helcim' ? (
+        ) : (
           <>
             <div className="tactical-card p-4 border-border space-y-3">
               <div className="text-xs uppercase tracking-wider font-bold">Add payout destination</div>
               <p className="text-[11px] text-muted-foreground">
-                Helcim collects student payments. TacLink batches your weekly payout to the destination below.
+                Our payment processor collects student payments. TacLink batches your weekly payout to the destination below.
               </p>
               <div className="space-y-2">
                 <Label className="text-xs">Method</Label>
@@ -213,11 +213,6 @@ const PayoutMethods = () => {
               </div>
             )}
           </>
-        ) : (
-          <Button onClick={launchOnboarding} disabled={launching} className="w-full h-12 bg-primary text-primary-foreground font-bold">
-            {launching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
-            {status === 'active' ? 'Manage payout account' : status === 'not_started' ? 'Connect payout account' : 'Continue payout setup'}
-          </Button>
         )}
 
         <div className="tactical-card p-4 border-primary/20 bg-primary/5 text-[11px] text-muted-foreground leading-relaxed">
