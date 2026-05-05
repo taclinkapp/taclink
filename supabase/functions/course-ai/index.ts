@@ -19,6 +19,20 @@ interface Body {
     capacity?: number | string;
     price?: number | string;
   };
+  criteria?: {
+    liveFire?: boolean;
+    forceOnForce?: boolean;
+    combatives?: boolean;
+    vehicleBased?: boolean;
+    lowLight?: boolean;
+    medicalRisk?: boolean;
+    minorsAllowed?: boolean;
+    mediaRelease?: boolean;
+    offsiteTravel?: boolean;
+    instructorGear?: boolean;
+    physicalExertion?: boolean;
+    customNotes?: string;
+  };
 }
 
 const COURSE_CATALOG_HINT = `
