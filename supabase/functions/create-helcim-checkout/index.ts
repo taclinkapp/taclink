@@ -39,7 +39,6 @@ async function initializeHelcimPay(opts: {
   apiToken: string;
   amountCents: number;
   currency: string;
-  customerEmail: string;
   description: string;
 }): Promise<HelcimInitializeResponse> {
   const res = await fetch(`${HELCIM_API_BASE}/helcim-pay/initialize`, {
@@ -55,8 +54,8 @@ async function initializeHelcimPay(opts: {
       currency: opts.currency.toUpperCase(),
       paymentMethod: "cc-ach",
       hasConvenienceFee: 0,
+      displayContactFields: 1,
       description: opts.description,
-      ...(opts.customerEmail ? { customerRequest: { email: opts.customerEmail } } : {}),
     }),
   });
   if (!res.ok) {
@@ -137,7 +136,6 @@ Deno.serve(async (req) => {
         apiToken,
         amountCents: booking.online_total_cents,
         currency: "usd",
-        customerEmail: user.email ?? "",
         description,
       });
       checkoutToken = init.checkoutToken;
