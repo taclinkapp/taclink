@@ -420,7 +420,7 @@ export const AdminRefunds = () => {
 
   const retryStripeRefund = async (refundId: string) => {
     const { data, error } = await supabase.functions.invoke(
-      `process-refund?env=${stripeEnvironment}`,
+      `process-refund?env=${paymentEnvironment}`,
       { body: { refund_id: refundId } },
     );
     if (error) {
