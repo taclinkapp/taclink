@@ -213,6 +213,52 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId, attempt]);
 
+  // Poll + realtime-subscribe for the webhook-driven escrow flip while the
+  // payment modal is open. As soon as the Helcim webhook marks the booking
+  // as held_in_escrow we redirect, even if the postMessage SUCCESS event
+  // never reaches us (popup blockers, cross-origin quirks, etc.).
+  useEffect(() => {
+    if (phase !== "waiting" && phase !== "loading") return;
+    let cancelled = false;
+
+    const checkBooking = async () => {
+      const { data } = await supabase
+        .from("bookings")
+        .select("escrow_status, deposit_status, status")
+        .eq("id", bookingId)
+        .maybeSingle();
+      if (cancelled || !data) return false;
+      const paid =
+        data.escrow_status === "held_in_escrow" ||
+        data.escrow_status === "released" ||
+        data.deposit_status === "confirmed";
+      if (paid) {
+        cleanup();
+        window.location.href = returnUrl;
+        return true;
+      }
+      return false;
+    };
+
+    const interval = window.setInterval(checkBooking, 3000);
+    void checkBooking();
+
+    const channel = supabase
+      .channel(`booking-${bookingId}-payment`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "bookings", filter: `id=eq.${bookingId}` },
+        () => { void checkBooking(); },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [bookingId, phase, returnUrl, cleanup]);
+
   const retry = () => setAttempt((n) => n + 1);
 
   if (phase === "error" || phase === "aborted") {
