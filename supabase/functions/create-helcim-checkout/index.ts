@@ -161,6 +161,16 @@ Deno.serve(async (req) => {
       })
       .eq("id", booking.id);
 
+    await supabase
+      .from("helcim_checkout_sessions")
+      .insert({
+        booking_id: booking.id,
+        checkout_token: checkoutToken,
+        secret_token: secretToken,
+        amount_cents: booking.online_total_cents,
+        currency: "USD",
+      });
+
     return json({
       checkoutToken,
       secretToken,
