@@ -70,8 +70,8 @@ export const HowPaymentsWorkCard = ({
           },
           {
             icon: Banknote,
-            title: "Full course price paid out 24h after course ends",
-            body: "Transferred straight to your connected payout account. TacLink keeps only the $25 platform fee — you keep 100% of your course price.",
+            title: `Course price paid out 24h after course ends (minus ${formatTransferFeePct()} transfer fee)`,
+            body: `Transferred straight to your connected payout account. TacLink keeps the $25 platform fee and the payout processor charges a flat ${formatTransferFeePct()} transfer fee on the course price — you keep the rest.`,
           },
         ];
 
