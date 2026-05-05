@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isBookingPaymentConfirmed } from "@/lib/helcimPayment";
 
 type Status = "waiting" | "confirmed" | "failed";
 
@@ -22,12 +23,7 @@ export function PaymentStatusBanner({ bookingId }: Props) {
 
     const evaluate = (row: any) => {
       if (!row) return;
-      if (
-        row.escrow_status === "held" ||
-        row.escrow_status === "released" ||
-        row.deposit_status === "held_in_escrow" ||
-        row.deposit_status === "confirmed"
-      ) {
+      if (isBookingPaymentConfirmed(row)) {
         setStatus("confirmed");
         setDetail(null);
       } else if (
