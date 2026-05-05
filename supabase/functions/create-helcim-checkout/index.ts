@@ -173,7 +173,6 @@ Deno.serve(async (req) => {
 
     return json({
       checkoutToken,
-      secretToken,
       bookingId: booking.id,
       amountCents: booking.online_total_cents,
       returnUrl,
