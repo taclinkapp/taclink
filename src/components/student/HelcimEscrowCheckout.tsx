@@ -59,8 +59,8 @@ const ERROR_COPY: Record<ErrorKind, { title: string; help: string }> = {
     help: "You dismissed the secure payment window. Your booking is still pending — tap retry when you're ready to pay.",
   },
   payment_declined: {
-    title: "Payment declined",
-    help: "The payment processor declined that attempt. In Helcim sandbox, use the exact test card, expiry, and CVV shown above — generic test cards like 5454545454545454 are declined.",
+    title: "Payment declined — INVALID CARD",
+    help: "Helcim rejected the card. If you used the exact sandbox card shown above (5413 3300 8909 9130, exp 01/28, CVV 100) and still see INVALID CARD, the connected Helcim merchant token is a production terminal, not a developer test terminal. Helcim test cards only work against a developer test account — swap HELCIM_API_TOKEN for one generated from a Helcim developer test account, then retry.",
   },
   unknown: {
     title: "Something went wrong",
