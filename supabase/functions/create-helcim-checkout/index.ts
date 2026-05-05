@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    await supabase
+    const { error: updateErr } = await supabase
       .from("bookings")
       .update({
         helcim_checkout_token: checkoutToken,
@@ -160,8 +160,9 @@ Deno.serve(async (req) => {
         payment_provider: "helcim",
       })
       .eq("id", booking.id);
+    if (updateErr) throw updateErr;
 
-    await supabase
+    const { error: sessionErr } = await supabase
       .from("helcim_checkout_sessions")
       .insert({
         booking_id: booking.id,
@@ -170,6 +171,7 @@ Deno.serve(async (req) => {
         amount_cents: booking.online_total_cents,
         currency: "USD",
       });
+    if (sessionErr) throw sessionErr;
 
     return json({
       checkoutToken,
