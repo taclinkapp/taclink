@@ -1,9 +1,19 @@
-export const HELCIM_SANDBOX_TEST_CARDS = [
-  { brand: "Visa", number: "4124 9399 9999 9990", cvv: "100", expiry: "01/28" },
-  { brand: "Mastercard", number: "5413 3300 8909 9130", cvv: "100", expiry: "01/28" },
-  { brand: "Mastercard", number: "5413 3300 8902 0011", cvv: "100", expiry: "01/28" },
-  { brand: "Amex", number: "3742 4500 1751 006", cvv: "1000", expiry: "01/28" },
-] as const;
+export const HELCIM_SANDBOX_TEST_PROFILE = {
+  firstName: "Andy",
+  lastName: "Perez",
+  fullName: "Andy Perez",
+  phone: "7866032316",
+  address: "3010 Valentina Way",
+  zip: "90210",
+  card: {
+    brand: "Mastercard",
+    number: "5413 3300 8909 9130",
+    cvv: "100",
+    expiry: "01/28",
+  },
+} as const;
+
+export const HELCIM_SANDBOX_TEST_CARDS = [HELCIM_SANDBOX_TEST_PROFILE.card] as const;
 
 export function normalizeCardNumber(cardNumber: string) {
   return cardNumber.replace(/\D/g, "");
