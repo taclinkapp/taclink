@@ -29,6 +29,20 @@ const json = (body: unknown, status = 200) =>
   });
 
 const HELCIM_API_BASE = "https://api.helcim.com/v2";
+const HELCIM_SANDBOX_PROFILE = {
+  fullName: "Andy Perez",
+  phone: "7866032316",
+  address: "3010 Valentina Way",
+  city: "Miami",
+  province: "FL",
+  country: "USA",
+  postalCode: "90210",
+};
+
+const isSandboxHelcim = () => {
+  const env = (Deno.env.get("HELCIM_ENV") ?? Deno.env.get("VITE_HELCIM_ENV") ?? "sandbox").toLowerCase();
+  return env !== "live" && env !== "production";
+};
 
 interface HelcimInitializeResponse {
   checkoutToken: string;
@@ -54,8 +68,24 @@ async function initializeHelcimPay(opts: {
       currency: opts.currency.toUpperCase(),
       paymentMethod: "cc",
       hasConvenienceFee: 0,
-      displayContactFields: 1,
+      hideExistingPaymentDetails: 1,
+      displayContactFields: isSandboxHelcim() ? 0 : 1,
       description: opts.description,
+      ...(isSandboxHelcim() ? {
+        customerRequest: {
+          contactName: HELCIM_SANDBOX_PROFILE.fullName,
+          cellPhone: HELCIM_SANDBOX_PROFILE.phone,
+          billingAddress: {
+            name: HELCIM_SANDBOX_PROFILE.fullName,
+            street1: HELCIM_SANDBOX_PROFILE.address,
+            city: HELCIM_SANDBOX_PROFILE.city,
+            province: HELCIM_SANDBOX_PROFILE.province,
+            country: HELCIM_SANDBOX_PROFILE.country,
+            postalCode: HELCIM_SANDBOX_PROFILE.postalCode,
+            phone: HELCIM_SANDBOX_PROFILE.phone,
+          },
+        },
+      } : {}),
     }),
   });
   if (!res.ok) {
