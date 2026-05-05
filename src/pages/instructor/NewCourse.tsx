@@ -126,6 +126,43 @@ const NewCourse = () => {
   const [feeAck, setFeeAck] = useState(false);
   const [availableCredits, setAvailableCredits] = useState(0);
 
+  // Waiver step state
+  const [waiverCriteria, setWaiverCriteria] = useState<WaiverCriteria>({});
+  const [waiverNotes, setWaiverNotes] = useState('');
+  const [waiverContent, setWaiverContent] = useState('');
+  const [waiverTitle, setWaiverTitle] = useState('Liability Waiver & Assumption of Risk');
+  const [waiverGenerating, setWaiverGenerating] = useState(false);
+  const [waiverLegalAck, setWaiverLegalAck] = useState(false);
+  const [waiverPreview, setWaiverPreview] = useState(false);
+  const [skipWaiver, setSkipWaiver] = useState(false);
+
+  const toggleCriterion = (k: keyof WaiverCriteria) =>
+    setWaiverCriteria((p) => ({ ...p, [k]: !p[k] }));
+
+  const generateWaiver = async () => {
+    setWaiverGenerating(true);
+    try {
+      const draft = await generateCourseWaiver(
+        {
+          title: title.trim() || undefined,
+          category: category || undefined,
+          description: description.trim() || undefined,
+          duration_minutes: durationMinutesFromTimes(date, startTime, endTime),
+          city: city || undefined,
+          state: state || undefined,
+        },
+        { ...waiverCriteria, customNotes: waiverNotes },
+      );
+      setWaiverContent(draft);
+      setWaiverPreview(false);
+      toast.success('Draft ready — review, edit, then continue.');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'AI generation failed');
+    } finally {
+      setWaiverGenerating(false);
+    }
+  };
+
   useEffect(() => {
     if (!user || !subActive) return;
     fetchPunchCardState(user.id).then((s) => setAvailableCredits(s.unredeemedCredits)).catch(() => {});
