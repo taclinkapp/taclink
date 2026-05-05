@@ -14,10 +14,8 @@ import { computeFees, fmt } from '@/lib/fees';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 import { sendAppEmail } from '@/lib/appEmail';
 import { cancelDeadline } from '@/lib/cancellation';
-import { EscrowCheckout } from '@/components/student/EscrowCheckout';
 import { HelcimEscrowCheckout } from '@/components/student/HelcimEscrowCheckout';
 import { PaymentTestModeBanner } from '@/components/PaymentTestModeBanner';
-import { useActivePaymentProvider } from '@/hooks/useActivePaymentProvider';
 
 type Course = {
   id: string;
@@ -42,7 +40,7 @@ const Checkout = () => {
   const { id } = useParams();
   const nav = useNavigate();
   const { user, profile } = useAuth();
-  const { provider: activeProvider } = useActivePaymentProvider();
+  
 
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
@@ -260,11 +258,7 @@ const Checkout = () => {
           <div className="text-xs text-muted-foreground flex items-center gap-1.5">
             <Lock className="h-3.5 w-3.5 text-primary" /> Charged securely by our PCI-compliant payment processor — your card never touches our servers.
           </div>
-          {activeProvider === 'helcim' ? (
-            <HelcimEscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
-          ) : (
-            <EscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
-          )}
+          <HelcimEscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
         </div>
       </MobileShell>
     );
