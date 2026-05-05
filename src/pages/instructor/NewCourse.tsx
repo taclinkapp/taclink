@@ -41,6 +41,7 @@ const NewCourse = () => {
   const hasPM = !!profile?.payment_method_added;
   const subActive = profile?.subscription_status === 'active';
   const [connectActive, setConnectActive] = useState(false);
+  const [pmHint, setPmHint] = useState<{ brand: string | null; last4: string | null; method_type: string; handle: string | null } | null>(null);
   const { data: prelaunch } = usePrelaunch();
   const { roles } = useAuth() as any;
   const [isTestAccount, setIsTestAccount] = useState(false);
@@ -70,6 +71,19 @@ const NewCourse = () => {
       .maybeSingle()
       .then(({ data }) => setIsTestAccount(!!data));
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user || !hasPM) { setPmHint(null); return; }
+    supabase
+      .from('payment_methods')
+      .select('method_type, brand, last4, handle, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setPmHint(data as any));
+  }, [user?.id, hasPM]);
+
 
   // form state
   const [title, setTitle] = useState('');
@@ -696,7 +710,12 @@ const NewCourse = () => {
                   <div className="tactical-card border-success/40 bg-success/10 p-3 flex items-center gap-2 text-xs">
                     <Check className="h-4 w-4 text-success shrink-0" />
                     <span className="text-foreground">
-                      Payment method on file. <Link to="/instructor/payment-methods" className="text-primary underline">Manage</Link>
+                      {pmHint && pmHint.method_type === 'card' && pmHint.last4
+                        ? <>Payment method: <strong className="text-foreground">{pmHint.brand || 'Card'} •••• {pmHint.last4}</strong>. </>
+                        : pmHint && pmHint.handle
+                          ? <>Payment method: <strong className="text-foreground">{pmHint.method_type} · {pmHint.handle}</strong>. </>
+                          : <>Payment method on file. </>}
+                      <Link to="/instructor/payment-methods" className="text-primary underline">Manage</Link>
                     </span>
                   </div>
                 )}
