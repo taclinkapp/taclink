@@ -36,7 +36,7 @@ export function HelcimSandboxCardBanner({ compact = false }: { compact?: boolean
       {open && (
         <div className="px-3 pb-3 space-y-2">
           <p className="text-[11px] leading-relaxed text-foreground/80">
-            Use this one Helcim developer-test profile. If it still returns <span className="font-mono">INVALID CARD</span>, the connected Helcim token is not a developer test account/terminal and must be switched in Helcim.
+            Use this one Helcim developer-test profile. <strong>Diagnostic confirmed:</strong> the connected <span className="font-mono">HELCIM_API_TOKEN</span> is valid but bound to a <strong>production terminal</strong>, so Helcim test cards (5413 3300 8909 9130 etc.) will be rejected as <span className="font-mono">INVALID CARD</span>. Generate a token from a Helcim <em>developer test account</em> and update <span className="font-mono">HELCIM_API_TOKEN</span> in Lovable Cloud secrets to make sandbox payments succeed.
           </p>
           <div className="bg-background/60 rounded px-2 py-2 space-y-1.5">
             <div className="flex items-center gap-2">

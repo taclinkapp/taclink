@@ -23,6 +23,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { fmt } from '@/lib/fees';
 import { HelcimSandboxCardBanner } from '@/components/HelcimSandboxCardBanner';
+import { HelcimAccountCheckCard } from '@/components/admin/HelcimAccountCheckCard';
 
 export const AdminHeader = ({
   title,
@@ -219,6 +220,9 @@ const AdminDashboard = () => {
           <HelcimSandboxCardBanner compact />
           <div className="mt-2 text-[11px] text-muted-foreground">
             Sandbox tester: <strong className="text-foreground">Andy Perez</strong> · <span className="font-mono">7866032316</span> · 3010 Valentina Way
+          </div>
+          <div className="mt-3">
+            <HelcimAccountCheckCard />
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
