@@ -217,6 +217,9 @@ const AdminDashboard = () => {
       <div className="p-4 sm:p-8">
         <div className="mb-4 sm:mb-6">
           <HelcimSandboxCardBanner compact />
+          <div className="mt-2 text-[11px] text-muted-foreground">
+            Sandbox tester: <strong className="text-foreground">Andy Perez</strong> · <span className="font-mono">7866032316</span> · 3010 Valentina Way
+          </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {cards.map((s) => (
