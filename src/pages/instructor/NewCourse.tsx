@@ -24,6 +24,7 @@ import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 import { AISuggestButton } from '@/components/instructor/AISuggestButton';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 import { AddressMapPreview } from '@/components/AddressMapPreview';
+import { useActivePaymentProvider } from '@/hooks/useActivePaymentProvider';
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
 
@@ -41,8 +42,10 @@ const NewCourse = () => {
   const hasPM = !!profile?.payment_method_added;
   const subActive = profile?.subscription_status === 'active';
   const [connectActive, setConnectActive] = useState(false);
+  const [payoutHint, setPayoutHint] = useState<{ method_type: string; handle: string } | null>(null);
   const [pmHint, setPmHint] = useState<{ brand: string | null; last4: string | null; method_type: string; handle: string | null } | null>(null);
   const { data: prelaunch } = usePrelaunch();
+  const { provider: activeProvider } = useActivePaymentProvider();
   const { roles } = useAuth() as any;
   const [isTestAccount, setIsTestAccount] = useState(false);
   const isAdmin = Array.isArray(roles) && roles.includes('admin');
@@ -54,13 +57,22 @@ const NewCourse = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from('profiles')
-      .select('stripe_connect_status')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }) => setConnectActive((data as any)?.stripe_connect_status === 'active'));
-  }, [user?.id]);
+    (async () => {
+      if (activeProvider === 'helcim') {
+        const [{ data: acct }, { data: methods }] = await Promise.all([
+          supabase.from('instructor_payout_accounts').select('status').eq('instructor_id', user.id).eq('provider', 'helcim').maybeSingle(),
+          supabase.from('instructor_payout_methods').select('method_type, handle, is_preferred').eq('instructor_id', user.id).order('is_preferred', { ascending: false }).limit(1),
+        ]);
+        setConnectActive((acct as any)?.status === 'active' && Array.isArray(methods) && methods.length > 0);
+        const m = (methods as any[])?.[0];
+        setPayoutHint(m ? { method_type: m.method_type, handle: m.handle } : null);
+      } else {
+        const { data } = await supabase.from('profiles').select('stripe_connect_status').eq('id', user.id).maybeSingle();
+        setConnectActive((data as any)?.stripe_connect_status === 'active');
+        setPayoutHint(null);
+      }
+    })();
+  }, [user?.id, activeProvider]);
 
   useEffect(() => {
     if (!user) return;
@@ -723,6 +735,22 @@ const NewCourse = () => {
                   <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
                     <div className="font-bold text-destructive">Required to publish:</div>
                     <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
+                  </div>
+                )}
+                {connectActive ? (
+                  <div className="tactical-card border-success/40 bg-success/10 p-3 flex items-center gap-2 text-xs">
+                    <Check className="h-4 w-4 text-success shrink-0" />
+                    <span className="text-foreground">
+                      {payoutHint
+                        ? <>Payout method: <strong className="text-foreground capitalize">{payoutHint.method_type} · {payoutHint.handle}</strong> (preferred). </>
+                        : <>Payout account connected. </>}
+                      <Link to="/instructor/payout-methods" className="text-primary underline">Change</Link>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
+                    <div className="font-bold text-destructive">Required to publish:</div>
+                    <Link to="/instructor/payout-methods" className="block text-primary underline">Set up a payout method →</Link>
                   </div>
                 )}
               </>
