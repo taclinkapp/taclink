@@ -17,7 +17,7 @@ import {
   instructorNoShowConfirmMessage,
 } from '@/lib/refundCopy';
 import { toast } from 'sonner';
-import { stripeEnvironment } from '@/lib/stripe';
+import { paymentEnvironment } from '@/lib/paymentEnv';
 
 type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
 
@@ -141,10 +141,10 @@ const BookingDetail = () => {
   const [cancelling, setCancelling] = useState(false);
   const [reportingNoShow, setReportingNoShow] = useState(false);
 
-  const triggerStripeRefund = async (refundId: string | undefined) => {
+  const triggerRefund = async (refundId: string | undefined) => {
     if (!refundId) return;
     try {
-      await supabase.functions.invoke(`process-refund?env=${stripeEnvironment}`, {
+      await supabase.functions.invoke(`process-refund?env=${paymentEnvironment}`, {
         body: { refund_id: refundId },
       });
     } catch (e) {
