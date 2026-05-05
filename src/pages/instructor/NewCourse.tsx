@@ -24,7 +24,7 @@ import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 import { AISuggestButton } from '@/components/instructor/AISuggestButton';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 import { AddressMapPreview } from '@/components/AddressMapPreview';
-import { useActivePaymentProvider } from '@/hooks/useActivePaymentProvider';
+
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
 
@@ -45,7 +45,7 @@ const NewCourse = () => {
   const [payoutHint, setPayoutHint] = useState<{ method_type: string; handle: string } | null>(null);
   const [pmHint, setPmHint] = useState<{ brand: string | null; last4: string | null; method_type: string; handle: string | null } | null>(null);
   const { data: prelaunch } = usePrelaunch();
-  const { provider: activeProvider } = useActivePaymentProvider();
+  
   const { roles } = useAuth() as any;
   const [isTestAccount, setIsTestAccount] = useState(false);
   const isAdmin = Array.isArray(roles) && roles.includes('admin');
