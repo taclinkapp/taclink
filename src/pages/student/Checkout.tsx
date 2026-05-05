@@ -301,7 +301,7 @@ const Checkout = () => {
             </div>
           </div>
           <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground leading-relaxed">
-            TacLink charges <strong className="text-foreground">{fmt(fees.onlineTotalCents)}</strong> today via secure card processing. The full course price is held in secure escrow and released to your instructor 24 hours after they scan you in at the course. If they cancel or no-show, you're refunded in full within 48 hours. <strong className="text-foreground">No cash, no card readers — payment is fully handled by the app.</strong>
+            TacLink charges <strong className="text-foreground">{fmt(fees.onlineTotalCents)}</strong> today via secure card processing. The full course price is held in secure escrow and released to your instructor 24 hours after they scan you in at the course (a flat <strong className="text-foreground">{(0.029 * 100).toFixed(1)}%</strong> payout-processor transfer fee is deducted from the instructor's payout, not from your total). If they cancel or no-show, you're refunded in full within 48 hours. <strong className="text-foreground">No cash, no card readers — payment is fully handled by the app.</strong>
           </div>
         </div>
 
