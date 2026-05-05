@@ -4,14 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, ExternalLink, Loader2, ShieldCheck, AlertTriangle, Trash2 } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldCheck, AlertTriangle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { HowPaymentsWorkCard } from "@/components/HowPaymentsWorkCard";
-import { stripeEnvironment } from "@/lib/stripe";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
-import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
+
 import { formatTransferFeePct, computeTransferFeeCents, fmt } from "@/lib/fees";
 
 type ConnectStatus = "not_started" | "onboarding" | "active" | "restricted";
@@ -55,10 +54,8 @@ const METHOD_LABEL: Record<PayoutMethod['method_type'], string> = {
 
 const PayoutMethods = () => {
   const { user } = useAuth();
-  const { provider, loading: providerLoading } = useActivePaymentProvider();
   const [status, setStatus] = useState<ConnectStatus>("not_started");
   const [loading, setLoading] = useState(true);
-  const [launching, setLaunching] = useState(false);
   const [methods, setMethods] = useState<PayoutMethod[]>([]);
   const [methodType, setMethodType] = useState<PayoutMethod['method_type']>('zelle');
   const [handle, setHandle] = useState('');
@@ -67,46 +64,22 @@ const PayoutMethods = () => {
   const reload = async () => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
-    if (provider === 'helcim') {
-      const [{ data: acct }, { data: pm }] = await Promise.all([
-        supabase.from('instructor_payout_accounts').select('status').eq('instructor_id', user.id).eq('provider', 'helcim').maybeSingle(),
-        supabase.from('instructor_payout_methods').select('id, method_type, handle, is_preferred').eq('instructor_id', user.id).order('is_preferred', { ascending: false }),
-      ]);
-      setStatus((acct?.status as ConnectStatus) ?? 'not_started');
-      setMethods((pm as PayoutMethod[]) ?? []);
-    } else {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('stripe_connect_status')
-        .eq('id', user.id)
-        .maybeSingle();
-      if (error) toast.error(error.message);
-      setStatus((data?.stripe_connect_status as ConnectStatus) ?? 'not_started');
-    }
+    const [{ data: acct }, { data: pm }] = await Promise.all([
+      supabase.from('instructor_payout_accounts').select('status').eq('instructor_id', user.id).eq('provider', 'helcim').maybeSingle(),
+      supabase.from('instructor_payout_methods').select('id, method_type, handle, is_preferred').eq('instructor_id', user.id).order('is_preferred', { ascending: false }),
+    ]);
+    const methodsList = (pm as PayoutMethod[]) ?? [];
+    setMethods(methodsList);
+    // Having a saved payout method is sufficient for "active" — keeps UX
+    // simple and matches the publish gate in NewCourse.
+    setStatus(((acct?.status as ConnectStatus) ?? (methodsList.length > 0 ? 'active' : 'not_started')));
     setLoading(false);
   };
 
   useEffect(() => {
-    if (providerLoading) return;
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, provider, providerLoading]);
-
-  const launchOnboarding = async () => {
-    if (!user) return;
-    setLaunching(true);
-    try {
-      const baseUrl = `${window.location.origin}/instructor/payout-methods`;
-      const { data, error } = await supabase.functions.invoke('create-connect-onboarding', {
-        body: { returnUrl: `${baseUrl}?stripe=return`, refreshUrl: `${baseUrl}?stripe=refresh`, environment: stripeEnvironment },
-      });
-      if (error || !data?.url) throw new Error(error?.message ?? 'Could not start payout onboarding');
-      window.location.href = data.url;
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Could not start payout onboarding');
-      setLaunching(false);
-    }
-  };
+  }, [user?.id]);
 
   const addHelcimMethod = async () => {
     if (!user) return;
@@ -179,16 +152,16 @@ const PayoutMethods = () => {
           <p className="text-xs text-muted-foreground leading-relaxed">{meta.description}</p>
         </div>
 
-        {loading || providerLoading ? (
+        {loading ? (
           <div className="text-center text-muted-foreground text-sm py-8">
             <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Loading…
           </div>
-        ) : provider === 'helcim' ? (
+        ) : (
           <>
             <div className="tactical-card p-4 border-border space-y-3">
               <div className="text-xs uppercase tracking-wider font-bold">Add payout destination</div>
               <p className="text-[11px] text-muted-foreground">
-                Helcim collects student payments. TacLink batches your weekly payout to the destination below.
+                Our payment processor collects student payments. TacLink batches your weekly payout to the destination below.
               </p>
               <div className="space-y-2">
                 <Label className="text-xs">Method</Label>
@@ -240,11 +213,6 @@ const PayoutMethods = () => {
               </div>
             )}
           </>
-        ) : (
-          <Button onClick={launchOnboarding} disabled={launching} className="w-full h-12 bg-primary text-primary-foreground font-bold">
-            {launching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
-            {status === 'active' ? 'Manage payout account' : status === 'not_started' ? 'Connect payout account' : 'Continue payout setup'}
-          </Button>
         )}
 
         <div className="tactical-card p-4 border-primary/20 bg-primary/5 text-[11px] text-muted-foreground leading-relaxed">

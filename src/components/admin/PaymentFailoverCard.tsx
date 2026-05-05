@@ -21,8 +21,8 @@ type Settings = {
 };
 
 const PROVIDER_LABEL: Record<Provider, string> = {
-  stripe: "Stripe (backup rail)",
-  helcim: "Helcim (2A-friendly, primary target)",
+  stripe: "Stripe (Plan B / backup rail)",
+  helcim: "Helcim (primary processor)",
 };
 
 export function PaymentFailoverCard() {
@@ -91,15 +91,16 @@ export function PaymentFailoverCard() {
   return (
     <section className="tactical-card p-5 space-y-4">
       <div className="flex items-center gap-2 text-sm font-bold">
-        <CreditCard className="h-4 w-4 text-primary" /> Payment Failover
+        <CreditCard className="h-4 w-4 text-primary" /> Payment Processor — Plan B Deployment
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Helcim is the planned <strong>primary</strong> processor (2A-friendly,
-        merchant account in underwriting). Stripe stays active as the backup
-        rail until Helcim credentials are added and the adapter is marked
-        configured. Switching flips all future checkouts and subscriptions;
-        in-flight payments on the old rail finish on that rail.
+        <strong>Helcim</strong> is the live processor for all instructors and
+        students. Stripe is kept dormant as a Plan B and is hidden from every
+        non-admin surface. Deploy Stripe here only if Helcim is unavailable
+        (outage, deplatforming, underwriting issue). Switching flips all
+        future checkouts, refunds, payouts, and subscriptions to the chosen
+        rail; in-flight payments finish on the rail they started on.
       </p>
 
       {/* Status row */}
