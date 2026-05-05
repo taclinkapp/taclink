@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { getStripeEnvironment } from "@/lib/stripe";
+import { getPaymentEnvironment } from "@/lib/paymentEnv";
 
 export type SubscriptionRow = {
   id: string;
@@ -32,7 +32,7 @@ export function useSubscription() {
       .from("subscriptions")
       .select("*")
       .eq("user_id", user.id)
-      .eq("environment", getStripeEnvironment())
+      .eq("environment", getPaymentEnvironment())
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

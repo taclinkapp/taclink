@@ -11,7 +11,7 @@ import { fmt, INSTRUCTOR_SUBSCRIPTION_CENTS } from '@/lib/fees';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 import { useSubscription } from '@/hooks/useSubscription';
 import { SubscriptionEmbeddedCheckout } from '@/components/SubscriptionEmbeddedCheckout';
-import { getStripeEnvironment } from '@/lib/stripe';
+import { getPaymentEnvironment } from '@/lib/paymentEnv';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CountdownClock } from '@/components/CountdownClock';
 
@@ -45,7 +45,7 @@ const InstructorSubscription = () => {
     try {
       const { data, error } = await supabase.functions.invoke('create-portal-session', {
         body: {
-          environment: getStripeEnvironment(),
+          environment: getPaymentEnvironment(),
           returnUrl: `${window.location.origin}/instructor/subscription`,
         },
       });

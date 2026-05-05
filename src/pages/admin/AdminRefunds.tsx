@@ -27,7 +27,7 @@ import {
 import { DollarSign, Loader2, RefreshCw, Search, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fmt } from '@/lib/fees';
-import { stripeEnvironment } from '@/lib/stripe';
+import { paymentEnvironment } from '@/lib/paymentEnv';
 
 type RefundType = 'platform_fee' | 'deposit' | 'full' | 'partial' | 'goodwill' | 'other';
 type ReasonCategory =
