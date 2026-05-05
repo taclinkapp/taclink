@@ -12,6 +12,7 @@ import { HowPaymentsWorkCard } from "@/components/HowPaymentsWorkCard";
 import { stripeEnvironment } from "@/lib/stripe";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
+import { formatTransferFeePct, computeTransferFeeCents, fmt } from "@/lib/fees";
 
 type ConnectStatus = "not_started" | "onboarding" | "active" | "restricted";
 
