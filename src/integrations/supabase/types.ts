@@ -2930,6 +2930,7 @@ export type Database = {
         Args: { _slug: string }
         Returns: boolean
       }
+      is_test_account: { Args: { _user_id: string }; Returns: boolean }
       list_due_attendance_claims: {
         Args: never
         Returns: {
