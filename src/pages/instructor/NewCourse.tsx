@@ -61,6 +61,16 @@ const NewCourse = () => {
       .then(({ data }) => setConnectActive((data as any)?.stripe_connect_status === 'active'));
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('test_accounts')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setIsTestAccount(!!data));
+  }, [user?.id]);
+
   // form state
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
