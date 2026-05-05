@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { HowPaymentsWorkCard } from "@/components/HowPaymentsWorkCard";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { ALT_PAYOUT_META, validatePayoutHandle, normalizePayoutHandle, type AltPayoutType } from "@/lib/payoutHandleValidation";
 
 import { formatTransferFeePct, computeTransferFeeCents, fmt } from "@/lib/fees";
 
@@ -40,16 +41,16 @@ const STATUS_META: Record<ConnectStatus, { label: string; tone: string; descript
 
 type PayoutMethod = {
   id: string;
-  method_type: 'cashapp' | 'venmo' | 'paypal' | 'zelle';
+  method_type: AltPayoutType;
   handle: string;
   is_preferred: boolean;
 };
 
-const METHOD_LABEL: Record<PayoutMethod['method_type'], string> = {
-  cashapp: 'Cash App',
-  venmo: 'Venmo',
-  paypal: 'PayPal',
-  zelle: 'Zelle',
+const METHOD_LABEL: Record<AltPayoutType, string> = {
+  cashapp: ALT_PAYOUT_META.cashapp.label,
+  venmo: ALT_PAYOUT_META.venmo.label,
+  paypal: ALT_PAYOUT_META.paypal.label,
+  zelle: ALT_PAYOUT_META.zelle.label,
 };
 
 const PayoutMethods = () => {
@@ -57,8 +58,9 @@ const PayoutMethods = () => {
   const [status, setStatus] = useState<ConnectStatus>("not_started");
   const [loading, setLoading] = useState(true);
   const [methods, setMethods] = useState<PayoutMethod[]>([]);
-  const [methodType, setMethodType] = useState<PayoutMethod['method_type']>('zelle');
+  const [methodType, setMethodType] = useState<AltPayoutType>('zelle');
   const [handle, setHandle] = useState('');
+  const [handleError, setHandleError] = useState<string | null>(null);
   const [savingMethod, setSavingMethod] = useState(false);
 
   const reload = async () => {
@@ -83,15 +85,36 @@ const PayoutMethods = () => {
 
   const addHelcimMethod = async () => {
     if (!user) return;
-    const trimmed = handle.trim();
-    if (!trimmed) { toast.error('Enter your payout handle'); return; }
+    const raw = handle.trim();
+    if (!raw) {
+      setHandleError('Enter your payout handle');
+      toast.error('Enter your payout handle');
+      return;
+    }
+    const err = validatePayoutHandle(methodType, raw);
+    if (err) {
+      setHandleError(err);
+      toast.error(err);
+      return;
+    }
+    const normalized = normalizePayoutHandle(methodType, raw);
+    const dup = methods.some(
+      (m) => m.method_type === methodType && m.handle.toLowerCase() === normalized.toLowerCase()
+    );
+    if (dup) {
+      const msg = `That ${METHOD_LABEL[methodType]} account is already saved`;
+      setHandleError(msg);
+      toast.error(msg);
+      return;
+    }
+    setHandleError(null);
     setSavingMethod(true);
     try {
       const isFirst = methods.length === 0;
       const { error } = await supabase.from('instructor_payout_methods').insert({
         instructor_id: user.id,
         method_type: methodType,
-        handle: trimmed,
+        handle: normalized,
         is_preferred: isFirst,
       });
       if (error) throw error;
@@ -165,7 +188,13 @@ const PayoutMethods = () => {
               </p>
               <div className="space-y-2">
                 <Label className="text-xs">Method</Label>
-                <Select value={methodType} onValueChange={(v) => setMethodType(v as PayoutMethod['method_type'])}>
+                <Select
+                  value={methodType}
+                  onValueChange={(v) => {
+                    setMethodType(v as AltPayoutType);
+                    setHandleError(null);
+                  }}
+                >
                   <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="zelle">Zelle</SelectItem>
@@ -176,13 +205,29 @@ const PayoutMethods = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Handle / email / phone</Label>
+                <Label className="text-xs">{ALT_PAYOUT_META[methodType].hint}</Label>
                 <Input
                   value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                  placeholder={methodType === 'zelle' ? 'email or phone' : `$your-${methodType}`}
-                  className="h-11"
+                  onChange={(e) => {
+                    setHandle(e.target.value);
+                    if (handleError) setHandleError(null);
+                  }}
+                  onBlur={() => {
+                    const v = handle.trim();
+                    if (!v) return;
+                    const err = validatePayoutHandle(methodType, v);
+                    setHandleError(err);
+                  }}
+                  placeholder={ALT_PAYOUT_META[methodType].placeholder}
+                  className={`h-11 ${handleError ? 'border-destructive' : ''}`}
+                  aria-invalid={!!handleError}
+                  maxLength={120}
                 />
+                {handleError && (
+                  <p className="text-[11px] text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" /> {handleError}
+                  </p>
+                )}
               </div>
               <Button onClick={addHelcimMethod} disabled={savingMethod} className="w-full h-11 bg-primary text-primary-foreground font-bold">
                 {savingMethod ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add payout method'}
