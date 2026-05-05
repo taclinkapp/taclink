@@ -658,13 +658,23 @@ const NewCourse = () => {
                       When you tap <strong className="text-foreground">Publish</strong>, your card on file will be charged
                       <strong className="text-foreground"> {fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> ({Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% × ${price || 0}).
                     </p>
-                    <p className="text-destructive font-bold uppercase tracking-wider text-[10px]">
-                      ⚠ This fee is non-refundable.
+                    <p className="text-foreground font-bold uppercase tracking-wider text-[10px]">
+                      ⚠ Refund rules for this listing fee
                     </p>
-                    <p>
-                      It will <strong className="text-foreground">not</strong> be returned if you cancel, edit, unpublish, or
-                      delete this course, or if no students book. It is the cost of listing your course on the platform.
-                    </p>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>
+                        <strong className="text-foreground">Timely cancellation (48+ hours before start):</strong> listing
+                        fee is <strong className="text-success">released back to you</strong> within 48 hours. No strike.
+                      </li>
+                      <li>
+                        <strong className="text-foreground">Late cancellation (under 48 hours), no-show, or you delete the
+                        course after a student books:</strong> listing fee is <strong className="text-destructive">
+                        forfeited</strong> and 1 strike is added to your account.
+                      </li>
+                      <li>
+                        Editing, unpublishing before any bookings, or no students booking does <strong className="text-foreground">not</strong> trigger a refund — the fee covers the cost of listing your course on the platform.
+                      </li>
+                    </ul>
                   </div>
                   <label className="flex items-start gap-2 pt-2 border-t border-primary/20 cursor-pointer">
                     <input
