@@ -158,6 +158,7 @@ const App = () => (
             <Route path="/instructor/reviews" element={<Instructor><InstructorReviews /></Instructor>} />
             <Route path="/instructor/payment-methods" element={<Instructor><PaymentMethods /></Instructor>} />
             <Route path="/instructor/payouts" element={<Instructor><PayoutMethods /></Instructor>} />
+            <Route path="/instructor/payout-methods" element={<Instructor><PayoutMethods /></Instructor>} />
             <Route path="/instructor/subscription" element={<Instructor><InstructorSubscription /></Instructor>} />
 
             {/* Admin */}
