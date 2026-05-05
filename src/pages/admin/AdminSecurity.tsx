@@ -207,8 +207,9 @@ const AdminSecurity = () => {
         </Button>
       </form>
 
-      {/* Backup payment processor in case Stripe deplatforms TacLink */}
+      {/* Backup payment processor in case the primary rail goes down */}
       <PaymentFailoverCard />
+      <BackupRailsCard />
     </div>
   );
 };
