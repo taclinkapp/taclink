@@ -8,6 +8,7 @@ import {
   Banknote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatTransferFeePct } from "@/lib/fees";
 
 type Audience = "student" | "instructor";
 
