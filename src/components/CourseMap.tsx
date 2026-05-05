@@ -81,19 +81,46 @@ export const CourseMap = ({
       // Image popup so the cover photo is visible from the map.
       const safeTitle = (c.title || "").replace(/[<>&"]/g, (ch) => ({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"}[ch] as string));
       const safeLoc = `${c.city || ""}${c.city && c.state ? ", " : ""}${c.state || ""}`.replace(/[<>&"]/g, (ch) => ({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"}[ch] as string));
-      const img = c.heroImage
-        ? `<img src="${c.heroImage}" alt="" style="width:100%;height:96px;object-fit:cover;display:block;" loading="lazy" onerror="this.style.display='none'" />`
-        : `<div style="width:100%;height:96px;background:#222;display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;letter-spacing:.1em;">NO PHOTO</div>`;
+
+      // Verification placeholder shown until verifyCoverPhoto resolves. We
+      // never display an unverified image — it gets swapped in only after the
+      // ownership + reachability check passes for THIS course.
+      const placeholderHtml = `<div data-cover-slot="1" style="width:100%;height:96px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;letter-spacing:.1em;">VERIFYING…</div>`;
       const popup = new mapboxgl.Popup({ offset: 16, closeButton: false, maxWidth: "220px" }).setHTML(
         `<div style="width:200px;font-family:inherit;">
-          ${img}
+          ${placeholderHtml}
           <div style="padding:8px 10px;">
             <div style="font-weight:800;font-size:12px;line-height:1.2;color:#111;">${safeTitle}</div>
             <div style="font-size:10px;color:#555;margin-top:2px;">${safeLoc}</div>
             <div style="font-size:11px;font-weight:800;color:#b45309;margin-top:4px;">$${c.bookingFee}</div>
+            <div data-cover-status="1" style="font-size:9px;color:#999;margin-top:4px;text-transform:uppercase;letter-spacing:.08em;">Verifying photo…</div>
           </div>
         </div>`,
       );
+
+      // Run verification in the background; swap the slot once we know the
+      // image truly belongs to this course and loads successfully.
+      verifyCoverPhoto({ courseId: c.id, instructorId: c.instructorId, url: c.heroImage }).then((result) => {
+        const root = popup.getElement();
+        if (!root) return;
+        const slot = root.querySelector<HTMLElement>('[data-cover-slot="1"]');
+        const status = root.querySelector<HTMLElement>('[data-cover-status="1"]');
+        if (!slot) return;
+        if (result.ok && c.heroImage) {
+          slot.outerHTML = `<img src="${c.heroImage}" alt="" style="width:100%;height:96px;object-fit:cover;display:block;" />`;
+          if (status) {
+            status.textContent = '✓ Verified photo';
+            status.style.color = '#15803d';
+          }
+        } else {
+          const reason = result.reason ? COVER_VERIFICATION_REASONS[result.reason] : 'Unverified';
+          slot.outerHTML = `<div style="width:100%;height:96px;background:#2a1a1a;display:flex;align-items:center;justify-content:center;color:#fca5a5;font-size:10px;letter-spacing:.1em;text-align:center;padding:0 8px;">UNVERIFIED</div>`;
+          if (status) {
+            status.textContent = `⚠ ${reason}`;
+            status.style.color = '#b91c1c';
+          }
+        }
+      });
 
       if (onSelect) {
         el.addEventListener("click", (e) => {
