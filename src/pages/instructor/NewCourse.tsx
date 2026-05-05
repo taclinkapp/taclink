@@ -480,7 +480,7 @@ const NewCourse = () => {
           ))}
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Step {step + 1} of 4 · {STEPS[step]}</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Step {step + 1} of {STEPS.length} · {STEPS[step]}</div>
           <div className="text-[10px] text-muted-foreground">
             {draftStatus === 'saving' && 'Saving draft…'}
             {draftStatus === 'saved' && lastSavedAt && `Draft saved ${lastSavedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
