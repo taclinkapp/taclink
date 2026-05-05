@@ -39,15 +39,22 @@ const CourseDetail = () => {
       <div className="pb-28">
         <PageHeader back />
         {/* Hero */}
-        <div className="relative h-44 bg-gradient-to-br from-primary/20 via-surface to-background overflow-hidden">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'linear-gradient(hsl(0 0% 16% / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 16% / 0.5) 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }} />
-          <Crosshair className="absolute right-4 top-4 h-32 w-32 text-primary/10" strokeWidth={1} />
-          <div className="absolute bottom-4 left-4">
+        <div className="relative h-56 bg-surface overflow-hidden">
+          {course.heroImage ? (
+            <img
+              src={course.heroImage}
+              alt={course.title}
+              loading="eager"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-surface to-background" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+          <Crosshair className="absolute right-4 top-4 h-24 w-24 text-primary/20" strokeWidth={1} />
+          <div className="absolute bottom-4 left-4 right-4">
             <CategoryPill category={course.category} />
-            <h1 className="text-2xl font-black mt-2 max-w-[80%] leading-tight">{course.title}</h1>
+            <h1 className="text-2xl font-black mt-2 max-w-[80%] leading-tight drop-shadow-lg">{course.title}</h1>
           </div>
         </div>
 
