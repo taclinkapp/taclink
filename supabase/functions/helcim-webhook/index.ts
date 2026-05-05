@@ -213,7 +213,9 @@ Deno.serve(async (req) => {
     return await handleAdminRetry(req, { event_id: asJson.event_id, environment: env });
   }
 
-  const rawEnv = new URL(req.url).searchParams.get("env");
+  // Helcim doesn't allow query strings in webhook URLs, so default to "live"
+  // when no env param is present. Sandbox can still be forced via ?env=sandbox.
+  const rawEnv = new URL(req.url).searchParams.get("env") ?? "live";
   if (rawEnv !== "sandbox" && rawEnv !== "live") {
     console.error("Helcim webhook: invalid env query param:", rawEnv);
     return new Response(JSON.stringify({ received: true, ignored: "invalid env" }), {
