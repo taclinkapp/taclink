@@ -76,14 +76,36 @@ export const CourseMap = ({
       el.className =
         "group relative flex h-8 min-w-[2.25rem] items-center justify-center rounded-full border-2 border-background bg-primary px-2 text-[11px] font-black text-primary-foreground shadow-lg transition hover:scale-110";
       el.innerText = `$${c.bookingFee}`;
+
+      // Image popup so the cover photo is visible from the map.
+      const safeTitle = (c.title || "").replace(/[<>&"]/g, (ch) => ({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"}[ch] as string));
+      const safeLoc = `${c.city || ""}${c.city && c.state ? ", " : ""}${c.state || ""}`.replace(/[<>&"]/g, (ch) => ({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"}[ch] as string));
+      const img = c.heroImage
+        ? `<img src="${c.heroImage}" alt="" style="width:100%;height:96px;object-fit:cover;display:block;" loading="lazy" onerror="this.style.display='none'" />`
+        : `<div style="width:100%;height:96px;background:#222;display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;letter-spacing:.1em;">NO PHOTO</div>`;
+      const popup = new mapboxgl.Popup({ offset: 16, closeButton: false, maxWidth: "220px" }).setHTML(
+        `<div style="width:200px;font-family:inherit;">
+          ${img}
+          <div style="padding:8px 10px;">
+            <div style="font-weight:800;font-size:12px;line-height:1.2;color:#111;">${safeTitle}</div>
+            <div style="font-size:10px;color:#555;margin-top:2px;">${safeLoc}</div>
+            <div style="font-size:11px;font-weight:800;color:#b45309;margin-top:4px;">$${c.bookingFee}</div>
+          </div>
+        </div>`,
+      );
+
       if (onSelect) {
         el.addEventListener("click", (e) => {
           e.stopPropagation();
           onSelect(c);
         });
       }
+      el.addEventListener("mouseenter", () => popup.addTo(map));
+      el.addEventListener("mouseleave", () => popup.remove());
+
       const marker = new mapboxgl.Marker({ element: el })
         .setLngLat([c.lng, c.lat])
+        .setPopup(popup)
         .addTo(map);
       markersRef.current.push(marker);
     });
