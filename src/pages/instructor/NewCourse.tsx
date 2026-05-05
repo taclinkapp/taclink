@@ -41,6 +41,7 @@ const NewCourse = () => {
   const hasPM = !!profile?.payment_method_added;
   const subActive = profile?.subscription_status === 'active';
   const [connectActive, setConnectActive] = useState(false);
+  const [pmHint, setPmHint] = useState<{ brand: string | null; last4: string | null; method_type: string; handle: string | null } | null>(null);
   const { data: prelaunch } = usePrelaunch();
   const { roles } = useAuth() as any;
   const [isTestAccount, setIsTestAccount] = useState(false);
