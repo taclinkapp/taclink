@@ -684,7 +684,7 @@ const NewCourse = () => {
                       className="mt-0.5 h-4 w-4 accent-primary shrink-0"
                     />
                     <span className="text-[11px] leading-relaxed">
-                      I understand the <strong>{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> listing fee is <strong className="text-destructive">non-refundable</strong> and will be charged immediately when I publish{availableCredits > 0 ? ' (waived this time by your free credit)' : ''}.
+                      I understand the <strong>{fmt(computeListingFeeCents(Math.round(Number(price || 0) * 100)))}</strong> listing fee is charged immediately when I publish{availableCredits > 0 ? ' (waived this time by your free credit)' : ''}, is <strong className="text-success">released back</strong> if I cancel 48+ hours before start, and is <strong className="text-destructive">forfeited</strong> on late cancellation, no-show, or deletion after a booking.
                     </span>
                   </label>
                 </div>
