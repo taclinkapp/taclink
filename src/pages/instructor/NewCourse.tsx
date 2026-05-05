@@ -974,8 +974,8 @@ const NewCourse = () => {
 
         <div className="flex gap-2 pt-4">
           {step > 0 && <Button variant="outline" onClick={back} disabled={saving} className="flex-1 h-12 bg-card border-border font-semibold">Back</Button>}
-          <Button onClick={next} disabled={saving || (step === 3 && !isPrelaunch && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3
+          <Button onClick={next} disabled={saving || (step === 4 && !isPrelaunch && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 4
               ? 'Continue'
               : isPrelaunch
                 ? 'Save Draft'
