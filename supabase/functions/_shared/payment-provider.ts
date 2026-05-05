@@ -267,12 +267,10 @@ class HelcimProvider implements PaymentProvider {
         paymentType: "purchase",
         amount: input.amountCents / 100,
         currency: (input.currency ?? "usd").toUpperCase(),
-        customerCode: input.bookingId ?? input.userId ?? "anon",
-        invoiceNumber: input.bookingId ?? undefined,
         paymentMethod: "cc-ach",
         hasConvenienceFee: 0,
+        displayContactFields: 1,
         description: input.metadata?.productName ?? "TacLink charge",
-        customerRequest: input.customerEmail ? { email: input.customerEmail } : undefined,
       }),
     });
     if (!res.ok) {

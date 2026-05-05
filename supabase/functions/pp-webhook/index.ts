@@ -109,8 +109,6 @@ async function markEventStatus(
 
 // Helcim webhook payloads vary by event but consistently expose:
 //   data.id / data.transactionId — Helcim transaction id
-//   data.invoiceNumber — we set this to the bookingId at checkout time
-//   data.customerCode — fallback identifier
 //   data.amount — decimal dollars
 //   data.currency — ISO currency
 function pickTransactionId(d: any): string | null {
@@ -128,9 +126,8 @@ async function handleTransactionSuccess(payload: any, _env: HelcimEnv) {
 
   if (!txnId) throw new Error("transaction.success missing transactionId");
 
-  // Find booking: prefer invoiceNumber/customerCode (= bookingId we set in
-  // create-helcim-checkout), fall back to helcim_checkout_token if Helcim
-  // includes it on the payload.
+  // Find booking: prefer legacy invoiceNumber/customerCode if present,
+  // otherwise fall back to helcim_checkout_token if Helcim includes it.
   let booking: any = null;
   if (bookingId) {
     const { data: row } = await sb

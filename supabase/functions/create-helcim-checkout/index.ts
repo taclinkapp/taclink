@@ -35,26 +35,12 @@ interface HelcimInitializeResponse {
   secretToken: string;
 }
 
-const createHelcimInvoiceNumber = () => {
-  const timestamp = Date.now().toString();
-  const randomDigits = crypto.getRandomValues(new Uint32Array(1))[0]
-    .toString()
-    .padStart(10, "0")
-    .slice(0, 10);
-
-  return `${timestamp}${randomDigits}`.slice(0, 25);
-};
-
 async function initializeHelcimPay(opts: {
   apiToken: string;
   amountCents: number;
   currency: string;
-  bookingId: string;
-  customerEmail: string;
   description: string;
 }): Promise<HelcimInitializeResponse> {
-  const invoiceNumber = createHelcimInvoiceNumber();
-
   const res = await fetch(`${HELCIM_API_BASE}/helcim-pay/initialize`, {
     method: "POST",
     headers: {
@@ -66,11 +52,10 @@ async function initializeHelcimPay(opts: {
       paymentType: "purchase",
       amount: opts.amountCents / 100,
       currency: opts.currency.toUpperCase(),
-      invoiceNumber,
       paymentMethod: "cc-ach",
       hasConvenienceFee: 0,
+      displayContactFields: 1,
       description: opts.description,
-      ...(opts.customerEmail ? { customerRequest: { email: opts.customerEmail } } : {}),
     }),
   });
   if (!res.ok) {
@@ -151,8 +136,6 @@ Deno.serve(async (req) => {
         apiToken,
         amountCents: booking.online_total_cents,
         currency: "usd",
-        bookingId: booking.id,
-        customerEmail: user.email ?? "",
         description,
       });
       checkoutToken = init.checkoutToken;
