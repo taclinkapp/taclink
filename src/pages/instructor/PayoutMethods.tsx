@@ -29,7 +29,7 @@ const STATUS_META: Record<ConnectStatus, { label: string; tone: string; descript
   active: {
     label: "Payouts enabled",
     tone: "border-success/40 bg-success/5",
-    description: "Full course price will be transferred to your payout account after each completed course. TacLink keeps only the $25 platform fee.",
+    description: `Course price will be transferred to your payout account after each completed course. TacLink keeps the $25 platform fee, and the payout processor charges a flat ${formatTransferFeePct()} transfer fee on the course price (deducted from your payout).`,
   },
   restricted: {
     label: "Action required",
