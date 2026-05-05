@@ -302,6 +302,12 @@ const NewCourse = () => {
       if (!price || Number(price) < 5) return 'Price must be at least $5';
     }
     if (step === 3) {
+      if (!skipWaiver) {
+        if (!waiverContent.trim()) return 'Generate or paste your waiver, or check "Skip waiver for this course"';
+        if (!waiverLegalAck) return 'Please acknowledge the legal notice before continuing';
+      }
+    }
+    if (step === 4) {
       if (!skillLevel) return 'Skill level is required — go back to Basics and pick a level';
       if (!isPrelaunch && !feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
     }
@@ -311,7 +317,7 @@ const NewCourse = () => {
   const next = async () => {
     const err = validate();
     if (err) { toast.error(err); return; }
-    if (step < 3) { setStep(step + 1); return; }
+    if (step < 4) { setStep(step + 1); return; }
     if (!user) { toast.error('You must be signed in'); return; }
     // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
     // since nothing is being published or charged yet.
