@@ -28,6 +28,7 @@ type ErrorKind =
   | "modal_unavailable"  // script loaded but global hook missing
   | "timeout"            // user didn't complete the modal in time
   | "user_aborted"       // user dismissed the modal
+  | "payment_declined"   // processor declined the attempted card/bank payment
   | "unknown";
 
 interface ErrorState {
@@ -55,6 +56,10 @@ const ERROR_COPY: Record<ErrorKind, { title: string; help: string }> = {
   user_aborted: {
     title: "Payment cancelled",
     help: "You dismissed the secure payment window. Your booking is still pending — tap retry when you're ready to pay.",
+  },
+  payment_declined: {
+    title: "Payment declined",
+    help: "The payment processor declined that attempt. Your booking is still pending — check the card details or try another payment method.",
   },
   unknown: {
     title: "Something went wrong",
