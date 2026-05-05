@@ -286,9 +286,10 @@ const PaymentMethods = () => {
 
     if (card.method_type !== 'card') {
       const meta = ALT_META[card.method_type as AltType];
-      const v = editHandle.trim();
-      const err = meta.validate(v);
+      const raw = editHandle.trim();
+      const err = meta.validate(raw);
       if (err) { setEditErrors({ handle: err }); return; }
+      const v = normalizePayoutHandle(card.method_type as AltType, raw);
       const dup = cards.some((c) => c.id !== id && c.method_type === card.method_type && (c.handle ?? '').toLowerCase() === v.toLowerCase());
       if (dup) { setEditErrors({ handle: `That ${meta.label} account is already saved` }); return; }
       setEditSaving(true);
