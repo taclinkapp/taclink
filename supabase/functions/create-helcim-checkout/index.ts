@@ -52,7 +52,7 @@ async function initializeHelcimPay(opts: {
       paymentType: "purchase",
       amount: opts.amountCents / 100,
       currency: opts.currency.toUpperCase(),
-      paymentMethod: "cc-ach",
+      paymentMethod: "cc",
       hasConvenienceFee: 0,
       displayContactFields: 1,
       description: opts.description,
