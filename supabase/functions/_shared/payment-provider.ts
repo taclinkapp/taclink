@@ -267,7 +267,7 @@ class HelcimProvider implements PaymentProvider {
         paymentType: "purchase",
         amount: input.amountCents / 100,
         currency: (input.currency ?? "usd").toUpperCase(),
-        paymentMethod: "cc-ach",
+        paymentMethod: "cc",
         hasConvenienceFee: 0,
         displayContactFields: 1,
         description: input.metadata?.productName ?? "TacLink charge",

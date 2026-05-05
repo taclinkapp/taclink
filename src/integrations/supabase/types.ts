@@ -997,6 +997,56 @@ export type Database = {
         }
         Relationships: []
       }
+      helcim_checkout_sessions: {
+        Row: {
+          amount_cents: number
+          booking_id: string
+          checkout_token: string
+          confirmed_at: string | null
+          created_at: string
+          currency: string
+          helcim_transaction_id: string | null
+          id: string
+          raw_response: Json | null
+          secret_token: string
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          booking_id: string
+          checkout_token: string
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          helcim_transaction_id?: string | null
+          id?: string
+          raw_response?: Json | null
+          secret_token: string
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          booking_id?: string
+          checkout_token?: string
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          helcim_transaction_id?: string | null
+          id?: string
+          raw_response?: Json | null
+          secret_token?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helcim_checkout_sessions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       helcim_webhook_events: {
         Row: {
           attempt_count: number

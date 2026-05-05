@@ -52,7 +52,7 @@ async function initializeHelcimPay(opts: {
       paymentType: "purchase",
       amount: opts.amountCents / 100,
       currency: opts.currency.toUpperCase(),
-      paymentMethod: "cc-ach",
+      paymentMethod: "cc",
       hasConvenienceFee: 0,
       displayContactFields: 1,
       description: opts.description,
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    await supabase
+    const { error: updateErr } = await supabase
       .from("bookings")
       .update({
         helcim_checkout_token: checkoutToken,
@@ -160,10 +160,21 @@ Deno.serve(async (req) => {
         payment_provider: "helcim",
       })
       .eq("id", booking.id);
+    if (updateErr) throw updateErr;
+
+    const { error: sessionErr } = await supabase
+      .from("helcim_checkout_sessions")
+      .insert({
+        booking_id: booking.id,
+        checkout_token: checkoutToken,
+        secret_token: secretToken,
+        amount_cents: booking.online_total_cents,
+        currency: "USD",
+      });
+    if (sessionErr) throw sessionErr;
 
     return json({
       checkoutToken,
-      secretToken,
       bookingId: booking.id,
       amountCents: booking.online_total_cents,
       returnUrl,

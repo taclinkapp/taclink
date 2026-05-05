@@ -28,6 +28,7 @@ type ErrorKind =
   | "modal_unavailable"  // script loaded but global hook missing
   | "timeout"            // user didn't complete the modal in time
   | "user_aborted"       // user dismissed the modal
+  | "payment_declined"   // processor declined the attempted card/bank payment
   | "unknown";
 
 interface ErrorState {
@@ -55,6 +56,10 @@ const ERROR_COPY: Record<ErrorKind, { title: string; help: string }> = {
   user_aborted: {
     title: "Payment cancelled",
     help: "You dismissed the secure payment window. Your booking is still pending — tap retry when you're ready to pay.",
+  },
+  payment_declined: {
+    title: "Payment declined",
+    help: "The payment processor declined that attempt. Your booking is still pending — check the card details or try another payment method.",
   },
   unknown: {
     title: "Something went wrong",
@@ -138,17 +143,29 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
         throw new Error("modal_unavailable:appendHelcimPayIframe is undefined");
       }
 
-      const onMessage = (event: MessageEvent) => {
+      const checkoutToken = String(data.checkoutToken);
+      const onMessage = async (event: MessageEvent) => {
         const payload = event.data;
         if (!payload || typeof payload !== "object") return;
+        if (payload.eventName !== `helcim-pay-js-${checkoutToken}`) return;
         const status = payload.eventStatus ?? payload.status;
         if (status === "SUCCESS") {
           cleanup();
+          setPhase("loading");
+          const { error: confirmErr } = await supabase.functions.invoke(
+            "confirm-helcim-payment",
+            { body: { bookingId, checkoutToken, eventMessage: payload.eventMessage } },
+          );
+          if (confirmErr) {
+            setError({ kind: "init_failed", message: confirmErr.message });
+            setPhase("error");
+            return;
+          }
           window.location.href = returnUrl;
         } else if (status === "ABORTED") {
           cleanup();
-          setError({ kind: "user_aborted", message: "User dismissed the payment modal" });
-          setPhase("aborted");
+          setError({ kind: "payment_declined", message: String(payload.eventMessage ?? "Payment attempt was declined") });
+          setPhase("error");
         } else if (status === "HIDE") {
           // HIDE alone (without SUCCESS) typically means the user closed
           // the modal manually — Helcim emits ABORTED for that, but if we
@@ -182,6 +199,7 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
         "modal_unavailable",
         "timeout",
         "user_aborted",
+        "payment_declined",
       ];
       const kind = (known as string[]).includes(kindRaw) ? (kindRaw as ErrorKind) : "unknown";
       setError({ kind, message: rest.join(":").trim() || raw });
