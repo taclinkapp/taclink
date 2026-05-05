@@ -25,6 +25,9 @@ import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 import { AISuggestButton } from '@/components/instructor/AISuggestButton';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 import { AddressMapPreview } from '@/components/AddressMapPreview';
+import { generateCourseWaiver, type WaiverCriteria } from '@/lib/courseAI';
+import ReactMarkdown from 'react-markdown';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Waiver', 'Review'];
