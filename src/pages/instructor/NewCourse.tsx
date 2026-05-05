@@ -10,6 +10,7 @@ import { US_STATES } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { createCourse, uploadCoursePhoto, SKILL_LEVEL_LABELS, type SkillLevel } from '@/lib/courses';
+import { geocodeAddress } from '@/lib/geocode';
 import { COURSE_CATALOG, getCategoryTypes } from '@/lib/courseCatalog';
 import { supabase } from '@/integrations/supabase/client';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
