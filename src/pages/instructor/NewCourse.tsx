@@ -737,6 +737,22 @@ const NewCourse = () => {
                     <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
                   </div>
                 )}
+                {connectActive ? (
+                  <div className="tactical-card border-success/40 bg-success/10 p-3 flex items-center gap-2 text-xs">
+                    <Check className="h-4 w-4 text-success shrink-0" />
+                    <span className="text-foreground">
+                      {payoutHint
+                        ? <>Payout method: <strong className="text-foreground capitalize">{payoutHint.method_type} · {payoutHint.handle}</strong> (preferred). </>
+                        : <>Payout account connected. </>}
+                      <Link to="/instructor/payout-methods" className="text-primary underline">Change</Link>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
+                    <div className="font-bold text-destructive">Required to publish:</div>
+                    <Link to="/instructor/payout-methods" className="block text-primary underline">Set up a payout method →</Link>
+                  </div>
+                )}
               </>
             )}
           </>
