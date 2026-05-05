@@ -17,7 +17,7 @@ import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/f
 import { redeemFreeListingCredit, fetchPunchCardState } from '@/lib/punchCard';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2, Lightbulb } from 'lucide-react';
+import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2, Lightbulb, Sparkles, Scale, FileText, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
