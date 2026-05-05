@@ -6,7 +6,7 @@ import { CategoryPill } from '@/components/CategoryPill';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { Button } from '@/components/ui/button';
 import { CourseMap } from '@/components/CourseMap';
-import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, Lock } from 'lucide-react';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 
 const CourseDetail = () => {
@@ -73,14 +73,10 @@ const CourseDetail = () => {
                 <span>· 124 reviews</span>
               </div>
             </div>
-            <Button
-              onClick={() => nav(`/student/messages/${course.instructorId}?courseId=${course.id}`)}
-              variant="outline"
-              size="sm"
-              className="bg-card border-border text-xs gap-1.5"
-            >
-              <MessageSquare className="h-3.5 w-3.5" /> Message
-            </Button>
+            <div className="text-[10px] text-muted-foreground text-right max-w-[110px] leading-tight">
+              <Lock className="h-3 w-3 inline mr-1 text-primary" />
+              Messaging unlocks after booking
+            </div>
           </div>
         </div>
 
