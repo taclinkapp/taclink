@@ -6,7 +6,7 @@ import { CategoryPill } from '@/components/CategoryPill';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { Button } from '@/components/ui/button';
 import { CourseMap } from '@/components/CourseMap';
-import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, Lock } from 'lucide-react';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 
 const CourseDetail = () => {
