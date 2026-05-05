@@ -209,6 +209,45 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_payment_rails: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          credentials: Json
+          display_label: string
+          environment: string
+          id: string
+          notes: string | null
+          provider_key: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          credentials?: Json
+          display_label: string
+          environment?: string
+          id?: string
+          notes?: string | null
+          provider_key: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          credentials?: Json
+          display_label?: string
+          environment?: string
+          id?: string
+          notes?: string | null
+          provider_key?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_fees: {
         Row: {
           booking_id: string
