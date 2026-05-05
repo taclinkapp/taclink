@@ -59,7 +59,7 @@ const ERROR_COPY: Record<ErrorKind, { title: string; help: string }> = {
   },
   payment_declined: {
     title: "Payment declined",
-    help: "The payment processor declined that attempt. Your booking is still pending — check the card details or try another payment method.",
+    help: "The payment processor declined that attempt. In Helcim sandbox, use the exact test card, expiry, and CVV shown above — generic test cards like 5454545454545454 are declined.",
   },
   unknown: {
     title: "Something went wrong",
@@ -229,8 +229,9 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
         .maybeSingle();
       if (cancelled || !data) return false;
       const paid =
-        data.escrow_status === "held_in_escrow" ||
+        data.escrow_status === "held" ||
         data.escrow_status === "released" ||
+        data.deposit_status === "held_in_escrow" ||
         data.deposit_status === "confirmed";
       if (paid) {
         cleanup();
