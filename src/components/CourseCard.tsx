@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Course } from '@/lib/mockData';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { Calendar, Star, Heart } from 'lucide-react';
 
 export const CourseCard = ({ course }: { course: Course }) => {
   const isFull = course.spotsRemaining === 0;
+  const nav = useNavigate();
   return (
     <Link to={`/student/course/${course.id}`} className="block">
       <article className="tactical-card overflow-hidden hover:border-primary/40 transition group">
