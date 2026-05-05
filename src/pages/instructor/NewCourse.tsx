@@ -42,7 +42,11 @@ const NewCourse = () => {
   const subActive = profile?.subscription_status === 'active';
   const [connectActive, setConnectActive] = useState(false);
   const { data: prelaunch } = usePrelaunch();
-  const isPrelaunch = !!prelaunch?.enabled;
+  const { roles } = useAuth() as any;
+  const [isTestAccount, setIsTestAccount] = useState(false);
+  const isAdmin = Array.isArray(roles) && roles.includes('admin');
+  const prelaunchExempt = isAdmin || isTestAccount;
+  const isPrelaunch = !!prelaunch?.enabled && !prelaunchExempt;
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -55,6 +59,16 @@ const NewCourse = () => {
       .eq('id', user.id)
       .maybeSingle()
       .then(({ data }) => setConnectActive((data as any)?.stripe_connect_status === 'active'));
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('test_accounts')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setIsTestAccount(!!data));
   }, [user?.id]);
 
   // form state
