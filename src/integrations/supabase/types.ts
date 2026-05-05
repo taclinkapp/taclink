@@ -1776,6 +1776,7 @@ export type Database = {
           fallback_provider:
             | Database["public"]["Enums"]["payment_provider"]
             | null
+          helcim_configured: boolean
           id: boolean
           notes: string | null
           updated_at: string
@@ -1788,6 +1789,7 @@ export type Database = {
           fallback_provider?:
             | Database["public"]["Enums"]["payment_provider"]
             | null
+          helcim_configured?: boolean
           id?: boolean
           notes?: string | null
           updated_at?: string
@@ -1800,6 +1802,7 @@ export type Database = {
           fallback_provider?:
             | Database["public"]["Enums"]["payment_provider"]
             | null
+          helcim_configured?: boolean
           id?: boolean
           notes?: string | null
           updated_at?: string
