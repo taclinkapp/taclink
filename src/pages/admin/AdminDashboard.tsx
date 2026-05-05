@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { fmt } from '@/lib/fees';
+import { HelcimSandboxCardBanner } from '@/components/HelcimSandboxCardBanner';
 
 export const AdminHeader = ({
   title,
@@ -214,6 +215,9 @@ const AdminDashboard = () => {
     <>
       <AdminHeader title="Dashboard" subtitle="Platform overview — click any card for details" />
       <div className="p-4 sm:p-8">
+        <div className="mb-4 sm:mb-6">
+          <HelcimSandboxCardBanner compact />
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {cards.map((s) => (
             <button
