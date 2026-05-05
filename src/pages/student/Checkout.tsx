@@ -115,11 +115,29 @@ const Checkout = () => {
   const waiverReady = !waiver || (agreeWaiver && signedName.trim().length >= 3 && esignReady && minorReady);
   const canSubmit = !!user && !!course && agreeRisk && waiverReady && !submitting;
 
+  const findExistingBooking = async () => {
+    if (!user || !course) return null;
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('id, booked_at, cancellation_cutoff_hours, deposit_status')
+      .eq('student_id', user.id)
+      .eq('course_id', course.id)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  };
+
   const handleConfirm = async () => {
     if (!user) { toast.error('Please sign in to book'); return; }
     if (!course) return;
     setSubmitting(true);
     try {
+      const existingBooking = await findExistingBooking();
+      if (existingBooking) {
+        setBookingId(existingBooking.id);
+        return;
+      }
+
       // Create the booking record up-front in pending_payment state.
       // The payment webhook flips it to held_in_escrow once payment lands.
       const { data: booking, error: bErr } = await supabase
@@ -138,7 +156,16 @@ const Checkout = () => {
         })
         .select('id, booked_at, cancellation_cutoff_hours')
         .single();
-      if (bErr) throw bErr;
+      if (bErr) {
+        if (bErr.code === '23505' || /bookings_student_id_course_id_key/i.test(bErr.message ?? '')) {
+          const retryBooking = await findExistingBooking();
+          if (retryBooking) {
+            setBookingId(retryBooking.id);
+            return;
+          }
+        }
+        throw bErr;
+      }
 
       await supabase.from('booking_fees').insert({
         booking_id: booking.id,
