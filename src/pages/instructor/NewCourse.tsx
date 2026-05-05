@@ -63,10 +63,28 @@ const NewCourse = () => {
           supabase.from('instructor_payout_accounts').select('status').eq('instructor_id', user.id).eq('provider', 'helcim').maybeSingle(),
           supabase.from('instructor_payout_methods').select('method_type, handle, is_preferred').eq('instructor_id', user.id).order('is_preferred', { ascending: false }).limit(1),
         ]);
-        setConnectActive((acct as any)?.status === 'active' && Array.isArray(methods) && methods.length > 0);
+        const hasMethod = Array.isArray(methods) && methods.length > 0;
+        // For Helcim, having a saved payout method is sufficient to publish.
+        // Backfill the payout account row if it's missing so admin/edge views stay consistent.
+        if (hasMethod && (acct as any)?.status !== 'active') {
+          await supabase.from('instructor_payout_accounts').upsert({
+            instructor_id: user.id,
+            provider: 'helcim',
+            status: 'active',
+            payouts_enabled: true,
+            charges_enabled: true,
+          }, { onConflict: 'instructor_id,provider' });
+        }
+        setConnectActive(hasMethod);
         const m = (methods as any[])?.[0];
         setPayoutHint(m ? { method_type: m.method_type, handle: m.handle } : null);
       } else {
+        const { data } = await supabase.from('profiles').select('stripe_connect_status').eq('id', user.id).maybeSingle();
+        setConnectActive((data as any)?.stripe_connect_status === 'active');
+        setPayoutHint(null);
+      }
+    })();
+  }, [user?.id, activeProvider]);
         const { data } = await supabase.from('profiles').select('stripe_connect_status').eq('id', user.id).maybeSingle();
         setConnectActive((data as any)?.stripe_connect_status === 'active');
         setPayoutHint(null);
