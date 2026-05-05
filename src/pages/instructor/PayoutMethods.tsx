@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, ExternalLink, Loader2, ShieldCheck, AlertTriangle, Trash2 } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldCheck, AlertTriangle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { HowPaymentsWorkCard } from "@/components/HowPaymentsWorkCard";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
-import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
+
 import { formatTransferFeePct, computeTransferFeeCents, fmt } from "@/lib/fees";
 
 type ConnectStatus = "not_started" | "onboarding" | "active" | "restricted";
