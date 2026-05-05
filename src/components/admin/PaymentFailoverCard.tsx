@@ -142,7 +142,7 @@ export function PaymentFailoverCard() {
             <li>Generate an API token in Helcim dashboard → Integrations → API Access (with HelcimPay scope).</li>
             <li>Add <code className="font-mono">HELCIM_API_TOKEN</code> and <code className="font-mono">HELCIM_WEBHOOK_VERIFIER_TOKEN</code> as backend secrets.</li>
             <li>Implement the <code className="font-mono">HelcimProvider</code> adapter (stub already wired) — HelcimPay.js modal for checkout, ledger-based weekly ACH for instructor payouts.</li>
-            <li>Configure the Helcim webhook to point at <code className="font-mono">/functions/v1/helcim-webhook?env=live</code>.</li>
+            <li>Configure the webhook to point at <code className="font-mono">/functions/v1/pp-webhook?env=live</code> (note: provider name is intentionally omitted from the URL per processor policy).</li>
             <li>Flip <code className="font-mono">helcim_configured = true</code> in <code className="font-mono">payment_provider_settings</code>, then switch active processor here.</li>
           </ol>
         </div>

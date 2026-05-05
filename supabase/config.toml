@@ -75,7 +75,7 @@ verify_jwt = false
 [functions.create-portal-session]
 verify_jwt = false
 
-[functions.helcim-webhook]
+[functions.pp-webhook]
 verify_jwt = false
 
 [functions.create-helcim-checkout]

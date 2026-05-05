@@ -126,7 +126,7 @@ export default function AdminHelcimWebhooks() {
         .eq("id", ev.id);
       if (upErr) throw upErr;
 
-      const { error: invokeErr } = await supabase.functions.invoke("helcim-webhook", {
+      const { error: invokeErr } = await supabase.functions.invoke("pp-webhook", {
         body: { __retry: true, event_id: ev.event_id, environment: ev.environment },
       });
       if (invokeErr) throw invokeErr;
