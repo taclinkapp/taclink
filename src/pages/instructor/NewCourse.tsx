@@ -27,7 +27,7 @@ import { usePrelaunch } from '@/hooks/usePrelaunch';
 import { AddressMapPreview } from '@/components/AddressMapPreview';
 
 
-const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
+const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Waiver', 'Review'];
 
 const durationMinutesFromTimes = (date: string, start: string, end: string): number | undefined => {
   if (!date || !start || !end) return undefined;
