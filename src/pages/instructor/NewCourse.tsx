@@ -710,7 +710,12 @@ const NewCourse = () => {
                   <div className="tactical-card border-success/40 bg-success/10 p-3 flex items-center gap-2 text-xs">
                     <Check className="h-4 w-4 text-success shrink-0" />
                     <span className="text-foreground">
-                      Payment method on file. <Link to="/instructor/payment-methods" className="text-primary underline">Manage</Link>
+                      {pmHint && pmHint.method_type === 'card' && pmHint.last4
+                        ? <>Payment method: <strong className="text-foreground">{pmHint.brand || 'Card'} •••• {pmHint.last4}</strong>. </>
+                        : pmHint && pmHint.handle
+                          ? <>Payment method: <strong className="text-foreground">{pmHint.method_type} · {pmHint.handle}</strong>. </>
+                          : <>Payment method on file. </>}
+                      <Link to="/instructor/payment-methods" className="text-primary underline">Manage</Link>
                     </span>
                   </div>
                 )}
