@@ -54,7 +54,7 @@ async function initializeHelcimPay(opts: {
       paymentType: "purchase",
       amount: opts.amountCents / 100,
       currency: opts.currency.toUpperCase(),
-      invoiceNumber: opts.bookingId,
+      invoiceNumber: `B${opts.bookingId.replace(/-/g, "").slice(0, 18)}${Date.now().toString(36).slice(-4)}`.slice(0, 25),
       paymentMethod: "cc-ach",
       hasConvenienceFee: 0,
       description: opts.description,
