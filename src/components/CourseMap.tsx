@@ -4,6 +4,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import type { Course } from "@/lib/mockData";
 import { Map as MapIcon, Loader2 } from "lucide-react";
+import { verifyCoverPhoto, COVER_VERIFICATION_REASONS } from "@/lib/coverPhotoVerification";
 
 type Props = {
   courses: Course[];
