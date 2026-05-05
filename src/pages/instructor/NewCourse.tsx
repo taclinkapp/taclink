@@ -718,6 +718,131 @@ const NewCourse = () => {
         )}
         {step === 3 && (
           <>
+            {/* Legal disclaimer banner — top of waiver step */}
+            <div className="tactical-card border-amber-500/40 bg-amber-500/10 p-4">
+              <div className="flex items-start gap-2 mb-2">
+                <Scale className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-500">
+                  Not Legal Counsel
+                </div>
+              </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                TacLink is <strong className="text-foreground">not a law firm</strong> and does not provide legal advice. AI-generated waivers are a <strong className="text-foreground">starting draft only</strong>. Liability rules vary by state and discipline — you must have your final waiver reviewed by a <strong className="text-foreground">licensed attorney in your state</strong> before relying on it. By using this generator, you accept that:
+              </p>
+              <ul className="mt-1.5 ml-4 text-[11px] text-muted-foreground list-disc space-y-0.5">
+                <li>The waiver is between <strong className="text-foreground">you and the student</strong>; TacLink is only the record-keeper.</li>
+                <li>TacLink <strong className="text-foreground">assumes no liability</strong> for the waiver's content, enforceability, or compliance with local law.</li>
+                <li>You are solely responsible for the final published text.</li>
+              </ul>
+            </div>
+
+            <Field label="Waiver Title">
+              <Input
+                value={waiverTitle}
+                onChange={(e) => setWaiverTitle(e.target.value)}
+                className="bg-card border-border h-11"
+                placeholder="Liability Waiver & Assumption of Risk"
+                disabled={skipWaiver}
+              />
+            </Field>
+
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Tailoring criteria — check what applies to this course
+              </Label>
+              <div className={cn("mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2", skipWaiver && "opacity-40 pointer-events-none")}>
+                {[
+                  ['liveFire', 'Live fire (real ammunition)'],
+                  ['forceOnForce', 'Force-on-force / Simunitions'],
+                  ['combatives', 'Hands-on combatives / grappling'],
+                  ['vehicleBased', 'Vehicle-based drills'],
+                  ['lowLight', 'Low-light / night ops'],
+                  ['medicalRisk', 'Realistic medical scenarios'],
+                  ['minorsAllowed', 'Minors allowed (parental co-sign)'],
+                  ['mediaRelease', 'Photo / video may be captured'],
+                  ['offsiteTravel', 'Off-site travel during course'],
+                  ['instructorGear', 'Instructor-provided firearms / gear'],
+                  ['physicalExertion', 'High physical exertion'],
+                ].map(([key, label]) => (
+                  <label
+                    key={key}
+                    className="flex items-start gap-2 rounded-md border border-border bg-card p-2.5 text-[12px] cursor-pointer hover:border-primary/50 transition"
+                  >
+                    <Checkbox
+                      checked={!!waiverCriteria[key as keyof WaiverCriteria]}
+                      onCheckedChange={() => toggleCriterion(key as keyof WaiverCriteria)}
+                      className="mt-0.5"
+                    />
+                    <span className="leading-snug">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <Field label="Anything else the waiver should mention? (optional)">
+              <Textarea
+                value={waiverNotes}
+                onChange={(e) => setWaiverNotes(e.target.value)}
+                placeholder="e.g. specific drills, range rules, prerequisites, alcohol/drug policy…"
+                className="bg-card border-border min-h-20"
+                disabled={skipWaiver}
+              />
+            </Field>
+
+            <Button
+              type="button"
+              onClick={generateWaiver}
+              disabled={waiverGenerating || skipWaiver}
+              className="w-full h-11 bg-primary text-primary-foreground font-bold"
+            >
+              {waiverGenerating
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
+                : <><Sparkles className="h-4 w-4 mr-2" /> {waiverContent ? 'Regenerate with AI' : 'Generate waiver with AI'}</>}
+            </Button>
+
+            {waiverContent && !skipWaiver && (
+              <>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Draft (edit freely — markdown)
+                  </Label>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setWaiverPreview((p) => !p)} className="h-7 text-[11px]">
+                    <FileText className="h-3 w-3 mr-1" /> {waiverPreview ? 'Edit' : 'Preview'}
+                  </Button>
+                </div>
+                {waiverPreview ? (
+                  <div className="prose prose-sm max-w-none border border-border rounded-md p-3 bg-card text-xs max-h-80 overflow-y-auto">
+                    <h3>{waiverTitle}</h3>
+                    <ReactMarkdown>{waiverContent}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <Textarea
+                    value={waiverContent}
+                    onChange={(e) => setWaiverContent(e.target.value)}
+                    className="bg-card border-border font-mono text-xs min-h-72"
+                  />
+                )}
+
+                <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border border-amber-500/40 bg-amber-500/5">
+                  <Checkbox checked={waiverLegalAck} onCheckedChange={(v) => setWaiverLegalAck(!!v)} className="mt-0.5" />
+                  <span className="text-[11px] leading-relaxed text-muted-foreground">
+                    <strong className="text-foreground">I confirm</strong> that I will have this waiver reviewed by a licensed attorney in my state before relying on it, and I accept that TacLink provides no legal advice and assumes no liability for the waiver's content or enforceability.
+                  </span>
+                </label>
+              </>
+            )}
+
+            <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border border-border bg-card">
+              <Checkbox checked={skipWaiver} onCheckedChange={(v) => { setSkipWaiver(!!v); if (v) setWaiverLegalAck(false); }} className="mt-0.5" />
+              <span className="text-[11px] leading-relaxed text-muted-foreground">
+                Skip waiver for this course — students will not be required to e-sign before booking. <span className="block text-amber-600 mt-0.5"><AlertTriangle className="inline h-3 w-3 mr-1" />Strongly discouraged for any live-fire or contact training.</span>
+              </span>
+            </label>
+          </>
+        )}
+
+        {step === 4 && (
+          <>
             <div className="tactical-card p-5 space-y-3">
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Summary</div>
               <h2 className="font-bold text-lg">{title || 'Untitled course'}</h2>
