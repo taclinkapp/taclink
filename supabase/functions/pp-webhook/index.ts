@@ -107,20 +107,236 @@ async function markEventStatus(
     .eq("event_id", eventId);
 }
 
-async function handleTransactionSuccess(_payload: any, _env: HelcimEnv) {
-  // Phase 2: lookup booking by helcim_checkout_token, flip
-  // deposit_status -> held_in_escrow, set helcim_transaction_id.
-  throw new Error("Helcim transaction.success handler not yet implemented");
+// Helcim webhook payloads vary by event but consistently expose:
+//   data.id / data.transactionId — Helcim transaction id
+//   data.invoiceNumber — we set this to the bookingId at checkout time
+//   data.customerCode — fallback identifier
+//   data.amount — decimal dollars
+//   data.currency — ISO currency
+function pickTransactionId(d: any): string | null {
+  return d?.transactionId ?? d?.id ?? d?.transaction?.id ?? null;
+}
+function pickBookingId(d: any): string | null {
+  return d?.invoiceNumber ?? d?.invoice?.invoiceNumber ?? d?.customerCode ?? null;
 }
 
-async function handleTransactionRefunded(_payload: any, _env: HelcimEnv) {
-  // Phase 2: mark refund row as issued, reverse instructor_ledger entry.
-  throw new Error("Helcim transaction.refunded handler not yet implemented");
+async function handleTransactionSuccess(payload: any, _env: HelcimEnv) {
+  const sb = getSupabase();
+  const data = payload ?? {};
+  const txnId = pickTransactionId(data);
+  const bookingId = pickBookingId(data);
+
+  if (!txnId) throw new Error("transaction.success missing transactionId");
+
+  // Find booking: prefer invoiceNumber/customerCode (= bookingId we set in
+  // create-helcim-checkout), fall back to helcim_checkout_token if Helcim
+  // includes it on the payload.
+  let booking: any = null;
+  if (bookingId) {
+    const { data: row } = await sb
+      .from("bookings")
+      .select("id, course_id, course_price_cents, instructor_payout_cents, escrow_status, deposit_status")
+      .eq("id", bookingId)
+      .maybeSingle();
+    booking = row;
+  }
+  if (!booking && data?.checkoutToken) {
+    const { data: row } = await sb
+      .from("bookings")
+      .select("id, course_id, course_price_cents, instructor_payout_cents, escrow_status, deposit_status")
+      .eq("helcim_checkout_token", data.checkoutToken)
+      .maybeSingle();
+    booking = row;
+  }
+  if (!booking) {
+    throw new Error(`No booking match for Helcim transaction ${txnId} (bookingId=${bookingId ?? "?"})`);
+  }
+
+  // Only flip if not already held/released — webhooks may retry.
+  if (booking.escrow_status !== "held" && booking.escrow_status !== "released") {
+    const { error: updErr } = await sb
+      .from("bookings")
+      .update({
+        helcim_transaction_id: String(txnId),
+        deposit_status: "held_in_escrow",
+        escrow_status: "held",
+        escrow_held_at: new Date().toISOString(),
+        payment_provider: "helcim",
+      })
+      .eq("id", booking.id);
+    if (updErr) throw updErr;
+  } else {
+    // Still record the txn id if missing.
+    await sb.from("bookings").update({ helcim_transaction_id: String(txnId) })
+      .eq("id", booking.id).is("helcim_transaction_id", null);
+  }
+
+  // Record instructor's owed balance (Helcim has no marketplace split).
+  // Available 24h after course end (release-escrow-deposits batch picks it up).
+  const { data: course } = await sb
+    .from("courses")
+    .select("instructor_id, ends_at, starts_at")
+    .eq("id", booking.course_id)
+    .maybeSingle();
+
+  const owedCents = booking.instructor_payout_cents > 0
+    ? booking.instructor_payout_cents
+    : booking.course_price_cents;
+
+  if (course?.instructor_id && owedCents > 0) {
+    const endsAt = course.ends_at ?? course.starts_at;
+    const availableAt = endsAt
+      ? new Date(new Date(endsAt).getTime() + 24 * 3600 * 1000).toISOString()
+      : null;
+
+    // Upsert-ish: insert only if no 'owed' entry exists for this booking.
+    const { data: existing } = await sb
+      .from("instructor_ledger")
+      .select("id")
+      .eq("booking_id", booking.id)
+      .eq("entry_type", "owed")
+      .maybeSingle();
+    if (!existing) {
+      await sb.from("instructor_ledger").insert({
+        instructor_id: course.instructor_id,
+        booking_id: booking.id,
+        provider: "helcim",
+        entry_type: "owed",
+        amount_cents: owedCents,
+        currency: (data.currency ?? "usd").toLowerCase(),
+        available_at: availableAt,
+        notes: `Helcim transaction ${txnId}`,
+      });
+    }
+  }
+
+  await markEventStatus(String(payload?.eventId ?? ""), "succeeded", {
+    helcim_transaction_id: String(txnId),
+    booking_id: booking.id,
+  }).catch(() => { /* eventId stamping handled by outer flow */ });
 }
 
-async function handleSubscriptionEvent(_payload: any, _env: HelcimEnv) {
-  // Phase 2: upsert subscriptions row keyed by helcim_subscription_id.
-  throw new Error("Helcim subscription.* handler not yet implemented");
+async function handleTransactionRefunded(payload: any, _env: HelcimEnv) {
+  const sb = getSupabase();
+  const data = payload ?? {};
+  const txnId = pickTransactionId(data);
+  const originalTxnId = data?.originalTransactionId ?? data?.referenceTransactionId ?? null;
+  const refundAmountCents = Math.round(Number(data?.amount ?? 0) * 100);
+
+  if (!txnId && !originalTxnId) {
+    throw new Error("transaction.refunded missing transaction reference");
+  }
+
+  // Find the booking by either the refund txn id (if we recorded it) or the
+  // original charge id we stored at success time.
+  const lookupId = originalTxnId ?? txnId;
+  const { data: booking } = await sb
+    .from("bookings")
+    .select("id, course_id, escrow_status")
+    .eq("helcim_transaction_id", String(lookupId))
+    .maybeSingle();
+
+  if (!booking) {
+    throw new Error(`No booking match for Helcim refund (txn=${txnId}, orig=${originalTxnId})`);
+  }
+
+  // Mark any matching pending refund row as issued, or insert a record if
+  // the refund originated outside our app (manual Helcim dashboard refund).
+  const { data: pending } = await sb
+    .from("refunds")
+    .select("id, amount_cents, status")
+    .eq("booking_id", booking.id)
+    .in("status", ["issued", "failed"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (pending) {
+    await sb.from("refunds").update({
+      status: "issued",
+      external_reference: String(txnId),
+      stripe_refund_status: "succeeded",
+    }).eq("id", pending.id);
+  }
+
+  // Reverse the instructor's owed ledger entry (full or partial).
+  const { data: owedRow } = await sb
+    .from("instructor_ledger")
+    .select("id, instructor_id, amount_cents, currency")
+    .eq("booking_id", booking.id)
+    .eq("entry_type", "owed")
+    .maybeSingle();
+
+  if (owedRow && refundAmountCents > 0) {
+    const reverseCents = Math.min(refundAmountCents, owedRow.amount_cents);
+    await sb.from("instructor_ledger").insert({
+      instructor_id: owedRow.instructor_id,
+      booking_id: booking.id,
+      provider: "helcim",
+      entry_type: "reversed",
+      amount_cents: reverseCents,
+      currency: owedRow.currency,
+      notes: `Reversal for Helcim refund ${txnId}`,
+    });
+  }
+
+  // Update booking escrow state.
+  if (booking.escrow_status === "held") {
+    await sb.from("bookings").update({
+      escrow_status: "refunded",
+      deposit_status: "refunded",
+    }).eq("id", booking.id);
+  }
+}
+
+async function handleSubscriptionEvent(payload: any, _env: HelcimEnv) {
+  const sb = getSupabase();
+  const data = payload ?? {};
+  const subId = data?.subscriptionId ?? data?.id;
+  const customerCode = data?.customerCode;
+  const status = (data?.status ?? "active").toLowerCase();
+
+  if (!subId) throw new Error("subscription event missing subscriptionId");
+
+  // customerCode in our checkout = userId (set in create-helcim-checkout for
+  // future subscription support). For now, only update if a row already
+  // exists keyed by helcim_subscription_id.
+  const periodEnd = data?.currentPeriodEnd ?? data?.nextBillingDate ?? null;
+  const cancelAtEnd = !!(data?.cancelAtPeriodEnd ?? data?.cancel_at_period_end);
+
+  const { data: existing } = await sb
+    .from("subscriptions")
+    .select("id, user_id")
+    .eq("helcim_subscription_id", String(subId))
+    .maybeSingle();
+
+  if (existing) {
+    await sb.from("subscriptions").update({
+      status,
+      current_period_end: periodEnd ? new Date(periodEnd).toISOString() : null,
+      cancel_at_period_end: cancelAtEnd,
+    }).eq("id", existing.id);
+    return;
+  }
+
+  // No existing row — only insert if we can resolve user_id from customerCode
+  // (which create-helcim-subscription-checkout will set to the user uuid).
+  if (customerCode && /^[0-9a-f-]{36}$/i.test(String(customerCode))) {
+    await sb.from("subscriptions").insert({
+      user_id: String(customerCode),
+      helcim_subscription_id: String(subId),
+      stripe_subscription_id: `helcim_${subId}`,
+      stripe_customer_id: `helcim_${customerCode}`,
+      product_id: data?.productId ?? "helcim_unknown",
+      price_id: data?.priceId ?? "helcim_unknown",
+      status,
+      current_period_end: periodEnd ? new Date(periodEnd).toISOString() : null,
+      cancel_at_period_end: cancelAtEnd,
+      payment_provider: "helcim",
+    });
+  } else {
+    console.warn("subscription event with no resolvable user_id", subId);
+  }
 }
 
 async function dispatch(eventType: string, data: any, env: HelcimEnv) {
