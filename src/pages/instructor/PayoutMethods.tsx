@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { HowPaymentsWorkCard } from "@/components/HowPaymentsWorkCard";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { ALT_PAYOUT_META, validatePayoutHandle, normalizePayoutHandle, type AltPayoutType } from "@/lib/payoutHandleValidation";
 
 import { formatTransferFeePct, computeTransferFeeCents, fmt } from "@/lib/fees";
 
