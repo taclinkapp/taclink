@@ -184,9 +184,10 @@ const PaymentMethods = () => {
 
     if (addType !== 'card') {
       const meta = ALT_META[addType];
-      const handleVal = altHandle.trim();
-      const err = meta.validate(handleVal);
+      const raw = altHandle.trim();
+      const err = meta.validate(raw);
       if (err) { setErrors({ handle: err }); toast.error(err); return; }
+      const handleVal = normalizePayoutHandle(addType, raw);
       const dup = cards.some((c) => c.method_type === addType && (c.handle ?? '').toLowerCase() === handleVal.toLowerCase());
       if (dup) {
         const msg = `That ${meta.label} account is already saved`;
