@@ -42,7 +42,11 @@ const NewCourse = () => {
   const subActive = profile?.subscription_status === 'active';
   const [connectActive, setConnectActive] = useState(false);
   const { data: prelaunch } = usePrelaunch();
-  const isPrelaunch = !!prelaunch?.enabled;
+  const { roles } = useAuth() as any;
+  const [isTestAccount, setIsTestAccount] = useState(false);
+  const isAdmin = Array.isArray(roles) && roles.includes('admin');
+  const prelaunchExempt = isAdmin || isTestAccount;
+  const isPrelaunch = !!prelaunch?.enabled && !prelaunchExempt;
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
