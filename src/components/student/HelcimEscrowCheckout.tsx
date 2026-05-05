@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, AlertTriangle, RotateCcw, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { isBookingPaymentConfirmed } from "@/lib/helcimPayment";
 
 interface Props {
   bookingId: string;
@@ -228,12 +229,7 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
         .eq("id", bookingId)
         .maybeSingle();
       if (cancelled || !data) return false;
-      const paid =
-        data.escrow_status === "held" ||
-        data.escrow_status === "released" ||
-        data.deposit_status === "held_in_escrow" ||
-        data.deposit_status === "confirmed";
-      if (paid) {
+      if (isBookingPaymentConfirmed(data)) {
         cleanup();
         window.location.href = returnUrl;
         return true;
