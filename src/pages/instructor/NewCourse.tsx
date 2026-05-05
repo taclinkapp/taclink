@@ -24,6 +24,7 @@ import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 import { AISuggestButton } from '@/components/instructor/AISuggestButton';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 import { AddressMapPreview } from '@/components/AddressMapPreview';
+import { useActivePaymentProvider } from '@/hooks/useActivePaymentProvider';
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
 
