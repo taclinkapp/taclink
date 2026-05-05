@@ -17,7 +17,7 @@ import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/f
 import { redeemFreeListingCredit, fetchPunchCardState } from '@/lib/punchCard';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2, Lightbulb } from 'lucide-react';
+import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2, Lightbulb, Sparkles, Scale, FileText, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
@@ -25,9 +25,12 @@ import { ContactInfoWarning } from '@/components/ContactInfoWarning';
 import { AISuggestButton } from '@/components/instructor/AISuggestButton';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 import { AddressMapPreview } from '@/components/AddressMapPreview';
+import { generateCourseWaiver, type WaiverCriteria } from '@/lib/courseAI';
+import ReactMarkdown from 'react-markdown';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
-const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Review'];
+const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Waiver', 'Review'];
 
 const durationMinutesFromTimes = (date: string, start: string, end: string): number | undefined => {
   if (!date || !start || !end) return undefined;
@@ -122,6 +125,43 @@ const NewCourse = () => {
   const [price, setPrice] = useState('');
   const [feeAck, setFeeAck] = useState(false);
   const [availableCredits, setAvailableCredits] = useState(0);
+
+  // Waiver step state
+  const [waiverCriteria, setWaiverCriteria] = useState<WaiverCriteria>({});
+  const [waiverNotes, setWaiverNotes] = useState('');
+  const [waiverContent, setWaiverContent] = useState('');
+  const [waiverTitle, setWaiverTitle] = useState('Liability Waiver & Assumption of Risk');
+  const [waiverGenerating, setWaiverGenerating] = useState(false);
+  const [waiverLegalAck, setWaiverLegalAck] = useState(false);
+  const [waiverPreview, setWaiverPreview] = useState(false);
+  const [skipWaiver, setSkipWaiver] = useState(false);
+
+  const toggleCriterion = (k: keyof WaiverCriteria) =>
+    setWaiverCriteria((p) => ({ ...p, [k]: !p[k] }));
+
+  const generateWaiver = async () => {
+    setWaiverGenerating(true);
+    try {
+      const draft = await generateCourseWaiver(
+        {
+          title: title.trim() || undefined,
+          category: category || undefined,
+          description: description.trim() || undefined,
+          duration_minutes: durationMinutesFromTimes(date, startTime, endTime),
+          city: city || undefined,
+          state: state || undefined,
+        },
+        { ...waiverCriteria, customNotes: waiverNotes },
+      );
+      setWaiverContent(draft);
+      setWaiverPreview(false);
+      toast.success('Draft ready — review, edit, then continue.');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'AI generation failed');
+    } finally {
+      setWaiverGenerating(false);
+    }
+  };
 
   useEffect(() => {
     if (!user || !subActive) return;
@@ -262,6 +302,12 @@ const NewCourse = () => {
       if (!price || Number(price) < 5) return 'Price must be at least $5';
     }
     if (step === 3) {
+      if (!skipWaiver) {
+        if (!waiverContent.trim()) return 'Generate or paste your waiver, or check "Skip waiver for this course"';
+        if (!waiverLegalAck) return 'Please acknowledge the legal notice before continuing';
+      }
+    }
+    if (step === 4) {
       if (!skillLevel) return 'Skill level is required — go back to Basics and pick a level';
       if (!isPrelaunch && !feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
     }
@@ -271,7 +317,7 @@ const NewCourse = () => {
   const next = async () => {
     const err = validate();
     if (err) { toast.error(err); return; }
-    if (step < 3) { setStep(step + 1); return; }
+    if (step < 4) { setStep(step + 1); return; }
     if (!user) { toast.error('You must be signed in'); return; }
     // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
     // since nothing is being published or charged yet.
@@ -358,7 +404,22 @@ const NewCourse = () => {
         }).catch(() => {});
       }
 
-      // Pre-launch: don't charge a listing fee — the course is saved as a
+      // Persist the waiver tied to this course (published so students must e-sign at checkout).
+      if (!skipWaiver && waiverContent.trim()) {
+        const { error: wErr } = await supabase.from('course_waivers').insert({
+          course_id: created.id,
+          title: waiverTitle.trim() || 'Liability Waiver & Assumption of Risk',
+          content: waiverContent.trim(),
+          published: true,
+          ai_generated: true,
+          ai_model: 'google/gemini-3-flash-preview',
+        });
+        if (wErr) {
+          console.error('waiver insert failed', wErr);
+          toast.warning('Course saved, but the waiver did not attach — open the course to add it.');
+        }
+      }
+
       // draft and can't go live until the platform launches.
       if (isPrelaunch) {
         qc.invalidateQueries({ queryKey: ['courses'] });
@@ -419,7 +480,7 @@ const NewCourse = () => {
           ))}
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Step {step + 1} of 4 · {STEPS[step]}</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Step {step + 1} of {STEPS.length} · {STEPS[step]}</div>
           <div className="text-[10px] text-muted-foreground">
             {draftStatus === 'saving' && 'Saving draft…'}
             {draftStatus === 'saved' && lastSavedAt && `Draft saved ${lastSavedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
@@ -657,6 +718,131 @@ const NewCourse = () => {
         )}
         {step === 3 && (
           <>
+            {/* Legal disclaimer banner — top of waiver step */}
+            <div className="tactical-card border-amber-500/40 bg-amber-500/10 p-4">
+              <div className="flex items-start gap-2 mb-2">
+                <Scale className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-500">
+                  Not Legal Counsel
+                </div>
+              </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                TacLink is <strong className="text-foreground">not a law firm</strong> and does not provide legal advice. AI-generated waivers are a <strong className="text-foreground">starting draft only</strong>. Liability rules vary by state and discipline — you must have your final waiver reviewed by a <strong className="text-foreground">licensed attorney in your state</strong> before relying on it. By using this generator, you accept that:
+              </p>
+              <ul className="mt-1.5 ml-4 text-[11px] text-muted-foreground list-disc space-y-0.5">
+                <li>The waiver is between <strong className="text-foreground">you and the student</strong>; TacLink is only the record-keeper.</li>
+                <li>TacLink <strong className="text-foreground">assumes no liability</strong> for the waiver's content, enforceability, or compliance with local law.</li>
+                <li>You are solely responsible for the final published text.</li>
+              </ul>
+            </div>
+
+            <Field label="Waiver Title">
+              <Input
+                value={waiverTitle}
+                onChange={(e) => setWaiverTitle(e.target.value)}
+                className="bg-card border-border h-11"
+                placeholder="Liability Waiver & Assumption of Risk"
+                disabled={skipWaiver}
+              />
+            </Field>
+
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Tailoring criteria — check what applies to this course
+              </Label>
+              <div className={cn("mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2", skipWaiver && "opacity-40 pointer-events-none")}>
+                {[
+                  ['liveFire', 'Live fire (real ammunition)'],
+                  ['forceOnForce', 'Force-on-force / Simunitions'],
+                  ['combatives', 'Hands-on combatives / grappling'],
+                  ['vehicleBased', 'Vehicle-based drills'],
+                  ['lowLight', 'Low-light / night ops'],
+                  ['medicalRisk', 'Realistic medical scenarios'],
+                  ['minorsAllowed', 'Minors allowed (parental co-sign)'],
+                  ['mediaRelease', 'Photo / video may be captured'],
+                  ['offsiteTravel', 'Off-site travel during course'],
+                  ['instructorGear', 'Instructor-provided firearms / gear'],
+                  ['physicalExertion', 'High physical exertion'],
+                ].map(([key, label]) => (
+                  <label
+                    key={key}
+                    className="flex items-start gap-2 rounded-md border border-border bg-card p-2.5 text-[12px] cursor-pointer hover:border-primary/50 transition"
+                  >
+                    <Checkbox
+                      checked={!!waiverCriteria[key as keyof WaiverCriteria]}
+                      onCheckedChange={() => toggleCriterion(key as keyof WaiverCriteria)}
+                      className="mt-0.5"
+                    />
+                    <span className="leading-snug">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <Field label="Anything else the waiver should mention? (optional)">
+              <Textarea
+                value={waiverNotes}
+                onChange={(e) => setWaiverNotes(e.target.value)}
+                placeholder="e.g. specific drills, range rules, prerequisites, alcohol/drug policy…"
+                className="bg-card border-border min-h-20"
+                disabled={skipWaiver}
+              />
+            </Field>
+
+            <Button
+              type="button"
+              onClick={generateWaiver}
+              disabled={waiverGenerating || skipWaiver}
+              className="w-full h-11 bg-primary text-primary-foreground font-bold"
+            >
+              {waiverGenerating
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
+                : <><Sparkles className="h-4 w-4 mr-2" /> {waiverContent ? 'Regenerate with AI' : 'Generate waiver with AI'}</>}
+            </Button>
+
+            {waiverContent && !skipWaiver && (
+              <>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Draft (edit freely — markdown)
+                  </Label>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setWaiverPreview((p) => !p)} className="h-7 text-[11px]">
+                    <FileText className="h-3 w-3 mr-1" /> {waiverPreview ? 'Edit' : 'Preview'}
+                  </Button>
+                </div>
+                {waiverPreview ? (
+                  <div className="prose prose-sm max-w-none border border-border rounded-md p-3 bg-card text-xs max-h-80 overflow-y-auto">
+                    <h3>{waiverTitle}</h3>
+                    <ReactMarkdown>{waiverContent}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <Textarea
+                    value={waiverContent}
+                    onChange={(e) => setWaiverContent(e.target.value)}
+                    className="bg-card border-border font-mono text-xs min-h-72"
+                  />
+                )}
+
+                <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border border-amber-500/40 bg-amber-500/5">
+                  <Checkbox checked={waiverLegalAck} onCheckedChange={(v) => setWaiverLegalAck(!!v)} className="mt-0.5" />
+                  <span className="text-[11px] leading-relaxed text-muted-foreground">
+                    <strong className="text-foreground">I confirm</strong> that I will have this waiver reviewed by a licensed attorney in my state before relying on it, and I accept that TacLink provides no legal advice and assumes no liability for the waiver's content or enforceability.
+                  </span>
+                </label>
+              </>
+            )}
+
+            <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border border-border bg-card">
+              <Checkbox checked={skipWaiver} onCheckedChange={(v) => { setSkipWaiver(!!v); if (v) setWaiverLegalAck(false); }} className="mt-0.5" />
+              <span className="text-[11px] leading-relaxed text-muted-foreground">
+                Skip waiver for this course — students will not be required to e-sign before booking. <span className="block text-amber-600 mt-0.5"><AlertTriangle className="inline h-3 w-3 mr-1" />Strongly discouraged for any live-fire or contact training.</span>
+              </span>
+            </label>
+          </>
+        )}
+
+        {step === 4 && (
+          <>
             <div className="tactical-card p-5 space-y-3">
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Summary</div>
               <h2 className="font-bold text-lg">{title || 'Untitled course'}</h2>
@@ -788,8 +974,8 @@ const NewCourse = () => {
 
         <div className="flex gap-2 pt-4">
           {step > 0 && <Button variant="outline" onClick={back} disabled={saving} className="flex-1 h-12 bg-card border-border font-semibold">Back</Button>}
-          <Button onClick={next} disabled={saving || (step === 3 && !isPrelaunch && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 3
+          <Button onClick={next} disabled={saving || (step === 4 && !isPrelaunch && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 4
               ? 'Continue'
               : isPrelaunch
                 ? 'Save Draft'

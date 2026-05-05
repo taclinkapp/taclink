@@ -22,9 +22,27 @@ export async function suggestCourseField(field: CourseAIField, course: CourseAIC
   return (data?.result ?? '').toString().trim();
 }
 
-export async function generateCourseWaiver(course: CourseAIContext): Promise<string> {
+export interface WaiverCriteria {
+  liveFire?: boolean;
+  forceOnForce?: boolean;
+  combatives?: boolean;
+  vehicleBased?: boolean;
+  lowLight?: boolean;
+  medicalRisk?: boolean;
+  minorsAllowed?: boolean;
+  mediaRelease?: boolean;
+  offsiteTravel?: boolean;
+  instructorGear?: boolean;
+  physicalExertion?: boolean;
+  customNotes?: string;
+}
+
+export async function generateCourseWaiver(
+  course: CourseAIContext,
+  criteria?: WaiverCriteria,
+): Promise<string> {
   const { data, error } = await supabase.functions.invoke('course-ai', {
-    body: { action: 'generate_waiver', course },
+    body: { action: 'generate_waiver', course, criteria },
   });
   if (error) throw new Error(error.message || 'AI generation failed');
   if (data?.error) throw new Error(data.error);
