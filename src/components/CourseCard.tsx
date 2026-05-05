@@ -69,8 +69,17 @@ export const CourseCard = ({ course }: { course: Course }) => {
 
           <button
             type="button"
-            onClick={(e) => e.preventDefault()}
+            onClick={(e) => {
+              // Stop the parent <Link> from also firing — we want the
+              // Reserve Spot CTA to skip the detail page and jump straight
+              // into checkout. Sold-out courses do nothing.
+              e.preventDefault();
+              e.stopPropagation();
+              if (isFull) return;
+              nav(`/student/checkout/${course.id}`);
+            }}
             disabled={isFull}
+            aria-label={isFull ? 'Course sold out' : `Reserve a spot in ${course.title}`}
             className={isFull ? 'btn-pill mt-4 opacity-50 cursor-not-allowed' : 'btn-pill mt-4'}
           >
             {isFull ? 'Sold Out' : 'Reserve Spot'} <Calendar className="h-3.5 w-3.5" />
