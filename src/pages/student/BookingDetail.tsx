@@ -164,7 +164,7 @@ const BookingDetail = () => {
       return;
     }
     const refund = (data as any)?.student_refund_cents ?? 0;
-    await triggerStripeRefund((data as any)?.refund_id);
+    await triggerRefund((data as any)?.refund_id);
     toast.success('Booking cancelled', {
       description: `Refund of $${(refund / 100).toFixed(2)} on the way to your card.`,
     });
@@ -182,7 +182,7 @@ const BookingDetail = () => {
       return;
     }
     const refund = (data as any)?.student_refund_cents ?? 0;
-    await triggerStripeRefund((data as any)?.refund_id);
+    await triggerRefund((data as any)?.refund_id);
     toast.success('Report filed — full refund issued', {
       description: `$${(refund / 100).toFixed(2)} on the way to your card.`,
     });
