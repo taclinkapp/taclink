@@ -72,6 +72,19 @@ const NewCourse = () => {
       .then(({ data }) => setIsTestAccount(!!data));
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user || !hasPM) { setPmHint(null); return; }
+    supabase
+      .from('payment_methods')
+      .select('method_type, brand, last4, handle, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setPmHint(data as any));
+  }, [user?.id, hasPM]);
+
+
   // form state
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
