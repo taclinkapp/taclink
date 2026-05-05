@@ -305,6 +305,18 @@ const NewCourse = () => {
           return;
         }
       }
+      // Geocode the address so the course pins on the map. We require a hit
+      // for published courses — without coordinates the map can't render the
+      // marker and students lose location context. Drafts are allowed to
+      // skip (instructor may still be drafting an address).
+      const geo = await geocodeAddress({ address, city, state });
+      if (!isPrelaunch && !geo) {
+        toast.error("We couldn't locate that address on the map", {
+          description: 'Double-check the address, city, and state so students can find your course.',
+        });
+        setSaving(false);
+        return;
+      }
       const created = await createCourse(user.id, {
         title: title.trim(),
         description: description.trim() || undefined,
@@ -316,6 +328,8 @@ const NewCourse = () => {
         address: address || undefined,
         city,
         state,
+        lat: geo?.lat,
+        lng: geo?.lng,
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
         cover_image_url: coverUrl,
