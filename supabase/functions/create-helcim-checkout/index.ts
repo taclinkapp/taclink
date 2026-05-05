@@ -54,12 +54,11 @@ async function initializeHelcimPay(opts: {
       paymentType: "purchase",
       amount: opts.amountCents / 100,
       currency: opts.currency.toUpperCase(),
-      customerCode: opts.bookingId,
       invoiceNumber: opts.bookingId,
       paymentMethod: "cc-ach",
       hasConvenienceFee: 0,
       description: opts.description,
-      customerRequest: { email: opts.customerEmail },
+      ...(opts.customerEmail ? { customerRequest: { email: opts.customerEmail } } : {}),
     }),
   });
   if (!res.ok) {
