@@ -236,6 +236,7 @@ const NewCourse = () => {
       if (!title.trim()) return 'Title is required';
       if (!category) return 'Category is required';
       if (!skillLevel) return 'Please select a skill level before continuing';
+      if (!coverFile) return 'A cover photo is required so students can recognize your course on the map and listings';
       const titleHits = detectContactInfo(title);
       const descHits = detectContactInfo(description);
       if (titleHits.length || descHits.length) {
