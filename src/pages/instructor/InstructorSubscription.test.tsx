@@ -45,7 +45,7 @@ vi.mock('@/components/SubscriptionEmbeddedCheckout', () => ({
   SubscriptionEmbeddedCheckout: () => <div data-testid="checkout-mock" />,
 }));
 
-vi.mock('@/lib/stripe', () => ({ getStripeEnvironment: () => 'sandbox' }));
+vi.mock('@/lib/paymentEnv', () => ({ getPaymentEnvironment: () => 'sandbox' }));
 
 // MobileShell uses CSS-only bits; render-through is fine.
 import InstructorSubscription from './InstructorSubscription';
