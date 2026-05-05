@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { HowPaymentsWorkCard } from "@/components/HowPaymentsWorkCard";
-import { stripeEnvironment } from "@/lib/stripe";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { formatTransferFeePct, computeTransferFeeCents, fmt } from "@/lib/fees";
@@ -55,10 +54,8 @@ const METHOD_LABEL: Record<PayoutMethod['method_type'], string> = {
 
 const PayoutMethods = () => {
   const { user } = useAuth();
-  const { provider, loading: providerLoading } = useActivePaymentProvider();
   const [status, setStatus] = useState<ConnectStatus>("not_started");
   const [loading, setLoading] = useState(true);
-  const [launching, setLaunching] = useState(false);
   const [methods, setMethods] = useState<PayoutMethod[]>([]);
   const [methodType, setMethodType] = useState<PayoutMethod['method_type']>('zelle');
   const [handle, setHandle] = useState('');
@@ -67,46 +64,22 @@ const PayoutMethods = () => {
   const reload = async () => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
-    if (provider === 'helcim') {
-      const [{ data: acct }, { data: pm }] = await Promise.all([
-        supabase.from('instructor_payout_accounts').select('status').eq('instructor_id', user.id).eq('provider', 'helcim').maybeSingle(),
-        supabase.from('instructor_payout_methods').select('id, method_type, handle, is_preferred').eq('instructor_id', user.id).order('is_preferred', { ascending: false }),
-      ]);
-      setStatus((acct?.status as ConnectStatus) ?? 'not_started');
-      setMethods((pm as PayoutMethod[]) ?? []);
-    } else {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('stripe_connect_status')
-        .eq('id', user.id)
-        .maybeSingle();
-      if (error) toast.error(error.message);
-      setStatus((data?.stripe_connect_status as ConnectStatus) ?? 'not_started');
-    }
+    const [{ data: acct }, { data: pm }] = await Promise.all([
+      supabase.from('instructor_payout_accounts').select('status').eq('instructor_id', user.id).eq('provider', 'helcim').maybeSingle(),
+      supabase.from('instructor_payout_methods').select('id, method_type, handle, is_preferred').eq('instructor_id', user.id).order('is_preferred', { ascending: false }),
+    ]);
+    const methodsList = (pm as PayoutMethod[]) ?? [];
+    setMethods(methodsList);
+    // Having a saved payout method is sufficient for "active" — keeps UX
+    // simple and matches the publish gate in NewCourse.
+    setStatus(((acct?.status as ConnectStatus) ?? (methodsList.length > 0 ? 'active' : 'not_started')));
     setLoading(false);
   };
 
   useEffect(() => {
-    if (providerLoading) return;
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, provider, providerLoading]);
-
-  const launchOnboarding = async () => {
-    if (!user) return;
-    setLaunching(true);
-    try {
-      const baseUrl = `${window.location.origin}/instructor/payout-methods`;
-      const { data, error } = await supabase.functions.invoke('create-connect-onboarding', {
-        body: { returnUrl: `${baseUrl}?stripe=return`, refreshUrl: `${baseUrl}?stripe=refresh`, environment: stripeEnvironment },
-      });
-      if (error || !data?.url) throw new Error(error?.message ?? 'Could not start payout onboarding');
-      window.location.href = data.url;
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Could not start payout onboarding');
-      setLaunching(false);
-    }
-  };
+  }, [user?.id]);
 
   const addHelcimMethod = async () => {
     if (!user) return;
