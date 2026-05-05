@@ -41,16 +41,16 @@ const STATUS_META: Record<ConnectStatus, { label: string; tone: string; descript
 
 type PayoutMethod = {
   id: string;
-  method_type: 'cashapp' | 'venmo' | 'paypal' | 'zelle';
+  method_type: AltPayoutType;
   handle: string;
   is_preferred: boolean;
 };
 
-const METHOD_LABEL: Record<PayoutMethod['method_type'], string> = {
-  cashapp: 'Cash App',
-  venmo: 'Venmo',
-  paypal: 'PayPal',
-  zelle: 'Zelle',
+const METHOD_LABEL: Record<AltPayoutType, string> = {
+  cashapp: ALT_PAYOUT_META.cashapp.label,
+  venmo: ALT_PAYOUT_META.venmo.label,
+  paypal: ALT_PAYOUT_META.paypal.label,
+  zelle: ALT_PAYOUT_META.zelle.label,
 };
 
 const PayoutMethods = () => {
@@ -58,8 +58,9 @@ const PayoutMethods = () => {
   const [status, setStatus] = useState<ConnectStatus>("not_started");
   const [loading, setLoading] = useState(true);
   const [methods, setMethods] = useState<PayoutMethod[]>([]);
-  const [methodType, setMethodType] = useState<PayoutMethod['method_type']>('zelle');
+  const [methodType, setMethodType] = useState<AltPayoutType>('zelle');
   const [handle, setHandle] = useState('');
+  const [handleError, setHandleError] = useState<string | null>(null);
   const [savingMethod, setSavingMethod] = useState(false);
 
   const reload = async () => {
