@@ -557,7 +557,14 @@ const NewCourse = () => {
                 />
               }
             >
-              <Input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)} className="bg-card border-border h-11" placeholder="12" />
+              <div className="relative">
+                <Input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)} className={cn("bg-card border-border h-11", !capacity && "border-primary ring-2 ring-primary/40 animate-pulse")} placeholder="12" />
+                {!capacity && (
+                  <div className="pointer-events-none absolute -top-6 left-2 flex items-center gap-1 text-[11px] font-bold text-primary">
+                    <span>Set max students</span><span className="animate-bounce">↓</span>
+                  </div>
+                )}
+              </div>
             </Field>
             <Field
               label="Booking Fee per Student (USD, min $5)"
@@ -569,7 +576,14 @@ const NewCourse = () => {
                 />
               }
             >
-              <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-card border-border h-11" placeholder="185" />
+              <div className="relative">
+                <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className={cn("bg-card border-border h-11", capacity && (!price || Number(price) < 5) && "border-primary ring-2 ring-primary/40 animate-pulse")} placeholder="185" />
+                {capacity && (!price || Number(price) < 5) && (
+                  <div className="pointer-events-none absolute -top-6 left-2 flex items-center gap-1 text-[11px] font-bold text-primary">
+                    <span>{!price ? 'Set booking fee' : 'Minimum $5'}</span><span className="animate-bounce">↓</span>
+                  </div>
+                )}
+              </div>
             </Field>
           </>
         )}
