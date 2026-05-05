@@ -35,6 +35,16 @@ interface HelcimInitializeResponse {
   secretToken: string;
 }
 
+const createHelcimInvoiceNumber = () => {
+  const timestamp = Date.now().toString();
+  const randomDigits = crypto.getRandomValues(new Uint32Array(1))[0]
+    .toString()
+    .padStart(10, "0")
+    .slice(0, 10);
+
+  return `${timestamp}${randomDigits}`.slice(0, 25);
+};
+
 async function initializeHelcimPay(opts: {
   apiToken: string;
   amountCents: number;
@@ -43,6 +53,8 @@ async function initializeHelcimPay(opts: {
   customerEmail: string;
   description: string;
 }): Promise<HelcimInitializeResponse> {
+  const invoiceNumber = createHelcimInvoiceNumber();
+
   const res = await fetch(`${HELCIM_API_BASE}/helcim-pay/initialize`, {
     method: "POST",
     headers: {
@@ -54,7 +66,7 @@ async function initializeHelcimPay(opts: {
       paymentType: "purchase",
       amount: opts.amountCents / 100,
       currency: opts.currency.toUpperCase(),
-      invoiceNumber: `B${opts.bookingId.replace(/-/g, "").slice(0, 18)}${Date.now().toString(36).slice(-4)}`.slice(0, 25),
+      invoiceNumber,
       paymentMethod: "cc-ach",
       hasConvenienceFee: 0,
       description: opts.description,
