@@ -17,7 +17,7 @@ import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/f
 import { redeemFreeListingCredit, fetchPunchCardState } from '@/lib/punchCard';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2 } from 'lucide-react';
+import { Check, MapPin, Loader2, ImagePlus, X, Save, Trash2, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
@@ -484,7 +484,13 @@ const NewCourse = () => {
                 />
               }
             >
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-card border-border min-h-28" placeholder="Describe your course…" />
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-card border-border min-h-28" placeholder="Describe your course — what students will learn, gear required, prerequisites, drills, range type, instructor background…" />
+              <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-primary/5 border border-primary/20">
+                <Lightbulb className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                <p className="text-[11px] leading-snug text-foreground/80">
+                  <span className="font-bold text-primary">Pro tip:</span> The most-booked courses include curriculum, gear list, prerequisites, drills, and your credentials. More detail = more bookings and fewer questions.
+                </p>
+              </div>
               <ContactInfoWarning value={description} />
             </Field>
             <Field label="Cover Photo">
