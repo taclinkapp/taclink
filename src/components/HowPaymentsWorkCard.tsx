@@ -54,7 +54,7 @@ export const HowPaymentsWorkCard = ({
           {
             icon: Banknote,
             title: "Instructor is paid 24h after course ends",
-            body: "TacLink holds the funds in secure escrow until the course is complete, then transfers the full course price to the instructor automatically.",
+            body: `TacLink holds the funds in secure escrow until the course is complete, then transfers the course price to the instructor automatically. A flat ${formatTransferFeePct()} payout-processor transfer fee is deducted from the instructor's payout — your total never changes.`,
           },
         ]
       : [
