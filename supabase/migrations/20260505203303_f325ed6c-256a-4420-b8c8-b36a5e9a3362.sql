@@ -1,0 +1,1 @@
+ALTER TABLE public.bookings ALTER COLUMN payment_provider SET DEFAULT 'helcim'::payment_provider;
