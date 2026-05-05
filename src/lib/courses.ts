@@ -154,6 +154,8 @@ export type NewCourseInput = {
   address?: string;
   city?: string;
   state?: string;
+  lat?: number;
+  lng?: number;
   starts_at?: string; // ISO
   ends_at?: string; // ISO
   cover_image_url?: string;
