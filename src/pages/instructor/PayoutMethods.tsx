@@ -20,7 +20,7 @@ const STATUS_META: Record<ConnectStatus, { label: string; tone: string; descript
   not_started: {
     label: "Required to publish",
     tone: "border-destructive/40 bg-destructive/5",
-    description: "Connect a payout account to receive the full course price (paid 24h after each completed course). You cannot publish courses until this is set up.",
+    description: `Connect a payout account to receive the full course price (paid 24h after each completed course), minus a flat ${formatTransferFeePct()} payout-processor transfer fee deducted from your payout. You cannot publish courses until this is set up.`,
   },
   onboarding: {
     label: "Setup in progress",
