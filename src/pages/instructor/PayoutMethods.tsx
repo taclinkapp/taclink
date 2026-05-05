@@ -85,15 +85,36 @@ const PayoutMethods = () => {
 
   const addHelcimMethod = async () => {
     if (!user) return;
-    const trimmed = handle.trim();
-    if (!trimmed) { toast.error('Enter your payout handle'); return; }
+    const raw = handle.trim();
+    if (!raw) {
+      setHandleError('Enter your payout handle');
+      toast.error('Enter your payout handle');
+      return;
+    }
+    const err = validatePayoutHandle(methodType, raw);
+    if (err) {
+      setHandleError(err);
+      toast.error(err);
+      return;
+    }
+    const normalized = normalizePayoutHandle(methodType, raw);
+    const dup = methods.some(
+      (m) => m.method_type === methodType && m.handle.toLowerCase() === normalized.toLowerCase()
+    );
+    if (dup) {
+      const msg = `That ${METHOD_LABEL[methodType]} account is already saved`;
+      setHandleError(msg);
+      toast.error(msg);
+      return;
+    }
+    setHandleError(null);
     setSavingMethod(true);
     try {
       const isFirst = methods.length === 0;
       const { error } = await supabase.from('instructor_payout_methods').insert({
         instructor_id: user.id,
         method_type: methodType,
-        handle: trimmed,
+        handle: normalized,
         is_preferred: isFirst,
       });
       if (error) throw error;
