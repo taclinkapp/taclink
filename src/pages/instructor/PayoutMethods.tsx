@@ -188,7 +188,13 @@ const PayoutMethods = () => {
               </p>
               <div className="space-y-2">
                 <Label className="text-xs">Method</Label>
-                <Select value={methodType} onValueChange={(v) => setMethodType(v as PayoutMethod['method_type'])}>
+                <Select
+                  value={methodType}
+                  onValueChange={(v) => {
+                    setMethodType(v as AltPayoutType);
+                    setHandleError(null);
+                  }}
+                >
                   <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="zelle">Zelle</SelectItem>
@@ -199,13 +205,29 @@ const PayoutMethods = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Handle / email / phone</Label>
+                <Label className="text-xs">{ALT_PAYOUT_META[methodType].hint}</Label>
                 <Input
                   value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                  placeholder={methodType === 'zelle' ? 'email or phone' : `$your-${methodType}`}
-                  className="h-11"
+                  onChange={(e) => {
+                    setHandle(e.target.value);
+                    if (handleError) setHandleError(null);
+                  }}
+                  onBlur={() => {
+                    const v = handle.trim();
+                    if (!v) return;
+                    const err = validatePayoutHandle(methodType, v);
+                    setHandleError(err);
+                  }}
+                  placeholder={ALT_PAYOUT_META[methodType].placeholder}
+                  className={`h-11 ${handleError ? 'border-destructive' : ''}`}
+                  aria-invalid={!!handleError}
+                  maxLength={120}
                 />
+                {handleError && (
+                  <p className="text-[11px] text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" /> {handleError}
+                  </p>
+                )}
               </div>
               <Button onClick={addHelcimMethod} disabled={savingMethod} className="w-full h-11 bg-primary text-primary-foreground font-bold">
                 {savingMethod ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add payout method'}
