@@ -130,14 +130,28 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Apply payout-processor transfer fee (flat 2.9% across all methods).
+    // The fee is deducted from the instructor's payout — students are not
+    // charged. Keep this in sync with TRANSFER_FEE_PCT in src/lib/fees.ts.
+    const TRANSFER_FEE_PCT = 0.029;
+    const grossAmount = row.instructor_deposit_cents;
+    const transferFeeCents = Math.round(grossAmount * TRANSFER_FEE_PCT);
+    const netAmount = Math.max(0, grossAmount - transferFeeCents);
+
     try {
       const transfer = await stripe.transfers.create(
         {
-          amount: row.instructor_deposit_cents,
+          amount: netAmount,
           currency: "usd",
           destination: profile.stripe_connect_account_id,
           transfer_group: row.id,
-          metadata: { bookingId: row.id, instructorId },
+          metadata: {
+            bookingId: row.id,
+            instructorId,
+            grossCents: String(grossAmount),
+            transferFeeCents: String(transferFeeCents),
+            transferFeePct: String(TRANSFER_FEE_PCT),
+          },
           ...(sourceTransaction ? { source_transaction: sourceTransaction } : {}),
         },
         { idempotencyKey: `release_${row.id}` },
@@ -150,7 +164,7 @@ Deno.serve(async (req) => {
           escrow_status: "released",
           escrow_released_at: new Date().toISOString(),
           stripe_transfer_id: transfer.id,
-          instructor_payout_cents: row.instructor_deposit_cents,
+          instructor_payout_cents: netAmount,
           release_error: null,
         })
         .eq("id", row.id);

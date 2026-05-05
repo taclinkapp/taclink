@@ -8,6 +8,7 @@ import {
   Banknote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatTransferFeePct } from "@/lib/fees";
 
 type Audience = "student" | "instructor";
 
@@ -53,7 +54,7 @@ export const HowPaymentsWorkCard = ({
           {
             icon: Banknote,
             title: "Instructor is paid 24h after course ends",
-            body: "TacLink holds the funds in secure escrow until the course is complete, then transfers the full course price to the instructor automatically.",
+            body: `TacLink holds the funds in secure escrow until the course is complete, then transfers the course price to the instructor automatically. A flat ${formatTransferFeePct()} payout-processor transfer fee is deducted from the instructor's payout — your total never changes.`,
           },
         ]
       : [
@@ -69,8 +70,8 @@ export const HowPaymentsWorkCard = ({
           },
           {
             icon: Banknote,
-            title: "Full course price paid out 24h after course ends",
-            body: "Transferred straight to your connected payout account. TacLink keeps only the $25 platform fee — you keep 100% of your course price.",
+            title: `Course price paid out 24h after course ends (minus ${formatTransferFeePct()} transfer fee)`,
+            body: `Transferred straight to your connected payout account. TacLink keeps the $25 platform fee and the payout processor charges a flat ${formatTransferFeePct()} transfer fee on the course price — you keep the rest.`,
           },
         ];
 
