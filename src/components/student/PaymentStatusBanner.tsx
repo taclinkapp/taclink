@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isBookingPaymentConfirmed } from "@/lib/helcimPayment";
 
 type Status = "waiting" | "confirmed" | "failed";
 
@@ -22,11 +23,7 @@ export function PaymentStatusBanner({ bookingId }: Props) {
 
     const evaluate = (row: any) => {
       if (!row) return;
-      if (
-        row.escrow_status === "held_in_escrow" ||
-        row.escrow_status === "released" ||
-        row.deposit_status === "confirmed"
-      ) {
+      if (isBookingPaymentConfirmed(row)) {
         setStatus("confirmed");
         setDetail(null);
       } else if (
@@ -85,7 +82,7 @@ export function PaymentStatusBanner({ bookingId }: Props) {
       : "Waiting for webhook…";
   const help =
     status === "confirmed"
-      ? "Helcim webhook received. Your booking is held in escrow."
+      ? "Helcim webhook received. Your booking is paid and held in escrow."
       : status === "failed"
       ? detail ?? "The payment processor reported a failure. You can retry below."
       : "We're waiting for Helcim to confirm the charge. This usually takes a few seconds.";

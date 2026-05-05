@@ -20,6 +20,7 @@
  * break a test, not silently regress in prod.
  */
 import { describe, it, expect, beforeEach } from "vitest";
+import { HELCIM_SANDBOX_TEST_CARDS, isBookingPaymentConfirmed, isHelcimSandboxCard } from "@/lib/helcimPayment";
 
 // ---- Domain mirrors -----------------------------------------------------
 
@@ -195,5 +196,23 @@ describe("Helcim checkout smoke — provider flip → checkout → token persist
     const res = sim.invoke("user_attacker", booking.id);
     expect(res.status).toBe(403);
     expect(sim.snapshot(booking.id)?.helcim_checkout_token).toBeNull();
+  });
+});
+
+describe("Helcim sandbox card/status guardrails", () => {
+  it("documents real Helcim sandbox cards and rejects generic Stripe test Mastercard", () => {
+    expect(HELCIM_SANDBOX_TEST_CARDS).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ brand: "Mastercard", number: "5413 3300 8909 9130", cvv: "100", expiry: "01/28" }),
+        expect.objectContaining({ brand: "Visa", number: "4124 9399 9999 9990", cvv: "100", expiry: "01/28" }),
+      ]),
+    );
+    expect(isHelcimSandboxCard("5413330089099130")).toBe(true);
+    expect(isHelcimSandboxCard("5454545454545454")).toBe(false);
+  });
+
+  it("treats webhook-written booking statuses as paid", () => {
+    expect(isBookingPaymentConfirmed({ escrow_status: "held", deposit_status: "held_in_escrow" })).toBe(true);
+    expect(isBookingPaymentConfirmed({ escrow_status: "pending", deposit_status: "pending_payment" })).toBe(false);
   });
 });

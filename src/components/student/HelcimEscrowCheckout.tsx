@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, AlertTriangle, RotateCcw, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { isBookingPaymentConfirmed } from "@/lib/helcimPayment";
 
 interface Props {
   bookingId: string;
@@ -59,7 +60,7 @@ const ERROR_COPY: Record<ErrorKind, { title: string; help: string }> = {
   },
   payment_declined: {
     title: "Payment declined",
-    help: "The payment processor declined that attempt. Your booking is still pending — check the card details or try another payment method.",
+    help: "The payment processor declined that attempt. In Helcim sandbox, use the exact test card, expiry, and CVV shown above — generic test cards like 5454545454545454 are declined.",
   },
   unknown: {
     title: "Something went wrong",
@@ -228,11 +229,7 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
         .eq("id", bookingId)
         .maybeSingle();
       if (cancelled || !data) return false;
-      const paid =
-        data.escrow_status === "held_in_escrow" ||
-        data.escrow_status === "released" ||
-        data.deposit_status === "confirmed";
-      if (paid) {
+      if (isBookingPaymentConfirmed(data)) {
         cleanup();
         window.location.href = returnUrl;
         return true;
