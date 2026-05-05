@@ -85,12 +85,6 @@ const NewCourse = () => {
       }
     })();
   }, [user?.id, activeProvider]);
-        const { data } = await supabase.from('profiles').select('stripe_connect_status').eq('id', user.id).maybeSingle();
-        setConnectActive((data as any)?.stripe_connect_status === 'active');
-        setPayoutHint(null);
-      }
-    })();
-  }, [user?.id, activeProvider]);
 
   useEffect(() => {
     if (!user) return;
