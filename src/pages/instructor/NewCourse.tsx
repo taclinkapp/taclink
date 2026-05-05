@@ -404,7 +404,22 @@ const NewCourse = () => {
         }).catch(() => {});
       }
 
-      // Pre-launch: don't charge a listing fee — the course is saved as a
+      // Persist the waiver tied to this course (published so students must e-sign at checkout).
+      if (!skipWaiver && waiverContent.trim()) {
+        const { error: wErr } = await supabase.from('course_waivers').insert({
+          course_id: created.id,
+          title: waiverTitle.trim() || 'Liability Waiver & Assumption of Risk',
+          content: waiverContent.trim(),
+          published: true,
+          ai_generated: true,
+          ai_model: 'google/gemini-3-flash-preview',
+        });
+        if (wErr) {
+          console.error('waiver insert failed', wErr);
+          toast.warning('Course saved, but the waiver did not attach — open the course to add it.');
+        }
+      }
+
       // draft and can't go live until the platform launches.
       if (isPrelaunch) {
         qc.invalidateQueries({ queryKey: ['courses'] });
