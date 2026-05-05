@@ -493,9 +493,7 @@ const NewCourse = () => {
                 </Select>
               </Field>
             </div>
-            <div className="tactical-card h-32 flex items-center justify-center">
-              <div className="text-center text-muted-foreground text-xs"><MapPin className="h-6 w-6 text-primary mx-auto mb-1" />Map preview (coming soon)</div>
-            </div>
+            <AddressMapPreview address={address} city={city} state={state} />
           </>
         )}
         {step === 2 && (
