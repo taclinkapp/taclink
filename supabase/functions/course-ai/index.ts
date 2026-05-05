@@ -91,6 +91,30 @@ const buildUserPrompt = (body: Body): string => {
     c.capacity && `Capacity: ${c.capacity}`,
     c.price && `Price (USD): ${c.price}`,
   ].filter(Boolean);
+
+  if (body.action === 'generate_waiver' && body.criteria) {
+    const cr = body.criteria;
+    const tags: string[] = [];
+    if (cr.liveFire) tags.push('LIVE FIRE with real ammunition on a range');
+    if (cr.forceOnForce) tags.push('Force-on-force / Simunitions / non-lethal training munitions');
+    if (cr.combatives) tags.push('Hands-on combatives, grappling, or strikes between students');
+    if (cr.vehicleBased) tags.push('Vehicle-based drills (in/around moving or parked vehicles)');
+    if (cr.lowLight) tags.push('Low-light or night operations with reduced visibility');
+    if (cr.medicalRisk) tags.push('Realistic medical scenarios (TCCC, tourniquets, simulated wounds)');
+    if (cr.minorsAllowed) tags.push('Minors (under 18) may attend with parental/guardian co-signature — include a guardian section');
+    if (cr.mediaRelease) tags.push('Photography/video may be captured — include a media release clause');
+    if (cr.offsiteTravel) tags.push('Off-site travel between training locations during the course');
+    if (cr.instructorGear) tags.push('Instructor-provided firearms or gear are used');
+    if (cr.physicalExertion) tags.push('High physical exertion (running, carries, fitness drills)');
+    if (tags.length) {
+      lines.push('', 'Course-specific risk profile to ADDRESS in the waiver:');
+      tags.forEach((t) => lines.push(`- ${t}`));
+    }
+    if (cr.customNotes && cr.customNotes.trim()) {
+      lines.push('', `Additional instructor notes: ${cr.customNotes.trim().slice(0, 600)}`);
+    }
+  }
+
   return lines.join('\n');
 };
 
