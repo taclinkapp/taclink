@@ -507,14 +507,39 @@ const NewCourse = () => {
             {startTime && endTime && new Date(`2000-01-01T${endTime}:00`) <= new Date(`2000-01-01T${startTime}:00`) && (
               <p className="text-[11px] font-semibold text-destructive">End time must be after start time — check AM/PM.</p>
             )}
-            <Field label="Address"><Input value={address} onChange={(e) => setAddress(e.target.value)} className="bg-card border-border h-11" placeholder="Street address" /></Field>
+            <Field label="Address">
+              <div className="relative">
+                <Input value={address} onChange={(e) => setAddress(e.target.value)} className={cn("bg-card border-border h-11", endTime && !address && "border-primary ring-2 ring-primary/40 animate-pulse")} placeholder="Street address" />
+                {endTime && !address && (
+                  <div className="pointer-events-none absolute -top-6 left-2 flex items-center gap-1 text-[11px] font-bold text-primary">
+                    <span>Add street address</span><span className="animate-bounce">↓</span>
+                  </div>
+                )}
+              </div>
+            </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="City"><Input value={city} onChange={(e) => setCity(e.target.value)} className="bg-card border-border h-11" /></Field>
+              <Field label="City">
+                <div className="relative">
+                  <Input value={city} onChange={(e) => setCity(e.target.value)} className={cn("bg-card border-border h-11", address && !city && "border-primary ring-2 ring-primary/40 animate-pulse")} />
+                  {address && !city && (
+                    <div className="pointer-events-none absolute -top-6 left-2 flex items-center gap-1 text-[11px] font-bold text-primary">
+                      <span>Add city</span><span className="animate-bounce">↓</span>
+                    </div>
+                  )}
+                </div>
+              </Field>
               <Field label="State">
-                <Select value={state} onValueChange={setState}>
-                  <SelectTrigger className="bg-card border-border h-11"><SelectValue placeholder="State" /></SelectTrigger>
-                  <SelectContent className="bg-card border-border max-h-64">{US_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                </Select>
+                <div className={cn("relative rounded-md", city && !state && "ring-2 ring-primary/40 animate-pulse")}>
+                  <Select value={state} onValueChange={setState}>
+                    <SelectTrigger className={cn("bg-card border-border h-11", city && !state && "border-primary")}><SelectValue placeholder="State" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border max-h-64">{US_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                  {city && !state && (
+                    <div className="pointer-events-none absolute -top-6 left-2 flex items-center gap-1 text-[11px] font-bold text-primary">
+                      <span>Pick state</span><span className="animate-bounce">↓</span>
+                    </div>
+                  )}
+                </div>
               </Field>
             </div>
             <AddressMapPreview address={address} city={city} state={state} />
