@@ -361,7 +361,11 @@ const PaymentMethods = () => {
       <PageHeader
         title="Payment Methods"
         back
-        onBack={returnTo ? () => nav(returnTo, { replace: true }) : undefined}
+        onBack={() => {
+          if (returnTo) { nav(returnTo, { replace: true }); return; }
+          if (window.history.length > 1) { nav(-1); return; }
+          nav('/student/bookings', { replace: true });
+        }}
       />
       <div className="px-4 py-4 space-y-4">
         {loading ? (
