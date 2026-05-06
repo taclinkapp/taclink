@@ -2438,6 +2438,39 @@ export type Database = {
           },
         ]
       }
+      route_404_events: {
+        Row: {
+          created_at: string
+          id: string
+          path: string
+          referrer: string | null
+          release_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          path: string
+          referrer?: string | null
+          release_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          path?: string
+          referrer?: string | null
+          release_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       stripe_webhook_events: {
         Row: {
           environment: string
