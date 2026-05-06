@@ -4,7 +4,6 @@ import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { mockCourses } from "@/lib/mockData";
 import {
   ensureConversation,
   sendMessage,
