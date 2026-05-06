@@ -24,7 +24,7 @@ const AdminLogin = () => {
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
-            <Input type="password" className="bg-background border-border h-11 mt-1.5" />
+            <PasswordInput className="bg-background border-border h-11 mt-1.5" />
           </div>
           <Button type="submit" className="w-full h-11 bg-primary text-primary-foreground font-bold">Sign In to Admin</Button>
         </form>
