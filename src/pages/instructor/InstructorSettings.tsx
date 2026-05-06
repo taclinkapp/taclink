@@ -15,6 +15,7 @@ const InstructorSettings = () => {
   const { signOut } = useAuth();
   const [reportOpen, setReportOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
