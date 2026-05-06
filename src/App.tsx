@@ -65,6 +65,7 @@ import { AdminInstructors } from "./pages/admin/AdminUsers";
 
 import { AdminUsersReal } from "./pages/admin/AdminUsersReal";
 import { AdminCoursesReal } from "./pages/admin/AdminCoursesReal";
+import AdminWaivers from "./pages/admin/AdminWaivers";
 import { AdminPlatformSettings } from "./pages/admin/AdminPlatformSettings";
 import { AdminFeatureFlags } from "./pages/admin/AdminFeatureFlags";
 import { AdminAuditLog } from "./pages/admin/AdminAuditLog";
@@ -175,6 +176,7 @@ const App = () => (
               <Route path="users" element={<AdminUsersReal />} />
               <Route path="instructors" element={<AdminInstructors />} />
               <Route path="courses" element={<AdminCoursesReal />} />
+              <Route path="waivers" element={<AdminWaivers />} />
               
               <Route path="reports" element={<AdminReports />} />
               <Route path="support" element={<AdminSupportTickets />} />
