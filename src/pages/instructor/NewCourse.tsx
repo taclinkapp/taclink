@@ -181,6 +181,7 @@ const NewCourse = () => {
   const [waiverLegalAck, setWaiverLegalAck] = useState(false);
   const [waiverPreview, setWaiverPreview] = useState(false);
   const [skipWaiver, setSkipWaiver] = useState(false);
+  const [freePlanWaiverAck, setFreePlanWaiverAck] = useState(false);
 
   const toggleCriterion = (k: keyof WaiverCriteria) =>
     setWaiverCriteria((p) => ({ ...p, [k]: !p[k] }));
