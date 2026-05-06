@@ -163,6 +163,37 @@ const NewCourse = () => {
   const removeGalleryUrl = (i: number) => setGalleryUrls((p) => p.filter((_, idx) => idx !== i));
   const removeGalleryFile = (i: number) => setGalleryFiles((p) => p.filter((_, idx) => idx !== i));
 
+  // Photo adjuster (zoom / pan / fit) for cover and gallery photos.
+  const [adjuster, setAdjuster] = useState<{
+    open: boolean;
+    source: File | string | null;
+    aspect: AdjustAspect;
+    target: { kind: 'cover' } | { kind: 'gallery-file'; index: number } | { kind: 'gallery-url'; index: number };
+  } | null>(null);
+  const openCoverAdjuster = () => {
+    if (!coverFile && !coverPreview) return;
+    setAdjuster({ open: true, source: coverFile ?? coverPreview, aspect: '16:9', target: { kind: 'cover' } });
+  };
+  const openGalleryFileAdjuster = (i: number) =>
+    setAdjuster({ open: true, source: galleryFiles[i], aspect: '1:1', target: { kind: 'gallery-file', index: i } });
+  const openGalleryUrlAdjuster = (i: number) =>
+    setAdjuster({ open: true, source: galleryUrls[i], aspect: '1:1', target: { kind: 'gallery-url', index: i } });
+  const handleAdjusterSave = (file: File) => {
+    if (!adjuster) return;
+    const t = adjuster.target;
+    if (t.kind === 'cover') {
+      setCoverFile(file);
+      setCoverPreview(URL.createObjectURL(file));
+    } else if (t.kind === 'gallery-file') {
+      setGalleryFiles((p) => p.map((f, idx) => (idx === t.index ? file : f)));
+    } else {
+      // Adjusted an already-uploaded URL: replace it with the new local file
+      // (it'll be uploaded on save like any new gallery file).
+      setGalleryUrls((p) => p.filter((_, idx) => idx !== t.index));
+      setGalleryFiles((p) => [...p, file]);
+    }
+  };
+
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
