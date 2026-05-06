@@ -67,6 +67,7 @@ const Checkout = () => {
 
   // Created booking + Embedded Checkout takeover
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [skipAutoResume, setSkipAutoResume] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -91,8 +92,9 @@ const Checkout = () => {
         w = (wRow as Waiver) ?? null;
       }
 
-      // If a booking already exists for this student/course, jump straight to Secure Payment.
-      if (c && user) {
+      // If a booking already exists for this student/course, jump straight to Secure Payment
+      // (unless the user just hit "back" from Secure Payment).
+      if (c && user && !skipAutoResume) {
         const { data: existing } = await supabase
           .from('bookings')
           .select('id')
@@ -294,7 +296,7 @@ const Checkout = () => {
     return (
       <MobileShell withTabBar={false}>
         <PaymentTestModeBanner />
-        <PageHeader title="Secure Payment" back onBack={() => setBookingId(null)} />
+        <PageHeader title="Secure Payment" back onBack={() => { setSkipAutoResume(true); setBookingId(null); }} />
         <div className="px-4 py-4 space-y-3">
           <PaymentStatusBanner bookingId={bookingId} />
           
