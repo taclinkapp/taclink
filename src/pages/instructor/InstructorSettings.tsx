@@ -47,6 +47,10 @@ const InstructorSettings = () => {
           <ToggleRow label="Weekly demand digest" defaultOn />
         </Section>
         <Section title="Support">
+          <button onClick={() => setTourOpen(true)} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
+            <span className="text-sm font-medium flex items-center gap-2"><PlayCircle className="h-4 w-4 text-primary" />Replay App Tour</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
           <button onClick={() => nav('/support')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
             <span className="text-sm font-medium flex items-center gap-2"><LifeBuoy className="h-4 w-4 text-primary" />Help Center</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
