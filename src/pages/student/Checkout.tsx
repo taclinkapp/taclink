@@ -277,7 +277,7 @@ const Checkout = () => {
   if (loading) {
     return (
       <MobileShell withTabBar={false}>
-        <PageHeader title="Confirm Booking" back />
+        <PageHeader title="Confirm Booking" back backTo={`/student/course/${id}`} />
         <div className="px-4 py-12 text-center text-muted-foreground text-sm">
           <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
           Loading…
@@ -289,7 +289,7 @@ const Checkout = () => {
   if (!course) {
     return (
       <MobileShell withTabBar={false}>
-        <PageHeader title="Confirm Booking" back />
+        <PageHeader title="Confirm Booking" back backTo={`/student/course/${id}`} />
         <div className="px-4 py-12 text-center text-muted-foreground text-sm">Course not found.</div>
       </MobileShell>
     );
@@ -317,7 +317,7 @@ const Checkout = () => {
   return (
     <MobileShell withTabBar={false}>
       <PaymentTestModeBanner />
-      <PageHeader title="Confirm Booking" back />
+      <PageHeader title="Confirm Booking" back backTo={`/student/course/${id}`} />
       <div className="px-4 py-4 space-y-4">
         <div className="tactical-card p-4">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Course</div>
