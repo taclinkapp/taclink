@@ -66,11 +66,19 @@ async function helcimCall(
   amountCents: number,
   idempotencyKey: string,
 ) {
-  const body: Record<string, unknown> = {
-    originalTransactionId: Number(txnId),
-    ipAddress: "0.0.0.0",
-  };
-  if (endpoint === "refund") body.amount = (amountCents / 100).toFixed(2);
+  // /payment/refund expects originalTransactionId + amount
+  // /payment/reverse expects cardTransactionId (full void of original auth/purchase)
+  const body: Record<string, unknown> =
+    endpoint === "refund"
+      ? {
+          originalTransactionId: Number(txnId),
+          amount: (amountCents / 100).toFixed(2),
+          ipAddress: "0.0.0.0",
+        }
+      : {
+          cardTransactionId: Number(txnId),
+          ipAddress: "0.0.0.0",
+        };
   const res = await fetch(`${HELCIM_API_BASE}/payment/${endpoint}`, {
     method: "POST",
     headers: {
