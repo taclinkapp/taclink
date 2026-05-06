@@ -214,6 +214,9 @@ const NewCourse = () => {
   const [waiverLegalAck, setWaiverLegalAck] = useState(false);
   const [waiverPreview, setWaiverPreview] = useState(false);
   const [skipWaiver, setSkipWaiver] = useState(false);
+  // Pro waiver mode: 'ai' = generate / paste a waiver students e-sign at checkout,
+  // 'in_person' = instructor will hand the student a paper waiver on training day.
+  const [waiverMode, setWaiverMode] = useState<'ai' | 'in_person'>('ai');
   const FREE_WAIVER_ACK_KEY = `taclink_free_waiver_ack:${user?.id ?? 'anon'}`;
   const [freePlanWaiverAck, setFreePlanWaiverAck] = useState<boolean>(() => {
     if (typeof localStorage === 'undefined') return false;
