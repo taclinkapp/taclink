@@ -43,63 +43,7 @@ const Checkout = () => {
   const { id } = useParams();
   const nav = useNavigate();
   const { user, profile } = useAuth();
-        {conflict && (
-          <div
-            role="alert"
-            className="rounded-xl border border-destructive/40 bg-destructive/10 p-3.5 flex gap-3"
-          >
-            {conflict.kind === 'already_booked' ? (
-              <BookmarkCheck className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-            ) : (
-              <CalendarX className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-destructive">
-                {conflict.kind === 'already_booked'
-                  ? "You're already booked on this course"
-                  : 'Schedule conflict'}
-              </div>
-              <p className="text-xs text-foreground/80 leading-snug mt-1">
-                {conflict.kind === 'already_booked'
-                  ? 'You have an active booking for this course. To book again, cancel the existing booking first.'
-                  : conflict.conflictTitle
-                    ? `This course overlaps another active booking: "${conflict.conflictTitle}". Cancel that booking first or choose a different time.`
-                    : 'This course overlaps another active booking. Cancel that booking first or choose a different time.'}
-              </p>
-              <div className="flex gap-2 mt-3">
-                {conflict.kind === 'already_booked' && conflict.existingBookingId ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => nav(`/student/booking/${conflict.existingBookingId}`)}
-                    className="h-8 text-xs"
-                  >
-                    View booking
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => nav('/student/bookings')}
-                    className="h-8 text-xs"
-                  >
-                    My bookings
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setConflict(null)}
-                  className="h-8 text-xs"
-                >
-                  Dismiss
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-
+  
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
   const [waiver, setWaiver] = useState<Waiver | null>(null);
