@@ -55,6 +55,11 @@ const NewCourse = () => {
   const isAdmin = Array.isArray(roles) && roles.includes('admin');
   const prelaunchExempt = isAdmin || isTestAccount;
   const isPrelaunch = !!prelaunch?.enabled && !prelaunchExempt;
+  // Fake QA test instructors and admins skip the listing-fee, payment-method,
+  // payout-setup, and geocode requirements so they can publish QA courses
+  // freely (especially during pre-launch). Their courses are still hidden
+  // from regular students by RLS — only fake QA students see them.
+  const skipPublishGuards = isAdmin || isTestAccount;
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -309,7 +314,7 @@ const NewCourse = () => {
     }
     if (step === 4) {
       if (!skillLevel) return 'Skill level is required — go back to Basics and pick a level';
-      if (!isPrelaunch && !feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
+      if (!isPrelaunch && !skipPublishGuards && !feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
     }
     return null;
   };
@@ -321,7 +326,7 @@ const NewCourse = () => {
     if (!user) { toast.error('You must be signed in'); return; }
     // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
     // since nothing is being published or charged yet.
-    if (!isPrelaunch) {
+    if (!isPrelaunch && !skipPublishGuards) {
       if (!hasPM) {
         toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
         nav('/instructor/payment-methods');
@@ -356,7 +361,7 @@ const NewCourse = () => {
       // marker and students lose location context. Drafts are allowed to
       // skip (instructor may still be drafting an address).
       const geo = await geocodeAddress({ address, city, state });
-      if (!isPrelaunch && !geo) {
+      if (!isPrelaunch && !skipPublishGuards && !geo) {
         toast.error("We couldn't locate that address on the map", {
           description: 'Double-check the address, city, and state so students can find your course.',
         });
@@ -379,7 +384,7 @@ const NewCourse = () => {
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
         cover_image_url: coverUrl,
-        status: isPrelaunch ? 'draft' : 'published',
+        status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
       });
 
       // AI moderation — scan course text + cover photo for contact info or
@@ -421,7 +426,7 @@ const NewCourse = () => {
       }
 
       // draft and can't go live until the platform launches.
-      if (isPrelaunch) {
+      if (isPrelaunch && !skipPublishGuards) {
         qc.invalidateQueries({ queryKey: ['courses'] });
         localStorage.removeItem(DRAFT_KEY);
         toast.success('Draft saved', {
@@ -853,7 +858,14 @@ const NewCourse = () => {
                 <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
               </div>
             </div>
-            {isPrelaunch ? (
+            {skipPublishGuards ? (
+              <div className="tactical-card border-primary/40 bg-primary/10 p-4 space-y-2">
+                <div className="text-xs uppercase tracking-wider font-bold text-primary">QA test account</div>
+                <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  Listing fee, payment method, payout setup, and address geocoding are <strong className="text-foreground">skipped</strong> for fake test instructor accounts. Your course will publish immediately and is only visible to other fake QA test student accounts and admins.
+                </p>
+              </div>
+            ) : isPrelaunch ? (
               <div className="tactical-card border-primary/40 bg-primary/10 p-4 space-y-2">
                 <div className="text-xs uppercase tracking-wider font-bold text-primary">Pre-launch mode</div>
                 <p className="text-[12px] leading-relaxed text-muted-foreground">
@@ -974,10 +986,10 @@ const NewCourse = () => {
 
         <div className="flex gap-2 pt-4">
           {step > 0 && <Button variant="outline" onClick={back} disabled={saving} className="flex-1 h-12 bg-card border-border font-semibold">Back</Button>}
-          <Button onClick={next} disabled={saving || (step === 4 && !isPrelaunch && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
+          <Button onClick={next} disabled={saving || (step === 4 && !isPrelaunch && !skipPublishGuards && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 4
               ? 'Continue'
-              : isPrelaunch
+              : (isPrelaunch && !skipPublishGuards)
                 ? 'Save Draft'
                 : availableCredits > 0
                   ? 'Publish · FREE 🎉'

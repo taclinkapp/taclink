@@ -5,6 +5,18 @@ import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminAIPanel } from '@/components/admin/AdminAIPanel';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type Item = {
   to: string;
@@ -45,8 +57,25 @@ const items: Item[] = [
 export const AdminLayout = () => {
   const nav = useNavigate();
   const location = useLocation();
+  const { signOut } = useAuth();
   const [stuckDeposits, setStuckDeposits] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await signOut();
+      toast.success('Signed out');
+      nav('/', { replace: true });
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Failed to sign out');
+    } finally {
+      setSigningOut(false);
+      setSignOutOpen(false);
+    }
+  };
 
   const refreshBadges = async () => {
     // Stuck = awaiting_confirmation past expiry window.
@@ -147,7 +176,7 @@ export const AdminLayout = () => {
           })}
         </nav>
         <div className="p-3 border-t border-sidebar-border">
-          <button onClick={() => nav('/')} className="w-full flex items-center gap-3 px-3 h-10 rounded-md text-sm font-semibold text-destructive hover:bg-destructive/10">
+          <button onClick={() => setSignOutOpen(true)} className="w-full flex items-center gap-3 px-3 h-10 rounded-md text-sm font-semibold text-destructive hover:bg-destructive/10">
             <LogOut className="h-4 w-4" /> Sign Out
           </button>
         </div>
@@ -156,6 +185,23 @@ export const AdminLayout = () => {
         <Outlet />
       </main>
       <AdminAIPanel />
+
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out of admin?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You'll be signed out of the admin panel and returned to the home page. You can sign back in at any time.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={signingOut}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut} disabled={signingOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {signingOut ? 'Signing out…' : 'Yes, sign out'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
