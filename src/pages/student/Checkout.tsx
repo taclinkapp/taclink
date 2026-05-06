@@ -147,6 +147,10 @@ const Checkout = () => {
   const handleConfirm = async () => {
     if (!user) { toast.error('Please sign in to book'); return; }
     if (!course) return;
+    if (waiver && !waiverReady) {
+      toast.error('Sign the waiver above before continuing to payment.');
+      return;
+    }
     setSubmitting(true);
     try {
       const existingBooking = await findExistingBooking();
