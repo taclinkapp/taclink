@@ -181,7 +181,16 @@ const NewCourse = () => {
   const [waiverLegalAck, setWaiverLegalAck] = useState(false);
   const [waiverPreview, setWaiverPreview] = useState(false);
   const [skipWaiver, setSkipWaiver] = useState(false);
-  const [freePlanWaiverAck, setFreePlanWaiverAck] = useState(false);
+  const FREE_WAIVER_ACK_KEY = `taclink_free_waiver_ack:${user?.id ?? 'anon'}`;
+  const [freePlanWaiverAck, setFreePlanWaiverAck] = useState<boolean>(() => {
+    if (typeof localStorage === 'undefined') return false;
+    return localStorage.getItem(FREE_WAIVER_ACK_KEY) === '1';
+  });
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return;
+    if (freePlanWaiverAck) localStorage.setItem(FREE_WAIVER_ACK_KEY, '1');
+    else localStorage.removeItem(FREE_WAIVER_ACK_KEY);
+  }, [freePlanWaiverAck, FREE_WAIVER_ACK_KEY]);
 
   const toggleCriterion = (k: keyof WaiverCriteria) =>
     setWaiverCriteria((p) => ({ ...p, [k]: !p[k] }));
