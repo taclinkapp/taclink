@@ -42,6 +42,8 @@ const durationMinutesFromTimes = (date: string, start: string, end: string): num
 
 const NewCourse = () => {
   const nav = useNavigate();
+  const { id: editId } = useParams<{ id: string }>();
+  const isEdit = !!editId;
   const { user, profile } = useAuth();
   const hasPM = !!profile?.payment_method_added;
   const subActive = profile?.subscription_status === 'active';
