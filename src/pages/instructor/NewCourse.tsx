@@ -1212,7 +1212,7 @@ const NewCourse = () => {
               </>
             )}
 
-            {subActive && (
+            {subActive && waiverMode === 'ai' && (
               <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border border-border bg-card">
                 <Checkbox checked={skipWaiver} onCheckedChange={(v) => { setSkipWaiver(!!v); if (v) setWaiverLegalAck(false); }} className="mt-0.5" />
                 <span className="text-[11px] leading-relaxed text-muted-foreground">
