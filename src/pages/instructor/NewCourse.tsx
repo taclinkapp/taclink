@@ -462,6 +462,18 @@ const NewCourse = () => {
           return;
         }
       }
+      // Upload any new gallery files. Combine with already-saved gallery URLs.
+      let finalGallery: string[] = [...galleryUrls];
+      if (galleryFiles.length > 0) {
+        try {
+          const uploaded = await Promise.all(galleryFiles.map((f) => uploadCoursePhoto(user.id, f)));
+          finalGallery = [...finalGallery, ...uploaded].slice(0, 8);
+        } catch (e: any) {
+          toast.error(e?.message ?? 'Gallery photo upload failed');
+          setSaving(false);
+          return;
+        }
+      }
       // Geocode the address so the course pins on the map. We require a hit
       // for published courses — without coordinates the map can't render the
       // marker and students lose location context. Drafts are allowed to
