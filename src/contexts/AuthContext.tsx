@@ -137,6 +137,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
+    // Clear per-user local-only flags so they never leak between accounts.
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('taclink_free_waiver_ack:')) localStorage.removeItem(k);
+      }
+    } catch { /* ignore */ }
     await supabase.auth.signOut();
   };
 
