@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { mockReviews } from '@/lib/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useCourse } from '@/hooks/useCourses';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { CategoryPill } from '@/components/CategoryPill';
