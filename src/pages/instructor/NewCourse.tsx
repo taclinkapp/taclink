@@ -1114,19 +1114,15 @@ const NewCourse = () => {
                       <strong className="text-foreground">I confirm</strong> that I will provide my own attorney-reviewed waiver to every student in person before training begins, and I accept full responsibility for its content, enforceability, and collection. TacLink is not a law firm and assumes no liability.
                     </span>
                   </label>
-
-                  <p className="text-[11px] text-muted-foreground text-center">
-                    Optional — you may also paste your waiver text below to keep a digital copy on file.
-                  </p>
                 </div>
               </div>
             )}
 
-            {!skipWaiver && (
+            {!skipWaiver && subActive && (
               <>
                 <div className="flex items-center justify-between">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    {subActive ? 'Draft (edit freely — markdown)' : 'Paste your waiver text (markdown supported)'}
+                    Draft (edit freely — markdown)
                   </Label>
                   {waiverContent && (
                     <Button type="button" size="sm" variant="ghost" onClick={() => setWaiverPreview((p) => !p)} className="h-7 text-[11px]">
@@ -1143,7 +1139,7 @@ const NewCourse = () => {
                   <Textarea
                     value={waiverContent}
                     onChange={(e) => setWaiverContent(e.target.value)}
-                    placeholder={subActive ? '' : 'Paste your attorney-reviewed waiver here…'}
+                    placeholder=""
                     className="bg-card border-border font-mono text-xs min-h-72"
                   />
                 )}
