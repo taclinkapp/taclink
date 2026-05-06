@@ -109,8 +109,7 @@ const CheckoutReturn = () => {
             <CheckCircle2 className="h-12 w-12 text-primary mx-auto" />
             <h2 className="font-bold text-lg">Payment received</h2>
             <p className="text-sm text-muted-foreground">
-              Your deposit is <strong className="text-foreground">held in escrow</strong>. We'll
-              release it to your instructor 24 hours after they scan you in at the course.
+              Your deposit is <strong className="text-foreground">held in escrow</strong>.
             </p>
             <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground text-left flex gap-2">
               <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
