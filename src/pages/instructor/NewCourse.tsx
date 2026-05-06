@@ -565,8 +565,8 @@ const NewCourse = () => {
           title: waiverTitle.trim() || 'Liability Waiver & Assumption of Risk',
           content: waiverContent.trim(),
           published: true,
-          ai_generated: true,
-          ai_model: 'google/gemini-3-flash-preview',
+          ai_generated: subActive,
+          ai_model: subActive ? 'google/gemini-3-flash-preview' : null,
         });
         if (wErr) {
           console.error('waiver insert failed', wErr);
