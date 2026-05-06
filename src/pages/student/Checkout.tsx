@@ -282,7 +282,7 @@ const Checkout = () => {
     return (
       <MobileShell withTabBar={false}>
         <PaymentTestModeBanner />
-        <PageHeader title="Secure Payment" back />
+        <PageHeader title="Secure Payment" back onBack={() => setBookingId(null)} />
         <div className="px-4 py-4 space-y-3">
           <PaymentStatusBanner bookingId={bookingId} />
           
