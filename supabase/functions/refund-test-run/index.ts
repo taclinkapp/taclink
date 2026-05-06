@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
     return json({ error: "booking has no helcim_transaction_id (was it paid via Helcim?)" }, 400);
   }
 
-  const apiToken = Deno.env.get("HELCIM_API_TOKEN");
+  const apiToken = Deno.env.get("HELCIM_API_TOKEN")?.trim().replace(/^["']|["']$/g, "");
   if (!apiToken) return json({ error: "HELCIM_API_TOKEN not configured" }, 500);
 
   const before = await snapshotBooking(admin, booking.id);
