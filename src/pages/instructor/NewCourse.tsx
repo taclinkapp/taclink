@@ -214,6 +214,9 @@ const NewCourse = () => {
   const [waiverLegalAck, setWaiverLegalAck] = useState(false);
   const [waiverPreview, setWaiverPreview] = useState(false);
   const [skipWaiver, setSkipWaiver] = useState(false);
+  // Pro waiver mode: 'ai' = generate / paste a waiver students e-sign at checkout,
+  // 'in_person' = instructor will hand the student a paper waiver on training day.
+  const [waiverMode, setWaiverMode] = useState<'ai' | 'in_person'>('ai');
   const FREE_WAIVER_ACK_KEY = `taclink_free_waiver_ack:${user?.id ?? 'anon'}`;
   const [freePlanWaiverAck, setFreePlanWaiverAck] = useState<boolean>(() => {
     if (typeof localStorage === 'undefined') return false;
@@ -312,6 +315,7 @@ const NewCourse = () => {
         setPrice(data.price_cents ? String(Math.round(data.price_cents / 100)) : '');
         if (data.cover_image_url) setCoverPreview(data.cover_image_url);
         if (Array.isArray((data as any).gallery_urls)) setGalleryUrls((data as any).gallery_urls);
+        if ((data as any).in_person_waiver) setWaiverMode('in_person');
         // Load existing waiver, if any
         const { data: w } = await supabase
           .from('course_waivers')
@@ -456,6 +460,8 @@ const NewCourse = () => {
       if (!subActive) {
         if (!freePlanWaiverAck) return 'Please confirm that you will provide your own waiver in person to continue';
         
+      } else if (waiverMode === 'in_person') {
+        // Pro instructor opted to collect a paper waiver on training day. Nothing to validate.
       } else if (!skipWaiver) {
         if (!waiverContent.trim()) return 'Generate or paste your waiver, or check "Skip waiver for this course"';
         if (!waiverLegalAck) return 'Please acknowledge the legal notice before continuing';
@@ -532,6 +538,8 @@ const NewCourse = () => {
         setSaving(false);
         return;
       }
+      // Free plan and Pro `in_person` mode both mean: no app-side waiver, instructor hands one out on training day.
+      const inPersonWaiver = !subActive || waiverMode === 'in_person';
       let created: any;
       if (isEdit && editId) {
         const { data, error } = await supabase
@@ -553,6 +561,7 @@ const NewCourse = () => {
             ends_at: endsAt.toISOString(),
             ...(coverUrl ? { cover_image_url: coverUrl } : {}),
             gallery_urls: finalGallery,
+            in_person_waiver: inPersonWaiver,
             status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
           })
           .eq('id', editId)
@@ -578,6 +587,7 @@ const NewCourse = () => {
           ends_at: endsAt.toISOString(),
           cover_image_url: coverUrl,
           gallery_urls: finalGallery,
+          in_person_waiver: inPersonWaiver,
           status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
         });
       }
@@ -605,7 +615,7 @@ const NewCourse = () => {
       }
 
       // Persist the waiver tied to this course (published so students must e-sign at checkout).
-      if (!skipWaiver && waiverContent.trim()) {
+      if (subActive && waiverMode === 'ai' && !skipWaiver && waiverContent.trim()) {
         const { error: wErr } = await supabase.from('course_waivers').insert({
           course_id: created.id,
           title: waiverTitle.trim() || 'Liability Waiver & Assumption of Risk',
@@ -1017,7 +1027,56 @@ const NewCourse = () => {
               />
             </Field>
 
+            {subActive && (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setWaiverMode('ai')}
+                  className={cn(
+                    'rounded-md border px-3 py-3 text-left transition',
+                    waiverMode === 'ai'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-card hover:border-primary/50',
+                  )}
+                >
+                  <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" /> AI Waiver
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                    Generate a course-specific waiver. Students e-sign at checkout.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWaiverMode('in_person')}
+                  className={cn(
+                    'rounded-md border px-3 py-3 text-left transition',
+                    waiverMode === 'in_person'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-card hover:border-primary/50',
+                  )}
+                >
+                  <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider">
+                    <FileText className="h-3.5 w-3.5 text-primary" /> In-Person Waiver
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                    You'll provide your own paper waiver on training day.
+                  </p>
+                </button>
+              </div>
+            )}
+
             {subActive ? (
+              waiverMode === 'in_person' ? (
+                <div className="tactical-card border-amber-500/40 bg-amber-500/10 p-4 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <FileText className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <div className="text-[12px] leading-relaxed text-foreground">
+                      Students will be told at checkout that you are providing the <strong>liability waiver in person</strong> on the day of training. You are <strong>solely responsible</strong> for collecting a signed waiver from every student before they participate. TacLink will not generate or store a waiver for this course.
+                    </div>
+                  </div>
+                </div>
+              ) : (
               <>
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -1073,6 +1132,7 @@ const NewCourse = () => {
                     : <><Sparkles className="h-4 w-4 mr-2" /> {waiverContent ? 'Regenerate with AI' : 'Generate waiver with AI'}</>}
                 </Button>
               </>
+              )
             ) : (
               <div className="tactical-card p-0 overflow-hidden border-primary/50">
                 {/* Pro hero */}
@@ -1118,7 +1178,7 @@ const NewCourse = () => {
               </div>
             )}
 
-            {!skipWaiver && subActive && (
+            {!skipWaiver && subActive && waiverMode === 'ai' && (
               <>
                 <div className="flex items-center justify-between">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -1153,7 +1213,7 @@ const NewCourse = () => {
               </>
             )}
 
-            {subActive && (
+            {subActive && waiverMode === 'ai' && (
               <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border border-border bg-card">
                 <Checkbox checked={skipWaiver} onCheckedChange={(v) => { setSkipWaiver(!!v); if (v) setWaiverLegalAck(false); }} className="mt-0.5" />
                 <span className="text-[11px] leading-relaxed text-muted-foreground">

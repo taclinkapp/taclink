@@ -27,6 +27,7 @@ type Course = {
   state: string | null;
   starts_at: string | null;
   price_cents: number;
+  in_person_waiver: boolean | null;
 };
 
 type Waiver = {
@@ -76,7 +77,7 @@ const Checkout = () => {
       setLoading(true);
       const { data: c, error: cErr } = await supabase
         .from('courses')
-        .select('id, title, instructor_id, city, state, starts_at, price_cents')
+        .select('id, title, instructor_id, city, state, starts_at, price_cents, in_person_waiver')
         .eq('id', id)
         .maybeSingle();
       if (cErr) toast.error(cErr.message);
@@ -464,6 +465,20 @@ const Checkout = () => {
                   </label>
                 </div>
               )}
+            </div>
+          </div>
+        ) : course?.in_person_waiver ? (
+          <div className="tactical-card border-amber-500/40 bg-amber-500/10 p-4">
+            <div className="flex items-start gap-2">
+              <FileText className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <div className="text-xs uppercase tracking-wider font-bold text-amber-700 dark:text-amber-500">
+                  In-Person Waiver Required
+                </div>
+                <p className="text-[12px] text-foreground leading-relaxed">
+                  Your instructor will provide a <strong>liability waiver in person</strong> on the day of training. You must sign it before participating — failure to sign may result in being turned away with no refund.
+                </p>
+              </div>
             </div>
           </div>
         ) : (

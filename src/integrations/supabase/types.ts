@@ -656,6 +656,7 @@ export type Database = {
           ends_at: string | null
           gallery_urls: string[]
           id: string
+          in_person_waiver: boolean
           instructor_id: string
           lat: number | null
           lng: number | null
@@ -683,6 +684,7 @@ export type Database = {
           ends_at?: string | null
           gallery_urls?: string[]
           id?: string
+          in_person_waiver?: boolean
           instructor_id: string
           lat?: number | null
           lng?: number | null
@@ -710,6 +712,7 @@ export type Database = {
           ends_at?: string | null
           gallery_urls?: string[]
           id?: string
+          in_person_waiver?: boolean
           instructor_id?: string
           lat?: number | null
           lng?: number | null
