@@ -70,6 +70,13 @@ const Checkout = () => {
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [skipAutoResume, setSkipAutoResume] = useState(false);
 
+  // Inline conflict surfaced from server-side double-booking guards
+  const [conflict, setConflict] = useState<
+    | { kind: 'already_booked'; existingBookingId?: string | null }
+    | { kind: 'time_overlap'; conflictTitle?: string }
+    | null
+  >(null);
+
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
