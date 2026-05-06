@@ -46,7 +46,7 @@ const SECTIONS = [
 
 const PrivacyPolicy = () => (
   <MobileShell withTabBar={false}>
-    <PageHeader title="Privacy Policy" back />
+    <PageHeader title="Privacy Policy" back backTo="/" />
     <div className="px-4 py-4 space-y-4">
       <LegalAccountBanner documentName="Privacy Policy" />
       <p className="text-xs text-muted-foreground">Last updated: April 2026</p>

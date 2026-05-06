@@ -146,7 +146,7 @@ const InstructorCredentials = () => {
 
   return (
     <MobileShell>
-      <PageHeader title="Credentials" back />
+      <PageHeader title="Credentials" back backTo="/instructor/profile" />
       <div className="px-4 pt-3 space-y-4">
         <div className="tactical-card p-4 bg-gradient-to-br from-primary/10 to-transparent">
           <div className="flex items-start gap-3">

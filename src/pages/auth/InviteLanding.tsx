@@ -40,7 +40,7 @@ const InviteLanding = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="You're invited" back />
+      <PageHeader title="You're invited" back backTo="/" />
       <div className="max-w-md mx-auto px-6 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">

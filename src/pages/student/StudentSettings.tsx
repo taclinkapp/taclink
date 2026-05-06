@@ -26,7 +26,7 @@ const StudentSettings = () => {
 
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title="Settings" back />
+      <PageHeader title="Settings" back backTo="/student/profile" />
       <div className="px-4 py-4 space-y-6">
         <Section title="Account">
           <Row label="Edit Profile" onClick={() => nav('/profile/edit')} />

@@ -162,7 +162,7 @@ const InstructorReviews = () => {
 
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title="My Reviews" back />
+      <PageHeader title="My Reviews" back backTo="/instructor/profile" />
       <div className="px-4 py-4 space-y-4">
         <div className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-1">
           {filters.map((t) => (
