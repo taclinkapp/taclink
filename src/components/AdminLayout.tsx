@@ -51,6 +51,7 @@ const items: Item[] = [
   { to: '/admin/warrior-quotes', icon: Sword, label: 'Warrior Quotes' },
   { to: '/admin/security', icon: KeyRound, label: 'Security' },
   { to: '/admin/helcim-webhooks', icon: Webhook, label: 'Helcim Webhooks' },
+  { to: '/admin/refund-test', icon: FlaskConical, label: 'Live Refund Test' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
