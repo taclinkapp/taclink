@@ -579,7 +579,7 @@ const NewCourse = () => {
 
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title="New Course" back onBack={back} />
+      <PageHeader title={isEdit ? 'Edit Draft' : 'New Course'} back onBack={back} />
       <div className="px-4 pt-3">
         <div className="flex items-center gap-1.5">
           {STEPS.map((_, i) => (
