@@ -258,24 +258,32 @@ const CourseManagement = () => {
                 <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
                   No students have booked this course. You can delete it at no cost — no penalty, no strike.
                 </p>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="mt-2 h-8 text-[11px]"
-                  onClick={async () => {
-                    if (!confirm('Delete this course? This cannot be undone.')) return;
-                    const { error } = await supabase.from('courses').delete().eq('id', c.id);
-                    if (error) {
-                      toast.error('Could not delete course', { description: error.message });
-                      return;
-                    }
-                    toast.success('Course deleted');
-                    qc.invalidateQueries({ queryKey: ['courses'] });
-                    window.history.back();
-                  }}
-                >
-                  Delete course
-                </Button>
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  <Link
+                    to={`/instructor/courses/${c.id}/edit`}
+                    className="inline-flex items-center h-8 px-3 rounded-md bg-primary text-primary-foreground text-[11px] font-bold"
+                  >
+                    Edit course
+                  </Link>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="h-8 text-[11px]"
+                    onClick={async () => {
+                      if (!confirm('Delete this course? This cannot be undone.')) return;
+                      const { error } = await supabase.from('courses').delete().eq('id', c.id);
+                      if (error) {
+                        toast.error('Could not delete course', { description: error.message });
+                        return;
+                      }
+                      toast.success('Course deleted');
+                      qc.invalidateQueries({ queryKey: ['courses'] });
+                      window.history.back();
+                    }}
+                  >
+                    Delete course
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
