@@ -295,23 +295,19 @@ const Checkout = () => {
     );
   }
 
-  // Embedded Checkout takeover after the booking is created.
-  if (bookingId) {
-    const returnUrl = `${window.location.origin}/student/checkout/${bookingId}/return`;
-    return (
-      <MobileShell withTabBar={false}>
-        <PaymentTestModeBanner />
-        <PageHeader title="Checkout" back onBack={() => { setSkipAutoResume(true); setBookingId(null); }} />
-        <div className="px-4 py-4 space-y-3">
-          <PaymentStatusBanner bookingId={bookingId} />
-          <HelcimEscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
-        </div>
-      </MobileShell>
-    );
-  }
+  // Once the booking is created we mount the Helcim component invisibly — it
+  // auto-opens the secure payment iframe over whatever page is showing, so
+  // there's no intermediate "Checkout" wrapper screen.
+  const helcimMount = bookingId ? (
+    <HelcimEscrowCheckout
+      bookingId={bookingId}
+      returnUrl={`${window.location.origin}/student/checkout/${bookingId}/return`}
+    />
+  ) : null;
 
   return (
     <MobileShell withTabBar={false}>
+      {helcimMount}
       <PaymentTestModeBanner />
       <PageHeader title="Confirm Booking" back />
       <div className="px-4 py-4 space-y-4">
