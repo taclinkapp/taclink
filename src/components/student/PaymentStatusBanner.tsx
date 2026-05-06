@@ -65,31 +65,27 @@ export function PaymentStatusBanner({ bookingId }: Props) {
     };
   }, [bookingId]);
 
+  // The "waiting for webhook" state is intentionally hidden — the
+  // Checkout button + secure payment modal already communicate that
+  // a charge is in flight. We only surface this banner once Helcim
+  // confirms (success) or reports a failure.
+  if (status === "waiting") return null;
+
   const styles =
     status === "confirmed"
       ? "border-success/40 bg-success/10 text-success"
-      : status === "failed"
-      ? "border-destructive/40 bg-destructive/10 text-destructive"
-      : "border-primary/40 bg-primary/5 text-primary";
+      : "border-destructive/40 bg-destructive/10 text-destructive";
 
-  const Icon =
-    status === "confirmed" ? CheckCircle2 : status === "failed" ? AlertTriangle : Loader2;
-  const title =
-    status === "confirmed"
-      ? "Payment confirmed"
-      : status === "failed"
-      ? "Payment failed"
-      : "Waiting for webhook…";
+  const Icon = status === "confirmed" ? CheckCircle2 : AlertTriangle;
+  const title = status === "confirmed" ? "Payment confirmed" : "Payment failed";
   const help =
     status === "confirmed"
       ? "Helcim webhook received. Your booking is paid and held in escrow."
-      : status === "failed"
-      ? detail ?? "The payment processor reported a failure. You can retry below."
-      : "We're waiting for Helcim to confirm the charge. This usually takes a few seconds.";
+      : detail ?? "The payment processor reported a failure. You can retry below.";
 
   return (
     <div className={`rounded-md border px-3 py-2 flex items-start gap-2 text-xs ${styles}`}>
-      <Icon className={`h-4 w-4 shrink-0 mt-0.5 ${status === "waiting" ? "animate-spin" : ""}`} />
+      <Icon className="h-4 w-4 shrink-0 mt-0.5" />
       <div className="flex-1">
         <div className="font-bold">{title}</div>
         <div className="text-[11px] opacity-90 mt-0.5">{help}</div>
