@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
   let query = supabase
     .from("refunds")
     .select(
-      "id, booking_id, student_cash_refund_cents, amount_cents, external_reference, stripe_refund_status, bookings!inner(helcim_transaction_id)",
+      "id, booking_id, student_cash_refund_cents, amount_cents, external_reference, stripe_refund_status",
     )
     .is("external_reference", null);
 
@@ -166,13 +166,27 @@ Deno.serve(async (req) => {
   const pending = (rows ?? []) as unknown as PendingRefund[];
   const results: Array<Record<string, unknown>> = [];
 
+  // Fetch helcim_transaction_id for all bookings in one query
+  const bookingIds = Array.from(new Set(pending.map((r) => r.booking_id)));
+  const txnByBooking = new Map<string, string | null>();
+  if (bookingIds.length > 0) {
+    const { data: bRows } = await supabase
+      .from("bookings")
+      .select("id, helcim_transaction_id")
+      .in("id", bookingIds);
+    for (const b of bRows ?? []) {
+      txnByBooking.set((b as any).id, (b as any).helcim_transaction_id ?? null);
+    }
+  }
+
   for (const r of pending) {
     const amount = r.student_cash_refund_cents ?? r.amount_cents;
     if (!amount || amount <= 0) {
       results.push({ refund_id: r.id, skipped: "zero amount" });
       continue;
     }
-    const txnId = r.bookings?.helcim_transaction_id;
+    const txnId = txnByBooking.get(r.booking_id) ?? null;
+
     if (!txnId) {
       await supabase
         .from("refunds")
