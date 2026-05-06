@@ -427,24 +427,53 @@ const NewCourse = () => {
         setSaving(false);
         return;
       }
-      const created = await createCourse(user.id, {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        category,
-        skill_level: skillLevel as SkillLevel,
-        price_cents: Math.round(Number(price) * 100),
-        duration_minutes: durationMin,
-        capacity: Number(capacity),
-        address: address || undefined,
-        city,
-        state,
-        lat: geo?.lat,
-        lng: geo?.lng,
-        starts_at: startsAt.toISOString(),
-        ends_at: endsAt.toISOString(),
-        cover_image_url: coverUrl,
-        status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
-      });
+      let created: any;
+      if (isEdit && editId) {
+        const { data, error } = await supabase
+          .from('courses')
+          .update({
+            title: title.trim(),
+            description: description.trim() || null,
+            category,
+            skill_level: skillLevel as SkillLevel,
+            price_cents: Math.round(Number(price) * 100),
+            duration_minutes: durationMin,
+            capacity: Number(capacity),
+            address: address || null,
+            city,
+            state,
+            lat: geo?.lat ?? null,
+            lng: geo?.lng ?? null,
+            starts_at: startsAt.toISOString(),
+            ends_at: endsAt.toISOString(),
+            ...(coverUrl ? { cover_image_url: coverUrl } : {}),
+            status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
+          })
+          .eq('id', editId)
+          .select()
+          .single();
+        if (error) throw error;
+        created = data;
+      } else {
+        created = await createCourse(user.id, {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          category,
+          skill_level: skillLevel as SkillLevel,
+          price_cents: Math.round(Number(price) * 100),
+          duration_minutes: durationMin,
+          capacity: Number(capacity),
+          address: address || undefined,
+          city,
+          state,
+          lat: geo?.lat,
+          lng: geo?.lng,
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt.toISOString(),
+          cover_image_url: coverUrl,
+          status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
+        });
+      }
 
       // AI moderation — scan course text + cover photo for contact info or
       // off-platform communication attempts (phone, email, social handles, URLs).
