@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CourseMap } from '@/components/CourseMap';
 import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, Lock } from 'lucide-react';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
+import { SmartCoverImage } from '@/components/SmartCoverImage';
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -63,16 +64,16 @@ const CourseDetail = () => {
         {/* Hero */}
         <div className="relative h-56 bg-surface overflow-hidden">
           {course.heroImage ? (
-            <img
+            <SmartCoverImage
               src={course.heroImage}
               alt={course.title}
               loading="eager"
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-surface to-background" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
           <Crosshair className="absolute right-4 top-4 h-24 w-24 text-primary/20" strokeWidth={1} />
           <div className="absolute bottom-4 left-4 right-4">
             <CategoryPill category={course.category} />

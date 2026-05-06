@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Course } from '@/lib/mockData';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { Calendar, Star, Heart } from 'lucide-react';
+import { SmartCoverImage } from '@/components/SmartCoverImage';
 
 export const CourseCard = ({ course }: { course: Course }) => {
   const isFull = course.spotsRemaining === 0;
@@ -11,23 +12,23 @@ export const CourseCard = ({ course }: { course: Course }) => {
       <article className="tactical-card overflow-hidden hover:border-primary/40 transition group">
         {/* Hero image */}
         <div className="relative aspect-[16/9] overflow-hidden bg-surface">
-          <img
+          <SmartCoverImage
             src={course.heroImage}
             alt={course.title}
             loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            className="absolute inset-0 h-full w-full"
+            overlay={<div className="absolute inset-0 bg-gradient-to-t from-card via-card/10 to-transparent pointer-events-none" />}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/10 to-transparent" />
           <button
             type="button"
             onClick={(e) => e.preventDefault()}
             aria-label="Save course"
-            className="absolute top-3 right-3 h-9 w-9 rounded-md bg-background/70 backdrop-blur border border-border/60 flex items-center justify-center text-foreground/80 hover:text-primary"
+            className="absolute top-3 right-3 h-9 w-9 rounded-md bg-background/70 backdrop-blur border border-border/60 flex items-center justify-center text-foreground/80 hover:text-primary z-10"
           >
             <Heart className="h-4 w-4" />
           </button>
           {isFull && (
-            <span className="absolute top-3 left-3 px-2 py-1 rounded-sm bg-destructive text-destructive-foreground text-[10px] font-bold uppercase tracking-widest">
+            <span className="absolute top-3 left-3 px-2 py-1 rounded-sm bg-destructive text-destructive-foreground text-[10px] font-bold uppercase tracking-widest z-10">
               Full
             </span>
           )}
