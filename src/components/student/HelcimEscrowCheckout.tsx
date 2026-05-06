@@ -279,7 +279,7 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => { cleanup(); setError(null); setPhase("idle"); }}
+            onClick={() => { cleanup(); nav(-1); }}
           >
             Cancel and go back
           </Button>
