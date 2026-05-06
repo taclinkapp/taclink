@@ -240,8 +240,41 @@ const CourseManagement = () => {
             </div>
           </div>
         )}
-        {/* Non-refundable listing fee disclosure + receipt — only for published/active courses */}
-        {(c.status as string) !== 'draft' && (() => {
+        {/* Zero-booking published course → allow no-penalty delete (no warnings). */}
+        {(c.status as string) !== 'draft' && (c.status as string) !== 'cancelled' && bookings.length === 0 && (
+          <div className="tactical-card border-border bg-muted/20 p-3 mb-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] uppercase tracking-wider font-bold">No bookings yet</div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                  No students have booked this course. You can delete it at no cost — no penalty, no strike.
+                </p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="mt-2 h-8 text-[11px]"
+                  onClick={async () => {
+                    if (!confirm('Delete this course? This cannot be undone.')) return;
+                    const { error } = await supabase.from('courses').delete().eq('id', c.id);
+                    if (error) {
+                      toast.error('Could not delete course', { description: error.message });
+                      return;
+                    }
+                    toast.success('Course deleted');
+                    qc.invalidateQueries({ queryKey: ['courses'] });
+                    window.history.back();
+                  }}
+                >
+                  Delete course
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Listing fee disclosure + cancel-with-penalty card — only when there are real bookings. */}
+        {(c.status as string) !== 'draft' && bookings.length > 0 && (() => {
           const feeCents = listingCharge?.amount_cents ?? computeListingFeeCents(Math.round((c.bookingFee ?? 0) * 100));
           const priceCents = listingCharge?.course_price_cents ?? Math.round((c.bookingFee ?? 0) * 100);
           const ref = listingCharge?.id ? `LF-${listingCharge.id.slice(0, 8).toUpperCase()}` : null;
@@ -325,10 +358,8 @@ const CourseManagement = () => {
           );
         })()}
 
-        {/* Hide cancel-with-penalty card on drafts (no bookings, no penalty). */}
-
-        {/* Final-step instructor cancellation */}
-        {(c.status as string) !== 'cancelled' && (c.status as string) !== 'draft' && (
+        {/* Cancel-with-penalty card — only when there are real bookings to refund. */}
+        {(c.status as string) !== 'cancelled' && (c.status as string) !== 'draft' && bookings.length > 0 && (
           <div className="tactical-card border-destructive/40 bg-destructive/5 p-3 mb-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
