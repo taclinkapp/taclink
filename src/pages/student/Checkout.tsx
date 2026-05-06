@@ -92,8 +92,9 @@ const Checkout = () => {
         w = (wRow as Waiver) ?? null;
       }
 
-      // If a booking already exists for this student/course, jump straight to Secure Payment.
-      if (c && user) {
+      // If a booking already exists for this student/course, jump straight to Secure Payment
+      // (unless the user just hit "back" from Secure Payment).
+      if (c && user && !skipAutoResume) {
         const { data: existing } = await supabase
           .from('bookings')
           .select('id')
