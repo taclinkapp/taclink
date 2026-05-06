@@ -216,26 +216,34 @@ const CourseManagement = () => {
                 <div className="text-[11px] uppercase tracking-wider font-bold">Draft course</div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
                   This course is unpublished — no listing fee has been charged and no students can book.
-                  You can delete it any time at no cost.
+                  Pick up where you left off, or delete it at no cost.
                 </p>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="mt-2 h-8 text-[11px]"
-                  onClick={async () => {
-                    if (!confirm('Delete this draft? This cannot be undone.')) return;
-                    const { error } = await supabase.from('courses').delete().eq('id', c.id);
-                    if (error) {
-                      toast.error('Could not delete draft', { description: error.message });
-                      return;
-                    }
-                    toast.success('Draft deleted');
-                    qc.invalidateQueries({ queryKey: ['courses'] });
-                    window.history.back();
-                  }}
-                >
-                  Delete draft
-                </Button>
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  <Link
+                    to={`/instructor/courses/${c.id}/edit`}
+                    className="inline-flex items-center h-8 px-3 rounded-md bg-primary text-primary-foreground text-[11px] font-bold"
+                  >
+                    Continue editing
+                  </Link>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="h-8 text-[11px]"
+                    onClick={async () => {
+                      if (!confirm('Delete this draft? This cannot be undone.')) return;
+                      const { error } = await supabase.from('courses').delete().eq('id', c.id);
+                      if (error) {
+                        toast.error('Could not delete draft', { description: error.message });
+                        return;
+                      }
+                      toast.success('Draft deleted');
+                      qc.invalidateQueries({ queryKey: ['courses'] });
+                      window.history.back();
+                    }}
+                  >
+                    Delete draft
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
