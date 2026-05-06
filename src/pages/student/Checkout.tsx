@@ -90,13 +90,25 @@ const Checkout = () => {
           .maybeSingle();
         w = (wRow as Waiver) ?? null;
       }
+
+      // If a booking already exists for this student/course, jump straight to Secure Payment.
+      if (c && user) {
+        const { data: existing } = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('student_id', user.id)
+          .eq('course_id', c.id)
+          .maybeSingle();
+        if (!cancelled && existing?.id) setBookingId(existing.id);
+      }
+
       if (cancelled) return;
       setCourse((c as Course) ?? null);
       setWaiver(w);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, user?.id]);
 
   useEffect(() => {
     if (profile?.display_name && !signedName) setSignedName(profile.display_name);
@@ -282,7 +294,7 @@ const Checkout = () => {
     return (
       <MobileShell withTabBar={false}>
         <PaymentTestModeBanner />
-        <PageHeader title="Secure Payment" back />
+        <PageHeader title="Secure Payment" back onBack={() => setBookingId(null)} />
         <div className="px-4 py-4 space-y-3">
           <PaymentStatusBanner bookingId={bookingId} />
           
