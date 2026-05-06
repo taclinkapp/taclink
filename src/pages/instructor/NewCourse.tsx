@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,8 @@ const durationMinutesFromTimes = (date: string, start: string, end: string): num
 
 const NewCourse = () => {
   const nav = useNavigate();
+  const { id: editId } = useParams<{ id: string }>();
+  const isEdit = !!editId;
   const { user, profile } = useAuth();
   const hasPM = !!profile?.payment_method_added;
   const subActive = profile?.subscription_status === 'active';
@@ -180,10 +182,67 @@ const NewCourse = () => {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const hydrated = useRef(false);
 
-  // Hydrate once
+  // Hydrate once. When editing an existing draft (?:id in URL), load the
+  // course row from the DB so the instructor picks up where they left off.
+  // Otherwise fall back to the localStorage autosave for new courses.
   useEffect(() => {
     if (hydrated.current) return;
+    if (isEdit && !user) return; // wait for auth before hitting the DB
     hydrated.current = true;
+
+    if (isEdit && editId) {
+      (async () => {
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*')
+          .eq('id', editId)
+          .maybeSingle();
+        if (error || !data) {
+          toast.error('Could not load draft');
+          nav('/instructor/courses');
+          return;
+        }
+        if (data.instructor_id !== user!.id) {
+          toast.error('You can only edit your own drafts');
+          nav('/instructor/courses');
+          return;
+        }
+        setTitle(data.title ?? '');
+        setCategory(data.category ?? '');
+        setSkillLevel((data.skill_level as SkillLevel) ?? '');
+        setDescription(data.description ?? '');
+        if (data.starts_at) {
+          const s = new Date(data.starts_at);
+          setDate(s.toISOString().slice(0, 10));
+          setStartTime(`${String(s.getHours()).padStart(2, '0')}:${String(s.getMinutes()).padStart(2, '0')}`);
+        }
+        if (data.ends_at) {
+          const e = new Date(data.ends_at);
+          setEndTime(`${String(e.getHours()).padStart(2, '0')}:${String(e.getMinutes()).padStart(2, '0')}`);
+        }
+        setAddress(data.address ?? '');
+        setCity(data.city ?? '');
+        setState(data.state ?? '');
+        setCapacity(data.capacity ? String(data.capacity) : '');
+        setPrice(data.price_cents ? String(Math.round(data.price_cents / 100)) : '');
+        if (data.cover_image_url) setCoverPreview(data.cover_image_url);
+        // Load existing waiver, if any
+        const { data: w } = await supabase
+          .from('course_waivers')
+          .select('title, content')
+          .eq('course_id', editId)
+          .order('version', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (w) {
+          setWaiverTitle(w.title);
+          setWaiverContent(w.content);
+        }
+        toast.message('Draft loaded', { description: 'Pick up where you left off.' });
+      })();
+      return;
+    }
+
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
@@ -206,11 +265,12 @@ const NewCourse = () => {
     } catch {
       // ignore corrupt drafts
     }
-  }, [DRAFT_KEY]);
+  }, [DRAFT_KEY, isEdit, editId, user?.id]);
 
   // Debounced autosave on changes
   useEffect(() => {
     if (!hydrated.current) return;
+    if (isEdit) return; // editing a real DB draft — skip localStorage autosave
     const hasContent = title || category || description || date || startTime || endTime || address || city || state || capacity || price;
     if (!hasContent) return;
     setDraftStatus('saving');
@@ -368,24 +428,53 @@ const NewCourse = () => {
         setSaving(false);
         return;
       }
-      const created = await createCourse(user.id, {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        category,
-        skill_level: skillLevel as SkillLevel,
-        price_cents: Math.round(Number(price) * 100),
-        duration_minutes: durationMin,
-        capacity: Number(capacity),
-        address: address || undefined,
-        city,
-        state,
-        lat: geo?.lat,
-        lng: geo?.lng,
-        starts_at: startsAt.toISOString(),
-        ends_at: endsAt.toISOString(),
-        cover_image_url: coverUrl,
-        status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
-      });
+      let created: any;
+      if (isEdit && editId) {
+        const { data, error } = await supabase
+          .from('courses')
+          .update({
+            title: title.trim(),
+            description: description.trim() || null,
+            category,
+            skill_level: skillLevel as SkillLevel,
+            price_cents: Math.round(Number(price) * 100),
+            duration_minutes: durationMin,
+            capacity: Number(capacity),
+            address: address || null,
+            city,
+            state,
+            lat: geo?.lat ?? null,
+            lng: geo?.lng ?? null,
+            starts_at: startsAt.toISOString(),
+            ends_at: endsAt.toISOString(),
+            ...(coverUrl ? { cover_image_url: coverUrl } : {}),
+            status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
+          })
+          .eq('id', editId)
+          .select()
+          .single();
+        if (error) throw error;
+        created = data;
+      } else {
+        created = await createCourse(user.id, {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          category,
+          skill_level: skillLevel as SkillLevel,
+          price_cents: Math.round(Number(price) * 100),
+          duration_minutes: durationMin,
+          capacity: Number(capacity),
+          address: address || undefined,
+          city,
+          state,
+          lat: geo?.lat,
+          lng: geo?.lng,
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt.toISOString(),
+          cover_image_url: coverUrl,
+          status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
+        });
+      }
 
       // AI moderation — scan course text + cover photo for contact info or
       // off-platform communication attempts (phone, email, social handles, URLs).
@@ -441,24 +530,37 @@ const NewCourse = () => {
       const priceCents = Math.round(Number(price) * 100);
       const listingFeeCents = computeListingFeeCents(priceCents);
 
+      // Skip the listing-fee charge if one was already recorded for this course
+      // (e.g. editing/republishing a previously-published course). Drafts have
+      // no charge yet, so this only fires the first time.
+      const { data: existingCharge } = await supabase
+        .from('instructor_charges')
+        .select('id')
+        .eq('course_id', created.id)
+        .eq('charge_type', 'listing_fee')
+        .limit(1)
+        .maybeSingle();
+
       let redeemedCreditId: string | null = null;
-      if (subActive && availableCredits > 0) {
+      if (!existingCharge && subActive && availableCredits > 0) {
         redeemedCreditId = await redeemFreeListingCredit(user.id, created.id);
       }
 
-      await supabase.from('instructor_charges').insert({
-        instructor_id: user.id,
-        course_id: created.id,
-        charge_type: 'listing_fee',
-        course_price_cents: priceCents,
-        capacity: Number(capacity),
-        amount_cents: redeemedCreditId ? 0 : listingFeeCents,
-        status: redeemedCreditId ? 'waived' : 'charged',
-        refundable: false,
-        note: redeemedCreditId
-          ? 'Listing fee waived — punch-card free credit redeemed'
-          : '10% listing fee at publish (non-refundable)',
-      });
+      if (!existingCharge) {
+        await supabase.from('instructor_charges').insert({
+          instructor_id: user.id,
+          course_id: created.id,
+          charge_type: 'listing_fee',
+          course_price_cents: priceCents,
+          capacity: Number(capacity),
+          amount_cents: redeemedCreditId ? 0 : listingFeeCents,
+          status: redeemedCreditId ? 'waived' : 'charged',
+          refundable: false,
+          note: redeemedCreditId
+            ? 'Listing fee waived — punch-card free credit redeemed'
+            : '10% listing fee at publish (non-refundable)',
+        });
+      }
 
       qc.invalidateQueries({ queryKey: ['courses'] });
       localStorage.removeItem(DRAFT_KEY);
@@ -477,7 +579,7 @@ const NewCourse = () => {
 
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title="New Course" back onBack={back} />
+      <PageHeader title={isEdit ? 'Edit Draft' : 'New Course'} back onBack={back} />
       <div className="px-4 pt-3">
         <div className="flex items-center gap-1.5">
           {STEPS.map((_, i) => (
