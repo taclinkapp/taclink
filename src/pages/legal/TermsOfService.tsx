@@ -16,7 +16,7 @@ const SECTIONS = [
   },
   {
     title: '3. Instructor Responsibility',
-    body: 'Instructors are independent contractors, not TacLink employees. TacLink does not verify the accuracy of instructor credentials, course content, or safety practices beyond the verified badge program. Students train at their own risk.',
+    body: 'Instructors are independent contractors, not TacLink employees. TacLink reviews instructor credentials submitted at sign-up and through the verified badge program, but cannot independently guarantee the ongoing accuracy, validity, or completeness of any credential, certification, course content, or safety practice. Students are responsible for using their own judgment and train at their own risk.',
   },
   {
     title: '4. Liability Waiver — Between Student and Instructor Only',
