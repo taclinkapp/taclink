@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
+import { useNavHistory } from '@/contexts/NavHistoryContext';
 
 export const MobileShell = ({ children, className, withTabBar = true }: { children: ReactNode; className?: string; withTabBar?: boolean }) => (
   <div className="min-h-screen bg-background">
