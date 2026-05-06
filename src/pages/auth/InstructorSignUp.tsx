@@ -35,6 +35,35 @@ const InstructorSignUp = () => {
   const [bio, setBio] = useState('');
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const onPickPhoto = (f: File | null | undefined) => {
+    if (!f) return;
+    if (!['image/jpeg','image/png','image/webp'].includes(f.type)) {
+      toast.error('Photo must be JPG, PNG, or WEBP'); return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error('Photo must be 5MB or smaller'); return;
+    }
+    setPhotoFile(f);
+    setPhotoPreview(URL.createObjectURL(f));
+  };
+
+  const uploadPhotoIfAny = async (userId: string) => {
+    if (!photoFile) return;
+    try {
+      const ext = photoFile.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+      const path = `${userId}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, photoFile, { contentType: photoFile.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
+      await supabase.from('profiles').update({ photo_url: pub.publicUrl }).eq('id', userId);
+    } catch (e: any) {
+      toast.error('Photo upload failed', { description: e?.message });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
