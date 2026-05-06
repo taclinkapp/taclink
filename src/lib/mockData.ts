@@ -10,6 +10,7 @@ export type Course = {
   instructorVerified: boolean;
   instructorRating: number;
   heroImage: string;
+  gallery?: string[];
   city: string;
   state: string;
   address: string;

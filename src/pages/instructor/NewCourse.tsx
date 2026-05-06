@@ -136,6 +136,31 @@ const NewCourse = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Gallery (up to 8 extra photos). `galleryUrls` are already-uploaded URLs
+  // (loaded when editing); `galleryFiles` are new files queued for upload.
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const galleryCount = galleryUrls.length + galleryFiles.length;
+  const galleryPreviews = galleryFiles.map((f) => URL.createObjectURL(f));
+
+  const onPickGallery = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const remaining = 8 - galleryCount;
+    if (remaining <= 0) {
+      toast.error('You can attach up to 8 gallery photos');
+      return;
+    }
+    const arr = Array.from(files).slice(0, remaining);
+    for (const f of arr) {
+      if (!f.type.startsWith('image/')) { toast.error('Only image files allowed'); return; }
+      if (f.size > 10 * 1024 * 1024) { toast.error(`${f.name} is over 10MB`); return; }
+    }
+    setGalleryFiles((prev) => [...prev, ...arr]);
+  };
+  const removeGalleryUrl = (i: number) => setGalleryUrls((p) => p.filter((_, idx) => idx !== i));
+  const removeGalleryFile = (i: number) => setGalleryFiles((p) => p.filter((_, idx) => idx !== i));
+
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -243,6 +268,7 @@ const NewCourse = () => {
         setCapacity(data.capacity ? String(data.capacity) : '');
         setPrice(data.price_cents ? String(Math.round(data.price_cents / 100)) : '');
         if (data.cover_image_url) setCoverPreview(data.cover_image_url);
+        if (Array.isArray((data as any).gallery_urls)) setGalleryUrls((data as any).gallery_urls);
         // Load existing waiver, if any
         const { data: w } = await supabase
           .from('course_waivers')
@@ -436,6 +462,18 @@ const NewCourse = () => {
           return;
         }
       }
+      // Upload any new gallery files. Combine with already-saved gallery URLs.
+      let finalGallery: string[] = [...galleryUrls];
+      if (galleryFiles.length > 0) {
+        try {
+          const uploaded = await Promise.all(galleryFiles.map((f) => uploadCoursePhoto(user.id, f)));
+          finalGallery = [...finalGallery, ...uploaded].slice(0, 8);
+        } catch (e: any) {
+          toast.error(e?.message ?? 'Gallery photo upload failed');
+          setSaving(false);
+          return;
+        }
+      }
       // Geocode the address so the course pins on the map. We require a hit
       // for published courses — without coordinates the map can't render the
       // marker and students lose location context. Drafts are allowed to
@@ -468,6 +506,7 @@ const NewCourse = () => {
             starts_at: startsAt.toISOString(),
             ends_at: endsAt.toISOString(),
             ...(coverUrl ? { cover_image_url: coverUrl } : {}),
+            gallery_urls: finalGallery,
             status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
           })
           .eq('id', editId)
@@ -492,6 +531,7 @@ const NewCourse = () => {
           starts_at: startsAt.toISOString(),
           ends_at: endsAt.toISOString(),
           cover_image_url: coverUrl,
+          gallery_urls: finalGallery,
           status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
         });
       }
@@ -719,6 +759,51 @@ const NewCourse = () => {
                   <span className="text-[10px] text-muted-foreground/80">Shown as the course header for students</span>
                 </button>
               )}
+            </Field>
+            <Field label={`Course Gallery (${galleryCount}/8)`}>
+              <input
+                ref={galleryInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => { onPickGallery(e.target.files); if (e.target) e.target.value = ''; }}
+              />
+              {galleryCount > 0 && (
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {galleryUrls.map((url, i) => (
+                    <div key={`u-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border">
+                      <img src={url} alt={`Gallery ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
+                      <button type="button" onClick={() => removeGalleryUrl(i)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Remove">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {galleryFiles.map((_, i) => (
+                    <div key={`f-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border">
+                      <img src={galleryPreviews[i]} alt={`New ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
+                      <button type="button" onClick={() => removeGalleryFile(i)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Remove">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                disabled={galleryCount >= 8}
+                className="w-full h-20 rounded-xl border-2 border-dashed border-border bg-card hover:border-primary hover:text-primary transition flex flex-col items-center justify-center gap-1 text-muted-foreground disabled:opacity-50"
+              >
+                <ImagePlus className="h-5 w-5" />
+                <span className="text-xs font-bold uppercase tracking-wider">+ Add course photos</span>
+              </button>
+              <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-primary/5 border border-primary/20">
+                <Lightbulb className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                <p className="text-[11px] leading-snug text-foreground/80">
+                  <span className="font-bold text-primary">Show, don't tell:</span> Add up to 8 photos of the range, training bays, equipment students will use (rifles, mats, pistols, dummies), the parking area, your gear table, or past classes in action. The cover photo above is what students see first; gallery photos appear on the course page so they know what to expect.
+                </p>
+              </div>
             </Field>
           </>
         )}

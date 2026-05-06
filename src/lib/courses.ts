@@ -19,6 +19,7 @@ export type DbCourse = {
   starts_at: string | null;
   ends_at: string | null;
   cover_image_url: string | null;
+  gallery_urls?: string[] | null;
   status: string;
   skill_level?: string | null;
   created_at: string;
@@ -69,7 +70,8 @@ export const dbToViewCourse = (
     instructorPhoto: instructor?.photo_url ?? "https://i.pravatar.cc/150?img=12",
     instructorVerified: true,
     instructorRating: 0,
-    heroImage: row.cover_image_url || PLACEHOLDER_IMG,
+    heroImage: row.cover_image_url || (row.gallery_urls && row.gallery_urls[0]) || PLACEHOLDER_IMG,
+    gallery: row.gallery_urls ?? [],
     city: row.city ?? "",
     state: row.state ?? "",
     address: row.address ?? "",
@@ -159,6 +161,7 @@ export type NewCourseInput = {
   starts_at?: string; // ISO
   ends_at?: string; // ISO
   cover_image_url?: string;
+  gallery_urls?: string[];
   skill_level?: SkillLevel;
   status: "draft" | "published";
 };

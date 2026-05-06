@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCircle2, ShieldCheck, RefreshCw, XCircle, UserX } from 'lucide-react';
+import { Calendar, Clock, MapPin, AlertTriangle, Star, Wallet, Loader2, CheckCircle2, ShieldCheck, RefreshCw, XCircle, UserX, MessageSquare } from 'lucide-react';
 import { fmt } from '@/lib/fees';
 import { QRCodeSVG } from 'qrcode.react';
 import { AttendanceClaimResponse } from '@/components/student/AttendanceClaimResponse';
@@ -57,6 +57,7 @@ const BookingDetail = () => {
   const [loading, setLoading] = useState(true);
   const [b, setB] = useState<BookingRow | null>(null);
   const [c, setC] = useState<CourseRow | null>(null);
+  const [instructor, setInstructor] = useState<{ id: string; display_name: string | null; photo_url: string | null } | null>(null);
   const [signedToken, setSignedToken] = useState<string | null>(null);
   const [tokenExpiresAt, setTokenExpiresAt] = useState<number | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
@@ -111,6 +112,14 @@ const BookingDetail = () => {
         .eq('id', row.course_id)
         .maybeSingle();
       setC((course as CourseRow) ?? null);
+      if (course?.instructor_id) {
+        const { data: inst } = await supabase
+          .from('profiles')
+          .select('id, display_name, photo_url')
+          .eq('id', course.instructor_id)
+          .maybeSingle();
+        setInstructor(inst as any);
+      }
       if (row.status === 'reserved' && (row.deposit_status === 'held_in_escrow' || row.deposit_status === 'confirmed')) {
         fetchSignedToken(row.id);
       }
@@ -234,6 +243,27 @@ const BookingDetail = () => {
             )}
           </div>
         </div>
+
+        {instructor && (
+          <div className="tactical-card p-4 flex items-center gap-3">
+            {instructor.photo_url ? (
+              <img src={instructor.photo_url} alt={instructor.display_name ?? 'Instructor'} className="h-12 w-12 rounded-full object-cover border-2 border-primary" />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-muted border-2 border-primary" />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Your instructor</div>
+              <div className="font-bold truncate">{instructor.display_name ?? 'Instructor'}</div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => nav(`/student/messages/${instructor.id}`)}
+              className="h-9 bg-primary text-primary-foreground font-bold"
+            >
+              <MessageSquare className="h-4 w-4 mr-1.5" /> Message
+            </Button>
+          </div>
+        )}
 
         {/* Payment summary */}
         <div className="tactical-card p-4">
