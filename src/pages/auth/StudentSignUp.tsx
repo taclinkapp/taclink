@@ -129,10 +129,27 @@ const StudentSignUp = () => {
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex justify-center mb-2">
-            <button type="button" className="h-24 w-24 rounded-full bg-card border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition">
-              <Camera className="h-7 w-7" />
+          <div className="flex flex-col items-center gap-2 mb-2">
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => onPickPhoto(e.target.files?.[0])}
+            />
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              className="h-24 w-24 rounded-full bg-card border-2 border-dashed border-border overflow-hidden flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition"
+              aria-label="Add profile photo"
+            >
+              {photoPreview ? (
+                <img src={photoPreview} alt="Profile preview" className="h-full w-full object-cover" />
+              ) : (
+                <Camera className="h-7 w-7" />
+              )}
             </button>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{photoFile ? 'Tap to change' : 'Add a photo (optional)'}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
