@@ -314,7 +314,7 @@ const NewCourse = () => {
     }
     if (step === 4) {
       if (!skillLevel) return 'Skill level is required — go back to Basics and pick a level';
-      if (!isPrelaunch && !feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
+      if (!isPrelaunch && !skipPublishGuards && !feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
     }
     return null;
   };
@@ -326,7 +326,7 @@ const NewCourse = () => {
     if (!user) { toast.error('You must be signed in'); return; }
     // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
     // since nothing is being published or charged yet.
-    if (!isPrelaunch) {
+    if (!isPrelaunch && !skipPublishGuards) {
       if (!hasPM) {
         toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
         nav('/instructor/payment-methods');
@@ -361,7 +361,7 @@ const NewCourse = () => {
       // marker and students lose location context. Drafts are allowed to
       // skip (instructor may still be drafting an address).
       const geo = await geocodeAddress({ address, city, state });
-      if (!isPrelaunch && !geo) {
+      if (!isPrelaunch && !skipPublishGuards && !geo) {
         toast.error("We couldn't locate that address on the map", {
           description: 'Double-check the address, city, and state so students can find your course.',
         });
@@ -384,7 +384,7 @@ const NewCourse = () => {
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
         cover_image_url: coverUrl,
-        status: isPrelaunch ? 'draft' : 'published',
+        status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
       });
 
       // AI moderation — scan course text + cover photo for contact info or
@@ -426,7 +426,7 @@ const NewCourse = () => {
       }
 
       // draft and can't go live until the platform launches.
-      if (isPrelaunch) {
+      if (isPrelaunch && !skipPublishGuards) {
         qc.invalidateQueries({ queryKey: ['courses'] });
         localStorage.removeItem(DRAFT_KEY);
         toast.success('Draft saved', {
@@ -979,7 +979,7 @@ const NewCourse = () => {
 
         <div className="flex gap-2 pt-4">
           {step > 0 && <Button variant="outline" onClick={back} disabled={saving} className="flex-1 h-12 bg-card border-border font-semibold">Back</Button>}
-          <Button onClick={next} disabled={saving || (step === 4 && !isPrelaunch && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
+          <Button onClick={next} disabled={saving || (step === 4 && !isPrelaunch && !skipPublishGuards && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 4
               ? 'Continue'
               : isPrelaunch
