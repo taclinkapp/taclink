@@ -1040,17 +1040,19 @@ const NewCourse = () => {
               </div>
             )}
 
-            {waiverContent && !skipWaiver && (
+            {!skipWaiver && (
               <>
                 <div className="flex items-center justify-between">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Draft (edit freely — markdown)
+                    {subActive ? 'Draft (edit freely — markdown)' : 'Paste your waiver text (markdown supported)'}
                   </Label>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setWaiverPreview((p) => !p)} className="h-7 text-[11px]">
-                    <FileText className="h-3 w-3 mr-1" /> {waiverPreview ? 'Edit' : 'Preview'}
-                  </Button>
+                  {waiverContent && (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setWaiverPreview((p) => !p)} className="h-7 text-[11px]">
+                      <FileText className="h-3 w-3 mr-1" /> {waiverPreview ? 'Edit' : 'Preview'}
+                    </Button>
+                  )}
                 </div>
-                {waiverPreview ? (
+                {waiverPreview && waiverContent ? (
                   <div className="prose prose-sm max-w-none border border-border rounded-md p-3 bg-card text-xs max-h-80 overflow-y-auto">
                     <h3>{waiverTitle}</h3>
                     <ReactMarkdown>{waiverContent}</ReactMarkdown>
@@ -1059,6 +1061,7 @@ const NewCourse = () => {
                   <Textarea
                     value={waiverContent}
                     onChange={(e) => setWaiverContent(e.target.value)}
+                    placeholder={subActive ? '' : 'Paste your attorney-reviewed waiver here…'}
                     className="bg-card border-border font-mono text-xs min-h-72"
                   />
                 )}
