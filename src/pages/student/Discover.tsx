@@ -546,6 +546,7 @@ const Discover = () => {
 
       <StudentTabBar />
       <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} rewardLabel="1 free booking" />
+      <CrashCourseTour role="student" open={tour.open} onClose={tour.close} />
     </MobileShell>
   );
 };
