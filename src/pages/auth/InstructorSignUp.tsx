@@ -191,7 +191,7 @@ const InstructorSignUp = () => {
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Confirm</Label>
-              <Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
+              <PasswordInput required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
             </div>
           </div>
           <PasswordRequirements password={password} />
