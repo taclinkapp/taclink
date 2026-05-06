@@ -103,12 +103,16 @@ const InstructorSignUp = () => {
         },
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       logSignupRedirect({ role: 'instructor', intendedPath: '/instructor/subscription?onboarding=1', status: 'error', email, message: error.message });
       toast.error(error.message);
       return;
     }
+    const { data: sess } = await supabase.auth.getSession();
+    const uid = sess.session?.user?.id;
+    if (uid) await uploadPhotoIfAny(uid);
+    setLoading(false);
     toast.success('Account created', {
       description: 'Choose your plan to get started.',
     });
