@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Course } from '@/lib/mockData';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { Calendar, Star, Heart } from 'lucide-react';
+import { SmartCoverImage } from '@/components/SmartCoverImage';
 
 export const CourseCard = ({ course }: { course: Course }) => {
   const isFull = course.spotsRemaining === 0;
