@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CourseMap } from '@/components/CourseMap';
 import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, Lock } from 'lucide-react';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
+import { SmartCoverImage } from '@/components/SmartCoverImage';
 
 const CourseDetail = () => {
   const { id } = useParams();
