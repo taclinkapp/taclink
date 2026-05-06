@@ -35,10 +35,13 @@ export const PageHeader = ({
   backTo?: string;
 }) => {
   const navigate = useNavigate();
+  const { depthRef } = useNavHistory();
   const handleBack = () => {
     if (onBack) return onBack();
+    // Smart: only use browser-back if we've actually navigated within the app
+    // in this tab. Otherwise (deep link / first page) fall back to backTo.
+    if (depthRef.current > 0) return navigate(-1);
     if (backTo) return navigate(backTo);
-    if (window.history.length > 1) return navigate(-1);
     navigate('/');
   };
   return (
