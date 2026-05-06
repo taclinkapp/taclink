@@ -38,7 +38,6 @@ type PendingRefund = {
   amount_cents: number;
   external_reference: string | null;
   stripe_refund_status: string | null;
-  bookings: { helcim_transaction_id: string | null } | null;
 };
 
 async function helcimCall(
