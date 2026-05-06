@@ -328,7 +328,7 @@ const CourseManagement = () => {
         {/* Hide cancel-with-penalty card on drafts (no bookings, no penalty). */}
 
         {/* Final-step instructor cancellation */}
-        {(c.status as string) !== 'cancelled' && (
+        {(c.status as string) !== 'cancelled' && (c.status as string) !== 'draft' && (
           <div className="tactical-card border-destructive/40 bg-destructive/5 p-3 mb-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
