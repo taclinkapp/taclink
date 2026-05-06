@@ -1026,7 +1026,58 @@ const NewCourse = () => {
               />
             </Field>
 
+            {subActive && (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setWaiverMode('ai')}
+                  className={cn(
+                    'rounded-md border px-3 py-3 text-left transition',
+                    waiverMode === 'ai'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-card hover:border-primary/50',
+                  )}
+                >
+                  <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" /> AI Waiver
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                    Generate a course-specific waiver. Students e-sign at checkout.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWaiverMode('in_person')}
+                  className={cn(
+                    'rounded-md border px-3 py-3 text-left transition',
+                    waiverMode === 'in_person'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-card hover:border-primary/50',
+                  )}
+                >
+                  <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider">
+                    <FileText className="h-3.5 w-3.5 text-primary" /> In-Person Waiver
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                    You'll provide your own paper waiver on training day.
+                  </p>
+                </button>
+              </div>
+            )}
+
             {subActive ? (
+              waiverMode === 'in_person' ? (
+                <div className="tactical-card border-amber-500/40 bg-amber-500/10 p-4 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <FileText className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <div className="text-[12px] leading-relaxed text-foreground">
+                      Students will be told at checkout that you are providing the <strong>liability waiver in person</strong> on the day of training. You are <strong>solely responsible</strong> for collecting a signed waiver from every student before they participate. TacLink will not generate or store a waiver for this course.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+              <></>
+            )) : (
               <>
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground">
