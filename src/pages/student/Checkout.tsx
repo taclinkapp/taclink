@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertTriangle, FileText, Loader2, ShieldCheck, Lock } from 'lucide-react';
+import { AlertTriangle, FileText, Loader2, ShieldCheck, Lock, CalendarX, BookmarkCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { computeFees, fmt } from '@/lib/fees';
