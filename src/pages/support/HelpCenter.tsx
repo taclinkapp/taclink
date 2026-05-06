@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
-import { ChevronDown, Search, MessageSquare, LifeBuoy } from 'lucide-react';
+import { ChevronDown, Search, MessageSquare, LifeBuoy, PlayCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { CrashCourseTour } from '@/components/CrashCourseTour';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 type Faq = { q: string; a: string; tags: string[] };
