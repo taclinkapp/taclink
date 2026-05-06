@@ -111,7 +111,7 @@ export default function AdminRefundTest() {
     }
     setStarting(true);
     const { data, error } = await supabase.functions.invoke("refund-test-run", {
-      body: { booking_id: bookingId, amount_cents: 100 },
+      body: { booking_id: bookingId, amount_cents: 500 },
     });
     setStarting(false);
     if (error) {
@@ -128,7 +128,7 @@ export default function AdminRefundTest() {
 
   return (
     <>
-      <AdminHeader title="Live Refund Test" subtitle="Issue a real $1 Helcim refund and verify the full webhook → DB chain" />
+      <AdminHeader title="Live Refund Test" subtitle="Issue a real $5 Helcim refund and verify the full webhook → DB chain" />
       <div className="p-6 space-y-6 max-w-5xl">
         <div className="tactical-card p-5 space-y-4">
           <div className="flex items-start gap-3">
@@ -136,9 +136,9 @@ export default function AdminRefundTest() {
               <FlaskConical className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <h2 className="font-bold">Run a $1 refund test</h2>
+              <h2 className="font-bold">Run a $5 refund test</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Pick a booking that was paid through Helcim. We'll issue a $1 refund,
+                Pick a booking that was paid through Helcim. We'll issue a $5 refund,
                 wait for Helcim's webhook, and verify the booking, refund row, and
                 instructor ledger were all updated correctly.
               </p>
@@ -173,12 +173,12 @@ export default function AdminRefundTest() {
               className="h-10 bg-primary text-primary-foreground font-bold"
             >
               {starting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-              Run $1 refund test
+              Run $5 refund test
             </Button>
           </div>
 
           <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
-            <strong>This is a real refund.</strong> $1.00 will be returned to the student's card and reversed
+            <strong>This is a real refund.</strong> $5.00 will be returned to the student's card and reversed
             in the instructor's ledger. Use a booking you control.
           </div>
         </div>
