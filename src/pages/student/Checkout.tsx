@@ -27,6 +27,7 @@ type Course = {
   state: string | null;
   starts_at: string | null;
   price_cents: number;
+  in_person_waiver: boolean | null;
 };
 
 type Waiver = {
