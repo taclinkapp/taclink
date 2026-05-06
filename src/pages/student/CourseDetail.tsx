@@ -40,7 +40,7 @@ const CourseDetail = () => {
   if (isLoading) {
     return (
       <MobileShell withTabBar={false}>
-        <PageHeader back backTo="/student/discover" />
+        <PageHeader back backTo="/student" />
         <div className="px-4 py-12 text-center text-muted-foreground text-sm">Loading…</div>
       </MobileShell>
     );
@@ -49,7 +49,7 @@ const CourseDetail = () => {
   if (!course) {
     return (
       <MobileShell withTabBar={false}>
-        <PageHeader back backTo="/student/discover" />
+        <PageHeader back backTo="/student" />
         <div className="px-4 py-12 text-center text-muted-foreground text-sm">Course not found.</div>
       </MobileShell>
     );
@@ -60,7 +60,7 @@ const CourseDetail = () => {
   return (
     <MobileShell withTabBar={false}>
       <div className="pb-28">
-        <PageHeader back backTo="/student/discover" />
+        <PageHeader back backTo="/student" />
         {/* Hero */}
         <div className="relative h-56 bg-surface overflow-hidden">
           {course.heroImage ? (
