@@ -989,7 +989,7 @@ const NewCourse = () => {
           <Button onClick={next} disabled={saving || (step === 4 && !isPrelaunch && !skipPublishGuards && !feeAck)} className="flex-1 h-12 bg-primary text-primary-foreground font-bold">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < 4
               ? 'Continue'
-              : isPrelaunch
+              : (isPrelaunch && !skipPublishGuards)
                 ? 'Save Draft'
                 : availableCredits > 0
                   ? 'Publish · FREE 🎉'
