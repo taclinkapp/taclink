@@ -614,7 +614,7 @@ const NewCourse = () => {
       }
 
       // Persist the waiver tied to this course (published so students must e-sign at checkout).
-      if (!skipWaiver && waiverContent.trim()) {
+      if (subActive && waiverMode === 'ai' && !skipWaiver && waiverContent.trim()) {
         const { error: wErr } = await supabase.from('course_waivers').insert({
           course_id: created.id,
           title: waiverTitle.trim() || 'Liability Waiver & Assumption of Risk',
