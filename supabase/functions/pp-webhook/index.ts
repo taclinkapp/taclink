@@ -30,37 +30,52 @@ function getSupabase() {
 
 type HelcimEnv = "sandbox" | "live";
 
-async function verifyHelcimSignature(rawBody: string, signatureHeader: string | null): Promise<boolean> {
+async function verifyHelcimSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+  webhookId: string | null,
+  webhookTimestamp: string | null,
+): Promise<boolean> {
   const verifierToken = Deno.env.get("HELCIM_WEBHOOK_VERIFIER_TOKEN");
   if (!verifierToken) {
     console.error("HELCIM_WEBHOOK_VERIFIER_TOKEN not configured");
     return false;
   }
-  if (!signatureHeader) return false;
+  if (!signatureHeader || !webhookId || !webhookTimestamp) {
+    console.error("Missing webhook signature headers", {
+      hasSig: !!signatureHeader, hasId: !!webhookId, hasTs: !!webhookTimestamp,
+    });
+    return false;
+  }
+
+  // Helcim uses Svix-style signatures: HMAC-SHA256 of `${id}.${timestamp}.${body}`
+  // signed with the verifier token (which may be base64-prefixed `whsec_...`).
+  // Header value: space-separated `v1,<base64sig>` entries.
+  let keyBytes: Uint8Array;
+  if (verifierToken.startsWith("whsec_")) {
+    const b64 = verifierToken.slice(6);
+    const bin = atob(b64);
+    keyBytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) keyBytes[i] = bin.charCodeAt(i);
+  } else {
+    keyBytes = new TextEncoder().encode(verifierToken);
+  }
 
   const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(verifierToken),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
+    "raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
   );
-  const signed = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(rawBody),
-  );
-  // Helcim docs: hex-encoded HMAC-SHA256.
-  const bytes = new Uint8Array(signed);
-  const expected = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const toSign = `${webhookId}.${webhookTimestamp}.${rawBody}`;
+  const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(toSign));
+  const expectedB64 = btoa(String.fromCharCode(...new Uint8Array(signed)));
 
-  // Constant-time comparison.
-  if (expected.length !== signatureHeader.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < expected.length; i++) {
-    mismatch |= expected.charCodeAt(i) ^ signatureHeader.charCodeAt(i);
+  // Compare against any v1 entry in the header
+  const entries = signatureHeader.split(" ");
+  for (const entry of entries) {
+    const [version, sig] = entry.split(",");
+    if (version === "v1" && sig === expectedB64) return true;
   }
-  return mismatch === 0;
+  console.error("Helcim webhook signature mismatch", { expected: expectedB64, got: signatureHeader });
+  return false;
 }
 
 /**
