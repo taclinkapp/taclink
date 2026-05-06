@@ -114,6 +114,19 @@ const NewCourse = () => {
       .then(({ data }) => setPmHint(data as any));
   }, [user?.id]);
 
+  const refreshPaymentMethodHint = async () => {
+    if (!user) return null;
+    const { data } = await supabase
+      .from('payment_methods')
+      .select('method_type, brand, last4, handle, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setPmHint(data as any);
+    return data;
+  };
+
 
   // form state
   const [title, setTitle] = useState('');
@@ -391,7 +404,8 @@ const NewCourse = () => {
     // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
     // since nothing is being published or charged yet.
     if (!isPrelaunch && !skipPublishGuards) {
-      if (!hasPaymentMethodOnFile) {
+      const confirmedPaymentMethod = hasPaymentMethodOnFile || !!(await refreshPaymentMethodHint());
+      if (!confirmedPaymentMethod) {
         toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
         saveDraftNow();
         nav(paymentMethodsPath);
