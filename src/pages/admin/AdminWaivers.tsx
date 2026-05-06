@@ -94,6 +94,13 @@ export default function AdminWaivers() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: 'Admin', to: '/admin' },
+          { label: 'Courses', to: '/admin/courses' },
+          { label: 'Waivers' },
+        ]}
+      />
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Course Waivers</h1>
         <p className="text-sm text-muted-foreground mt-1">
