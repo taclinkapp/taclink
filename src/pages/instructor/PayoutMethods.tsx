@@ -165,7 +165,7 @@ const PayoutMethods = () => {
   return (
     <MobileShell>
       <PaymentTestModeBanner />
-      <PageHeader title="Payout Method" back />
+      <PageHeader title="Payout Method" back backTo="/instructor" />
 
       <div className="px-4 py-4 space-y-4">
         <HowPaymentsWorkCard audience="instructor" />

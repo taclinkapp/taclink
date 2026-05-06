@@ -123,7 +123,7 @@ const InstructorSignUp = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="Instructor Application" back />
+      <PageHeader title="Instructor Application" back backTo="/" />
       <div className="max-w-md mx-auto px-6 py-6">
         <div className="flex justify-center mb-6">
           <Logo showTagline widthPx={180} />

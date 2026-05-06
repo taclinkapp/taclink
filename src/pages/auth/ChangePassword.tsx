@@ -61,7 +61,7 @@ const ChangePassword = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="Change Password" back />
+      <PageHeader title="Change Password" back backTo="/student/settings" />
       <div className="max-w-md mx-auto px-6 py-6">
         <p className="text-muted-foreground text-sm mb-6">
           Enter your current password, then choose a new one that meets the requirements below.

@@ -31,7 +31,7 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="Forgot Password" back />
+      <PageHeader title="Forgot Password" back backTo="/auth/sign-in" />
       <div className="max-w-md mx-auto px-6 py-6">
         {sent ? (
           <div className="tactical-card p-6 text-center space-y-4">

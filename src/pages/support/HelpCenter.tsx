@@ -126,7 +126,7 @@ const HelpCenter = () => {
 
   return (
     <MobileShell>
-      <PageHeader title="Help Center" back />
+      <PageHeader title="Help Center" back backTo="/" />
       <div className="px-4 py-4 space-y-5 pb-32">
         <div className="tactical-card p-5 bg-gradient-to-br from-primary/15 via-card to-card border border-primary/20">
           <div className="flex items-center gap-2 text-primary text-[10px] font-bold uppercase tracking-[0.2em]">

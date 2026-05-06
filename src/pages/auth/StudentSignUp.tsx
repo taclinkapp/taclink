@@ -112,7 +112,7 @@ const StudentSignUp = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="Student Sign Up" back />
+      <PageHeader title="Student Sign Up" back backTo="/" />
       <div className="max-w-md mx-auto px-6 py-6">
         <div className="flex justify-center mb-6">
           <Logo showTagline widthPx={180} />

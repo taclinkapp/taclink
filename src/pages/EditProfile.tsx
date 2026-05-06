@@ -295,7 +295,7 @@ const EditProfile = () => {
 
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title="Edit Profile" back />
+      <PageHeader title="Edit Profile" back backTo="/student/profile" />
       <div className="px-4 py-4 pb-24 space-y-4">
         <div className="rounded-md border border-border bg-card p-3 flex items-center gap-3">
           <div className="h-10 w-10 rounded-md bg-primary/10 text-primary flex items-center justify-center">

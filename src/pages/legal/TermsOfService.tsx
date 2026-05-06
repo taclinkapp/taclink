@@ -50,7 +50,7 @@ const SECTIONS = [
 
 const TermsOfService = () => (
   <MobileShell withTabBar={false}>
-    <PageHeader title="Terms of Service" back />
+    <PageHeader title="Terms of Service" back backTo="/" />
     <div className="px-4 py-4 space-y-4">
       <LegalAccountBanner documentName="Terms of Service" />
       <p className="text-xs text-muted-foreground">Last updated: April 30, 2026</p>

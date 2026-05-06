@@ -68,7 +68,7 @@ const CredentialVerification = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="Verify Credentials" back />
+      <PageHeader title="Verify Credentials" back backTo="/instructor/credentials" />
       <div className="max-w-md mx-auto px-6 py-6">
         <div className="flex items-start gap-3 mb-6">
           <ShieldCheck className="h-6 w-6 text-primary shrink-0 mt-0.5" />

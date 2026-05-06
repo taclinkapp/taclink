@@ -66,7 +66,7 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="Reset Password" back />
+      <PageHeader title="Reset Password" back backTo="/auth/sign-in" />
       <div className="max-w-md mx-auto px-6 py-6">
         {error ? (
           <div className="tactical-card p-5 border-destructive/40">

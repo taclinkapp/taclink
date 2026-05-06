@@ -10,7 +10,7 @@ const LeaveReview = () => {
   const [rating, setRating] = useState(0);
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title="Leave a Review" back />
+      <PageHeader title="Leave a Review" back backTo="/student/bookings" />
       <div className="px-4 py-6 space-y-6">
         <div className="text-center">
           <h2 className="text-lg font-bold">Rate your experience</h2>

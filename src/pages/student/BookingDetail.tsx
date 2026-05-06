@@ -201,7 +201,7 @@ const BookingDetail = () => {
   if (loading) {
     return (
       <MobileShell withTabBar={false}>
-        <PageHeader title="Booking Detail" back />
+        <PageHeader title="Booking Detail" back backTo="/student/bookings" />
         <div className="px-4 py-12 text-center text-muted-foreground text-sm">
           <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Loading…
         </div>
@@ -212,7 +212,7 @@ const BookingDetail = () => {
   if (!b || !c) {
     return (
       <MobileShell withTabBar={false}>
-        <PageHeader title="Booking Detail" back />
+        <PageHeader title="Booking Detail" back backTo="/student/bookings" />
         <div className="px-4 py-12 text-center text-muted-foreground text-sm">Booking not found.</div>
       </MobileShell>
     );
@@ -227,7 +227,7 @@ const BookingDetail = () => {
 
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title="Booking Detail" back />
+      <PageHeader title="Booking Detail" back backTo="/student/bookings" />
       <div className="px-4 py-4 space-y-4">
         <div className="tactical-card p-4">
           <h2 className="font-bold mb-3">{c.title}</h2>

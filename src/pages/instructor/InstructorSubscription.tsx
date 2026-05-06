@@ -36,7 +36,7 @@ const InstructorSubscription = () => {
   if (prelaunchLoading || subLoading) {
     return (
       <MobileShell withTabBar={false}>
-        <PageHeader title="Subscription" back />
+        <PageHeader title="Subscription" back backTo="/instructor" />
         <div className="p-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
       </MobileShell>
     );
@@ -70,7 +70,7 @@ const InstructorSubscription = () => {
 
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title="Subscription" back />
+      <PageHeader title="Subscription" back backTo="/instructor" />
       <div className="px-4 py-4 space-y-4">
         <p className="text-xs text-muted-foreground">
           Pro unlocks AI tools and instructor analytics. Publishing courses is always free.

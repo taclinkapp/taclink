@@ -41,7 +41,7 @@ const toneText = {
 
 const CancellationsFAQ = () => (
   <MobileShell withTabBar={false}>
-    <PageHeader title="Cancellation Policy" back />
+    <PageHeader title="Cancellation Policy" back backTo="/" />
     <div className="px-4 py-4 space-y-4 pb-12">
       {/* Hero */}
       <section className="tactical-card p-5 bg-gradient-to-br from-primary/15 via-card to-card border border-primary/20">
