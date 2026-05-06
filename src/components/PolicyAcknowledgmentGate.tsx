@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ShieldCheck, Lock, AlertTriangle } from "lucide-react";
+import { Loader2, ShieldCheck, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 const POLICY_VERSION = "v1.0";
@@ -96,13 +96,6 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
                 Payment is processed securely in-app and held in escrow — funds only
                 release to your instructor after the course runs. Don't share contact
                 info or arrange training off-platform.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-              <p>
-                Arranging training without a TacLink booking may result in a
-                trust-score penalty or account suspension.
               </p>
             </div>
           </div>
