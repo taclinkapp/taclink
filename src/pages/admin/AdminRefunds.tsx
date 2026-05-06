@@ -392,9 +392,44 @@ export const AdminRefunds = () => {
         body: `${fmt(cents)} refunded to your payment method for ${picked.courseTitle}. Allow up to 5–10 business days to appear on your statement. Reason: ${reason.trim()}`,
         link: `/student/booking/${picked.id}`,
       });
-      toast.success('Cash refund queued — student notified', {
-        description: 'The refund will be processed by the next refund worker run.',
-      });
+
+      // Look up the row we just created and process it immediately.
+      const { data: justCreated } = await supabase
+        .from('refunds')
+        .select('id')
+        .eq('booking_id', picked.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const refundId = justCreated?.id;
+      if (refundId) {
+        toast.message('Sending refund to processor…');
+        const { data: procData, error: procErr } = await supabase.functions.invoke(
+          `process-refund?env=${paymentEnvironment}`,
+          { body: { refund_id: refundId } },
+        );
+        const result = (procData as any)?.results?.[0];
+        if (procErr) {
+          toast.error('Refund queued, but processor call failed', {
+            description: `${procErr.message} — it will retry on the next worker run.`,
+          });
+        } else if (result?.error) {
+          toast.error('Refund failed at processor', {
+            description: result.already_refunded
+              ? 'This transaction has already been refunded or reversed at Helcim.'
+              : result.error,
+          });
+        } else if (result?.helcim_refund_txn_id) {
+          toast.success('Refund issued', {
+            description: `Helcim txn ${result.helcim_refund_txn_id}`,
+          });
+        } else {
+          toast.success('Cash refund queued — student notified');
+        }
+      } else {
+        toast.success('Cash refund queued — student notified');
+      }
     } else {
       toast.success('Decision recorded — no refund issued');
     }
@@ -429,9 +464,13 @@ export const AdminRefunds = () => {
     }
     const result = (data as any)?.results?.[0];
     if (result?.error) {
-      toast.error('Refund failed', { description: result.error });
-    } else if (result?.stripe_refund_id) {
-      toast.success('Refund issued', { description: result.stripe_refund_id });
+      toast.error('Refund failed', {
+        description: result.already_refunded
+          ? 'This transaction has already been refunded or reversed at Helcim.'
+          : result.error,
+      });
+    } else if (result?.helcim_refund_txn_id) {
+      toast.success('Refund issued', { description: `Helcim txn ${result.helcim_refund_txn_id}` });
     } else {
       toast.success('Refund queue swept');
     }
