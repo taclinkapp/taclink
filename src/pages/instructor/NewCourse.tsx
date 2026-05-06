@@ -960,14 +960,15 @@ const NewCourse = () => {
                 <div>Capacity: {capacity || '—'} students · ${price || '—'} each</div>
               </div>
             </div>
-            {skipPublishGuards ? (
+            {skipPublishGuards && (
               <div className="tactical-card border-primary/40 bg-primary/10 p-4 space-y-2">
                 <div className="text-xs uppercase tracking-wider font-bold text-primary">QA test account</div>
                 <p className="text-[12px] leading-relaxed text-muted-foreground">
-                  Listing fee, payment method, payout setup, and address geocoding are <strong className="text-foreground">skipped</strong> for fake test instructor accounts. Your course will publish immediately and is only visible to other fake QA test student accounts and admins.
+                  You're a fake QA test instructor — payment method, payout setup, listing-fee charge, and address geocoding are <strong className="text-foreground">not enforced</strong>. The cards below are shown so you can preview the live flow. Your course publishes immediately and is only visible to other fake QA test students and admins.
                 </p>
               </div>
-            ) : isPrelaunch ? (
+            )}
+            {isPrelaunch && !skipPublishGuards ? (
               <div className="tactical-card border-primary/40 bg-primary/10 p-4 space-y-2">
                 <div className="text-xs uppercase tracking-wider font-bold text-primary">Pre-launch mode</div>
                 <p className="text-[12px] leading-relaxed text-muted-foreground">
