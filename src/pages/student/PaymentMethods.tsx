@@ -577,9 +577,14 @@ const PaymentMethods = () => {
                     : `Your ${ALT_META[addType as AltType].label} info is saved as a payout/contact reference. Off-platform transfers happen between you and the instructor.`}
                 </p>
               </div>
+            ) : atLimit ? (
+              <div className="tactical-card p-4 text-center space-y-1 border-dashed">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Limit reached</p>
+                <p className="text-[11px] text-muted-foreground">You can save up to {MAX_METHODS} payment methods. Remove one to add another.</p>
+              </div>
             ) : (
               <Button onClick={() => setAdding(true)} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
-                <Plus className="h-4 w-4 mr-1" /> Add Payment Method
+                <Plus className="h-4 w-4 mr-1" /> Add Payment Method <span className="ml-2 text-[10px] opacity-80">({cards.length}/{MAX_METHODS})</span>
               </Button>
             )}
           </>
