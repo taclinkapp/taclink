@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, Star, DollarSign } from 'lucide-react';
+import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, Star, DollarSign, PlayCircle } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
+import { CrashCourseTour } from '@/components/CrashCourseTour';
 import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +17,7 @@ const InstructorSettings = () => {
   const [reportOpen, setReportOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
