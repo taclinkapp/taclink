@@ -29,13 +29,20 @@ export const PageHeader = ({
   right?: ReactNode;
   back?: boolean;
   onBack?: () => void;
-}) => (
+}) => {
+  const navigate = useNavigate();
+  const handleBack = () => {
+    if (onBack) return onBack();
+    if (window.history.length > 1) window.history.back();
+    else navigate('/');
+  };
+  return (
   <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
     <div className="flex items-center justify-between px-4 h-14">
       <div className="flex items-center gap-3 min-w-0">
         {back && (
           <button
-            onClick={onBack ?? (() => window.history.back())}
+            onClick={handleBack}
             className="text-muted-foreground hover:text-foreground -ml-2 p-2"
             aria-label="Back"
           >
