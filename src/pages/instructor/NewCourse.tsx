@@ -270,6 +270,7 @@ const NewCourse = () => {
   // Debounced autosave on changes
   useEffect(() => {
     if (!hydrated.current) return;
+    if (isEdit) return; // editing a real DB draft — skip localStorage autosave
     const hasContent = title || category || description || date || startTime || endTime || address || city || state || capacity || price;
     if (!hasContent) return;
     setDraftStatus('saving');
