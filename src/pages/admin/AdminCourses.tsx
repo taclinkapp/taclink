@@ -1,49 +1,9 @@
 import { AdminHeader } from './AdminDashboard';
-import { mockCourses } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-
-export const AdminCourses = () => (
-  <>
-    <AdminHeader title="Courses" subtitle={`${mockCourses.length} listings`} />
-    <div className="p-8">
-      <div className="tactical-card overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
-            <tr>
-              <th className="text-left px-4 py-3 font-bold">Title</th>
-              <th className="text-left px-4 py-3 font-bold">Instructor</th>
-              <th className="text-left px-4 py-3 font-bold">Date</th>
-              <th className="text-left px-4 py-3 font-bold">Enrolled</th>
-              <th className="text-left px-4 py-3 font-bold">Status</th>
-              <th className="text-left px-4 py-3 font-bold">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {mockCourses.map((c) => (
-              <tr key={c.id} className="hover:bg-muted/30">
-                <td className="px-4 py-3 font-semibold">{c.title}</td>
-                <td className="px-4 py-3 text-muted-foreground">{c.instructorName}</td>
-                <td className="px-4 py-3">{new Date(c.date).toLocaleDateString()}</td>
-                <td className="px-4 py-3">{c.maxStudents - c.spotsRemaining}/{c.maxStudents}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-[10px] uppercase tracking-wider font-bold ${c.status === 'active' ? 'text-success' : c.status === 'full' ? 'text-primary' : 'text-muted-foreground'}`}>{c.status}</span>
-                </td>
-                <td className="px-4 py-3 space-x-3">
-                  <button className="text-xs text-primary font-bold hover:underline">View</button>
-                  <button className="text-xs text-destructive font-bold hover:underline">Remove</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </>
-);
 
 const waitlist = [
   { email: 'eager.beaver@example.com', role: 'student', date: '2026-04-25', notified: false },

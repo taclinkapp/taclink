@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
-import { mockRoster, mockWaitlist } from '@/lib/mockData';
+
 import { useCourse } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -199,7 +199,8 @@ const CourseManagement = () => {
   }
 
   const c = course;
-  const enrolled = c.maxStudents - c.spotsRemaining;
+  const activeBookings = bookings.filter((b: any) => b.status !== 'cancelled');
+  const enrolled = activeBookings.length;
   const attendedBookings = bookings.filter((b: any) => b.status === 'attended');
   const checkedIn = attendedBookings.length;
 
@@ -405,7 +406,7 @@ const CourseManagement = () => {
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
             { label: 'Enrolled', value: enrolled },
-            { label: 'Waitlist', value: mockWaitlist.length },
+            { label: 'Capacity', value: c.maxStudents },
             { label: 'Checked In', value: checkedIn },
           ].map((s) => (
             <div key={s.label} className="tactical-card p-3 text-center">
@@ -448,41 +449,42 @@ const CourseManagement = () => {
           </div>
         ) : (
           <>
-            {tab === 'Roster' && mockRoster.map((s) => (
-              <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
-                <img src={s.photo} className="h-10 w-10 rounded-full border border-border" alt="" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold truncate">{s.name}</div>
-                  <div className="text-[10px] uppercase tracking-wider mt-0.5">
-                    <span className={s.paymentStatus === 'paid' ? 'text-success' : 'text-primary'}>{s.paymentStatus}</span>
-                  </div>
+            {tab === 'Roster' && (
+              activeBookings.length === 0 ? (
+                <div className="tactical-card p-6 text-center text-xs text-muted-foreground">
+                  No students enrolled yet.
                 </div>
-                <div className="flex gap-1.5">
-                  <button className={cn('h-9 w-9 rounded-md flex items-center justify-center border', s.checkedIn ? 'bg-success/15 border-success/30 text-success' : 'bg-card border-border text-muted-foreground hover:border-primary hover:text-primary')}>
-                    <Check className="h-4 w-4" />
-                  </button>
-                  <button className="h-9 w-9 rounded-md bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              ) : (
+                activeBookings.map((b: any) => {
+                  const name = b.profiles?.display_name ?? `Booking ${b.id.slice(0, 8).toUpperCase()}`;
+                  const isAttended = b.status === 'attended';
+                  return (
+                    <div key={b.id} className="tactical-card p-3 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-bold text-muted-foreground">
+                        {name.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold truncate">{name}</div>
+                        <div className="text-[10px] uppercase tracking-wider mt-0.5">
+                          <span className={isAttended ? 'text-success' : 'text-primary'}>
+                            {isAttended ? 'checked in' : 'reserved'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className={cn('h-9 w-9 rounded-md flex items-center justify-center border', isAttended ? 'bg-success/15 border-success/30 text-success' : 'bg-card border-border text-muted-foreground')}>
+                        {isAttended ? <Check className="h-4 w-4" /> : <X className="h-4 w-4 opacity-40" />}
+                      </div>
+                    </div>
+                  );
+                })
+              )
+            )}
 
             {tab === 'Waitlist' && (
-              <>
-                <button className="w-full h-11 rounded-md bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 mb-2">
-                  <Bell className="h-4 w-4" /> Notify Waitlist
-                </button>
-                {mockWaitlist.map((w) => (
-                  <div key={w.id} className="tactical-card p-3 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-black text-sm">#{w.position}</div>
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold">{w.name}</div>
-                      <div className="text-[10px] text-muted-foreground">Joined {w.joinedAt}</div>
-                    </div>
-                  </div>
-                ))}
-              </>
+              <div className="tactical-card p-6 text-center text-xs text-muted-foreground space-y-2">
+                <Bell className="h-5 w-5 text-muted-foreground/60 mx-auto" />
+                <div>Waitlist isn't open yet for this course.</div>
+              </div>
             )}
 
             {tab === 'Check-In' && (

@@ -4,7 +4,6 @@ import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { mockCourses } from "@/lib/mockData";
 import {
   ensureConversation,
   sendMessage,
@@ -65,18 +64,21 @@ export const ConversationView = ({ variant }: Props) => {
           if (error) throw error;
           setConversation(data as ConversationRow);
         } else if (variant === "student") {
-          // id is the instructor id; look up details from mock data
-          const course = courseId ? mockCourses.find((c) => c.id === courseId) : null;
-          const sample = mockCourses.find((c) => c.instructorId === id);
+          const [{ data: instructor }, { data: course }] = await Promise.all([
+            supabase.from("profiles").select("display_name, photo_url").eq("id", id).maybeSingle(),
+            courseId
+              ? supabase.from("courses").select("title").eq("id", courseId).maybeSingle()
+              : Promise.resolve({ data: null }),
+          ]);
           const conv = await ensureConversation({
             studentId: user.id,
             studentName: user.name,
             studentPhoto: `https://i.pravatar.cc/100?u=${user.id}`,
             instructorId: id,
-            instructorName: sample?.instructorName,
-            instructorPhoto: sample?.instructorPhoto,
+            instructorName: instructor?.display_name ?? undefined,
+            instructorPhoto: instructor?.photo_url ?? undefined,
             courseId: courseId,
-            courseTitle: course?.title ?? null,
+            courseTitle: (course as any)?.title ?? null,
           });
           setConversation(conv);
         } else {
