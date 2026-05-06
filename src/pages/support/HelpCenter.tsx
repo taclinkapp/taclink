@@ -105,8 +105,11 @@ const FAQS: { category: string; items: Faq[] }[] = [
 
 const HelpCenter = () => {
   const nav = useNavigate();
+  const { profile } = useAuth();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState<string | null>(null);
+  const [tourOpen, setTourOpen] = useState(false);
+  const tourRole: 'instructor' | 'student' = profile?.role === 'instructor' ? 'instructor' : 'student';
 
   const filtered = FAQS.map((cat) => ({
     ...cat,
