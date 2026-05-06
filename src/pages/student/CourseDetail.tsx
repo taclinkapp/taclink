@@ -15,6 +15,27 @@ const CourseDetail = () => {
   const nav = useNavigate();
   const { data: course, isLoading } = useCourse(id);
 
+  const { data: reviews = [] } = useQuery({
+    queryKey: ['course_reviews', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('id, rating, comment, created_at, student_id, profiles:student_id(display_name, photo_url)')
+        .eq('course_id', id as string)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        id: r.id,
+        studentName: r.profiles?.display_name ?? 'Student',
+        studentPhoto: r.profiles?.photo_url ?? '',
+        rating: r.rating,
+        comment: r.comment ?? '',
+        date: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      }));
+    },
+  });
   if (isLoading) {
     return (
       <MobileShell withTabBar={false}>
