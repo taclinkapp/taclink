@@ -163,6 +163,7 @@ export type NewCourseInput = {
   cover_image_url?: string;
   gallery_urls?: string[];
   skill_level?: SkillLevel;
+  in_person_waiver?: boolean;
   status: "draft" | "published";
 };
 
