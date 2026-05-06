@@ -111,7 +111,7 @@ export default function AdminRefundTest() {
     }
     setStarting(true);
     const { data, error } = await supabase.functions.invoke("refund-test-run", {
-      body: { booking_id: bookingId, amount_cents: 100 },
+      body: { booking_id: bookingId, amount_cents: 500 },
     });
     setStarting(false);
     if (error) {
