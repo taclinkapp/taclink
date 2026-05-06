@@ -109,8 +109,7 @@ const SignIn = () => {
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
-            <Input
-              type="password"
+            <PasswordInput
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
