@@ -309,7 +309,7 @@ const Checkout = () => {
     <MobileShell withTabBar={false}>
       {helcimMount}
       <PaymentTestModeBanner />
-      <PageHeader title="Confirm Booking" back />
+      <PageHeader title="Confirm Booking" back onBack={() => nav(`/student/course/${id}`)} />
       <div className="px-4 py-4 space-y-4">
         <div className="tactical-card p-4">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Course</div>
