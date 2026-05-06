@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     const isAdmin = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "owner");
     if (!isAdmin) return json({ error: "Forbidden" }, 403);
 
-    const apiToken = Deno.env.get("HELCIM_API_TOKEN");
+    const apiToken = Deno.env.get("HELCIM_API_TOKEN")?.trim().replace(/^["']|["']$/g, "");
     if (!apiToken) return json({ configured: false, message: "HELCIM_API_TOKEN not set" });
 
     const res = await fetch("https://api.helcim.com/v2/connection-test", {
