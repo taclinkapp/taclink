@@ -537,6 +537,8 @@ const NewCourse = () => {
         setSaving(false);
         return;
       }
+      // Free plan and Pro `in_person` mode both mean: no app-side waiver, instructor hands one out on training day.
+      const inPersonWaiver = !subActive || waiverMode === 'in_person';
       let created: any;
       if (isEdit && editId) {
         const { data, error } = await supabase
@@ -558,6 +560,7 @@ const NewCourse = () => {
             ends_at: endsAt.toISOString(),
             ...(coverUrl ? { cover_image_url: coverUrl } : {}),
             gallery_urls: finalGallery,
+            in_person_waiver: inPersonWaiver,
             status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
           })
           .eq('id', editId)
@@ -583,6 +586,7 @@ const NewCourse = () => {
           ends_at: endsAt.toISOString(),
           cover_image_url: coverUrl,
           gallery_urls: finalGallery,
+          in_person_waiver: inPersonWaiver,
           status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
         });
       }
