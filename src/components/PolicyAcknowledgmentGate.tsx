@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ShieldCheck, Lock, AlertTriangle } from "lucide-react";
+import { Loader2, ShieldCheck, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 const POLICY_VERSION = "v1.0";
