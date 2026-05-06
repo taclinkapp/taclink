@@ -243,8 +243,12 @@ export default function AdminTestAccounts() {
                 Signup credentials generator
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Generates a fresh email + password. <strong>No account is created</strong> —
+                Generates a fresh email + password. <strong>No account is created yet</strong> —
                 copy them and run through the real signup form to test onboarding end-to-end.
+                Emails on the <code className="font-mono">qa+…@taclink.test</code> pattern are
+                auto-confirmed (no inbox needed) and auto-tagged as test accounts, so you can run
+                full checkout: courses created by the fake instructor are only visible to fake
+                students, never to real users.
               </p>
             </div>
             <div className="flex gap-2">
