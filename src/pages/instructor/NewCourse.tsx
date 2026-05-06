@@ -1016,28 +1016,51 @@ const NewCourse = () => {
                 </Button>
               </>
             ) : (
-              <div className="tactical-card p-4 border-primary/40 bg-primary/5 space-y-3">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <div className="text-sm font-bold text-foreground">AI Waiver Generator — Pro feature</div>
-                    <p className="text-[12px] leading-relaxed text-muted-foreground mt-1">
-                      On the <strong className="text-foreground">free plan</strong>, instructors are responsible for providing their own
-                      course waivers. Paste your attorney-reviewed waiver below to continue. Upgrade to <strong className="text-foreground">TacLink Pro</strong> to instantly
-                      AI-generate course-specific waivers tailored to live-fire, force-on-force, combatives, vehicle drills, and more — every time you create a course.
-                    </p>
+              <div className="tactical-card p-0 overflow-hidden border-primary/50">
+                {/* Pro hero */}
+                <div className="relative bg-gradient-to-br from-primary/25 via-primary/10 to-card p-5 border-b border-primary/30">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-extrabold uppercase tracking-[0.18em]">
+                    <Sparkles className="h-3 w-3" /> Pro Feature
                   </div>
+                  <h3 className="mt-2 text-lg font-extrabold leading-tight text-foreground">
+                    AI Waiver Generator
+                  </h3>
+                  <p className="text-[12px] leading-relaxed text-muted-foreground mt-1.5">
+                    Auto-draft course-specific waivers tailored to <strong className="text-foreground">live-fire, force-on-force, combatives, vehicle drills, low-light</strong>, and more — in seconds, every time you create a course. Available exclusively on <strong className="text-foreground">TacLink Pro</strong>.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => nav('/instructor/subscription')}
+                    className="w-full h-11 mt-3 bg-primary text-primary-foreground font-bold"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" /> Upgrade to Pro
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  onClick={() => nav('/instructor/subscription')}
-                  className="w-full h-10 bg-primary text-primary-foreground font-bold"
-                >
-                  <Sparkles className="h-4 w-4 mr-2" /> Upgrade to Pro to unlock
-                </Button>
-                <p className="text-[11px] text-muted-foreground text-center">
-                  Or paste your own waiver text below to publish on the free plan.
-                </p>
+
+                {/* Free plan responsibility */}
+                <div className="p-4 space-y-3 bg-card">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <div className="text-[12px] leading-relaxed text-foreground">
+                      On the <strong>free plan</strong>, you are <strong>solely responsible for providing your own course waiver in person</strong> on the day of training. TacLink will not generate or supply a waiver, and students will not be required to e-sign one through the app for this course.
+                    </div>
+                  </div>
+
+                  <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border border-amber-500/40 bg-amber-500/5">
+                    <Checkbox
+                      checked={freePlanWaiverAck}
+                      onCheckedChange={(v) => setFreePlanWaiverAck(!!v)}
+                      className="mt-0.5"
+                    />
+                    <span className="text-[11px] leading-relaxed text-muted-foreground">
+                      <strong className="text-foreground">I confirm</strong> that I will provide my own attorney-reviewed waiver to every student in person before training begins, and I accept full responsibility for its content, enforceability, and collection. TacLink is not a law firm and assumes no liability.
+                    </span>
+                  </label>
+
+                  <p className="text-[11px] text-muted-foreground text-center">
+                    Optional — you may also paste your waiver text below to keep a digital copy on file.
+                  </p>
+                </div>
               </div>
             )}
 
