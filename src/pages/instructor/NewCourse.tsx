@@ -1062,13 +1062,13 @@ const NewCourse = () => {
                         : pmHint && pmHint.handle
                           ? <>Payment method: <strong className="text-foreground">{pmHint.method_type} · {pmHint.handle}</strong>. </>
                           : <>Payment method on file. </>}
-                      <Link to="/instructor/payment-methods" className="text-primary underline">Manage</Link>
+                      <Link to={paymentMethodsPath} className="text-primary underline">Manage</Link>
                     </span>
                   </div>
                 ) : (
                   <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
                     <div className="font-bold text-destructive">Required to publish:</div>
-                    <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
+                    <Link to={paymentMethodsPath} className="block text-primary underline">Add a payment method →</Link>
                   </div>
                 )}
                 {connectActive ? (
@@ -1078,13 +1078,13 @@ const NewCourse = () => {
                       {payoutHint
                         ? <>Payout method: <strong className="text-foreground capitalize">{payoutHint.method_type} · {payoutHint.handle}</strong> (preferred). </>
                         : <>Payout account connected. </>}
-                      <Link to="/instructor/payout-methods" className="text-primary underline">Change</Link>
+                      <Link to={payoutMethodsPath} className="text-primary underline">Change</Link>
                     </span>
                   </div>
                 ) : (
                   <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
                     <div className="font-bold text-destructive">Required to publish:</div>
-                    <Link to="/instructor/payout-methods" className="block text-primary underline">Set up a payout method →</Link>
+                    <Link to={payoutMethodsPath} className="block text-primary underline">Set up a payout method →</Link>
                   </div>
                 )}
               </>
