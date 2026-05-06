@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -702,6 +703,15 @@ const NewCourse = () => {
     <MobileShell withTabBar={false}>
       <PageHeader title={isEdit ? 'Edit Draft' : 'New Course'} back onBack={back} />
       <div className="px-4 pt-3">
+        <Breadcrumbs
+          className="mb-2"
+          items={[
+            { label: 'Dashboard', to: '/instructor/dashboard' },
+            { label: 'My Courses', to: '/instructor/courses' },
+            { label: isEdit ? 'Edit Draft' : 'New Course', to: undefined },
+            { label: STEPS[step] },
+          ]}
+        />
         <div className="flex items-center gap-1.5">
           {STEPS.map((_, i) => (
             <div key={i} className={cn('h-1 flex-1 rounded-full', i <= step ? 'bg-primary' : 'bg-border')} />
