@@ -78,7 +78,7 @@ const ChangePassword = () => {
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Confirm New Password</Label>
-            <Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
+            <PasswordInput required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
             {confirm && confirm !== password && (
               <p className="text-[11px] text-destructive mt-1.5">Passwords do not match</p>
             )}
