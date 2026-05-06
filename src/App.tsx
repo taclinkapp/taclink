@@ -65,6 +65,7 @@ import { AdminInstructors } from "./pages/admin/AdminUsers";
 
 import { AdminUsersReal } from "./pages/admin/AdminUsersReal";
 import { AdminCoursesReal } from "./pages/admin/AdminCoursesReal";
+import AdminWaivers from "./pages/admin/AdminWaivers";
 import { AdminPlatformSettings } from "./pages/admin/AdminPlatformSettings";
 import { AdminFeatureFlags } from "./pages/admin/AdminFeatureFlags";
 import { AdminAuditLog } from "./pages/admin/AdminAuditLog";
