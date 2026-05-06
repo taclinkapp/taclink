@@ -87,6 +87,7 @@ import AdminWarriorQuotes from "./pages/admin/AdminWarriorQuotes";
 import AdminSecurity from "./pages/admin/AdminSecurity";
 import AdminHelcimWebhooks from "./pages/admin/AdminHelcimWebhooks";
 import AdminRefundTest from "./pages/admin/AdminRefundTest";
+import AdminUptime from "./pages/admin/AdminUptime";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -194,6 +195,7 @@ const App = () => (
               <Route path="security" element={<AdminSecurity />} />
               <Route path="helcim-webhooks" element={<AdminHelcimWebhooks />} />
               <Route path="refund-test" element={<AdminRefundTest />} />
+              <Route path="uptime" element={<AdminUptime />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
 
