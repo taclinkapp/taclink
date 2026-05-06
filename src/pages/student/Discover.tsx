@@ -57,6 +57,8 @@ const loadPrefs = (): PersistedPrefs => {
 
 const Discover = () => {
   const nav = useNavigate();
+  const { user } = useAuth();
+  const tour = useCrashCourseTour('student', user?.id);
   const initialPrefs = loadPrefs();
   const [view, setView] = useState<'list' | 'map'>(initialPrefs.view ?? 'list');
   const [discipline, setDiscipline] = useState<string>('All');
