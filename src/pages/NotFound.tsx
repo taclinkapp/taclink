@@ -2,14 +2,44 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Compass, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
     document.title = "Page not found · TacLink";
-    console.warn("404:", location.pathname);
-  }, [location.pathname]);
+    const path = location.pathname + location.search;
+    console.warn("404:", path);
+
+    // Fire-and-forget beacon. Failures are silent — telemetry must never
+    // block the user.
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        let role: string | null = null;
+        if (user) {
+          const { data: roleRow } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .limit(1)
+            .maybeSingle();
+          role = (roleRow as any)?.role ?? null;
+        }
+        await supabase.from("route_404_events").insert({
+          path,
+          referrer: document.referrer || null,
+          user_agent: navigator.userAgent,
+          user_id: user?.id ?? null,
+          user_role: role,
+          release_id: (import.meta as any).env?.VITE_RELEASE_ID ?? null,
+        });
+      } catch {
+        /* swallow */
+      }
+    })();
+  }, [location.pathname, location.search]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
