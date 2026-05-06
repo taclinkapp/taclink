@@ -264,6 +264,15 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
             payment itself won't process until a merchant account is connected.
           </div>
         )}
+        <div className="px-3 pb-3">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => { cleanup(); setError(null); setPhase("idle"); }}
+          >
+            Cancel and go back
+          </Button>
+        </div>
       </div>
     );
   }
