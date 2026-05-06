@@ -103,16 +103,17 @@ Deno.serve(async (req) => {
     const token = authHeader.replace(/^Bearer\s+/i, "");
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const { data: userData, error: userErr } = await admin.auth.getUser(token);
-    if (userErr || !userData.user) {
-      console.error("auth.getUser failed", userErr);
+    const { data: claimsData, error: claimsErr } = await admin.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims?.sub) {
+      console.error("auth.getClaims failed", claimsErr);
       return json({ error: "Not authenticated" }, 401);
     }
+    const userId = claimsData.claims.sub as string;
 
     const { data: roleRow } = await admin
       .from("user_roles")
       .select("role")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
     if (!roleRow) return json({ error: "Admin role required" }, 403);
