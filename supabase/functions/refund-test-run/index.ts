@@ -267,7 +267,8 @@ Deno.serve(async (req) => {
     apiToken,
     booking.helcim_transaction_id,
     amountCents,
-    `refund-test:${runId}`,
+    // Helcim requires idempotency-key to be exactly 25 chars
+    `rt${runId.replace(/-/g, "").slice(0, 23)}`,
   );
 
   const helcimTxnId = (helcimResp.body as any)?.transactionId ??
