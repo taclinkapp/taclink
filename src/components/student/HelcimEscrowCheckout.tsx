@@ -167,14 +167,13 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
           cleanup();
           setError({ kind: "payment_declined", message: String(payload.eventMessage ?? "Payment attempt was declined") });
           setPhase("error");
-        } else if (status === "HIDE") {
-          // HIDE alone (without SUCCESS) typically means the user closed
-          // the modal manually — Helcim emits ABORTED for that, but if we
-          // only see HIDE we treat it as an abort too.
-          cleanup();
-          setError({ kind: "user_aborted", message: "Payment window was closed" });
-          setPhase("aborted");
         }
+        // NOTE: We intentionally ignore HIDE. Helcim fires HIDE both when
+        // the user cancels AND right after a successful charge as the
+        // iframe is torn down — racing it against SUCCESS caused real
+        // (live) payments to flash "Payment cancelled" even though the
+        // charge went through. The webhook poll below + ABORTED handle
+        // the real cancel/decline cases reliably.
       };
       messageHandlerRef.current = onMessage;
       window.addEventListener("message", onMessage);
