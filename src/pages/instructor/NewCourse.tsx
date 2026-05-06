@@ -102,7 +102,7 @@ const NewCourse = () => {
   }, [user?.id]);
 
   useEffect(() => {
-    if (!user || !hasPM) { setPmHint(null); return; }
+    if (!user) { setPmHint(null); return; }
     supabase
       .from('payment_methods')
       .select('method_type, brand, last4, handle, created_at')
@@ -111,7 +111,7 @@ const NewCourse = () => {
       .limit(1)
       .maybeSingle()
       .then(({ data }) => setPmHint(data as any));
-  }, [user?.id, hasPM]);
+  }, [user?.id]);
 
 
   // form state
