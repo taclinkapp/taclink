@@ -29,10 +29,21 @@ const SignIn = () => {
     } catch {}
   }, []);
 
-  // Redirect authenticated users away from sign-in
+  // Redirect authenticated users away from sign-in.
+  // Honor `from` only when it belongs to the role that just signed in;
+  // otherwise fall back to the role's home. Prevents e.g. an admin landing
+  // on `/instructor/subscription` because that URL was stashed pre-signin.
   useEffect(() => {
     if (user && primaryRole) {
-      const dest = (location.state as { from?: string } | null)?.from ?? homeForRole(primaryRole);
+      const from = (location.state as { from?: string } | null)?.from;
+      const home = homeForRole(primaryRole);
+      const roleAllows = (path: string) => {
+        if (primaryRole === 'admin') return path.startsWith('/admin');
+        if (primaryRole === 'instructor') return path.startsWith('/instructor');
+        if (primaryRole === 'student') return path.startsWith('/student');
+        return false;
+      };
+      const dest = from && roleAllows(from) ? from : home;
       nav(dest, { replace: true });
     }
   }, [user, primaryRole, nav, location.state]);
