@@ -171,12 +171,20 @@ const Checkout = () => {
         .select('id, booked_at, cancellation_cutoff_hours')
         .single();
       if (bErr) {
-        if (bErr.code === '23505' || /bookings_student_id_course_id_key/i.test(bErr.message ?? '')) {
+        if (bErr.code === '23505' || /bookings_active_student_course_uidx|bookings_student_id_course_id_key/i.test(bErr.message ?? '')) {
           const retryBooking = await findExistingBooking();
           if (retryBooking) {
             setBookingId(retryBooking.id);
             return;
           }
+          toast.error('You already have an active booking for this course.');
+          return;
+        }
+        if (/overlaps this time slot/i.test(bErr.message ?? '')) {
+          toast.error('Time conflict', {
+            description: bErr.message.replace(/^.*?: /, ''),
+          });
+          return;
         }
         throw bErr;
       }
