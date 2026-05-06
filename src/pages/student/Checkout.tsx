@@ -93,17 +93,10 @@ const Checkout = () => {
         w = (wRow as Waiver) ?? null;
       }
 
-      // If a booking already exists for this student/course, jump straight to Secure Payment
-      // (unless the user just hit "back" from Secure Payment).
-      if (c && user && !skipAutoResume) {
-        const { data: existing } = await supabase
-          .from('bookings')
-          .select('id')
-          .eq('student_id', user.id)
-          .eq('course_id', c.id)
-          .maybeSingle();
-        if (!cancelled && existing?.id) setBookingId(existing.id);
-      }
+      // NOTE: do NOT auto-jump to Secure Payment here even if a booking row
+      // already exists. Reserve Spot / Book Now must always land on the
+      // Confirm Booking page first; the user advances explicitly via
+      // "Continue to Secure Payment".
 
       if (cancelled) return;
       setCourse((c as Course) ?? null);
