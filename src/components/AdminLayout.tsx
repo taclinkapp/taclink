@@ -33,6 +33,7 @@ const items: Item[] = [
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/instructors', icon: Shield, label: 'Instructors' },
   { to: '/admin/courses', icon: BookOpen, label: 'Courses' },
+  { to: '/admin/waivers', icon: FileSignature, label: 'Course Waivers' },
   { to: '/admin/course-editor', icon: Edit3, label: 'Force-Edit Courses' },
   { to: '/admin/featured', icon: Star, label: 'Featured Courses' },
   { to: '/admin/conversations', icon: MessageSquare, label: 'Conversations' },
