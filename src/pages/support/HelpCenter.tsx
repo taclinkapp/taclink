@@ -142,6 +142,13 @@ const HelpCenter = () => {
           >
             <MessageSquare className="h-4 w-4" /> Contact Support
           </Button>
+          <Button
+            onClick={() => setTourOpen(true)}
+            variant="outline"
+            className="w-full mt-2 bg-card border-border font-semibold gap-2"
+          >
+            <PlayCircle className="h-4 w-4 text-primary" /> Replay App Tour
+          </Button>
         </div>
 
         <div className="relative">
