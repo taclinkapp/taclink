@@ -100,7 +100,7 @@ export const AdminSettings = () => (
           <div className="flex items-center justify-between py-2">
             <div>
               <div className="font-semibold">App Status</div>
-              <div className="text-xs text-muted-foreground">Toggle between pre-launch waitlist and live mode</div>
+              <div className="text-xs text-muted-foreground">Toggle between pre-launch and live mode</div>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs uppercase tracking-wider text-muted-foreground">Pre-Launch</span>

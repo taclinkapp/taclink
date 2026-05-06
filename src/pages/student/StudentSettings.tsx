@@ -31,7 +31,7 @@ const StudentSettings = () => {
 
         <Section title="Notifications">
           <ToggleRow label="Booking confirmations" defaultOn />
-          <ToggleRow label="Waitlist updates" defaultOn />
+          
           <ToggleRow label="New courses nearby" />
         </Section>
 

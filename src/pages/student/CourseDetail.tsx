@@ -201,7 +201,7 @@ const CourseDetail = () => {
         {isFull && (
           <div className="mx-4 mb-4 tactical-card border-destructive/30 bg-destructive/10 p-3 flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-destructive" />
-            <span className="text-xs text-destructive font-semibold">This course is full. Join the waitlist below.</span>
+            <span className="text-xs text-destructive font-semibold">This course is full.</span>
           </div>
         )}
       </div>
@@ -215,9 +215,10 @@ const CourseDetail = () => {
           </div>
           <Button
             onClick={() => nav(`/student/checkout/${course.id}`)}
+            disabled={isFull}
             className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold amber-glow"
           >
-            {isFull ? 'Join Waitlist' : 'Book Now'}
+            {isFull ? 'Course Full' : 'Book Now'}
           </Button>
         </div>
       </div>

@@ -62,7 +62,7 @@ import { AdminLayout } from "./components/AdminLayout";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { AdminInstructors } from "./pages/admin/AdminUsers";
-import { AdminWaitlist } from "./pages/admin/AdminCourses";
+
 import { AdminUsersReal } from "./pages/admin/AdminUsersReal";
 import { AdminCoursesReal } from "./pages/admin/AdminCoursesReal";
 import { AdminPlatformSettings } from "./pages/admin/AdminPlatformSettings";
@@ -173,7 +173,7 @@ const App = () => (
               <Route path="users" element={<AdminUsersReal />} />
               <Route path="instructors" element={<AdminInstructors />} />
               <Route path="courses" element={<AdminCoursesReal />} />
-              <Route path="waitlist" element={<AdminWaitlist />} />
+              
               <Route path="reports" element={<AdminReports />} />
               <Route path="support" element={<AdminSupportTickets />} />
               <Route path="conversations" element={<AdminConversations />} />

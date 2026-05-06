@@ -19,7 +19,7 @@ import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 
-const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
+const tabs = ['Roster', 'Check-In'] as const;
 
 const CourseManagement = () => {
   const { id } = useParams();
