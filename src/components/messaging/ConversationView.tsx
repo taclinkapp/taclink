@@ -55,15 +55,20 @@ export const ConversationView = ({ variant }: Props) => {
 
     const run = async () => {
       try {
+        // Try as a conversation id first (works for both variants).
         if (isUuid) {
-          const { data, error } = await supabase
+          const { data: convo } = await supabase
             .from("conversations")
             .select("*")
             .eq("id", id)
-            .single();
-          if (error) throw error;
-          setConversation(data as ConversationRow);
-        } else if (variant === "student") {
+            .maybeSingle();
+          if (convo) {
+            setConversation(convo as ConversationRow);
+            return;
+          }
+        }
+        // Otherwise treat the id as the other party's user id and ensure a thread.
+        if (variant === "student") {
           const [{ data: instructor }, { data: course }] = await Promise.all([
             supabase.from("profiles").select("display_name, photo_url").eq("id", id).maybeSingle(),
             courseId
