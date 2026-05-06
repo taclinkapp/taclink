@@ -89,7 +89,7 @@ export default function AdminRefundTest() {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(20);
-    setRuns((data ?? []) as Run[]);
+    setRuns((data ?? []) as unknown as Run[]);
   };
 
   const refresh = async () => {
