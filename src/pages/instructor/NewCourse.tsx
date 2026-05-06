@@ -825,18 +825,24 @@ const NewCourse = () => {
               {galleryCount > 0 && (
                 <div className="grid grid-cols-4 gap-2 mb-2">
                   {galleryUrls.map((url, i) => (
-                    <div key={`u-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border">
+                    <div key={`u-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border group">
                       <img src={url} alt={`Gallery ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
                       <button type="button" onClick={() => removeGalleryUrl(i)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Remove">
                         <X className="h-3 w-3" />
                       </button>
+                      <button type="button" onClick={() => openGalleryUrlAdjuster(i)} className="absolute bottom-1 left-1 h-6 px-1.5 rounded bg-background/80 backdrop-blur text-[10px] font-bold flex items-center gap-1 hover:bg-primary hover:text-primary-foreground" aria-label="Adjust">
+                        <Crop className="h-3 w-3" /> Adjust
+                      </button>
                     </div>
                   ))}
                   {galleryFiles.map((_, i) => (
-                    <div key={`f-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border">
+                    <div key={`f-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border group">
                       <img src={galleryPreviews[i]} alt={`New ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
                       <button type="button" onClick={() => removeGalleryFile(i)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Remove">
                         <X className="h-3 w-3" />
+                      </button>
+                      <button type="button" onClick={() => openGalleryFileAdjuster(i)} className="absolute bottom-1 left-1 h-6 px-1.5 rounded bg-background/80 backdrop-blur text-[10px] font-bold flex items-center gap-1 hover:bg-primary hover:text-primary-foreground" aria-label="Adjust">
+                        <Crop className="h-3 w-3" /> Adjust
                       </button>
                     </div>
                   ))}
