@@ -262,7 +262,7 @@ function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => v
             <Textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              className="min-h-[160px] bg-background border-border text-sm font-mono"
+              className="min-h-[320px] w-[80vw] max-w-[520px] bg-background border-border text-sm font-mono leading-relaxed"
               autoFocus
             />
             <div className="mt-2 flex items-center gap-2">
