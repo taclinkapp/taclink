@@ -301,13 +301,9 @@ const Checkout = () => {
     return (
       <MobileShell withTabBar={false}>
         <PaymentTestModeBanner />
-        <PageHeader title="Secure Payment" back onBack={() => { setSkipAutoResume(true); setBookingId(null); }} />
+        <PageHeader title="Checkout" back onBack={() => { setSkipAutoResume(true); setBookingId(null); }} />
         <div className="px-4 py-4 space-y-3">
           <PaymentStatusBanner bookingId={bookingId} />
-          
-          <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Lock className="h-3.5 w-3.5 text-primary" /> Charged securely by our PCI-compliant payment processor — your card never touches our servers.
-          </div>
           <HelcimEscrowCheckout bookingId={bookingId} returnUrl={returnUrl} />
         </div>
       </MobileShell>
