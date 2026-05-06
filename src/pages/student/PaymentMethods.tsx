@@ -190,8 +190,15 @@ const PaymentMethods = () => {
     setErrors({}); setAdding(false);
   };
 
+  const MAX_METHODS = 2;
+  const atLimit = cards.length >= MAX_METHODS;
+
   const handleAdd = async () => {
     if (!user) { toast.error('Please sign in'); return; }
+    if (atLimit) {
+      toast.error(`You can save up to ${MAX_METHODS} payment methods. Remove one to add another.`);
+      return;
+    }
 
     if (addType !== 'card') {
       const meta = ALT_META[addType];
