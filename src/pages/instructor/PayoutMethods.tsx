@@ -13,7 +13,7 @@ import { HowPaymentsWorkCard } from "@/components/HowPaymentsWorkCard";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { ALT_PAYOUT_META, validatePayoutHandle, normalizePayoutHandle, type AltPayoutType } from "@/lib/payoutHandleValidation";
 
-import { formatTransferFeePct, computeTransferFeeCents, fmt } from "@/lib/fees";
+import { formatTransferFeePct } from "@/lib/fees";
 
 type ConnectStatus = "not_started" | "onboarding" | "active" | "restricted";
 
