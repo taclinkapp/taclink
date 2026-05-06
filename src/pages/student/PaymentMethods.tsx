@@ -351,7 +351,11 @@ const PaymentMethods = () => {
 
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title="Payment Methods" back />
+      <PageHeader
+        title="Payment Methods"
+        back
+        onBack={returnTo ? () => nav(returnTo, { replace: true }) : undefined}
+      />
       <div className="px-4 py-4 space-y-4">
         {loading ? (
           <div className="text-center py-12 text-muted-foreground text-sm">
