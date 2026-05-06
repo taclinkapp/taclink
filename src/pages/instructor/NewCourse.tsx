@@ -529,24 +529,37 @@ const NewCourse = () => {
       const priceCents = Math.round(Number(price) * 100);
       const listingFeeCents = computeListingFeeCents(priceCents);
 
+      // Skip the listing-fee charge if one was already recorded for this course
+      // (e.g. editing/republishing a previously-published course). Drafts have
+      // no charge yet, so this only fires the first time.
+      const { data: existingCharge } = await supabase
+        .from('instructor_charges')
+        .select('id')
+        .eq('course_id', created.id)
+        .eq('charge_type', 'listing_fee')
+        .limit(1)
+        .maybeSingle();
+
       let redeemedCreditId: string | null = null;
-      if (subActive && availableCredits > 0) {
+      if (!existingCharge && subActive && availableCredits > 0) {
         redeemedCreditId = await redeemFreeListingCredit(user.id, created.id);
       }
 
-      await supabase.from('instructor_charges').insert({
-        instructor_id: user.id,
-        course_id: created.id,
-        charge_type: 'listing_fee',
-        course_price_cents: priceCents,
-        capacity: Number(capacity),
-        amount_cents: redeemedCreditId ? 0 : listingFeeCents,
-        status: redeemedCreditId ? 'waived' : 'charged',
-        refundable: false,
-        note: redeemedCreditId
-          ? 'Listing fee waived — punch-card free credit redeemed'
-          : '10% listing fee at publish (non-refundable)',
-      });
+      if (!existingCharge) {
+        await supabase.from('instructor_charges').insert({
+          instructor_id: user.id,
+          course_id: created.id,
+          charge_type: 'listing_fee',
+          course_price_cents: priceCents,
+          capacity: Number(capacity),
+          amount_cents: redeemedCreditId ? 0 : listingFeeCents,
+          status: redeemedCreditId ? 'waived' : 'charged',
+          refundable: false,
+          note: redeemedCreditId
+            ? 'Listing fee waived — punch-card free credit redeemed'
+            : '10% listing fee at publish (non-refundable)',
+        });
+      }
 
       qc.invalidateQueries({ queryKey: ['courses'] });
       localStorage.removeItem(DRAFT_KEY);
