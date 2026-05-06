@@ -92,9 +92,10 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
             <div className="flex gap-2">
               <Lock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
               <p>
-                <span className="font-bold">Bookings and messages stay on TacLink.</span>{" "}
-                Payment is handled directly with your instructor off-app, but don't
-                share contact info to arrange training off-platform.
+                <span className="font-bold">Bookings, messages, and payments stay on TacLink.</span>{" "}
+                Payment is processed securely in-app and held in escrow — funds only
+                release to your instructor after the course runs. Don't share contact
+                info or arrange training off-platform.
               </p>
             </div>
             <div className="flex gap-2">
