@@ -93,12 +93,17 @@ const StudentSignUp = () => {
         },
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'error', email, message: error.message });
       toast.error(error.message);
       return;
     }
+    // Upload photo if user provided one (best-effort)
+    const { data: sess } = await supabase.auth.getSession();
+    const uid = sess.session?.user?.id;
+    if (uid) await uploadPhotoIfAny(uid);
+    setLoading(false);
     toast.success('Welcome to TacLink™!');
     logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'redirected', email });
     nav('/student', { replace: true });
