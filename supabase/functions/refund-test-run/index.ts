@@ -309,20 +309,31 @@ Deno.serve(async (req) => {
   }).eq("id", runId);
 
   if (!helcimResp.ok) {
+    const errStr = JSON.stringify((helcimResp.body as any)?.errors ?? "").toLowerCase();
+    const alreadyDone =
+      errStr.includes("cannot be refunded") ||
+      errStr.includes("cannot be reversed") ||
+      errStr.includes("already refunded") ||
+      errStr.includes("already reversed");
+
+    const friendly = alreadyDone
+      ? "This booking's Helcim transaction has no remaining balance — it was already refunded or reversed. Pick another eligible booking (one paid through Helcim that hasn't been refunded yet) to run a fresh end-to-end test."
+      : `Helcim API returned ${helcimResp.status}`;
+
     await admin.from("refunds").update({
       status: "failed",
-      stripe_refund_status: "helcim_api_error",
+      stripe_refund_status: alreadyDone ? "already_refunded" : "helcim_api_error",
       notes: `Helcim API ${helcimResp.status}: ${JSON.stringify(helcimResp.body).slice(0, 500)}`,
     }).eq("id", refundRow.id);
 
     await admin.from("refund_test_runs").update({
-      status: "error",
-      error_message: `Helcim API returned ${helcimResp.status}`,
+      status: alreadyDone ? "failed" : "error",
+      error_message: friendly,
       after_snapshot: await snapshotBooking(admin, booking.id),
       completed_at: new Date().toISOString(),
     }).eq("id", runId);
 
-    return json({ run_id: runId, error: "helcim refund failed", helcim: helcimResp });
+    return json({ run_id: runId, error: friendly, already_refunded: alreadyDone, helcim: helcimResp });
   }
 
   // Background poll — don't block the request

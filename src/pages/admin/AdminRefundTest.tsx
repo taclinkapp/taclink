@@ -74,10 +74,12 @@ export default function AdminRefundTest() {
   const [starting, setStarting] = useState(false);
 
   const loadBookings = async () => {
+    // Only show bookings that still have an unrefunded Helcim charge.
     const { data } = await supabase
       .from("bookings")
-      .select("id, helcim_transaction_id, online_total_cents, booked_at")
+      .select("id, helcim_transaction_id, online_total_cents, booked_at, escrow_status")
       .not("helcim_transaction_id", "is", null)
+      .in("escrow_status", ["held", "released"])
       .order("booked_at", { ascending: false })
       .limit(25);
     setBookings((data ?? []) as BookingOpt[]);
@@ -118,8 +120,18 @@ export default function AdminRefundTest() {
       toast.error(error.message);
       return;
     }
-    if ((data as any)?.error) {
-      toast.error((data as any).error);
+    const resp = data as any;
+    if (resp?.already_refunded) {
+      toast.error("This booking is already refunded", {
+        description: "Pick another eligible Helcim-paid booking to run a fresh test.",
+        duration: 8000,
+      });
+      await loadRuns();
+      return;
+    }
+    if (resp?.error) {
+      toast.error(resp.error);
+      await loadRuns();
       return;
     }
     toast.success("Refund test started — polling for webhook…");
