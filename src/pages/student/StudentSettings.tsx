@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -13,6 +14,7 @@ const StudentSettings = () => {
   const { signOut } = useAuth();
   const [reportOpen, setReportOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -60,7 +62,7 @@ const StudentSettings = () => {
         </Section>
 
         <div className="pt-4 space-y-2">
-          <button onClick={handleSignOut} className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive font-bold text-sm hover:bg-destructive/10">
+          <button onClick={() => setSignOutOpen(true)} className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive font-bold text-sm hover:bg-destructive/10">
             <LogOut className="h-4 w-4" /> Sign Out
           </button>
           <button className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive/70 font-semibold text-xs hover:bg-destructive/10">
@@ -70,6 +72,18 @@ const StudentSettings = () => {
       </div>
       <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>You'll need to sign in again to view your bookings, messages, and saved courses.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 };
