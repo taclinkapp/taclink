@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
+import { useNavHistory } from '@/contexts/NavHistoryContext';
 
 export const MobileShell = ({ children, className, withTabBar = true }: { children: ReactNode; className?: string; withTabBar?: boolean }) => (
   <div className="min-h-screen bg-background">
@@ -34,10 +35,13 @@ export const PageHeader = ({
   backTo?: string;
 }) => {
   const navigate = useNavigate();
+  const { depthRef } = useNavHistory();
   const handleBack = () => {
     if (onBack) return onBack();
+    // Smart: only use browser-back if we've actually navigated within the app
+    // in this tab. Otherwise (deep link / first page) fall back to backTo.
+    if (depthRef.current > 0) return navigate(-1);
     if (backTo) return navigate(backTo);
-    if (window.history.length > 1) return navigate(-1);
     navigate('/');
   };
   return (
