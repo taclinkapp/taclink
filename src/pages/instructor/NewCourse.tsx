@@ -349,6 +349,11 @@ const NewCourse = () => {
       if (d.state) setState(d.state);
       if (d.capacity) setCapacity(d.capacity);
       if (d.price) setPrice(d.price);
+      if (d.waiverMode === 'in_person' || d.waiverMode === 'ai') setWaiverMode(d.waiverMode);
+      if (typeof d.waiverContent === 'string') setWaiverContent(d.waiverContent);
+      if (typeof d.waiverTitle === 'string' && d.waiverTitle) setWaiverTitle(d.waiverTitle);
+      if (typeof d.waiverNotes === 'string') setWaiverNotes(d.waiverNotes);
+      if (d.waiverCriteria && typeof d.waiverCriteria === 'object') setWaiverCriteria(d.waiverCriteria);
       if (typeof d.step === 'number') setStep(d.step);
       if (d.savedAt) setLastSavedAt(new Date(d.savedAt));
       toast.message('Draft restored', { description: 'Picked up where you left off.' });
