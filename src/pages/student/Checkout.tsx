@@ -307,6 +307,7 @@ const Checkout = () => {
 
   return (
     <MobileShell withTabBar={false}>
+      {helcimMount}
       <PaymentTestModeBanner />
       <PageHeader title="Confirm Booking" back />
       <div className="px-4 py-4 space-y-4">
