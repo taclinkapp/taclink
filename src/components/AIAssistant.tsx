@@ -225,14 +225,28 @@ export function AIAssistant({ role }: { role: Role }) {
   );
 }
 
-function MessageBubble({ msg }: { msg: Msg }) {
+function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => void }) {
   const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(msg.content);
   const isUser = msg.role === "user";
+
+  useEffect(() => {
+    if (!editing) setDraft(msg.content);
+  }, [msg.content, editing]);
+
   const copy = async () => {
-    await navigator.clipboard.writeText(msg.content);
+    await navigator.clipboard.writeText(editing ? draft : msg.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+
+  const saveEdit = () => {
+    onEdit?.(draft);
+    setEditing(false);
+    toast.success("Draft updated");
+  };
+
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
@@ -243,16 +257,57 @@ function MessageBubble({ msg }: { msg: Msg }) {
       >
         {isUser ? (
           <p className="whitespace-pre-wrap">{msg.content}</p>
+        ) : editing ? (
+          <>
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              className="min-h-[160px] bg-background border-border text-sm font-mono"
+              autoFocus
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                onClick={saveEdit}
+                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-primary hover:text-primary/80"
+              >
+                <Save className="h-3 w-3" /> Save
+              </button>
+              <button
+                onClick={() => { setDraft(msg.content); setEditing(false); }}
+                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={copy}
+                className="ml-auto inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              >
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-semibold [&_code]:text-xs">
               <ReactMarkdown>{msg.content}</ReactMarkdown>
             </div>
             {msg.content && (
-              <button onClick={copy} className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground">
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                {copied ? "Copied" : "Copy"}
-              </button>
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  onClick={() => setEditing(true)}
+                  className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                >
+                  <Pencil className="h-3 w-3" /> Edit
+                </button>
+                <button
+                  onClick={copy}
+                  className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                >
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
             )}
           </>
         )}
