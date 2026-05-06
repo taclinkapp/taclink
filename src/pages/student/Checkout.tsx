@@ -90,13 +90,25 @@ const Checkout = () => {
           .maybeSingle();
         w = (wRow as Waiver) ?? null;
       }
+
+      // If a booking already exists for this student/course, jump straight to Secure Payment.
+      if (c && user) {
+        const { data: existing } = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('student_id', user.id)
+          .eq('course_id', c.id)
+          .maybeSingle();
+        if (!cancelled && existing?.id) setBookingId(existing.id);
+      }
+
       if (cancelled) return;
       setCourse((c as Course) ?? null);
       setWaiver(w);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, user?.id]);
 
   useEffect(() => {
     if (profile?.display_name && !signedName) setSignedName(profile.display_name);
