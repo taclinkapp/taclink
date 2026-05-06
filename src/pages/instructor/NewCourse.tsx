@@ -268,6 +268,7 @@ const NewCourse = () => {
         setCapacity(data.capacity ? String(data.capacity) : '');
         setPrice(data.price_cents ? String(Math.round(data.price_cents / 100)) : '');
         if (data.cover_image_url) setCoverPreview(data.cover_image_url);
+        if (Array.isArray((data as any).gallery_urls)) setGalleryUrls((data as any).gallery_urls);
         // Load existing waiver, if any
         const { data: w } = await supabase
           .from('course_waivers')
