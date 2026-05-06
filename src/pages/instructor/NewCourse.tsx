@@ -455,7 +455,7 @@ const NewCourse = () => {
     if (step === 3) {
       if (!subActive) {
         if (!freePlanWaiverAck) return 'Please confirm that you will provide your own waiver in person to continue';
-        if (waiverContent.trim() && !waiverLegalAck) return 'Please acknowledge the legal notice for the waiver text you provided';
+        
       } else if (!skipWaiver) {
         if (!waiverContent.trim()) return 'Generate or paste your waiver, or check "Skip waiver for this course"';
         if (!waiverLegalAck) return 'Please acknowledge the legal notice before continuing';
