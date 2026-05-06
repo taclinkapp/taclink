@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,35 @@ const StudentSignUp = () => {
   const [confirm, setConfirm] = useState('');
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const onPickPhoto = (f: File | null | undefined) => {
+    if (!f) return;
+    if (!['image/jpeg','image/png','image/webp'].includes(f.type)) {
+      toast.error('Photo must be JPG, PNG, or WEBP'); return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error('Photo must be 5MB or smaller'); return;
+    }
+    setPhotoFile(f);
+    setPhotoPreview(URL.createObjectURL(f));
+  };
+
+  const uploadPhotoIfAny = async (userId: string) => {
+    if (!photoFile) return;
+    try {
+      const ext = photoFile.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+      const path = `${userId}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, photoFile, { contentType: photoFile.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
+      await supabase.from('profiles').update({ photo_url: pub.publicUrl }).eq('id', userId);
+    } catch (e: any) {
+      toast.error('Photo upload failed', { description: e?.message });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,12 +93,17 @@ const StudentSignUp = () => {
         },
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'error', email, message: error.message });
       toast.error(error.message);
       return;
     }
+    // Upload photo if user provided one (best-effort)
+    const { data: sess } = await supabase.auth.getSession();
+    const uid = sess.session?.user?.id;
+    if (uid) await uploadPhotoIfAny(uid);
+    setLoading(false);
     toast.success('Welcome to TacLink™!');
     logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'redirected', email });
     nav('/student', { replace: true });
@@ -95,10 +129,27 @@ const StudentSignUp = () => {
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex justify-center mb-2">
-            <button type="button" className="h-24 w-24 rounded-full bg-card border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition">
-              <Camera className="h-7 w-7" />
+          <div className="flex flex-col items-center gap-2 mb-2">
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => onPickPhoto(e.target.files?.[0])}
+            />
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              className="h-24 w-24 rounded-full bg-card border-2 border-dashed border-border overflow-hidden flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition"
+              aria-label="Add profile photo"
+            >
+              {photoPreview ? (
+                <img src={photoPreview} alt="Profile preview" className="h-full w-full object-cover" />
+              ) : (
+                <Camera className="h-7 w-7" />
+              )}
             </button>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{photoFile ? 'Tap to change' : 'Add a photo (optional)'}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
