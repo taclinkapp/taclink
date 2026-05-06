@@ -162,16 +162,26 @@ const CourseDetail = () => {
         </Section>
 
         <Section title="Reviews">
-          <div className="flex items-center gap-2 mb-3">
-            <Star className="h-5 w-5 fill-primary text-primary" />
-            <span className="text-2xl font-black">{course.instructorRating}</span>
-            <span className="text-sm text-muted-foreground">· 124 reviews</span>
-          </div>
+          {reviews.length > 0 && (
+            <div className="flex items-center gap-2 mb-3">
+              <Star className="h-5 w-5 fill-primary text-primary" />
+              <span className="text-2xl font-black">
+                {(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)}
+              </span>
+              <span className="text-sm text-muted-foreground">· {reviews.length} review{reviews.length === 1 ? '' : 's'}</span>
+            </div>
+          )}
           <div className="space-y-3">
-            {mockReviews.map((r) => (
+            {reviews.length === 0 ? (
+              <div className="tactical-card p-4 text-center text-xs text-muted-foreground">
+                No reviews yet — be the first after you attend.
+              </div>
+            ) : reviews.map((r) => (
               <div key={r.id} className="tactical-card p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <img src={r.studentPhoto} className="h-8 w-8 rounded-full" alt="" />
+                  {r.studentPhoto
+                    ? <img src={r.studentPhoto} className="h-8 w-8 rounded-full object-cover" alt="" />
+                    : <div className="h-8 w-8 rounded-full bg-muted" />}
                   <div className="flex-1">
                     <div className="text-sm font-semibold">{r.studentName}</div>
                     <div className="flex items-center gap-1">
@@ -182,7 +192,7 @@ const CourseDetail = () => {
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{r.comment}</p>
+                {r.comment && <p className="text-xs text-muted-foreground leading-relaxed">{r.comment}</p>}
               </div>
             ))}
           </div>
