@@ -1076,8 +1076,6 @@ const NewCourse = () => {
                   </div>
                 </div>
               ) : (
-              <></>
-            )) : (
               <>
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground">
