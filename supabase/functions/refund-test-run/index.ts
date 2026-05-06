@@ -59,29 +59,49 @@ async function snapshotBooking(sb: any, bookingId: string): Promise<Snapshot> {
   };
 }
 
+async function helcimCall(
+  endpoint: "refund" | "reverse",
+  apiToken: string,
+  txnId: string,
+  amountCents: number,
+  idempotencyKey: string,
+) {
+  const body: Record<string, unknown> = {
+    originalTransactionId: Number(txnId),
+    ipAddress: "0.0.0.0",
+  };
+  if (endpoint === "refund") body.amount = (amountCents / 100).toFixed(2);
+  const res = await fetch(`${HELCIM_API_BASE}/payment/${endpoint}`, {
+    method: "POST",
+    headers: {
+      "api-token": apiToken,
+      "content-type": "application/json",
+      accept: "application/json",
+      "idempotency-key": idempotencyKey,
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  let parsed: unknown = null;
+  try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
+  return { ok: res.ok, status: res.status, body: parsed, endpoint };
+}
+
 async function callHelcimRefund(
   apiToken: string,
   txnId: string,
   amountCents: number,
   idempotencyKey: string,
 ) {
-  const res = await fetch(`${HELCIM_API_BASE}/payment/refund`, {
-    method: "POST",
-    headers: {
-      "api-token": apiToken,
-      "content-type": "application/json",
-      "idempotency-key": idempotencyKey,
-    },
-    body: JSON.stringify({
-      originalTransactionId: txnId,
-      amount: (amountCents / 100).toFixed(2),
-      ipAddress: "0.0.0.0",
-    }),
-  });
-  const text = await res.text();
-  let parsed: unknown = null;
-  try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
-  return { ok: res.ok, status: res.status, body: parsed };
+  // Try refund first; if Helcim says the txn is unsettled, fall back to reverse (void)
+  let r = await helcimCall("refund", apiToken, txnId, amountCents, idempotencyKey);
+  const errStr = JSON.stringify((r.body as any)?.errors ?? "").toLowerCase();
+  if (!r.ok && (errStr.includes("cannot be refunded") || errStr.includes("not settled") || errStr.includes("unsettled"))) {
+    // Helcim requires reverse for unsettled batches. Use a fresh idempotency key (must be 25 chars).
+    const revKey = `rv${idempotencyKey.slice(2, 25)}`.padEnd(25, "0").slice(0, 25);
+    r = await helcimCall("reverse", apiToken, txnId, amountCents, revKey);
+  }
+  return r;
 }
 
 async function pollAndScore(
