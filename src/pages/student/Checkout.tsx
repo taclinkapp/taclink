@@ -17,7 +17,7 @@ import { cancelDeadline } from '@/lib/cancellation';
 import { HelcimEscrowCheckout } from '@/components/student/HelcimEscrowCheckout';
 import { PaymentTestModeBanner } from '@/components/PaymentTestModeBanner';
 import { PaymentStatusBanner } from '@/components/student/PaymentStatusBanner';
-import { HelcimSandboxCardBanner } from '@/components/HelcimSandboxCardBanner';
+
 
 type Course = {
   id: string;
@@ -285,7 +285,7 @@ const Checkout = () => {
         <PageHeader title="Secure Payment" back />
         <div className="px-4 py-4 space-y-3">
           <PaymentStatusBanner bookingId={bookingId} />
-          <HelcimSandboxCardBanner />
+          
           <div className="text-xs text-muted-foreground flex items-center gap-1.5">
             <Lock className="h-3.5 w-3.5 text-primary" /> Charged securely by our PCI-compliant payment processor — your card never touches our servers.
           </div>
