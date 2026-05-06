@@ -14,11 +14,13 @@ import { FeeInsights } from '@/components/instructor/FeeInsights';
 import { AutoRefundDisputes } from '@/components/instructor/AutoRefundDisputes';
 import { LapsedSubscriptionBanner } from '@/components/instructor/LapsedSubscriptionBanner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
 
 type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
 
 const InstructorDashboard = () => {
   const { user, profile } = useAuth();
+  const tour = useCrashCourseTour('instructor', user?.id);
   const [open, setOpen] = useState<StatKey | null>(null);
   const [revenueDrill, setRevenueDrill] = useState<string | null>(null);
   const monthLabel = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
