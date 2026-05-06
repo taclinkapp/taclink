@@ -86,7 +86,7 @@ const ResetPassword = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">New Password</Label>
-                <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
+                <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
                 <PasswordRequirements password={password} className="mt-2" />
               </div>
               <div>
