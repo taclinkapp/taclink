@@ -1131,6 +1131,7 @@ const NewCourse = () => {
                     : <><Sparkles className="h-4 w-4 mr-2" /> {waiverContent ? 'Regenerate with AI' : 'Generate waiver with AI'}</>}
                 </Button>
               </>
+              )
             ) : (
               <div className="tactical-card p-0 overflow-hidden border-primary/50">
                 {/* Pro hero */}
