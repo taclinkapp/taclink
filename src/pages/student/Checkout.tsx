@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertTriangle, FileText, Loader2, ShieldCheck, Lock } from 'lucide-react';
+import { AlertTriangle, FileText, Loader2, ShieldCheck, Lock, CalendarX, BookmarkCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { computeFees, fmt } from '@/lib/fees';
@@ -17,7 +17,6 @@ import { cancelDeadline } from '@/lib/cancellation';
 import { HelcimEscrowCheckout } from '@/components/student/HelcimEscrowCheckout';
 import { PaymentTestModeBanner } from '@/components/PaymentTestModeBanner';
 import { PaymentStatusBanner } from '@/components/student/PaymentStatusBanner';
-
 
 type Course = {
   id: string;
@@ -44,7 +43,6 @@ const Checkout = () => {
   const nav = useNavigate();
   const { user, profile } = useAuth();
   
-
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
   const [waiver, setWaiver] = useState<Waiver | null>(null);
@@ -69,6 +67,13 @@ const Checkout = () => {
   // Created booking + Embedded Checkout takeover
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [skipAutoResume, setSkipAutoResume] = useState(false);
+
+  // Inline conflict surfaced from server-side double-booking guards
+  const [conflict, setConflict] = useState<
+    | { kind: 'already_booked'; existingBookingId?: string | null }
+    | { kind: 'time_overlap'; conflictTitle?: string }
+    | null
+  >(null);
 
   useEffect(() => {
     if (!id) return;
@@ -145,10 +150,17 @@ const Checkout = () => {
       return;
     }
     setSubmitting(true);
+    setConflict(null);
     try {
       const existingBooking = await findExistingBooking();
       if (existingBooking) {
-        setBookingId(existingBooking.id);
+        // Active booking already exists for this course — surface inline,
+        // but still allow continuing into payment if it's pending.
+        if ((existingBooking as any).deposit_status === 'pending_payment') {
+          setBookingId(existingBooking.id);
+          return;
+        }
+        setConflict({ kind: 'already_booked', existingBookingId: existingBooking.id });
         return;
       }
 
@@ -173,17 +185,12 @@ const Checkout = () => {
       if (bErr) {
         if (bErr.code === '23505' || /bookings_active_student_course_uidx|bookings_student_id_course_id_key/i.test(bErr.message ?? '')) {
           const retryBooking = await findExistingBooking();
-          if (retryBooking) {
-            setBookingId(retryBooking.id);
-            return;
-          }
-          toast.error('You already have an active booking for this course.');
+          setConflict({ kind: 'already_booked', existingBookingId: retryBooking?.id ?? null });
           return;
         }
         if (/overlaps this time slot/i.test(bErr.message ?? '')) {
-          toast.error('Time conflict', {
-            description: bErr.message.replace(/^.*?: /, ''),
-          });
+          const m = bErr.message.match(/conflicts with: ([^)]+)\)/i);
+          setConflict({ kind: 'time_overlap', conflictTitle: m?.[1]?.trim() });
           return;
         }
         throw bErr;
@@ -489,6 +496,62 @@ const Checkout = () => {
         ) : (
           <div className="tactical-card p-4 text-xs text-muted-foreground">
             No course-specific waiver is required by this instructor.
+          </div>
+        )}
+
+        {conflict && (
+          <div
+            role="alert"
+            className="rounded-xl border border-destructive/40 bg-destructive/10 p-3.5 flex gap-3"
+          >
+            {conflict.kind === 'already_booked' ? (
+              <BookmarkCheck className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            ) : (
+              <CalendarX className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-destructive">
+                {conflict.kind === 'already_booked'
+                  ? "You're already booked on this course"
+                  : 'Schedule conflict'}
+              </div>
+              <p className="text-xs text-foreground/80 leading-snug mt-1">
+                {conflict.kind === 'already_booked'
+                  ? 'You have an active booking for this course. To book again, cancel the existing booking first.'
+                  : conflict.conflictTitle
+                    ? `This course overlaps another active booking: "${conflict.conflictTitle}". Cancel that booking first or pick a different time.`
+                    : 'This course overlaps another active booking. Cancel that booking first or pick a different time.'}
+              </p>
+              <div className="flex gap-2 mt-3">
+                {conflict.kind === 'already_booked' && conflict.existingBookingId ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => nav(`/student/booking/${conflict.existingBookingId}`)}
+                    className="h-8 text-xs"
+                  >
+                    View booking
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => nav('/student/bookings')}
+                    className="h-8 text-xs"
+                  >
+                    My bookings
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setConflict(null)}
+                  className="h-8 text-xs"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
