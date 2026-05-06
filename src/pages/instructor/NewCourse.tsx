@@ -746,6 +746,51 @@ const NewCourse = () => {
                 </button>
               )}
             </Field>
+            <Field label={`Course Gallery (${galleryCount}/8)`}>
+              <input
+                ref={galleryInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => { onPickGallery(e.target.files); if (e.target) e.target.value = ''; }}
+              />
+              {galleryCount > 0 && (
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {galleryUrls.map((url, i) => (
+                    <div key={`u-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border">
+                      <img src={url} alt={`Gallery ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
+                      <button type="button" onClick={() => removeGalleryUrl(i)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Remove">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {galleryFiles.map((_, i) => (
+                    <div key={`f-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border">
+                      <img src={galleryPreviews[i]} alt={`New ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
+                      <button type="button" onClick={() => removeGalleryFile(i)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Remove">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                disabled={galleryCount >= 8}
+                className="w-full h-20 rounded-xl border-2 border-dashed border-border bg-card hover:border-primary hover:text-primary transition flex flex-col items-center justify-center gap-1 text-muted-foreground disabled:opacity-50"
+              >
+                <ImagePlus className="h-5 w-5" />
+                <span className="text-xs font-bold uppercase tracking-wider">+ Add course photos</span>
+              </button>
+              <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-primary/5 border border-primary/20">
+                <Lightbulb className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                <p className="text-[11px] leading-snug text-foreground/80">
+                  <span className="font-bold text-primary">Show, don't tell:</span> Add up to 8 photos of the range, training bays, equipment students will use (rifles, mats, pistols, dummies), the parking area, your gear table, or past classes in action. The cover photo above is what students see first; gallery photos appear on the course page so they know what to expect.
+                </p>
+              </div>
+            </Field>
           </>
         )}
         {step === 1 && (
