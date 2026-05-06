@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
-import { ChevronDown, Search, MessageSquare, LifeBuoy } from 'lucide-react';
+import { ChevronDown, Search, MessageSquare, LifeBuoy, PlayCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { CrashCourseTour } from '@/components/CrashCourseTour';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 type Faq = { q: string; a: string; tags: string[] };
@@ -103,8 +105,11 @@ const FAQS: { category: string; items: Faq[] }[] = [
 
 const HelpCenter = () => {
   const nav = useNavigate();
+  const { roles } = useAuth();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState<string | null>(null);
+  const [tourOpen, setTourOpen] = useState(false);
+  const tourRole: 'instructor' | 'student' = roles?.includes('instructor') ? 'instructor' : 'student';
 
   const filtered = FAQS.map((cat) => ({
     ...cat,
@@ -136,6 +141,13 @@ const HelpCenter = () => {
             className="w-full mt-4 bg-primary text-primary-foreground font-bold gap-2"
           >
             <MessageSquare className="h-4 w-4" /> Contact Support
+          </Button>
+          <Button
+            onClick={() => setTourOpen(true)}
+            variant="outline"
+            className="w-full mt-2 bg-card border-border font-semibold gap-2"
+          >
+            <PlayCircle className="h-4 w-4 text-primary" /> Replay App Tour
           </Button>
         </div>
 
@@ -202,6 +214,7 @@ const HelpCenter = () => {
           </Button>
         </div>
       </div>
+      <CrashCourseTour role={tourRole} open={tourOpen} onClose={() => setTourOpen(false)} />
     </MobileShell>
   );
 };
