@@ -190,6 +190,17 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
 
   useEffect(() => () => cleanup(), [cleanup]);
 
+  // Auto-open the Helcim checkout window as soon as the booking is created,
+  // so students go straight from "Confirm Booking" into the payment iframe.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (autoStartedRef.current) return;
+    if (pmLoading) return;
+    if (phase !== "idle") return;
+    autoStartedRef.current = true;
+    void start();
+  }, [pmLoading, phase, start]);
+
   // Webhook poll while a payment is in flight.
   useEffect(() => {
     if (phase !== "waiting" && phase !== "loading") return;
