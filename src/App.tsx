@@ -112,6 +112,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <NavHistoryProvider>
           <Routes>
             <Route path="/" element={<Splash />} />
 
