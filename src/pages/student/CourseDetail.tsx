@@ -117,6 +117,20 @@ const CourseDetail = () => {
           ))}
         </div>
 
+        {/* Gallery */}
+        {course.gallery && course.gallery.length > 1 && (
+          <div className="px-4 mt-4">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">Gallery</h2>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {course.gallery.map((url, i) => (
+                <a key={i} href={url} target="_blank" rel="noreferrer" className="block shrink-0">
+                  <img src={url} alt={`Course photo ${i + 1}`} className="h-20 w-28 object-cover rounded-md border border-border hover:border-primary transition" loading="lazy" />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* About */}
         <Section title="About This Course">
           <p className="text-sm text-muted-foreground leading-relaxed">{course.description}</p>
