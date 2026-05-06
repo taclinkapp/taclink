@@ -67,6 +67,7 @@ const Checkout = () => {
 
   // Created booking + Embedded Checkout takeover
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [skipAutoResume, setSkipAutoResume] = useState(false);
 
   useEffect(() => {
     if (!id) return;
