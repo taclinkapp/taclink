@@ -1,0 +1,1 @@
+ALTER TABLE public.courses ADD COLUMN IF NOT EXISTS in_person_waiver boolean NOT NULL DEFAULT false;
