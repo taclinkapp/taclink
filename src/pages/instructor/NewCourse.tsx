@@ -788,6 +788,13 @@ const NewCourse = () => {
                   </button>
                   <button
                     type="button"
+                    onClick={openCoverAdjuster}
+                    className="absolute bottom-2 left-2 px-3 h-8 rounded-md bg-background/80 backdrop-blur text-xs font-bold hover:bg-primary hover:text-primary-foreground transition flex items-center gap-1"
+                  >
+                    <Crop className="h-3.5 w-3.5" /> Adjust
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="absolute bottom-2 right-2 px-3 h-8 rounded-md bg-background/80 backdrop-blur text-xs font-bold hover:bg-primary hover:text-primary-foreground transition"
                   >
