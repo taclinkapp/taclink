@@ -118,8 +118,18 @@ export default function AdminRefundTest() {
       toast.error(error.message);
       return;
     }
-    if ((data as any)?.error) {
-      toast.error((data as any).error);
+    const resp = data as any;
+    if (resp?.already_refunded) {
+      toast.error("This booking is already refunded", {
+        description: "Pick another eligible Helcim-paid booking to run a fresh test.",
+        duration: 8000,
+      });
+      await loadRuns();
+      return;
+    }
+    if (resp?.error) {
+      toast.error(resp.error);
+      await loadRuns();
       return;
     }
     toast.success("Refund test started — polling for webhook…");
