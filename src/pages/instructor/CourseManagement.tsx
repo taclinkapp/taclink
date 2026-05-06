@@ -263,7 +263,7 @@ const CourseManagement = () => {
                   size="sm"
                   className="mt-2 h-8 text-[11px]"
                   onClick={async () => {
-                    if (!confirm('Delete this course? This cannot be undone.')) return;
+                    if (!confirm('Heads up: deleting this course will cancel the listing and remove it from the marketplace. This cannot be undone. Continue?')) return;
                     const { error } = await supabase.from('courses').delete().eq('id', c.id);
                     if (error) {
                       toast.error('Could not delete course', { description: error.message });
