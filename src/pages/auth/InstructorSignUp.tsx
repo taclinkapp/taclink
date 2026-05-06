@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -186,11 +187,11 @@ const InstructorSignUp = () => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
-              <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
+              <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Confirm</Label>
-              <Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
+              <PasswordInput required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
             </div>
           </div>
           <PasswordRequirements password={password} />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/MobileShell';
 import { supabase } from '@/integrations/supabase/client';
@@ -85,12 +86,12 @@ const ResetPassword = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">New Password</Label>
-                <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
+                <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
                 <PasswordRequirements password={password} className="mt-2" />
               </div>
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">Confirm New Password</Label>
-                <Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
+                <PasswordInput required value={confirm} onChange={(e) => setConfirm(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
                 {confirm && confirm !== password && (
                   <p className="text-[11px] text-destructive mt-1.5">Passwords do not match</p>
                 )}
