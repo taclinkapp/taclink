@@ -19,6 +19,7 @@ export type DbCourse = {
   starts_at: string | null;
   ends_at: string | null;
   cover_image_url: string | null;
+  gallery_urls?: string[] | null;
   status: string;
   skill_level?: string | null;
   created_at: string;
