@@ -654,6 +654,7 @@ export type Database = {
           description: string | null
           duration_minutes: number | null
           ends_at: string | null
+          gallery_urls: string[]
           id: string
           instructor_id: string
           lat: number | null
@@ -680,6 +681,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number | null
           ends_at?: string | null
+          gallery_urls?: string[]
           id?: string
           instructor_id: string
           lat?: number | null
@@ -706,6 +708,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number | null
           ends_at?: string | null
+          gallery_urls?: string[]
           id?: string
           instructor_id?: string
           lat?: number | null
