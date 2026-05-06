@@ -467,6 +467,20 @@ const Checkout = () => {
               )}
             </div>
           </div>
+        ) : course?.in_person_waiver ? (
+          <div className="tactical-card border-amber-500/40 bg-amber-500/10 p-4">
+            <div className="flex items-start gap-2">
+              <FileText className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <div className="text-xs uppercase tracking-wider font-bold text-amber-700 dark:text-amber-500">
+                  In-Person Waiver Required
+                </div>
+                <p className="text-[12px] text-foreground leading-relaxed">
+                  Your instructor will provide a <strong>liability waiver in person</strong> on the day of training. You must sign it before participating — failure to sign may result in being turned away with no refund.
+                </p>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="tactical-card p-4 text-xs text-muted-foreground">
             No course-specific waiver is required by this instructor.
