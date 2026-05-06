@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles } from 'lucide-react';
+import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, PlayCircle } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
+import { CrashCourseTour } from '@/components/CrashCourseTour';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -15,6 +16,7 @@ const StudentSettings = () => {
   const [reportOpen, setReportOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -38,6 +40,10 @@ const StudentSettings = () => {
         </Section>
 
         <Section title="Support">
+          <button onClick={() => setTourOpen(true)} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
+            <span className="text-sm font-medium flex items-center gap-2"><PlayCircle className="h-4 w-4 text-primary" />Replay App Tour</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
           <button onClick={() => nav('/support')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
             <span className="text-sm font-medium flex items-center gap-2"><LifeBuoy className="h-4 w-4 text-primary" />Help Center</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -72,6 +78,7 @@ const StudentSettings = () => {
       </div>
       <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <CrashCourseTour role="student" open={tourOpen} onClose={() => setTourOpen(false)} />
       <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

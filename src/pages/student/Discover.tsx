@@ -15,6 +15,8 @@ import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
 import { WarriorQuoteBackdrop } from '@/components/WarriorQuoteBackdrop';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
+import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
@@ -55,6 +57,8 @@ const loadPrefs = (): PersistedPrefs => {
 
 const Discover = () => {
   const nav = useNavigate();
+  const { user } = useAuth();
+  const tour = useCrashCourseTour('student', user?.id);
   const initialPrefs = loadPrefs();
   const [view, setView] = useState<'list' | 'map'>(initialPrefs.view ?? 'list');
   const [discipline, setDiscipline] = useState<string>('All');
@@ -542,6 +546,7 @@ const Discover = () => {
 
       <StudentTabBar />
       <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} rewardLabel="1 free booking" />
+      <CrashCourseTour role="student" open={tour.open} onClose={tour.close} />
     </MobileShell>
   );
 };

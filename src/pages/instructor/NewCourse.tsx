@@ -411,7 +411,7 @@ const NewCourse = () => {
     }
     if (step === 3) {
       if (!skipWaiver) {
-        if (!waiverContent.trim()) return 'Generate or paste your waiver, or check "Skip waiver for this course"';
+        if (!waiverContent.trim()) return subActive ? 'Generate or paste your waiver, or check "Skip waiver for this course"' : 'Paste your waiver text, upgrade to Pro to AI-generate, or check "Skip waiver for this course"';
         if (!waiverLegalAck) return 'Please acknowledge the legal notice before continuing';
       }
     }
@@ -565,8 +565,8 @@ const NewCourse = () => {
           title: waiverTitle.trim() || 'Liability Waiver & Assumption of Risk',
           content: waiverContent.trim(),
           published: true,
-          ai_generated: true,
-          ai_model: 'google/gemini-3-flash-preview',
+          ai_generated: subActive,
+          ai_model: subActive ? 'google/gemini-3-flash-preview' : null,
         });
         if (wErr) {
           console.error('waiver insert failed', wErr);
@@ -958,71 +958,101 @@ const NewCourse = () => {
               />
             </Field>
 
-            <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                Tailoring criteria — check what applies to this course
-              </Label>
-              <div className={cn("mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2", skipWaiver && "opacity-40 pointer-events-none")}>
-                {[
-                  ['liveFire', 'Live fire (real ammunition)'],
-                  ['forceOnForce', 'Force-on-force / Simunitions'],
-                  ['combatives', 'Hands-on combatives / grappling'],
-                  ['vehicleBased', 'Vehicle-based drills'],
-                  ['lowLight', 'Low-light / night ops'],
-                  ['medicalRisk', 'Realistic medical scenarios'],
-                  ['minorsAllowed', 'Minors allowed (parental co-sign)'],
-                  ['mediaRelease', 'Photo / video may be captured'],
-                  ['offsiteTravel', 'Off-site travel during course'],
-                  ['instructorGear', 'Instructor-provided firearms / gear'],
-                  ['physicalExertion', 'High physical exertion'],
-                ].map(([key, label]) => (
-                  <label
-                    key={key}
-                    className="flex items-start gap-2 rounded-md border border-border bg-card p-2.5 text-[12px] cursor-pointer hover:border-primary/50 transition"
-                  >
-                    <Checkbox
-                      checked={!!waiverCriteria[key as keyof WaiverCriteria]}
-                      onCheckedChange={() => toggleCriterion(key as keyof WaiverCriteria)}
-                      className="mt-0.5"
-                    />
-                    <span className="leading-snug">{label}</span>
-                  </label>
-                ))}
+            {subActive ? (
+              <>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Tailoring criteria — check what applies to this course
+                  </Label>
+                  <div className={cn("mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2", skipWaiver && "opacity-40 pointer-events-none")}>
+                    {[
+                      ['liveFire', 'Live fire (real ammunition)'],
+                      ['forceOnForce', 'Force-on-force / Simunitions'],
+                      ['combatives', 'Hands-on combatives / grappling'],
+                      ['vehicleBased', 'Vehicle-based drills'],
+                      ['lowLight', 'Low-light / night ops'],
+                      ['medicalRisk', 'Realistic medical scenarios'],
+                      ['minorsAllowed', 'Minors allowed (parental co-sign)'],
+                      ['mediaRelease', 'Photo / video may be captured'],
+                      ['offsiteTravel', 'Off-site travel during course'],
+                      ['instructorGear', 'Instructor-provided firearms / gear'],
+                      ['physicalExertion', 'High physical exertion'],
+                    ].map(([key, label]) => (
+                      <label
+                        key={key}
+                        className="flex items-start gap-2 rounded-md border border-border bg-card p-2.5 text-[12px] cursor-pointer hover:border-primary/50 transition"
+                      >
+                        <Checkbox
+                          checked={!!waiverCriteria[key as keyof WaiverCriteria]}
+                          onCheckedChange={() => toggleCriterion(key as keyof WaiverCriteria)}
+                          className="mt-0.5"
+                        />
+                        <span className="leading-snug">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <Field label="Anything else the waiver should mention? (optional)">
+                  <Textarea
+                    value={waiverNotes}
+                    onChange={(e) => setWaiverNotes(e.target.value)}
+                    placeholder="e.g. specific drills, range rules, prerequisites, alcohol/drug policy…"
+                    className="bg-card border-border min-h-20"
+                    disabled={skipWaiver}
+                  />
+                </Field>
+
+                <Button
+                  type="button"
+                  onClick={generateWaiver}
+                  disabled={waiverGenerating || skipWaiver}
+                  className="w-full h-11 bg-primary text-primary-foreground font-bold"
+                >
+                  {waiverGenerating
+                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
+                    : <><Sparkles className="h-4 w-4 mr-2" /> {waiverContent ? 'Regenerate with AI' : 'Generate waiver with AI'}</>}
+                </Button>
+              </>
+            ) : (
+              <div className="tactical-card p-4 border-primary/40 bg-primary/5 space-y-3">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <div className="text-sm font-bold text-foreground">AI Waiver Generator — Pro feature</div>
+                    <p className="text-[12px] leading-relaxed text-muted-foreground mt-1">
+                      On the <strong className="text-foreground">free plan</strong>, instructors are responsible for providing their own
+                      course waivers. Paste your attorney-reviewed waiver below to continue. Upgrade to <strong className="text-foreground">TacLink Pro</strong> to instantly
+                      AI-generate course-specific waivers tailored to live-fire, force-on-force, combatives, vehicle drills, and more — every time you create a course.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => nav('/instructor/subscription')}
+                  className="w-full h-10 bg-primary text-primary-foreground font-bold"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" /> Upgrade to Pro to unlock
+                </Button>
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Or paste your own waiver text below to publish on the free plan.
+                </p>
               </div>
-            </div>
+            )}
 
-            <Field label="Anything else the waiver should mention? (optional)">
-              <Textarea
-                value={waiverNotes}
-                onChange={(e) => setWaiverNotes(e.target.value)}
-                placeholder="e.g. specific drills, range rules, prerequisites, alcohol/drug policy…"
-                className="bg-card border-border min-h-20"
-                disabled={skipWaiver}
-              />
-            </Field>
-
-            <Button
-              type="button"
-              onClick={generateWaiver}
-              disabled={waiverGenerating || skipWaiver}
-              className="w-full h-11 bg-primary text-primary-foreground font-bold"
-            >
-              {waiverGenerating
-                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
-                : <><Sparkles className="h-4 w-4 mr-2" /> {waiverContent ? 'Regenerate with AI' : 'Generate waiver with AI'}</>}
-            </Button>
-
-            {waiverContent && !skipWaiver && (
+            {!skipWaiver && (
               <>
                 <div className="flex items-center justify-between">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Draft (edit freely — markdown)
+                    {subActive ? 'Draft (edit freely — markdown)' : 'Paste your waiver text (markdown supported)'}
                   </Label>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setWaiverPreview((p) => !p)} className="h-7 text-[11px]">
-                    <FileText className="h-3 w-3 mr-1" /> {waiverPreview ? 'Edit' : 'Preview'}
-                  </Button>
+                  {waiverContent && (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setWaiverPreview((p) => !p)} className="h-7 text-[11px]">
+                      <FileText className="h-3 w-3 mr-1" /> {waiverPreview ? 'Edit' : 'Preview'}
+                    </Button>
+                  )}
                 </div>
-                {waiverPreview ? (
+                {waiverPreview && waiverContent ? (
                   <div className="prose prose-sm max-w-none border border-border rounded-md p-3 bg-card text-xs max-h-80 overflow-y-auto">
                     <h3>{waiverTitle}</h3>
                     <ReactMarkdown>{waiverContent}</ReactMarkdown>
@@ -1031,6 +1061,7 @@ const NewCourse = () => {
                   <Textarea
                     value={waiverContent}
                     onChange={(e) => setWaiverContent(e.target.value)}
+                    placeholder={subActive ? '' : 'Paste your attorney-reviewed waiver here…'}
                     className="bg-card border-border font-mono text-xs min-h-72"
                   />
                 )}
