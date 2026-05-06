@@ -2471,6 +2471,33 @@ export type Database = {
         }
         Relationships: []
       }
+      route_404_resolutions: {
+        Row: {
+          id: string
+          notes: string | null
+          path: string
+          release_id: string | null
+          resolved_at: string
+          resolved_by: string | null
+        }
+        Insert: {
+          id?: string
+          notes?: string | null
+          path: string
+          release_id?: string | null
+          resolved_at?: string
+          resolved_by?: string | null
+        }
+        Update: {
+          id?: string
+          notes?: string | null
+          path?: string
+          release_id?: string | null
+          resolved_at?: string
+          resolved_by?: string | null
+        }
+        Relationships: []
+      }
       stripe_webhook_events: {
         Row: {
           environment: string
