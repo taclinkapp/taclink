@@ -69,7 +69,7 @@ const ChangePassword = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Current Password</Label>
-            <Input type="password" required value={current} onChange={(e) => setCurrent(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
+            <PasswordInput required value={current} onChange={(e) => setCurrent(e.target.value)} className="bg-card border-border h-12 mt-1.5" />
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">New Password</Label>
