@@ -42,11 +42,6 @@ const FAQS: { category: string; items: Faq[] }[] = [
         a: 'Open **My Bookings → [course] → Cancel**. Your refund window is tiered by how far in advance you booked: **72h** if booked 7+ days out, **48h** if 3–7 days out, **24h** if 1–3 days out, and **none** if booked under 24h before the course. Cancel within your window for a full cash refund (platform fee + 10% deposit). See the full [cancellation policy](/legal/cancellations).',
         tags: ['booking', 'refund', 'cancel', 'grace'],
       },
-      {
-        q: 'How does the waitlist work?',
-        a: 'If a course is full, tap **Join Waitlist**. You will be notified the moment a seat opens up and have a short window to claim it.',
-        tags: ['booking', 'waitlist'],
-      },
     ],
   },
   {

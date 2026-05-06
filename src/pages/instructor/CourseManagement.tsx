@@ -19,7 +19,7 @@ import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 
-const tabs = ['Roster', 'Waitlist', 'Check-In'] as const;
+const tabs = ['Roster', 'Check-In'] as const;
 
 const CourseManagement = () => {
   const { id } = useParams();
@@ -480,12 +480,6 @@ const CourseManagement = () => {
               )
             )}
 
-            {tab === 'Waitlist' && (
-              <div className="tactical-card p-6 text-center text-xs text-muted-foreground space-y-2">
-                <Bell className="h-5 w-5 text-muted-foreground/60 mx-auto" />
-                <div>Waitlist isn't open yet for this course.</div>
-              </div>
-            )}
 
             {tab === 'Check-In' && (
               <div className="space-y-3">

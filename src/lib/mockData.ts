@@ -65,7 +65,7 @@ export type RosterStudent = {
 
 export const mockRoster: RosterStudent[] = [];
 
-export const mockWaitlist: { id: string; name: string; position: number; joinedAt: string }[] = [];
+
 
 export const US_STATES = [
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',

@@ -42,7 +42,7 @@ const items: Item[] = [
   { to: '/admin/fee-overrides', icon: Percent, label: 'Fee Overrides' },
   { to: '/admin/refunds', icon: DollarSign, label: 'Refund Credits' },
   { to: '/admin/bug-triage', icon: Sparkles, label: 'Bug Triage AI' },
-  { to: '/admin/waitlist', icon: Mail, label: 'Waitlist' },
+  
   { to: '/admin/reports', icon: Bug, label: 'Issue Reports' },
   { to: '/admin/support', icon: LifeBuoy, label: 'Support Tickets' },
   { to: '/admin/activity', icon: ScrollText, label: 'Audit Log' },

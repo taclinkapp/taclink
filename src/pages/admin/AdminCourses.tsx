@@ -5,47 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-const waitlist = [
-  { email: 'eager.beaver@example.com', role: 'student', date: '2026-04-25', notified: false },
-  { email: 'ready.to.train@example.com', role: 'student', date: '2026-04-24', notified: false },
-  { email: 'pro.instructor@example.com', role: 'instructor', date: '2026-04-22', notified: true },
-  { email: 'cant.wait@example.com', role: 'student', date: '2026-04-21', notified: true },
-];
-
-export const AdminWaitlist = () => (
-  <>
-    <AdminHeader title="Pre-Launch Waitlist" subtitle={`${waitlist.length} signups`} action={
-      <Button className="h-10 bg-primary text-primary-foreground font-bold">Notify All Waitlist</Button>
-    } />
-    <div className="p-8">
-      <div className="tactical-card overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
-            <tr>
-              <th className="text-left px-4 py-3 font-bold">Email</th>
-              <th className="text-left px-4 py-3 font-bold">Role</th>
-              <th className="text-left px-4 py-3 font-bold">Signed Up</th>
-              <th className="text-left px-4 py-3 font-bold">Notified</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {waitlist.map((w) => (
-              <tr key={w.email} className="hover:bg-muted/30">
-                <td className="px-4 py-3 font-semibold">{w.email}</td>
-                <td className="px-4 py-3"><span className="text-[10px] uppercase tracking-wider font-bold text-primary">{w.role}</span></td>
-                <td className="px-4 py-3">{w.date}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-[10px] uppercase tracking-wider font-bold ${w.notified ? 'text-success' : 'text-muted-foreground'}`}>{w.notified ? 'Sent' : 'Pending'}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </>
-);
-
 export const AdminActivity = () => {
   const log = [
     { admin: 'admin@taclink.app', action: 'approve_credential', target: 'Sarah Chen', time: '2 min ago' },
@@ -100,7 +59,7 @@ export const AdminSettings = () => (
           <div className="flex items-center justify-between py-2">
             <div>
               <div className="font-semibold">App Status</div>
-              <div className="text-xs text-muted-foreground">Toggle between pre-launch waitlist and live mode</div>
+              <div className="text-xs text-muted-foreground">Toggle between pre-launch and live mode</div>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs uppercase tracking-wider text-muted-foreground">Pre-Launch</span>
