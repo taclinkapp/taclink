@@ -84,6 +84,7 @@ const InstructorSettings = () => {
       </div>
       <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <CrashCourseTour role="instructor" open={tourOpen} onClose={() => setTourOpen(false)} />
       <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
