@@ -366,7 +366,7 @@ const NewCourse = () => {
   useEffect(() => {
     if (!hydrated.current) return;
     if (isEdit) return; // editing a real DB draft — skip localStorage autosave
-    const hasContent = title || category || description || date || startTime || endTime || address || city || state || capacity || price;
+    const hasContent = title || category || description || date || startTime || endTime || address || city || state || capacity || price || waiverContent || waiverNotes;
     if (!hasContent) return;
     setDraftStatus('saving');
     const t = setTimeout(() => {
@@ -374,7 +374,7 @@ const NewCourse = () => {
         const savedAt = new Date().toISOString();
         localStorage.setItem(
           DRAFT_KEY,
-          JSON.stringify({ title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
+          JSON.stringify({ title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt, waiverMode, waiverContent, waiverTitle, waiverNotes, waiverCriteria }),
         );
         setLastSavedAt(new Date(savedAt));
         setDraftStatus('saved');
@@ -383,14 +383,14 @@ const NewCourse = () => {
       }
     }, 800);
     return () => clearTimeout(t);
-  }, [title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, DRAFT_KEY]);
+  }, [title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, DRAFT_KEY, waiverMode, waiverContent, waiverTitle, waiverNotes, waiverCriteria]);
 
   const saveDraftNow = () => {
     try {
       const savedAt = new Date().toISOString();
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt }),
+        JSON.stringify({ title, category, skillLevel, description, date, startTime, endTime, address, city, state, capacity, price, step, savedAt, waiverMode, waiverContent, waiverTitle, waiverNotes, waiverCriteria }),
       );
       setLastSavedAt(new Date(savedAt));
       setDraftStatus('saved');
