@@ -214,7 +214,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <AIAssistantMount />
-          
+          </NavHistoryProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
