@@ -152,10 +152,17 @@ const Checkout = () => {
       return;
     }
     setSubmitting(true);
+    setConflict(null);
     try {
       const existingBooking = await findExistingBooking();
       if (existingBooking) {
-        setBookingId(existingBooking.id);
+        // Active booking already exists for this course — surface inline,
+        // but still allow continuing into payment if it's pending.
+        if ((existingBooking as any).deposit_status === 'pending_payment') {
+          setBookingId(existingBooking.id);
+          return;
+        }
+        setConflict({ kind: 'already_booked', existingBookingId: existingBooking.id });
         return;
       }
 
