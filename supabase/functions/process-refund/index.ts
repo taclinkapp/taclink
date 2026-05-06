@@ -43,11 +43,44 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  // Authorization: only allow callers presenting the shared CRON_SECRET.
-  // pg_cron / scheduled invokers must include this header.
+  // Authorization: allow either the shared CRON_SECRET (for pg_cron / scheduled
+  // invokers) OR an authenticated admin user (for manual retries from the
+  // admin refunds page).
   const expectedSecret = Deno.env.get("CRON_SECRET");
   const providedSecret = req.headers.get("x-cron-secret");
-  if (!expectedSecret || providedSecret !== expectedSecret) {
+  const cronOk = !!expectedSecret && providedSecret === expectedSecret;
+
+  let adminOk = false;
+  const authHeader = req.headers.get("Authorization");
+  if (!cronOk && authHeader?.startsWith("Bearer ")) {
+    try {
+      const authClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData } = await authClient.auth.getClaims(token);
+      const userId = claimsData?.claims?.sub;
+      if (userId) {
+        const adminClient = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        );
+        const { data: roleRow } = await adminClient
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .maybeSingle();
+        adminOk = !!roleRow;
+      }
+    } catch (e) {
+      console.error("Admin auth check failed", e);
+    }
+  }
+
+  if (!cronOk && !adminOk) {
     return json({ error: "Forbidden" }, 403);
   }
 
