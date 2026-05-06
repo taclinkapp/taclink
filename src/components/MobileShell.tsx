@@ -23,18 +23,22 @@ export const PageHeader = ({
   right,
   back,
   onBack,
+  backTo,
 }: {
   title?: string;
   brand?: boolean;
   right?: ReactNode;
   back?: boolean;
   onBack?: () => void;
+  /** Explicit destination for the back button. Strongly preferred over relying on history. */
+  backTo?: string;
 }) => {
   const navigate = useNavigate();
   const handleBack = () => {
     if (onBack) return onBack();
-    if (window.history.length > 1) window.history.back();
-    else navigate('/');
+    if (backTo) return navigate(backTo);
+    if (window.history.length > 1) return navigate(-1);
+    navigate('/');
   };
   return (
   <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
