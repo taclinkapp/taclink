@@ -28,6 +28,8 @@ import { AddressMapPreview } from '@/components/AddressMapPreview';
 import { generateCourseWaiver, type WaiverCriteria } from '@/lib/courseAI';
 import ReactMarkdown from 'react-markdown';
 import { Checkbox } from '@/components/ui/checkbox';
+import { PhotoAdjusterDialog, type AdjustAspect } from '@/components/instructor/PhotoAdjusterDialog';
+import { Crop } from 'lucide-react';
 
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Waiver', 'Review'];
@@ -160,6 +162,37 @@ const NewCourse = () => {
   };
   const removeGalleryUrl = (i: number) => setGalleryUrls((p) => p.filter((_, idx) => idx !== i));
   const removeGalleryFile = (i: number) => setGalleryFiles((p) => p.filter((_, idx) => idx !== i));
+
+  // Photo adjuster (zoom / pan / fit) for cover and gallery photos.
+  const [adjuster, setAdjuster] = useState<{
+    open: boolean;
+    source: File | string | null;
+    aspect: AdjustAspect;
+    target: { kind: 'cover' } | { kind: 'gallery-file'; index: number } | { kind: 'gallery-url'; index: number };
+  } | null>(null);
+  const openCoverAdjuster = () => {
+    if (!coverFile && !coverPreview) return;
+    setAdjuster({ open: true, source: coverFile ?? coverPreview, aspect: '16:9', target: { kind: 'cover' } });
+  };
+  const openGalleryFileAdjuster = (i: number) =>
+    setAdjuster({ open: true, source: galleryFiles[i], aspect: '1:1', target: { kind: 'gallery-file', index: i } });
+  const openGalleryUrlAdjuster = (i: number) =>
+    setAdjuster({ open: true, source: galleryUrls[i], aspect: '1:1', target: { kind: 'gallery-url', index: i } });
+  const handleAdjusterSave = (file: File) => {
+    if (!adjuster) return;
+    const t = adjuster.target;
+    if (t.kind === 'cover') {
+      setCoverFile(file);
+      setCoverPreview(URL.createObjectURL(file));
+    } else if (t.kind === 'gallery-file') {
+      setGalleryFiles((p) => p.map((f, idx) => (idx === t.index ? file : f)));
+    } else {
+      // Adjusted an already-uploaded URL: replace it with the new local file
+      // (it'll be uploaded on save like any new gallery file).
+      setGalleryUrls((p) => p.filter((_, idx) => idx !== t.index));
+      setGalleryFiles((p) => [...p, file]);
+    }
+  };
 
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -755,6 +788,13 @@ const NewCourse = () => {
                   </button>
                   <button
                     type="button"
+                    onClick={openCoverAdjuster}
+                    className="absolute bottom-2 left-2 px-3 h-8 rounded-md bg-background/80 backdrop-blur text-xs font-bold hover:bg-primary hover:text-primary-foreground transition flex items-center gap-1"
+                  >
+                    <Crop className="h-3.5 w-3.5" /> Adjust
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="absolute bottom-2 right-2 px-3 h-8 rounded-md bg-background/80 backdrop-blur text-xs font-bold hover:bg-primary hover:text-primary-foreground transition"
                   >
@@ -785,18 +825,24 @@ const NewCourse = () => {
               {galleryCount > 0 && (
                 <div className="grid grid-cols-4 gap-2 mb-2">
                   {galleryUrls.map((url, i) => (
-                    <div key={`u-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border">
+                    <div key={`u-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border group">
                       <img src={url} alt={`Gallery ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
                       <button type="button" onClick={() => removeGalleryUrl(i)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Remove">
                         <X className="h-3 w-3" />
                       </button>
+                      <button type="button" onClick={() => openGalleryUrlAdjuster(i)} className="absolute bottom-1 left-1 h-6 px-1.5 rounded bg-background/80 backdrop-blur text-[10px] font-bold flex items-center gap-1 hover:bg-primary hover:text-primary-foreground" aria-label="Adjust">
+                        <Crop className="h-3 w-3" /> Adjust
+                      </button>
                     </div>
                   ))}
                   {galleryFiles.map((_, i) => (
-                    <div key={`f-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border">
+                    <div key={`f-${i}`} className="relative aspect-square rounded-md overflow-hidden border border-border group">
                       <img src={galleryPreviews[i]} alt={`New ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
                       <button type="button" onClick={() => removeGalleryFile(i)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-destructive hover:text-destructive-foreground" aria-label="Remove">
                         <X className="h-3 w-3" />
+                      </button>
+                      <button type="button" onClick={() => openGalleryFileAdjuster(i)} className="absolute bottom-1 left-1 h-6 px-1.5 rounded bg-background/80 backdrop-blur text-[10px] font-bold flex items-center gap-1 hover:bg-primary hover:text-primary-foreground" aria-label="Adjust">
+                        <Crop className="h-3 w-3" /> Adjust
                       </button>
                     </div>
                   ))}
@@ -1296,6 +1342,16 @@ const NewCourse = () => {
           )}
         </div>
       </div>
+      {adjuster && (
+        <PhotoAdjusterDialog
+          open={adjuster.open}
+          source={adjuster.source}
+          aspect={adjuster.aspect}
+          initialMode="fit"
+          onClose={() => setAdjuster(null)}
+          onSave={handleAdjusterSave}
+        />
+      )}
     </MobileShell>
   );
 };
