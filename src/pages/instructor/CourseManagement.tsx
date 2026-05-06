@@ -207,8 +207,41 @@ const CourseManagement = () => {
     <MobileShell withTabBar={false}>
       <PageHeader title={c.title} back />
       <div className="px-4 pt-3">
-        {/* Non-refundable listing fee disclosure + receipt */}
-        {(() => {
+        {/* Drafts haven't been published yet — no listing fee, no penalty, no refunds. */}
+        {(c.status as string) === 'draft' && (
+          <div className="tactical-card border-border bg-muted/20 p-3 mb-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] uppercase tracking-wider font-bold">Draft course</div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                  This course is unpublished — no listing fee has been charged and no students can book.
+                  You can delete it any time at no cost.
+                </p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="mt-2 h-8 text-[11px]"
+                  onClick={async () => {
+                    if (!confirm('Delete this draft? This cannot be undone.')) return;
+                    const { error } = await supabase.from('courses').delete().eq('id', c.id);
+                    if (error) {
+                      toast.error('Could not delete draft', { description: error.message });
+                      return;
+                    }
+                    toast.success('Draft deleted');
+                    qc.invalidateQueries({ queryKey: ['courses'] });
+                    window.history.back();
+                  }}
+                >
+                  Delete draft
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Non-refundable listing fee disclosure + receipt — only for published/active courses */}
+        {(c.status as string) !== 'draft' && (() => {
           const feeCents = listingCharge?.amount_cents ?? computeListingFeeCents(Math.round((c.bookingFee ?? 0) * 100));
           const priceCents = listingCharge?.course_price_cents ?? Math.round((c.bookingFee ?? 0) * 100);
           const ref = listingCharge?.id ? `LF-${listingCharge.id.slice(0, 8).toUpperCase()}` : null;
