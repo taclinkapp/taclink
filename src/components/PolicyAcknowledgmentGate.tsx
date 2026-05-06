@@ -98,13 +98,6 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
                 info or arrange training off-platform.
               </p>
             </div>
-            <div className="flex gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-              <p>
-                Arranging training without a TacLink booking may result in a
-                trust-score penalty or account suspension.
-              </p>
-            </div>
           </div>
 
           <div className="flex items-start gap-3 pt-1">
