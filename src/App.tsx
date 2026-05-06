@@ -129,6 +129,7 @@ const App = () => (
 
             {/* Student */}
             <Route path="/student" element={<Student><Discover /></Student>} />
+            <Route path="/student/discover" element={<Navigate to="/student" replace />} />
             <Route path="/student/course/:id" element={<Student><CourseDetail /></Student>} />
             <Route path="/student/checkout/:id" element={<Student><Checkout /></Student>} />
             <Route path="/student/checkout/:id/return" element={<Student><CheckoutReturn /></Student>} />
