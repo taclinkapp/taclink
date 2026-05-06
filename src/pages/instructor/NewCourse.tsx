@@ -531,6 +531,7 @@ const NewCourse = () => {
           starts_at: startsAt.toISOString(),
           ends_at: endsAt.toISOString(),
           cover_image_url: coverUrl,
+          gallery_urls: finalGallery,
           status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
         });
       }
