@@ -86,6 +86,7 @@ import AdminTestAccounts from "./pages/admin/AdminTestAccounts";
 import AdminWarriorQuotes from "./pages/admin/AdminWarriorQuotes";
 import AdminSecurity from "./pages/admin/AdminSecurity";
 import AdminHelcimWebhooks from "./pages/admin/AdminHelcimWebhooks";
+import AdminRefundTest from "./pages/admin/AdminRefundTest";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -192,6 +193,7 @@ const App = () => (
               <Route path="warrior-quotes" element={<AdminWarriorQuotes />} />
               <Route path="security" element={<AdminSecurity />} />
               <Route path="helcim-webhooks" element={<AdminHelcimWebhooks />} />
+              <Route path="refund-test" element={<AdminRefundTest />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
 

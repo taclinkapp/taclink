@@ -2172,6 +2172,84 @@ export type Database = {
         }
         Relationships: []
       }
+      refund_test_runs: {
+        Row: {
+          after_snapshot: Json | null
+          amount_cents: number
+          before_snapshot: Json
+          booking_id: string
+          booking_updated: boolean
+          checks: Json
+          completed_at: string | null
+          created_at: string
+          environment: string
+          error_message: string | null
+          helcim_refund_response: Json | null
+          helcim_refund_txn_id: string | null
+          helcim_transaction_id: string | null
+          id: string
+          ledger_reversed: boolean
+          refund_id: string | null
+          refund_row_updated: boolean
+          started_by: string
+          status: string
+          updated_at: string
+          webhook_event_id: string | null
+          webhook_received: boolean
+          webhook_signature_valid: boolean | null
+        }
+        Insert: {
+          after_snapshot?: Json | null
+          amount_cents?: number
+          before_snapshot?: Json
+          booking_id: string
+          booking_updated?: boolean
+          checks?: Json
+          completed_at?: string | null
+          created_at?: string
+          environment?: string
+          error_message?: string | null
+          helcim_refund_response?: Json | null
+          helcim_refund_txn_id?: string | null
+          helcim_transaction_id?: string | null
+          id?: string
+          ledger_reversed?: boolean
+          refund_id?: string | null
+          refund_row_updated?: boolean
+          started_by: string
+          status?: string
+          updated_at?: string
+          webhook_event_id?: string | null
+          webhook_received?: boolean
+          webhook_signature_valid?: boolean | null
+        }
+        Update: {
+          after_snapshot?: Json | null
+          amount_cents?: number
+          before_snapshot?: Json
+          booking_id?: string
+          booking_updated?: boolean
+          checks?: Json
+          completed_at?: string | null
+          created_at?: string
+          environment?: string
+          error_message?: string | null
+          helcim_refund_response?: Json | null
+          helcim_refund_txn_id?: string | null
+          helcim_transaction_id?: string | null
+          id?: string
+          ledger_reversed?: boolean
+          refund_id?: string | null
+          refund_row_updated?: boolean
+          started_by?: string
+          status?: string
+          updated_at?: string
+          webhook_event_id?: string | null
+          webhook_received?: boolean
+          webhook_signature_valid?: boolean | null
+        }
+        Relationships: []
+      }
       refunds: {
         Row: {
           ai_action_id: string | null
