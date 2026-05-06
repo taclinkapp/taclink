@@ -455,8 +455,10 @@ Deno.serve(async (req) => {
 
   const rawBody = peek;
   const signature = req.headers.get("webhook-signature");
+  const webhookId = req.headers.get("webhook-id");
+  const webhookTimestamp = req.headers.get("webhook-timestamp");
 
-  const valid = await verifyHelcimSignature(rawBody, signature);
+  const valid = await verifyHelcimSignature(rawBody, signature, webhookId, webhookTimestamp);
   if (!valid) {
     console.error("Helcim webhook: invalid signature");
     return new Response("Invalid signature", { status: 400, headers: corsHeaders });
