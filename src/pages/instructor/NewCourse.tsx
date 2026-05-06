@@ -50,6 +50,7 @@ const NewCourse = () => {
   const [connectActive, setConnectActive] = useState(false);
   const [payoutHint, setPayoutHint] = useState<{ method_type: string; handle: string } | null>(null);
   const [pmHint, setPmHint] = useState<{ brand: string | null; last4: string | null; method_type: string; handle: string | null } | null>(null);
+  const hasPaymentMethodOnFile = hasPM || !!pmHint;
   const { data: prelaunch } = usePrelaunch();
   
   const { roles } = useAuth() as any;
@@ -112,6 +113,19 @@ const NewCourse = () => {
       .maybeSingle()
       .then(({ data }) => setPmHint(data as any));
   }, [user?.id]);
+
+  const refreshPaymentMethodHint = async () => {
+    if (!user) return null;
+    const { data } = await supabase
+      .from('payment_methods')
+      .select('method_type, brand, last4, handle, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setPmHint(data as any);
+    return data;
+  };
 
 
   // form state
@@ -178,6 +192,9 @@ const NewCourse = () => {
 
   // ---- Draft autosave (localStorage) ----
   const DRAFT_KEY = user ? `course-draft:${user.id}` : 'course-draft:anon';
+  const wizardReturnTo = isEdit && editId ? `/instructor/courses/${editId}/edit` : '/instructor/courses/new';
+  const paymentMethodsPath = `/instructor/payment-methods?returnTo=${encodeURIComponent(wizardReturnTo)}`;
+  const payoutMethodsPath = `/instructor/payout-methods?returnTo=${encodeURIComponent(wizardReturnTo)}`;
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const hydrated = useRef(false);
@@ -387,16 +404,19 @@ const NewCourse = () => {
     // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
     // since nothing is being published or charged yet.
     if (!isPrelaunch && !skipPublishGuards) {
-      if (!hasPM) {
+      const confirmedPaymentMethod = hasPaymentMethodOnFile || !!(await refreshPaymentMethodHint());
+      if (!confirmedPaymentMethod) {
         toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
-        nav('/instructor/payment-methods');
+        saveDraftNow();
+        nav(paymentMethodsPath);
         return;
       }
       if (!connectActive) {
         toast.error('Set up payouts before publishing', {
           description: 'Students pay the full course price online — you need a payout account to receive funds.',
         });
-        nav('/instructor/payout-methods');
+        saveDraftNow();
+        nav(payoutMethodsPath);
         return;
       }
     }
@@ -1056,13 +1076,13 @@ const NewCourse = () => {
                         : pmHint && pmHint.handle
                           ? <>Payment method: <strong className="text-foreground">{pmHint.method_type} · {pmHint.handle}</strong>. </>
                           : <>Payment method on file. </>}
-                      <Link to="/instructor/payment-methods" className="text-primary underline">Manage</Link>
+                      <Link to={paymentMethodsPath} className="text-primary underline">Manage</Link>
                     </span>
                   </div>
                 ) : (
                   <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
                     <div className="font-bold text-destructive">Required to publish:</div>
-                    <Link to="/instructor/payment-methods" className="block text-primary underline">Add a payment method →</Link>
+                    <Link to={paymentMethodsPath} className="block text-primary underline">Add a payment method →</Link>
                   </div>
                 )}
                 {connectActive ? (
@@ -1072,13 +1092,13 @@ const NewCourse = () => {
                       {payoutHint
                         ? <>Payout method: <strong className="text-foreground capitalize">{payoutHint.method_type} · {payoutHint.handle}</strong> (preferred). </>
                         : <>Payout account connected. </>}
-                      <Link to="/instructor/payout-methods" className="text-primary underline">Change</Link>
+                      <Link to={payoutMethodsPath} className="text-primary underline">Change</Link>
                     </span>
                   </div>
                 ) : (
                   <div className="tactical-card border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
                     <div className="font-bold text-destructive">Required to publish:</div>
-                    <Link to="/instructor/payout-methods" className="block text-primary underline">Set up a payout method →</Link>
+                    <Link to={payoutMethodsPath} className="block text-primary underline">Set up a payout method →</Link>
                   </div>
                 )}
               </>

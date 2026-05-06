@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -134,6 +135,8 @@ const buildSchema = (brand: Brand, existing: Card[]) =>
 
 const PaymentMethods = () => {
   const { user } = useAuth();
+  const nav = useNavigate();
+  const location = useLocation();
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -157,6 +160,14 @@ const PaymentMethods = () => {
   const digitsOnly = number.replace(/\D/g, '');
   const brand = useMemo<Brand>(() => detectBrand(digitsOnly), [digitsOnly]);
   const cardsOnly = useMemo(() => cards.filter((c) => c.method_type === 'card') as (Card & { brand: string; last4: string })[], [cards]);
+  const returnTo = useMemo(() => {
+    const raw = new URLSearchParams(location.search).get('returnTo');
+    return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null;
+  }, [location.search]);
+  const finishAndReturn = async () => {
+    await reload();
+    if (returnTo) nav(returnTo, { replace: true });
+  };
 
   const reload = async () => {
     if (!user) { setCards([]); setLoading(false); return; }
@@ -203,7 +214,7 @@ const PaymentMethods = () => {
       if (error) { toast.error(error.message); return; }
       toast.success(`${meta.label} added`);
       reset();
-      reload();
+      void finishAndReturn();
       return;
     }
 
@@ -246,7 +257,7 @@ const PaymentMethods = () => {
     }
     toast.success('Payment method added');
     reset();
-    reload();
+    void finishAndReturn();
   };
 
   const handleRemove = async (id: string) => {

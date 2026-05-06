@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import { HowPaymentsWorkCard } from "@/components/HowPaymentsWorkCard";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { ALT_PAYOUT_META, validatePayoutHandle, normalizePayoutHandle, type AltPayoutType } from "@/lib/payoutHandleValidation";
 
-import { formatTransferFeePct, computeTransferFeeCents, fmt } from "@/lib/fees";
+import { formatTransferFeePct } from "@/lib/fees";
 
 type ConnectStatus = "not_started" | "onboarding" | "active" | "restricted";
 
@@ -55,6 +56,8 @@ const METHOD_LABEL: Record<AltPayoutType, string> = {
 
 const PayoutMethods = () => {
   const { user } = useAuth();
+  const nav = useNavigate();
+  const location = useLocation();
   const [status, setStatus] = useState<ConnectStatus>("not_started");
   const [loading, setLoading] = useState(true);
   const [methods, setMethods] = useState<PayoutMethod[]>([]);
@@ -77,6 +80,11 @@ const PayoutMethods = () => {
     setStatus(((acct?.status as ConnectStatus) ?? (methodsList.length > 0 ? 'active' : 'not_started')));
     setLoading(false);
   };
+
+  const returnTo = (() => {
+    const raw = new URLSearchParams(location.search).get('returnTo');
+    return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null;
+  })();
 
   useEffect(() => {
     reload();
@@ -129,6 +137,7 @@ const PayoutMethods = () => {
       setHandle('');
       toast.success('Payout method added');
       await reload();
+      if (returnTo) nav(returnTo, { replace: true });
     } catch (e: any) {
       toast.error(e?.message ?? 'Could not add payout method');
     } finally {
