@@ -58,4 +58,5 @@ export const PageHeader = ({
       <div>{right}</div>
     </div>
   </header>
-);
+  );
+};
