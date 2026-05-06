@@ -74,10 +74,12 @@ export default function AdminRefundTest() {
   const [starting, setStarting] = useState(false);
 
   const loadBookings = async () => {
+    // Only show bookings that still have an unrefunded Helcim charge.
     const { data } = await supabase
       .from("bookings")
-      .select("id, helcim_transaction_id, online_total_cents, booked_at")
+      .select("id, helcim_transaction_id, online_total_cents, booked_at, escrow_status")
       .not("helcim_transaction_id", "is", null)
+      .in("escrow_status", ["held", "released"])
       .order("booked_at", { ascending: false })
       .limit(25);
     setBookings((data ?? []) as BookingOpt[]);
