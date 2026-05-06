@@ -88,7 +88,7 @@ const SignIn = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader back />
+      <PageHeader back backTo="/" />
       <div className="max-w-md mx-auto px-6 pt-4">
         <div className="flex justify-center mb-8">
           <Logo showTagline widthPx={180} />

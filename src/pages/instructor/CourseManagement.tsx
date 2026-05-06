@@ -190,7 +190,7 @@ const CourseManagement = () => {
   if (isLoading || !course) {
     return (
       <MobileShell withTabBar={false}>
-        <PageHeader title="Course" back />
+        <PageHeader title="Course" back backTo="/instructor/courses" />
         <div className="px-4 py-12 text-center text-muted-foreground text-sm">
           {isLoading ? 'Loading…' : 'Course not found.'}
         </div>
@@ -206,7 +206,7 @@ const CourseManagement = () => {
 
   return (
     <MobileShell withTabBar={false}>
-      <PageHeader title={c.title} back />
+      <PageHeader title={c.title} back backTo="/instructor/courses" />
       <div className="px-4 pt-3">
         {/* Drafts haven't been published yet — no listing fee, no penalty, no refunds. */}
         {(c.status as string) === 'draft' && (
