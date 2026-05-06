@@ -146,6 +146,7 @@ const App = () => (
             <Route path="/instructor/dashboard" element={<Navigate to="/instructor" replace />} />
             <Route path="/instructor/courses" element={<Instructor><MyCourses /></Instructor>} />
             <Route path="/instructor/courses/new" element={<Instructor><NewCourse /></Instructor>} />
+            <Route path="/instructor/courses/:id/edit" element={<Instructor><NewCourse /></Instructor>} />
             <Route path="/instructor/courses/:id" element={<Instructor><CourseManagement /></Instructor>} />
             <Route path="/instructor/profile" element={<Instructor><InstructorProfile /></Instructor>} />
             <Route path="/instructor/settings" element={<Instructor><InstructorSettings /></Instructor>} />
