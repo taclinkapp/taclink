@@ -77,7 +77,7 @@ const Checkout = () => {
       setLoading(true);
       const { data: c, error: cErr } = await supabase
         .from('courses')
-        .select('id, title, instructor_id, city, state, starts_at, price_cents')
+        .select('id, title, instructor_id, city, state, starts_at, price_cents, in_person_waiver')
         .eq('id', id)
         .maybeSingle();
       if (cErr) toast.error(cErr.message);
