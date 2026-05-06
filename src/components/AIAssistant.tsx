@@ -177,7 +177,15 @@ export function AIAssistant({ role }: { role: Role }) {
                   </div>
                 </div>
               ) : (
-                messages.map((m, i) => <MessageBubble key={i} msg={m} />)
+                messages.map((m, i) => (
+                  <MessageBubble
+                    key={i}
+                    msg={m}
+                    onEdit={(next) =>
+                      setMessages((prev) => prev.map((mm, ii) => (ii === i ? { ...mm, content: next } : mm)))
+                    }
+                  />
+                ))
               )}
               {loading && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
