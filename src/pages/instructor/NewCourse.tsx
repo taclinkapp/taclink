@@ -1177,7 +1177,7 @@ const NewCourse = () => {
               </div>
             )}
 
-            {!skipWaiver && subActive && (
+            {!skipWaiver && subActive && waiverMode === 'ai' && (
               <>
                 <div className="flex items-center justify-between">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground">
