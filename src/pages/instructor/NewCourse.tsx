@@ -411,8 +411,11 @@ const NewCourse = () => {
       if (!price || Number(price) < 5) return 'Price must be at least $5';
     }
     if (step === 3) {
-      if (!skipWaiver) {
-        if (!waiverContent.trim()) return subActive ? 'Generate or paste your waiver, or check "Skip waiver for this course"' : 'Paste your waiver text, upgrade to Pro to AI-generate, or check "Skip waiver for this course"';
+      if (!subActive) {
+        if (!freePlanWaiverAck) return 'Please confirm that you will provide your own waiver in person to continue';
+        if (waiverContent.trim() && !waiverLegalAck) return 'Please acknowledge the legal notice for the waiver text you provided';
+      } else if (!skipWaiver) {
+        if (!waiverContent.trim()) return 'Generate or paste your waiver, or check "Skip waiver for this course"';
         if (!waiverLegalAck) return 'Please acknowledge the legal notice before continuing';
       }
     }
