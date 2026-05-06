@@ -724,6 +724,48 @@ export type Database = {
         }
         Relationships: []
       }
+      domain_status: {
+        Row: {
+          created_at: string
+          domain: string
+          error: string | null
+          http_status: number | null
+          https_ok: boolean | null
+          id: string
+          last_checked_at: string | null
+          ssl_days_remaining: number | null
+          ssl_expires_at: string | null
+          ssl_valid: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          error?: string | null
+          http_status?: number | null
+          https_ok?: boolean | null
+          id?: string
+          last_checked_at?: string | null
+          ssl_days_remaining?: number | null
+          ssl_expires_at?: string | null
+          ssl_valid?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          error?: string | null
+          http_status?: number | null
+          https_ok?: boolean | null
+          id?: string
+          last_checked_at?: string | null
+          ssl_days_remaining?: number | null
+          ssl_expires_at?: string | null
+          ssl_valid?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -2676,6 +2718,101 @@ export type Database = {
           target_count?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      uptime_checks: {
+        Row: {
+          checked_at: string
+          error: string | null
+          http_status: number | null
+          id: string
+          monitor_id: string
+          response_ms: number | null
+          ssl_days_remaining: number | null
+          status: string
+        }
+        Insert: {
+          checked_at?: string
+          error?: string | null
+          http_status?: number | null
+          id?: string
+          monitor_id: string
+          response_ms?: number | null
+          ssl_days_remaining?: number | null
+          status: string
+        }
+        Update: {
+          checked_at?: string
+          error?: string | null
+          http_status?: number | null
+          id?: string
+          monitor_id?: string
+          response_ms?: number | null
+          ssl_days_remaining?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uptime_checks_monitor_id_fkey"
+            columns: ["monitor_id"]
+            isOneToOne: false
+            referencedRelation: "uptime_monitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uptime_monitors: {
+        Row: {
+          active: boolean
+          alert_emails: string[]
+          alert_threshold: number
+          consecutive_failures: number
+          created_at: string
+          expected_status: number
+          id: string
+          interval_minutes: number
+          last_alert_sent_at: string | null
+          last_checked_at: string | null
+          last_error: string | null
+          last_status: string | null
+          name: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          alert_emails?: string[]
+          alert_threshold?: number
+          consecutive_failures?: number
+          created_at?: string
+          expected_status?: number
+          id?: string
+          interval_minutes?: number
+          last_alert_sent_at?: string | null
+          last_checked_at?: string | null
+          last_error?: string | null
+          last_status?: string | null
+          name: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean
+          alert_emails?: string[]
+          alert_threshold?: number
+          consecutive_failures?: number
+          created_at?: string
+          expected_status?: number
+          id?: string
+          interval_minutes?: number
+          last_alert_sent_at?: string | null
+          last_checked_at?: string | null
+          last_error?: string | null
+          last_status?: string | null
+          name?: string
+          updated_at?: string
+          url?: string
         }
         Relationships: []
       }
