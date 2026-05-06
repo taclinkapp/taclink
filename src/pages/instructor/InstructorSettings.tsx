@@ -68,7 +68,7 @@ const InstructorSettings = () => {
         </Section>
         <LegalAcceptanceCard />
         <div className="pt-4 space-y-2">
-          <button onClick={handleSignOut} className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive font-bold text-sm hover:bg-destructive/10">
+          <button onClick={() => setSignOutOpen(true)} className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive font-bold text-sm hover:bg-destructive/10">
             <LogOut className="h-4 w-4" /> Sign Out
           </button>
           <button className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive/70 font-semibold text-xs hover:bg-destructive/10">
