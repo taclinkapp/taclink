@@ -464,9 +464,13 @@ export const AdminRefunds = () => {
     }
     const result = (data as any)?.results?.[0];
     if (result?.error) {
-      toast.error('Refund failed', { description: result.error });
-    } else if (result?.stripe_refund_id) {
-      toast.success('Refund issued', { description: result.stripe_refund_id });
+      toast.error('Refund failed', {
+        description: result.already_refunded
+          ? 'This transaction has already been refunded or reversed at Helcim.'
+          : result.error,
+      });
+    } else if (result?.helcim_refund_txn_id) {
+      toast.success('Refund issued', { description: `Helcim txn ${result.helcim_refund_txn_id}` });
     } else {
       toast.success('Refund queue swept');
     }
