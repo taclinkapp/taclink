@@ -30,12 +30,16 @@ const InstructorProfile = () => {
     enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('credentials')
-        .select('id, label, verified')
-        .eq('user_id', user!.id)
+        .from('instructor_credentials')
+        .select('id, display_name, credential_type, status')
+        .eq('instructor_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) return [];
-      return data ?? [];
+      return (data ?? []).map((r: any) => ({
+        id: r.id,
+        label: r.display_name || r.credential_type,
+        verified: r.status === 'approved',
+      }));
     },
   });
 
