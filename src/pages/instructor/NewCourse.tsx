@@ -1342,6 +1342,16 @@ const NewCourse = () => {
           )}
         </div>
       </div>
+      {adjuster && (
+        <PhotoAdjusterDialog
+          open={adjuster.open}
+          source={adjuster.source}
+          aspect={adjuster.aspect}
+          initialMode="fit"
+          onClose={() => setAdjuster(null)}
+          onSave={handleAdjusterSave}
+        />
+      )}
     </MobileShell>
   );
 };
