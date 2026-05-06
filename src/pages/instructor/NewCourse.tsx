@@ -182,10 +182,67 @@ const NewCourse = () => {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const hydrated = useRef(false);
 
-  // Hydrate once
+  // Hydrate once. When editing an existing draft (?:id in URL), load the
+  // course row from the DB so the instructor picks up where they left off.
+  // Otherwise fall back to the localStorage autosave for new courses.
   useEffect(() => {
     if (hydrated.current) return;
+    if (isEdit && !user) return; // wait for auth before hitting the DB
     hydrated.current = true;
+
+    if (isEdit && editId) {
+      (async () => {
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*')
+          .eq('id', editId)
+          .maybeSingle();
+        if (error || !data) {
+          toast.error('Could not load draft');
+          nav('/instructor/courses');
+          return;
+        }
+        if (data.instructor_id !== user!.id) {
+          toast.error('You can only edit your own drafts');
+          nav('/instructor/courses');
+          return;
+        }
+        setTitle(data.title ?? '');
+        setCategory(data.category ?? '');
+        setSkillLevel((data.skill_level as SkillLevel) ?? '');
+        setDescription(data.description ?? '');
+        if (data.starts_at) {
+          const s = new Date(data.starts_at);
+          setDate(s.toISOString().slice(0, 10));
+          setStartTime(`${String(s.getHours()).padStart(2, '0')}:${String(s.getMinutes()).padStart(2, '0')}`);
+        }
+        if (data.ends_at) {
+          const e = new Date(data.ends_at);
+          setEndTime(`${String(e.getHours()).padStart(2, '0')}:${String(e.getMinutes()).padStart(2, '0')}`);
+        }
+        setAddress(data.address ?? '');
+        setCity(data.city ?? '');
+        setState(data.state ?? '');
+        setCapacity(data.capacity ? String(data.capacity) : '');
+        setPrice(data.price_cents ? String(Math.round(data.price_cents / 100)) : '');
+        if (data.cover_image_url) setCoverPreview(data.cover_image_url);
+        // Load existing waiver, if any
+        const { data: w } = await supabase
+          .from('course_waivers')
+          .select('title, content')
+          .eq('course_id', editId)
+          .order('version', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (w) {
+          setWaiverTitle(w.title);
+          setWaiverContent(w.content);
+        }
+        toast.message('Draft loaded', { description: 'Pick up where you left off.' });
+      })();
+      return;
+    }
+
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
@@ -208,7 +265,7 @@ const NewCourse = () => {
     } catch {
       // ignore corrupt drafts
     }
-  }, [DRAFT_KEY]);
+  }, [DRAFT_KEY, isEdit, editId, user?.id]);
 
   // Debounced autosave on changes
   useEffect(() => {
