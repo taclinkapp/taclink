@@ -256,36 +256,10 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
     );
   }
 
-  // Modal opening / waiting on webhook
+  // Modal is open / waiting on webhook — Helcim renders its own full-screen
+  // iframe via appendHelcimPayIframe, so we render nothing behind it.
   if (phase === "loading" || phase === "waiting") {
-    return (
-      <div id="helcim-pay-mount" className="rounded-md overflow-hidden min-h-[200px]">
-        <div className="flex flex-col items-center justify-center py-10 text-muted-foreground text-sm">
-          <Loader2 className="h-5 w-5 animate-spin mb-2" />
-          {phase === "loading" ? "Opening secure payment…" : "Waiting for confirmation…"}
-        </div>
-        {phase === "waiting" && (
-          <div className="text-xs text-muted-foreground text-center py-2 px-3">
-            Complete payment in the secure window. We'll redirect you when it's done.
-          </div>
-        )}
-        {stub && (
-          <div className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-md px-3 py-2 mt-3">
-            Helcim is in <strong>setup mode</strong> (no API token yet). The modal will load but the
-            payment itself won't process until a merchant account is connected.
-          </div>
-        )}
-        <div className="px-3 pb-3">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => { cleanup(); nav(-1); }}
-          >
-            Cancel and go back
-          </Button>
-        </div>
-      </div>
-    );
+    return <div id="helcim-pay-mount" className="hidden" />;
   }
 
   // idle — show saved card + Pay button (mirrors instructor pre-publish UX)
