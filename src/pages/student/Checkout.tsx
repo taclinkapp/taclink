@@ -187,17 +187,12 @@ const Checkout = () => {
       if (bErr) {
         if (bErr.code === '23505' || /bookings_active_student_course_uidx|bookings_student_id_course_id_key/i.test(bErr.message ?? '')) {
           const retryBooking = await findExistingBooking();
-          if (retryBooking) {
-            setBookingId(retryBooking.id);
-            return;
-          }
-          toast.error('You already have an active booking for this course.');
+          setConflict({ kind: 'already_booked', existingBookingId: retryBooking?.id ?? null });
           return;
         }
         if (/overlaps this time slot/i.test(bErr.message ?? '')) {
-          toast.error('Time conflict', {
-            description: bErr.message.replace(/^.*?: /, ''),
-          });
+          const m = bErr.message.match(/conflicts with: ([^)]+)\)/i);
+          setConflict({ kind: 'time_overlap', conflictTitle: m?.[1]?.trim() });
           return;
         }
         throw bErr;
