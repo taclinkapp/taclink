@@ -55,6 +55,11 @@ const NewCourse = () => {
   const isAdmin = Array.isArray(roles) && roles.includes('admin');
   const prelaunchExempt = isAdmin || isTestAccount;
   const isPrelaunch = !!prelaunch?.enabled && !prelaunchExempt;
+  // Fake QA test instructors and admins skip the listing-fee, payment-method,
+  // payout-setup, and geocode requirements so they can publish QA courses
+  // freely (especially during pre-launch). Their courses are still hidden
+  // from regular students by RLS — only fake QA students see them.
+  const skipPublishGuards = isAdmin || isTestAccount;
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
