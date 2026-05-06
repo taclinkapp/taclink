@@ -1102,12 +1102,14 @@ const NewCourse = () => {
               </>
             )}
 
-            <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border border-border bg-card">
-              <Checkbox checked={skipWaiver} onCheckedChange={(v) => { setSkipWaiver(!!v); if (v) setWaiverLegalAck(false); }} className="mt-0.5" />
-              <span className="text-[11px] leading-relaxed text-muted-foreground">
-                Skip waiver for this course — students will not be required to e-sign before booking. <span className="block text-amber-600 mt-0.5"><AlertTriangle className="inline h-3 w-3 mr-1" />Strongly discouraged for any live-fire or contact training.</span>
-              </span>
-            </label>
+            {subActive && (
+              <label className="flex items-start gap-2 cursor-pointer p-3 rounded-md border border-border bg-card">
+                <Checkbox checked={skipWaiver} onCheckedChange={(v) => { setSkipWaiver(!!v); if (v) setWaiverLegalAck(false); }} className="mt-0.5" />
+                <span className="text-[11px] leading-relaxed text-muted-foreground">
+                  Skip waiver for this course — students will not be required to e-sign before booking. <span className="block text-amber-600 mt-0.5"><AlertTriangle className="inline h-3 w-3 mr-1" />Strongly discouraged for any live-fire or contact training.</span>
+                </span>
+              </label>
+            )}
           </>
         )}
 
