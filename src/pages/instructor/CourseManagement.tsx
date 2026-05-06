@@ -325,6 +325,8 @@ const CourseManagement = () => {
           );
         })()}
 
+        {/* Hide cancel-with-penalty card on drafts (no bookings, no penalty). */}
+
         {/* Final-step instructor cancellation */}
         {(c.status as string) !== 'cancelled' && (
           <div className="tactical-card border-destructive/40 bg-destructive/5 p-3 mb-3">
