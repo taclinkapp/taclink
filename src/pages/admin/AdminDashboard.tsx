@@ -22,8 +22,6 @@ import {
 } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { fmt } from '@/lib/fees';
-import { HelcimSandboxCardBanner } from '@/components/HelcimSandboxCardBanner';
-import { HelcimAccountCheckCard } from '@/components/admin/HelcimAccountCheckCard';
 
 export const AdminHeader = ({
   title,
