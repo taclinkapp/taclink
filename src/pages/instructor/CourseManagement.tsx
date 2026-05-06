@@ -480,12 +480,6 @@ const CourseManagement = () => {
               )
             )}
 
-            {tab === 'Waitlist' && (
-              <div className="tactical-card p-6 text-center text-xs text-muted-foreground space-y-2">
-                <Bell className="h-5 w-5 text-muted-foreground/60 mx-auto" />
-                <div>Waitlist isn't open yet for this course.</div>
-              </div>
-            )}
 
             {tab === 'Check-In' && (
               <div className="space-y-3">
