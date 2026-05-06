@@ -103,16 +103,17 @@ Deno.serve(async (req) => {
     const token = authHeader.replace(/^Bearer\s+/i, "");
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const { data: userData, error: userErr } = await admin.auth.getUser(token);
-    if (userErr || !userData.user) {
-      console.error("auth.getUser failed", userErr);
+    const { data: claimsData, error: claimsErr } = await admin.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims?.sub) {
+      console.error("auth.getClaims failed", claimsErr);
       return json({ error: "Not authenticated" }, 401);
     }
+    const userId = claimsData.claims.sub as string;
 
     const { data: roleRow } = await admin
       .from("user_roles")
       .select("role")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
     if (!roleRow) return json({ error: "Admin role required" }, 403);
@@ -127,8 +128,8 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       const [instructorToday, studentToday] = await Promise.all([
-        countTodayForAdmin(admin, userData.user.id, "instructor"),
-        countTodayForAdmin(admin, userData.user.id, "student"),
+        countTodayForAdmin(admin, userId, "instructor"),
+        countTodayForAdmin(admin, userId, "student"),
       ]);
 
       return json({
@@ -146,7 +147,7 @@ Deno.serve(async (req) => {
         return json({ error: "role must be instructor or student" }, 400);
       }
 
-      const usedToday = await countTodayForAdmin(admin, userData.user.id, role);
+      const usedToday = await countTodayForAdmin(admin, userId, role);
       if (usedToday >= DAILY_LIMIT_PER_ROLE) {
         return json(
           {
@@ -159,7 +160,7 @@ Deno.serve(async (req) => {
       const row = await provisionAccount(
         admin,
         role,
-        userData.user.id,
+        userId,
         body.label?.trim() || null,
       );
       return json({ account: row });
@@ -219,7 +220,7 @@ Deno.serve(async (req) => {
           const fresh = await provisionAccount(
             admin,
             row.role as "instructor" | "student",
-            userData.user.id,
+            userId,
             row.label ?? null,
           );
           created.push(fresh);
