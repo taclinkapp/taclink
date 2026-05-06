@@ -204,11 +204,4 @@ export const AdminLayout = () => {
       </AlertDialog>
     </div>
   );
-      </aside>
-      <main className="flex-1 overflow-auto pt-14 lg:pt-0 min-w-0">
-        <Outlet />
-      </main>
-      <AdminAIPanel />
-    </div>
-  );
 };
