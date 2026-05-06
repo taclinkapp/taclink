@@ -15,6 +15,8 @@ import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
 import { WarriorQuoteBackdrop } from '@/components/WarriorQuoteBackdrop';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
+import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
