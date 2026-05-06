@@ -136,6 +136,31 @@ const NewCourse = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Gallery (up to 8 extra photos). `galleryUrls` are already-uploaded URLs
+  // (loaded when editing); `galleryFiles` are new files queued for upload.
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const galleryCount = galleryUrls.length + galleryFiles.length;
+  const galleryPreviews = galleryFiles.map((f) => URL.createObjectURL(f));
+
+  const onPickGallery = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const remaining = 8 - galleryCount;
+    if (remaining <= 0) {
+      toast.error('You can attach up to 8 gallery photos');
+      return;
+    }
+    const arr = Array.from(files).slice(0, remaining);
+    for (const f of arr) {
+      if (!f.type.startsWith('image/')) { toast.error('Only image files allowed'); return; }
+      if (f.size > 10 * 1024 * 1024) { toast.error(`${f.name} is over 10MB`); return; }
+    }
+    setGalleryFiles((prev) => [...prev, ...arr]);
+  };
+  const removeGalleryUrl = (i: number) => setGalleryUrls((p) => p.filter((_, idx) => idx !== i));
+  const removeGalleryFile = (i: number) => setGalleryFiles((p) => p.filter((_, idx) => idx !== i));
+
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
