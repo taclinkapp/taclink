@@ -50,6 +50,7 @@ const NewCourse = () => {
   const [connectActive, setConnectActive] = useState(false);
   const [payoutHint, setPayoutHint] = useState<{ method_type: string; handle: string } | null>(null);
   const [pmHint, setPmHint] = useState<{ brand: string | null; last4: string | null; method_type: string; handle: string | null } | null>(null);
+  const hasPaymentMethodOnFile = hasPM || !!pmHint;
   const { data: prelaunch } = usePrelaunch();
   
   const { roles } = useAuth() as any;
@@ -178,6 +179,9 @@ const NewCourse = () => {
 
   // ---- Draft autosave (localStorage) ----
   const DRAFT_KEY = user ? `course-draft:${user.id}` : 'course-draft:anon';
+  const wizardReturnTo = isEdit && editId ? `/instructor/courses/${editId}/edit` : '/instructor/courses/new';
+  const paymentMethodsPath = `/instructor/payment-methods?returnTo=${encodeURIComponent(wizardReturnTo)}`;
+  const payoutMethodsPath = `/instructor/payout-methods?returnTo=${encodeURIComponent(wizardReturnTo)}`;
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const hydrated = useRef(false);
@@ -387,16 +391,18 @@ const NewCourse = () => {
     // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
     // since nothing is being published or charged yet.
     if (!isPrelaunch && !skipPublishGuards) {
-      if (!hasPM) {
+      if (!hasPaymentMethodOnFile) {
         toast.error('Add a payment method before publishing', { description: 'Required to charge the listing fee.' });
-        nav('/instructor/payment-methods');
+        saveDraftNow();
+        nav(paymentMethodsPath);
         return;
       }
       if (!connectActive) {
         toast.error('Set up payouts before publishing', {
           description: 'Students pay the full course price online — you need a payout account to receive funds.',
         });
-        nav('/instructor/payout-methods');
+        saveDraftNow();
+        nav(payoutMethodsPath);
         return;
       }
     }
