@@ -129,6 +129,20 @@ const BookingDetail = () => {
 
   useEffect(() => { reload(); /* eslint-disable-next-line */ }, [id]);
 
+  // Realtime: if the instructor cancels (or any backend update flips status /
+  // deposit_status), refresh immediately so the student sees the refund banner.
+  useEffect(() => {
+    if (!id) return;
+    const ch = supabase
+      .channel(`booking-${id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${id}` }, () => {
+        reload();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line
+  }, [id]);
+
   // Deep-link from notifications: ?focus=attendance scrolls to the claim card.
   useEffect(() => {
     if (loading || !b) return;
