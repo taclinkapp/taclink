@@ -229,8 +229,8 @@ const CredentialVerification = () => {
               </button>
             )}
           </div>
-          <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
-            Submit for Review
+          <Button type="submit" disabled={submitting || !file} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold disabled:opacity-50">
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit for Review'}
           </Button>
         </form>
       </div>
