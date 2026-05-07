@@ -61,7 +61,16 @@ const loadPrefs = (): PersistedPrefs => {
 const Discover = () => {
   const nav = useNavigate();
   const { user } = useAuth();
+  const isGuest = !user;
   const tour = useCrashCourseTour('student', user?.id);
+  const onboarding = useOnboarding();
+  // Mark "browsed_courses" once an authed student lands on Discover.
+  useEffect(() => {
+    if (user && !onboarding.loading && !onboarding.checklist.browsed_courses) {
+      onboarding.checkOff('browsed_courses');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, onboarding.loading]);
   const initialPrefs = loadPrefs();
   const [view, setView] = useState<'list' | 'map'>(initialPrefs.view ?? 'list');
   const [discipline, setDiscipline] = useState<string>('All');
@@ -475,6 +484,32 @@ const Discover = () => {
           </div>
         </div>
       </header>
+
+      {!user && (
+        <div className="px-4 pt-3">
+          <div className="tactical-card p-3 flex items-center gap-3 border-primary/40 bg-primary/5">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wider text-primary">Browsing as guest</div>
+              <div className="text-[11px] text-muted-foreground">Create an account to book courses, follow instructors, and earn XP.</div>
+            </div>
+            <Button size="sm" onClick={() => nav('/welcome/quiz')} className="shrink-0 h-9 font-bold">
+              Sign Up
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {user && !onboarding.allDone && (
+        <div className="px-4 pt-3">
+          <OnboardingChecklistCard />
+        </div>
+      )}
+
+      <FirstVisitTooltip
+        id="discover_intro"
+        title="Browse training"
+        body="Filter by discipline, level, and distance to find courses that match your training plan."
+      />
 
       {!bannerDismissed && (
         <div className="px-4 pt-3">
