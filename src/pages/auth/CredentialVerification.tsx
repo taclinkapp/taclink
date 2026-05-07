@@ -125,7 +125,7 @@ const CredentialVerification = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-3 block">Credential Type</Label>
-            <RadioGroup defaultValue="nra" className="space-y-2">
+            <RadioGroup value={credentialType} onValueChange={setCredentialType} className="space-y-2">
               {options.map((o) => (
                 <label key={o.id} className="tactical-card p-4 flex items-center gap-3 cursor-pointer hover:border-primary/50 transition">
                   <RadioGroupItem value={o.id} id={o.id} />
