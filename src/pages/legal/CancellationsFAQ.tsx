@@ -121,7 +121,8 @@ const CancellationsFAQ = () => (
                 48+ hours before start
               </div>
               <div className="text-muted-foreground">
-                Students are fully refunded. No strike, no payout penalty.
+                Students are fully refunded. Your $25 listing deposit is released and your
+                <strong className="text-foreground"> 10% listing fee is refunded</strong> back to your original payment method. No strike.
               </div>
             </div>
             <div className="border border-destructive/40 bg-destructive/10 rounded-md p-3">
@@ -129,7 +130,8 @@ const CancellationsFAQ = () => (
                 Less than 48 hours before start
               </div>
               <div className="text-muted-foreground">
-                Students are fully refunded, you receive no payout for the cancelled bookings, and 1 strike
+                Students are fully refunded. You <strong className="text-foreground">forfeit your $25 listing deposit</strong> per booking,
+                your <strong className="text-foreground">10% listing fee is NOT refunded</strong>, and 1 strike
                 is added to your account. Repeated late cancellations may suspend your ability to publish.
               </div>
             </div>
