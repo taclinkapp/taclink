@@ -310,20 +310,7 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
             For your security, you'll re-enter your card details in the PCI-compliant payment window — your saved card is shown here for reference and is also used as the refund destination.
           </p>
         </div>
-      ) : (
-        <div className="tactical-card border-primary/30 bg-primary/5 p-3 space-y-2">
-          <div className="flex items-center gap-2 text-xs">
-            <CreditCard className="h-4 w-4 text-primary shrink-0" />
-            <span className="text-foreground">No saved payment method.</span>
-          </div>
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
-            You can still pay below — we recommend saving a card so refunds (instructor cancellations, no-shows) go back to a known destination automatically.
-          </p>
-          <Link to={paymentMethodsPath} className="text-[11px] text-primary underline inline-block">
-            Add a payment method →
-          </Link>
-        </div>
-      )}
+      ) : null}
 
       <Button
         onClick={start}
