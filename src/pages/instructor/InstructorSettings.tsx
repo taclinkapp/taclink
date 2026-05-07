@@ -6,7 +6,7 @@ import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, S
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { CrashCourseTour } from '@/components/CrashCourseTour';
-import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
+
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
