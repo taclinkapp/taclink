@@ -423,10 +423,7 @@ const CourseManagement = () => {
       </div>
 
       <div className="px-4 py-4 space-y-2">
-        {false ? (
-          <div />
-        ) : (
-          <>
+        <>
             {tab === 'Roster' && (
               activeBookings.length === 0 ? (
                 <div className="tactical-card p-6 text-center text-xs text-muted-foreground">
