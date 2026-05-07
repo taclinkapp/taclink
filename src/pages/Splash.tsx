@@ -52,7 +52,7 @@ const Splash = () => {
       <div className="px-6 pt-8 pb-10 max-w-md w-full mx-auto space-y-3">
         <Button
           size="lg"
-          className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-base amber-glow"
+          className="w-full h-14 bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold text-base"
           onClick={() => nav('/auth/instructor-signup')}
         >
           <Shield className="mr-1" /> Reserve as Instructor
