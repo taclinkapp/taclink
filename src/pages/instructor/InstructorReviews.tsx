@@ -208,11 +208,6 @@ const InstructorReviews = () => {
                   <div className="px-4 py-3 border-b border-border space-y-2">
                     <div className="flex items-center gap-2">
                       <img src={getAvatarSrc(r.studentPhoto, r.studentName)} alt={r.studentName} className="h-8 w-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                          {r.studentName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold truncate">{r.studentName}</div>
                         <div className="text-[11px] text-muted-foreground truncate">{r.courseTitle}</div>
