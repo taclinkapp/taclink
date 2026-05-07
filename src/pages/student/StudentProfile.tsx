@@ -6,6 +6,7 @@ import { Settings, ChevronRight, Gift } from 'lucide-react';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { OperatorProfileMini } from '@/components/operator/OperatorProfileMini';
 
 type HistoryRow = {
   id: string;
