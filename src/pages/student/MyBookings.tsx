@@ -119,10 +119,28 @@ const MyBookings = () => {
     return bookings.filter((b) => {
       const ends = b.course?.ends_at ?? b.course?.starts_at ?? null;
       const endsMs = ends ? new Date(ends).getTime() : null;
-      const isPast = b.attended_at != null || (endsMs != null && endsMs < now);
+      const isCancelled = b.status === 'cancelled';
+      const isPast = isCancelled || b.attended_at != null || (endsMs != null && endsMs < now);
       return tab === 'upcoming' ? !isPast : isPast;
     });
   }, [bookings, tab]);
+
+  const refundSummary = (b: BookingItem) => {
+    // Full refund if deposit already refunded (timely cancel or instructor-fault).
+    // Otherwise late-cancel: 90% of course price, $25 platform fee non-refundable.
+    const isFull = b.deposit_status === 'refunded';
+    const cents = isFull
+      ? (b.online_total_cents ?? 0)
+      : Math.round((b.course_price_cents ?? 0) * 0.9);
+    return {
+      isFull,
+      amount: `$${(cents / 100).toFixed(2)}`,
+      label: isFull ? 'Full refund' : '90% refund (late cancel)',
+      eta: isFull
+        ? 'Posts back in 5–10 business days'
+        : 'Posts back in 5–10 business days · $25 platform fee non-refundable',
+    };
+  };
 
   return (
     <MobileShell>
