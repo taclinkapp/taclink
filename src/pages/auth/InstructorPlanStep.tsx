@@ -70,7 +70,12 @@ const InstructorPlanStep = () => {
             </ul>
           </div>
 
-          <div className="tactical-card p-5 space-y-3 border-primary/30">
+          <div className={`tactical-card p-5 space-y-3 border-primary/30 relative ${isPrelaunch ? 'opacity-70' : ''}`}>
+            {isPrelaunch && (
+              <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-sm flex items-center gap-1">
+                <Lock className="h-3 w-3" /> Locked
+              </span>
+            )}
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center">
                 <Crown className="h-5 w-5 text-primary" />
@@ -86,6 +91,14 @@ const InstructorPlanStep = () => {
               <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> AI-powered fee insights & payout summaries</li>
               <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> Local demand & instructor analytics</li>
             </ul>
+            {isPrelaunch && (
+              <div className="border-t border-primary/20 pt-3 space-y-2">
+                <CountdownClock />
+                <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider">
+                  Pro unlocks {launchDateStr ?? 'at launch'}
+                </p>
+              </div>
+            )}
           </div>
 
           <Button onClick={choose} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
