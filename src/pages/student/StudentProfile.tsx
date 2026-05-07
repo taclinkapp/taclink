@@ -102,6 +102,10 @@ const StudentProfile = () => {
           ))}
         </div>
 
+        <div className="mt-6">
+          <OperatorProfileMini studentId={user?.id} linkTo="/student/operator" />
+        </div>
+
         <Section title="Invite & Earn">
           <button
             onClick={() => setInviteOpen(true)}
