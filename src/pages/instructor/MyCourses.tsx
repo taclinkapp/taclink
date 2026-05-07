@@ -4,7 +4,7 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { useInstructorCourses } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Users, ChevronRight } from 'lucide-react';
+import { Plus, Users, ChevronRight, XCircle } from 'lucide-react';
 import { CategoryPill } from '@/components/CategoryPill';
 import { cn } from '@/lib/utils';
 
