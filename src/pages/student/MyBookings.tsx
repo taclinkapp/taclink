@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { CategoryPill } from '@/components/CategoryPill';
-import { QrCode, Calendar, MapPin, Star, Loader2 } from 'lucide-react';
+import { QrCode, Calendar, MapPin, Star, Loader2, XCircle, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
