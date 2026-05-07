@@ -172,8 +172,23 @@ const InstructorSignUp = () => {
                 </>
               )}
             </button>
-            {photoFile && <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Tap to change</span>}
+            {photoFile && (
+              <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider">
+                <button type="button" onClick={() => rawPhoto && setAdjusterOpen(true)} className="text-primary font-bold hover:underline">Adjust</button>
+                <button type="button" onClick={() => photoInputRef.current?.click()} className="text-muted-foreground hover:text-foreground">Replace</button>
+              </div>
+            )}
           </div>
+          <PhotoAdjusterDialog
+            open={adjusterOpen}
+            onClose={() => setAdjusterOpen(false)}
+            source={rawPhoto}
+            aspect="1:1"
+            initialMode="fill"
+            outputMaxWidth={800}
+            filename="avatar.jpg"
+            onSave={onAdjusted}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">First Name</Label>
