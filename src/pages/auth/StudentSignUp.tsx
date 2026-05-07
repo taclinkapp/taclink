@@ -232,6 +232,7 @@ const StudentSignUp = () => {
           </Button>
         </form>
       </div>
+      </div>
     </div>
   );
 };
