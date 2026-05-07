@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { FirstVisitTooltip } from "@/components/onboarding/FirstVisitTooltip";
+import { getAvatarSrc } from "@/lib/avatar";
 
 const OperatorProfile = () => {
   const { user, profile } = useAuth();
