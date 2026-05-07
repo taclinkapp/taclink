@@ -21,6 +21,8 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
+import { setInstructorDraft } from '@/lib/instructorSignupDraft';
+import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const InstructorSignUp = () => {
@@ -78,6 +80,7 @@ const InstructorSignUp = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    if (!photoFile) return toast.error('Profile photo is required');
     if (password !== confirm) return toast.error('Passwords do not match');
     const pwCheck = validatePassword(password);
     if (!pwCheck.valid) {
@@ -91,42 +94,32 @@ const InstructorSignUp = () => {
       logBypassAttempt({ userRole: 'instructor', fieldName: 'instructor_bio', originalContent: bio, detections: bioHits, actionTaken: 'blocked' });
       return toast.error('Remove contact info from your bio before submitting.');
     }
+    // Make sure no stale session interferes with the deferred flow.
     const { data: existing } = await supabase.auth.getSession();
     if (existing.session) {
       await supabase.auth.signOut();
     }
     setLoading(true);
-    logSignupRedirect({ role: 'instructor', intendedPath: '/instructor/subscription?onboarding=1', status: 'submitted', email });
-    const { error } = await supabase.auth.signUp({
+    // Persist draft to memory only — NO auth account is created yet. The
+    // account is only created after the user finishes plan + credential +
+    // policy steps.
+    setInstructorDraft({
+      firstName: first,
+      lastName: last,
       email,
       password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/instructor/subscription?onboarding=1`,
-        data: {
-          display_name: `${first} ${last}`.trim(),
-          state,
-          bio,
-          role: 'instructor',
-          ...(referralCode ? { referral_code: referralCode } : {}),
-          ...(influencerSlug ? { influencer_slug: influencerSlug } : {}),
-        },
-      },
+      state,
+      bio,
+      referralCode: referralCode || undefined,
+      influencerSlug: influencerSlug || undefined,
+      photo: photoFile,
     });
-    if (error) {
-      setLoading(false);
-      logSignupRedirect({ role: 'instructor', intendedPath: '/instructor/subscription?onboarding=1', status: 'error', email, message: error.message });
-      toast.error(error.message);
-      return;
-    }
-    const { data: sess } = await supabase.auth.getSession();
-    const uid = sess.session?.user?.id;
-    if (uid) await uploadPhotoIfAny(uid);
+    logSignupRedirect({ role: 'instructor', intendedPath: '/auth/instructor/plan', status: 'submitted', email });
     setLoading(false);
-    toast.success('Account created', {
-      description: 'Choose your plan to get started.',
+    toast.success('Application started', {
+      description: 'Account will be created after you finish onboarding.',
     });
-    logSignupRedirect({ role: 'instructor', intendedPath: '/instructor/subscription?onboarding=1', status: 'redirected', email });
-    nav('/instructor/subscription?onboarding=1', { replace: true });
+    nav('/auth/instructor/plan', { replace: true });
   };
 
   return (
@@ -143,7 +136,9 @@ const InstructorSignUp = () => {
         <div className="flex justify-center mb-6">
           <Logo showTagline widthPx={180} />
         </div>
-        <p className="text-muted-foreground text-sm mb-6">Apply to teach on TacLink™. We'll verify your credentials within 1 hour.</p>
+        <p className="text-muted-foreground text-sm mb-4">Apply to teach on TacLink™. We'll verify your credentials within 1 hour.</p>
+        <InstructorDraftProgress current="account" completed={{}} className="mb-5" />
+
         {referralCode && (
           <div className="tactical-card p-3 mb-5 flex items-center gap-3 border-primary/40">
             <div className="h-9 w-9 rounded-md bg-primary/15 flex items-center justify-center text-primary">
