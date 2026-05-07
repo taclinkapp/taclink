@@ -175,7 +175,7 @@ export const createCourse = async (
 ) => {
   const { data, error } = await supabase
     .from("courses")
-    .insert({ instructor_id: instructorId, ...input })
+    .insert({ instructor_id: instructorId, ...input } as any)
     .select()
     .single();
   if (error) throw error;
