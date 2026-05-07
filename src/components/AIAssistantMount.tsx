@@ -7,16 +7,21 @@ import { useAuth } from "@/contexts/AuthContext";
  * based on the current route and the signed-in user's roles.
  */
 export function AIAssistantMount() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const { roles } = useAuth();
 
-  // Hide on auth, splash, admin, checkout/booking-success
+  // Hide on auth, splash, admin, checkout/booking-success, and any onboarding flow
+  const isOnboarding =
+    pathname.startsWith("/onboarding") ||
+    new URLSearchParams(search).get("onboarding") === "1";
+
   if (
     pathname === "/" ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/admin") ||
     pathname.includes("/checkout") ||
-    pathname.includes("/booking-success")
+    pathname.includes("/booking-success") ||
+    isOnboarding
   ) {
     return null;
   }
