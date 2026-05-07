@@ -3188,6 +3188,7 @@ export type Database = {
           course_id: string
           hours_before_start: number
           instructor_forfeited_cents: number
+          listing_fee_refunded_cents: number
           total_refunded_cents: number
           was_timely: boolean
         }[]
