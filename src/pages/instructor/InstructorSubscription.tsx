@@ -16,6 +16,7 @@ import { useActivePaymentProvider } from '@/hooks/useActivePaymentProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CountdownClock } from '@/components/CountdownClock';
 import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
+import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const PRICE_ID = 'instructor_pro_monthly';
 
