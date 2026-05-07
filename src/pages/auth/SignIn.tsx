@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 import { useAuth, homeForRole } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 
 const SignIn = () => {
   const nav = useNavigate();
@@ -153,6 +153,15 @@ const SignIn = () => {
         <div className="mt-8 text-center text-sm text-muted-foreground space-x-4">
           <button onClick={() => nav('/auth/student-signup')} className="text-primary font-semibold">Student Sign Up</button>
           <button onClick={() => nav('/auth/instructor-signup')} className="text-primary font-semibold">Instructor Sign Up</button>
+        </div>
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => nav('/')}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to landing page
+          </button>
         </div>
       </div>
     </div>
