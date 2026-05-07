@@ -83,6 +83,11 @@ const MyBookings = () => {
           booked_at: r.booked_at,
           attended_at: r.attended_at,
           cancellation_cutoff_hours: r.cancellation_cutoff_hours,
+          deposit_status: r.deposit_status ?? null,
+          online_total_cents: r.online_total_cents ?? null,
+          course_price_cents: r.course_price_cents ?? null,
+          platform_fee_cents: r.platform_fee_cents ?? null,
+          updated_at: r.updated_at ?? null,
           course: r.course
             ? {
                 id: r.course.id,
