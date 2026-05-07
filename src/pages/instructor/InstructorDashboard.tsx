@@ -117,7 +117,7 @@ const InstructorDashboard = () => {
     .slice(0, 4);
 
   const displayName = profile?.display_name ?? 'Instructor';
-  const avatarSrc = profile?.photo_url ?? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`;
+  const avatarSrc = getAvatarSrc(profile?.photo_url, displayName);
 
   return (
     <MobileShell>
