@@ -14,6 +14,7 @@ import { validatePassword } from '@/lib/passwordRules';
 import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
+import { PhoneVerificationField } from '@/components/auth/PhoneVerificationField';
 
 const StudentSignUp = () => {
   const nav = useNavigate();
@@ -23,6 +24,8 @@ const StudentSignUp = () => {
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [agree, setAgree] = useState(false);
@@ -75,6 +78,10 @@ const StudentSignUp = () => {
       toast.error('You must agree to the terms');
       return;
     }
+    if (!phoneVerified) {
+      toast.error('Please verify your phone number');
+      return;
+    }
     const { data: existing } = await supabase.auth.getSession();
     if (existing.session) {
       await supabase.auth.signOut();
@@ -88,6 +95,7 @@ const StudentSignUp = () => {
         emailRedirectTo: `${window.location.origin}/student`,
         data: {
           display_name: `${first} ${last}`.trim(),
+          phone,
           role: 'student',
           ...(referralCode ? { referral_code: referralCode } : {}),
           ...(influencerSlug ? { influencer_slug: influencerSlug } : {}),
@@ -166,6 +174,13 @@ const StudentSignUp = () => {
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
             <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
           </div>
+          <PhoneVerificationField
+            phone={phone}
+            onPhoneChange={setPhone}
+            verified={phoneVerified}
+            onVerified={(p) => { if (p) { setPhone(p); setPhoneVerified(true); } else { setPhoneVerified(false); } }}
+            required
+          />
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
             <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
