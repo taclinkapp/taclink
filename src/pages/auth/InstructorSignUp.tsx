@@ -21,6 +21,7 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
+import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
