@@ -4,6 +4,8 @@ import { StudentTabBar } from "@/components/StudentTabBar";
 import { Logo } from "@/components/Logo";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { TrainingGoalsSection } from "@/components/TrainingGoalsSection";
+import { OperatorProfileMini } from "@/components/operator/OperatorProfileMini";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMyProgress } from "@/hooks/useMyProgress";
 import { Award, Calendar, MapPin, Target, TrendingUp, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,7 @@ const StatCard = ({
 );
 
 const MyProgress = () => {
+  const { user } = useAuth();
   const { data: bookings = [], isLoading } = useMyProgress();
 
   const attended = bookings.filter((b) => b.status === "attended");
