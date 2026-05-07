@@ -5,14 +5,15 @@
 // Terms reference (TermsOfService.tsx §6):
 //   - Timely cancel  → 100% refund ($25 platform fee + full course price).
 //   - Late cancel    → 90% of course price refunded; instructor keeps 10%
-//                       as compensation; $25 platform fee non-refundable.
+//                       as compensation; $25 platform fee is non-refundable
+//                       after the grace window.
 //   - Instructor cancel/no-show → 100% refund ($25 + course price), 48h SLA.
 
 export const REFUND_GRACE_HEADLINE =
   '100% refund ($25 platform fee + full course price)';
 
 export const REFUND_LATE_HEADLINE =
-  '90% of the course price back · instructor keeps 10% · $25 platform fee non-refundable';
+  '90% of the course price back · instructor keeps 10% · $25 platform fee non-refundable after the grace window';
 
 export const REFUND_INSTRUCTOR_FAULT_HEADLINE =
   '100% refund ($25 + full course price) within 48 hours';
@@ -20,7 +21,7 @@ export const REFUND_INSTRUCTOR_FAULT_HEADLINE =
 export const REFUND_POLICY_BLURB =
   "Cancel within your grace window for a 100% refund ($25 platform fee + full course price). " +
   "After the grace window, you receive 90% of the course price back — the instructor keeps 10% " +
-  "for the lost slot, and the $25 platform fee is non-refundable. " +
+  "for the lost slot, and the $25 platform fee is non-refundable after the grace window. " +
   "If the instructor cancels or no-shows, you're refunded in full ($25 + course price) within 48 hours.";
 
 export const cancelConfirmMessage = (inGrace: boolean) =>
