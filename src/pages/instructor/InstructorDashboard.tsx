@@ -210,9 +210,7 @@ const InstructorDashboard = () => {
           ) : (
             recent.map((s) => (
               <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
-                {s.photo
-                  ? <img src={s.photo} className="h-9 w-9 rounded-full border border-border object-cover" alt="" />
-                  : <div className="h-9 w-9 rounded-full bg-muted border border-border" />}
+                <img src={getAvatarSrc(s.photo, s.name)} className="h-9 w-9 rounded-full border border-border object-cover" alt="" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm"><span className="font-semibold">{s.name}</span> <span className="text-muted-foreground">{s.checkedIn ? 'checked in' : 'booked a course'}</span></div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">{new Date(s.bookedAt).toLocaleDateString()}</div>
@@ -344,9 +342,7 @@ const InstructorDashboard = () => {
                       const perNet = Math.round(drillCourse.unit * 0.9 * 100) / 100;
                       return (
                         <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
-                          {s.photo
-                            ? <img src={s.photo} className="h-10 w-10 rounded-full border border-border object-cover" alt="" />
-                            : <div className="h-10 w-10 rounded-full bg-muted border border-border" />}
+                          <img src={getAvatarSrc(s.photo, s.name)} className="h-10 w-10 rounded-full border border-border object-cover" alt="" />
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold text-sm truncate">{s.name}</div>
                             <div className="text-[11px] text-muted-foreground mt-0.5">
@@ -380,9 +376,7 @@ const InstructorDashboard = () => {
                 )}
                 {breakdown.studentRows.map((s) => (
                   <div key={s.id} className="tactical-card p-3 flex items-center gap-3">
-                    {s.photo
-                      ? <img src={s.photo} className="h-10 w-10 rounded-full border border-border object-cover" alt="" />
-                      : <div className="h-10 w-10 rounded-full bg-muted border border-border" />}
+                    <img src={getAvatarSrc(s.photo, s.name)} className="h-10 w-10 rounded-full border border-border object-cover" alt="" />
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm truncate">{s.name}</div>
                       <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
