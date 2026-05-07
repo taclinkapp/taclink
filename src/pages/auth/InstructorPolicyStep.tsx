@@ -40,7 +40,7 @@ const InstructorPolicyStep = () => {
       nav('/auth/instructor/plan', { replace: true });
       return;
     }
-    if (!draft.credentialFile) {
+    if (!draft.credentialType) {
       nav('/auth/instructor/credential', { replace: true });
     }
   }, [nav]);
