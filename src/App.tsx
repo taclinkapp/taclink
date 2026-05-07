@@ -98,6 +98,7 @@ import AdminUptime from "./pages/admin/AdminUptime";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
+import { InstructorOnboardingGate } from "./components/InstructorOnboardingGate";
 import { MissionCompleteWatcher } from "./components/operator/MissionCompleteWatcher";
 
 const queryClient = new QueryClient();
@@ -109,7 +110,9 @@ const StudentOrGuest = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute requireRole="student" allowGuest>{children}</ProtectedRoute>
 );
 const Instructor = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute requireRole="instructor">{children}</ProtectedRoute>
+  <ProtectedRoute requireRole="instructor">
+    <InstructorOnboardingGate>{children}</InstructorOnboardingGate>
+  </ProtectedRoute>
 );
 const Authed = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>{children}</ProtectedRoute>

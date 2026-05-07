@@ -2015,15 +2015,19 @@ export type Database = {
           account_status: string
           bio: string | null
           created_at: string
+          credential_uploaded_at: string | null
           disabled_at: string | null
           disabled_by: string | null
           disabled_reason: string | null
           display_name: string | null
           final_warning_sent_at: string | null
           id: string
+          onboarding_completed_at: string | null
+          onboarding_started_at: string | null
           payment_method_added: boolean
           phone: string | null
           photo_url: string | null
+          policy_acknowledged_at: string | null
           service_categories: string[] | null
           service_city: string | null
           service_state: string | null
@@ -2031,6 +2035,7 @@ export type Database = {
           strike_points: number
           stripe_connect_account_id: string | null
           stripe_connect_status: string
+          subscription_chosen_at: string | null
           subscription_status: string
           subscription_updated_at: string | null
           updated_at: string
@@ -2039,15 +2044,19 @@ export type Database = {
           account_status?: string
           bio?: string | null
           created_at?: string
+          credential_uploaded_at?: string | null
           disabled_at?: string | null
           disabled_by?: string | null
           disabled_reason?: string | null
           display_name?: string | null
           final_warning_sent_at?: string | null
           id: string
+          onboarding_completed_at?: string | null
+          onboarding_started_at?: string | null
           payment_method_added?: boolean
           phone?: string | null
           photo_url?: string | null
+          policy_acknowledged_at?: string | null
           service_categories?: string[] | null
           service_city?: string | null
           service_state?: string | null
@@ -2055,6 +2064,7 @@ export type Database = {
           strike_points?: number
           stripe_connect_account_id?: string | null
           stripe_connect_status?: string
+          subscription_chosen_at?: string | null
           subscription_status?: string
           subscription_updated_at?: string | null
           updated_at?: string
@@ -2063,15 +2073,19 @@ export type Database = {
           account_status?: string
           bio?: string | null
           created_at?: string
+          credential_uploaded_at?: string | null
           disabled_at?: string | null
           disabled_by?: string | null
           disabled_reason?: string | null
           display_name?: string | null
           final_warning_sent_at?: string | null
           id?: string
+          onboarding_completed_at?: string | null
+          onboarding_started_at?: string | null
           payment_method_added?: boolean
           phone?: string | null
           photo_url?: string | null
+          policy_acknowledged_at?: string | null
           service_categories?: string[] | null
           service_city?: string | null
           service_state?: string | null
@@ -2079,6 +2093,7 @@ export type Database = {
           strike_points?: number
           stripe_connect_account_id?: string | null
           stripe_connect_status?: string
+          subscription_chosen_at?: string | null
           subscription_status?: string
           subscription_updated_at?: string | null
           updated_at?: string
@@ -3308,6 +3323,7 @@ export type Database = {
           was_timely: boolean
         }[]
       }
+      instructor_choose_free_plan: { Args: never; Returns: undefined }
       instructor_dispute_refund: {
         Args: { _reason: string; _refund_id: string }
         Returns: Json
@@ -3315,6 +3331,17 @@ export type Database = {
       instructor_no_show_refund: {
         Args: { _booking_id: string; _reason?: string }
         Returns: Json
+      }
+      instructor_onboarding_status: {
+        Args: { _user_id: string }
+        Returns: {
+          complete: boolean
+          has_credential: boolean
+          has_policy_ack: boolean
+          has_subscription: boolean
+          next_step: string
+          started_at: string
+        }[]
       }
       instructor_owed_balance_cents: {
         Args: {
@@ -3347,6 +3374,14 @@ export type Database = {
           instructor_id: string
         }[]
       }
+      list_stale_instructor_onboarders: {
+        Args: { _older_than_hours?: number }
+        Returns: {
+          email: string
+          started_at: string
+          user_id: string
+        }[]
+      }
       log_admin_action: {
         Args: {
           _action: string
@@ -3365,6 +3400,10 @@ export type Database = {
           display_name: string
           user_role: string
         }[]
+      }
+      maybe_complete_instructor_onboarding: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
       move_to_dlq: {
         Args: {
