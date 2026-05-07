@@ -61,7 +61,7 @@ const InstructorPlanStep = () => {
                   <div className="text-xs text-muted-foreground">$0 / month</div>
                 </div>
               </div>
-              <span className="text-[10px] uppercase tracking-wider font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-sm">Recommended</span>
+              
             </div>
             <ul className="text-xs text-muted-foreground space-y-1.5 pl-1">
               <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> Publish unlimited courses</li>
