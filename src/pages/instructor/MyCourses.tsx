@@ -4,7 +4,7 @@ import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { useInstructorCourses } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Users, ChevronRight } from 'lucide-react';
+import { Plus, Users, ChevronRight, XCircle } from 'lucide-react';
 import { CategoryPill } from '@/components/CategoryPill';
 import { cn } from '@/lib/utils';
 
@@ -19,9 +19,10 @@ const MyCourses = () => {
   const filtered = courses.filter((c) => {
     const startMs = c.date ? new Date(c.date).getTime() : 0;
     const isPast = startMs && startMs < now;
+    const isCancelled = c.status === 'cancelled';
     if (tab === 'Active') return c.status === 'active' && !isPast;
     if (tab === 'Draft') return c.status === 'draft';
-    return isPast;
+    return isPast || isCancelled;
   });
 
   return (
@@ -58,29 +59,43 @@ const MyCourses = () => {
             No {tab.toLowerCase()} courses.{tab === 'Active' && ' Tap New to publish your first course.'}
           </div>
         ) : (
-          filtered.map((c) => (
-            <Link key={c.id} to={`/instructor/courses/${c.id}`} className="block tactical-card p-4 hover:border-primary/40">
+          filtered.map((c) => {
+            const isCancelled = c.status === 'cancelled';
+            return (
+            <Link key={c.id} to={`/instructor/courses/${c.id}`} className={cn('block tactical-card p-4 hover:border-primary/40', isCancelled && 'border-destructive/30')}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5">
                     <CategoryPill category={c.category} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-success">{c.status}</span>
+                    <span className={cn('text-[10px] font-bold uppercase tracking-wider', isCancelled ? 'text-destructive' : 'text-success')}>{c.status}</span>
                   </div>
                   <h3 className="font-bold leading-tight">{c.title}</h3>
                   <div className="text-xs text-muted-foreground mt-1.5">
                     {c.date ? new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
                     {c.startTime && ` · ${c.startTime}`}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-2 text-xs">
-                    <Users className="h-3.5 w-3.5 text-primary" />
-                    <span className="font-bold">0/{c.maxStudents}</span>
-                    <span className="text-muted-foreground">enrolled</span>
-                  </div>
+                  {isCancelled ? (
+                    <div className="mt-2 rounded-sm border border-destructive/30 bg-destructive/5 p-2">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive">
+                        <XCircle className="h-3 w-3" /> Cancelled · students refunded
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        Refunds post back to students in 5–10 business days.
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 mt-2 text-xs">
+                      <Users className="h-3.5 w-3.5 text-primary" />
+                      <span className="font-bold">0/{c.maxStudents}</span>
+                      <span className="text-muted-foreground">enrolled</span>
+                    </div>
+                  )}
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
             </Link>
-          ))
+            );
+          })
         )}
       </div>
       <InstructorTabBar />

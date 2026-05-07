@@ -86,7 +86,7 @@ export const dbToViewCourse = (
     whatYoullLearn: [],
     prerequisites: "",
     equipment: "",
-    status: row.status === "draft" ? "draft" : "active",
+    status: row.status === "draft" ? "draft" : row.status === "cancelled" ? "cancelled" : "active",
     skillLevel: (row.skill_level as any) ?? 'all_levels',
     lat: row.lat ?? 0,
     lng: row.lng ?? 0,
