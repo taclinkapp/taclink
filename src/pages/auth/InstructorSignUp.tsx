@@ -21,6 +21,7 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
+import { PhoneVerificationField } from '@/components/auth/PhoneVerificationField';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
@@ -41,6 +42,7 @@ const InstructorSignUp = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [rawPhoto, setRawPhoto] = useState<File | null>(null);
   const [adjusterOpen, setAdjusterOpen] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const onPickPhoto = (f: File | null | undefined) => {
@@ -85,6 +87,7 @@ const InstructorSignUp = () => {
       });
     }
     if (!agree) return toast.error('You must agree to the terms');
+    if (!phoneVerified) return toast.error('Please verify your phone number');
     const bioHits = detectContactInfo(bio);
     if (bioHits.length) {
       logBypassAttempt({ userRole: 'instructor', fieldName: 'instructor_bio', originalContent: bio, detections: bioHits, actionTaken: 'blocked' });
@@ -203,10 +206,13 @@ const InstructorSignUp = () => {
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
             <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
           </div>
-          <div>
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Phone</Label>
-            <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
-          </div>
+          <PhoneVerificationField
+            phone={phone}
+            onPhoneChange={setPhone}
+            verified={phoneVerified}
+            onVerified={(p) => { if (p) { setPhone(p); setPhoneVerified(true); } else { setPhoneVerified(false); } }}
+            required
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
