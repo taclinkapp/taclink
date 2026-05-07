@@ -19,9 +19,10 @@ const MyCourses = () => {
   const filtered = courses.filter((c) => {
     const startMs = c.date ? new Date(c.date).getTime() : 0;
     const isPast = startMs && startMs < now;
+    const isCancelled = c.status === 'cancelled';
     if (tab === 'Active') return c.status === 'active' && !isPast;
     if (tab === 'Draft') return c.status === 'draft';
-    return isPast;
+    return isPast || isCancelled;
   });
 
   return (
