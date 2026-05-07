@@ -788,6 +788,34 @@ const NewCourse = () => {
                 </SelectContent>
               </Select>
             </Field>
+            <Field label="Primary Skill Pillar *">
+              <Select value={primaryPillar} onValueChange={setPrimaryPillar}>
+                <SelectTrigger className={cn('bg-card border-border h-11', !primaryPillar && 'border-destructive/60')}>
+                  <SelectValue placeholder="What does this course primarily teach?" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {PILLARS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.emoji} {p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Students earn XP toward this pillar in their Operator Profile when they complete your course.
+              </p>
+            </Field>
+            <Field label="Secondary Skill Pillar (optional)">
+              <Select value={secondaryPillar || '__none__'} onValueChange={(v) => setSecondaryPillar(v === '__none__' ? '' : v)}>
+                <SelectTrigger className="bg-card border-border h-11">
+                  <SelectValue placeholder="Optional second pillar" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="__none__">— None —</SelectItem>
+                  {PILLARS.filter((p) => p.id !== primaryPillar).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.emoji} {p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
             <Field
               label="Description"
               action={
