@@ -308,6 +308,8 @@ const NewCourse = () => {
         setTitle(data.title ?? '');
         setCategory(data.category ?? '');
         setSkillLevel((data.skill_level as SkillLevel) ?? '');
+        setPrimaryPillar(((data as any).primary_pillar as string) ?? '');
+        setSecondaryPillar(((data as any).secondary_pillar as string) ?? '');
         setDescription(data.description ?? '');
         if (data.starts_at) {
           const s = new Date(data.starts_at);
@@ -447,6 +449,7 @@ const NewCourse = () => {
       if (!title.trim()) return 'Title is required';
       if (!category) return 'Category is required';
       if (!skillLevel) return 'Please select a skill level before continuing';
+      if (!primaryPillar) return 'Pick a primary skill pillar — this powers student progression';
       if (!coverFile && !coverPreview) return 'A cover photo is required so students can recognize your course on the map and listings';
       const titleHits = detectContactInfo(title);
       const descHits = detectContactInfo(description);
