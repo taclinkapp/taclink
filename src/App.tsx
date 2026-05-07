@@ -95,6 +95,7 @@ import AdminUptime from "./pages/admin/AdminUptime";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
+import { MissionCompleteWatcher } from "./components/operator/MissionCompleteWatcher";
 
 const queryClient = new QueryClient();
 
@@ -219,6 +220,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <AIAssistantMount />
+          <MissionCompleteWatcher />
           </NavHistoryProvider>
         </AuthProvider>
       </BrowserRouter>
