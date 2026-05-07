@@ -5,6 +5,7 @@ import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminAIPanel } from '@/components/admin/AdminAIPanel';
+import { AdminCrashCourse } from '@/components/admin/AdminCrashCourse';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import {
