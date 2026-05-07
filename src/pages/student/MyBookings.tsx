@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { StudentTabBar } from '@/components/StudentTabBar';
 import { CategoryPill } from '@/components/CategoryPill';
-import { QrCode, Calendar, MapPin, Star, Loader2 } from 'lucide-react';
+import { QrCode, Calendar, MapPin, Star, Loader2, XCircle, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
@@ -18,6 +18,11 @@ type BookingItem = {
   booked_at: string | null;
   attended_at: string | null;
   cancellation_cutoff_hours: number | null;
+  deposit_status: string | null;
+  online_total_cents: number | null;
+  course_price_cents: number | null;
+  platform_fee_cents: number | null;
+  updated_at: string | null;
   course: {
     id: string;
     title: string;
@@ -46,12 +51,12 @@ const MyBookings = () => {
         .from('bookings')
         .select(`
           id, status, booked_at, attended_at, cancellation_cutoff_hours,
+          deposit_status, online_total_cents, course_price_cents, platform_fee_cents, updated_at,
           course:courses (
             id, title, category, city, starts_at, ends_at, cover_image_url, instructor_id
           )
         `)
         .eq('student_id', user.id)
-        .neq('status', 'cancelled')
         .order('booked_at', { ascending: false });
       if (error) { toast.error(error.message); setLoading(false); return; }
 
@@ -78,6 +83,11 @@ const MyBookings = () => {
           booked_at: r.booked_at,
           attended_at: r.attended_at,
           cancellation_cutoff_hours: r.cancellation_cutoff_hours,
+          deposit_status: r.deposit_status ?? null,
+          online_total_cents: r.online_total_cents ?? null,
+          course_price_cents: r.course_price_cents ?? null,
+          platform_fee_cents: r.platform_fee_cents ?? null,
+          updated_at: r.updated_at ?? null,
           course: r.course
             ? {
                 id: r.course.id,
@@ -109,10 +119,28 @@ const MyBookings = () => {
     return bookings.filter((b) => {
       const ends = b.course?.ends_at ?? b.course?.starts_at ?? null;
       const endsMs = ends ? new Date(ends).getTime() : null;
-      const isPast = b.attended_at != null || (endsMs != null && endsMs < now);
+      const isCancelled = b.status === 'cancelled';
+      const isPast = isCancelled || b.attended_at != null || (endsMs != null && endsMs < now);
       return tab === 'upcoming' ? !isPast : isPast;
     });
   }, [bookings, tab]);
+
+  const refundSummary = (b: BookingItem) => {
+    // Full refund if deposit already refunded (timely cancel or instructor-fault).
+    // Otherwise late-cancel: 90% of course price, $25 platform fee non-refundable.
+    const isFull = b.deposit_status === 'refunded';
+    const cents = isFull
+      ? (b.online_total_cents ?? 0)
+      : Math.round((b.course_price_cents ?? 0) * 0.9);
+    return {
+      isFull,
+      amount: `$${(cents / 100).toFixed(2)}`,
+      label: isFull ? 'Full refund' : '90% refund (late cancel)',
+      eta: isFull
+        ? 'Posts back in 5–10 business days'
+        : 'Posts back in 5–10 business days · $25 platform fee non-refundable',
+    };
+  };
 
   return (
     <MobileShell>
@@ -147,6 +175,8 @@ const MyBookings = () => {
           const dateLabel = startsAt
             ? new Date(startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
             : 'TBD';
+          const isCancelled = b.status === 'cancelled';
+          const refund = isCancelled ? refundSummary(b) : null;
           return (
             <Link key={b.id} to={`/student/booking/${b.id}`} className="block tactical-card p-4 hover:border-primary/40 transition">
               <div className="flex items-start gap-3">
@@ -163,7 +193,7 @@ const MyBookings = () => {
                     <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{dateLabel}</span>
                     {b.course?.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{b.course.city}</span>}
                   </div>
-                  {tab === 'upcoming' && (
+                  {tab === 'upcoming' && !isCancelled && (
                     <div className="mt-1.5">
                       <CancelGraceBadge
                         startsAt={startsAt}
@@ -172,8 +202,20 @@ const MyBookings = () => {
                       />
                     </div>
                   )}
+                  {isCancelled && refund && (
+                    <div className="mt-2 rounded-sm border border-destructive/30 bg-destructive/5 p-2">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive">
+                        <XCircle className="h-3 w-3" /> Cancelled
+                      </div>
+                      <div className="mt-1 flex items-center gap-1 text-xs font-bold text-success">
+                        <DollarSign className="h-3 w-3" />
+                        {refund.amount} refund · {refund.label}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{refund.eta}</div>
+                    </div>
+                  )}
                 </div>
-                {tab === 'upcoming' ? (
+                {isCancelled ? null : tab === 'upcoming' ? (
                   <div className="h-10 w-10 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center">
                     <QrCode className="h-5 w-5 text-primary" />
                   </div>
