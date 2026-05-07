@@ -197,6 +197,8 @@ export function AIAssistant({ role }: { role: Role }) {
             <div className="border-t border-border p-3 bg-card">
               <div className="flex gap-2 items-end">
                 <Textarea
+                  key="ai-assistant-input"
+                  autoFocus
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -267,7 +269,7 @@ function makeBlankRenderer(blanksRef: React.MutableRefObject<Record<string, stri
   return render;
 }
 
-function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => void }) {
+const MessageBubble = React.memo(function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => void }) {
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(msg.content);
@@ -385,4 +387,4 @@ function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => v
       </div>
     </div>
   );
-}
+});
