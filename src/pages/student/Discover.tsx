@@ -64,6 +64,14 @@ const Discover = () => {
   const isGuest = !user;
   const tour = useCrashCourseTour('student', user?.id);
   const onboarding = useOnboarding();
+  const [showWelcome, setShowWelcome] = useState(false);
+  // Show post-signup welcome modal once.
+  useEffect(() => {
+    if (user && typeof window !== 'undefined' && sessionStorage.getItem('show_onboarding_welcome') === '1') {
+      setShowWelcome(true);
+      sessionStorage.removeItem('show_onboarding_welcome');
+    }
+  }, [user]);
   // Mark "browsed_courses" once an authed student lands on Discover.
   useEffect(() => {
     if (user && !onboarding.loading && !onboarding.checklist.browsed_courses) {
