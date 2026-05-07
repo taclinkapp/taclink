@@ -257,25 +257,16 @@ const CourseManagement = () => {
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] uppercase tracking-wider font-bold">No bookings yet</div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
-                  No students have booked this course. You can delete it at no cost — no penalty, no strike.
+                  No students have booked this course. You can cancel it at no cost — no penalty, no strike.
+                  Cancelled courses move to the <strong>Past</strong> tab on My Courses with the refund-policy timeframe applied.
                 </p>
                 <Button
                   variant="destructive"
                   size="sm"
                   className="mt-2 h-8 text-[11px]"
-                  onClick={async () => {
-                    if (!confirm('Heads up: deleting this course will cancel the listing and remove it from the marketplace. This cannot be undone. Continue?')) return;
-                    const { error } = await supabase.from('courses').delete().eq('id', c.id);
-                    if (error) {
-                      toast.error('Could not delete course', { description: error.message });
-                      return;
-                    }
-                    toast.success('Course deleted');
-                    qc.invalidateQueries({ queryKey: ['courses'] });
-                    window.history.back();
-                  }}
+                  onClick={() => setCancelOpen(true)}
                 >
-                  Delete course
+                  Cancel course
                 </Button>
               </div>
             </div>
