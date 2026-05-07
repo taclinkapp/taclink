@@ -53,9 +53,9 @@ export const InstructorOnboardingProgress = ({ current, className }: Props) => {
 
   const completed: Record<StepKey, boolean> = {
     account: !!user,
-    subscription: !!row?.subscription_chosen_at,
-    credential: !!row?.credential_uploaded_at,
-    policy: !!row?.policy_acknowledged_at,
+    subscription: !!row?.has_subscription,
+    credential: !!row?.has_credential,
+    policy: !!row?.has_policy_ack,
   };
 
   const activeKey: StepKey =
