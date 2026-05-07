@@ -109,7 +109,9 @@ const StudentOrGuest = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute requireRole="student" allowGuest>{children}</ProtectedRoute>
 );
 const Instructor = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute requireRole="instructor">{children}</ProtectedRoute>
+  <ProtectedRoute requireRole="instructor">
+    <InstructorOnboardingGate>{children}</InstructorOnboardingGate>
+  </ProtectedRoute>
 );
 const Authed = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>{children}</ProtectedRoute>
