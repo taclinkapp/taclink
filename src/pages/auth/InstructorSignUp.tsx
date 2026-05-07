@@ -183,6 +183,15 @@ const InstructorSignUp = () => {
         <p className="text-muted-foreground text-sm mb-4">Apply to teach on TacLink™. We'll verify your credentials within 1 hour.</p>
         <InstructorDraftProgress current="account" completed={{}} className="mb-5" />
 
+        {draftRestored && (
+          <div className="tactical-card p-3 mb-5 border-primary/40 bg-primary/5">
+            <div className="text-[10px] uppercase tracking-wider font-bold text-primary mb-1">Draft restored</div>
+            <p className="text-xs text-muted-foreground">
+              We brought back your in-progress application. Re-attach your photo if needed and continue.
+            </p>
+          </div>
+        )}
+
         {referralCode && (
           <div className="tactical-card p-3 mb-5 flex items-center gap-3 border-primary/40">
             <div className="h-9 w-9 rounded-md bg-primary/15 flex items-center justify-center text-primary">
