@@ -423,15 +423,15 @@ const CourseManagement = () => {
       </div>
 
       <div className="px-4 py-4 space-y-2">
-        {(tab === 'Roster' || tab === 'Check-In') && !isSubscribed ? (
+        {tab === 'Check-In' && !isSubscribed ? (
           <div className="tactical-card border-primary/40 bg-primary/5 p-6 text-center space-y-3">
             <div className="mx-auto h-12 w-12 rounded-full bg-primary/15 flex items-center justify-center">
               <Lock className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <div className="text-sm font-bold">{tab} is a Pro feature</div>
+              <div className="text-sm font-bold">Check-In is a Pro feature</div>
               <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed max-w-xs mx-auto">
-                Manage your students, track attendance, and run check-ins with the Pro subscription.
+                Track attendance and run QR check-ins with the Pro subscription.
               </p>
             </div>
             {isPrelaunch ? (
