@@ -8,7 +8,7 @@
 
 import {
   Target, Crosshair, Shield, Layers, Scale, PersonStanding,
-  Building2, Plus, UserCheck, Siren, Mountain, Users, Sparkles,
+  Building2, Plus, UserCheck, Siren, Mountain, Users, Sparkles, MoreHorizontal,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -194,6 +194,14 @@ export const COURSE_CATALOG: CourseCategory[] = [
       'SERE (Survival, Evasion, Resistance, Escape) Fundamentals',
       'Drone Awareness & Counter-UAS',
       'Cyber & Physical Security Integration',
+    ],
+  },
+  {
+    key: 'Other',
+    label: 'Other',
+    icon: MoreHorizontal,
+    types: [
+      'Other (describe in course details)',
     ],
   },
 ];
