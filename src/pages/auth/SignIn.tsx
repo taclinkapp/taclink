@@ -170,8 +170,9 @@ const SignIn = () => {
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to landing page
           </button>
-        </div>
       </div>
+      </div>
+    </div>
     </div>
   );
 };
