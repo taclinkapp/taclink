@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CourseCard } from "@/components/CourseCard";
 import { dbToViewCourse, type DbCourse } from "@/lib/courses";
 import { useAreaCourseAnalytics } from "@/hooks/useAreaCourseAnalytics";
-import { MapPin, Clock, DollarSign, Users } from "lucide-react";
+import { MapPin, Clock, DollarSign, Users, ArrowLeft } from "lucide-react";
 
 const TrainingPlan = () => {
   const nav = useNavigate();
@@ -53,7 +53,14 @@ const TrainingPlan = () => {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      <div className="max-w-md mx-auto px-6 pt-12">
+      <div className="max-w-md mx-auto px-6 pt-6">
+        <button
+          onClick={() => nav("/welcome/quiz")}
+          aria-label="Back"
+          className="inline-flex items-center justify-center h-11 w-11 -ml-2 mb-2 rounded-full text-foreground hover:bg-foreground/10 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <span className="inline-block text-[0.625rem] font-bold uppercase tracking-[0.25em] text-primary">
           Training Plan
         </span>
