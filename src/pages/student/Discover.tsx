@@ -18,6 +18,9 @@ import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { OnboardingChecklistCard } from '@/components/onboarding/OnboardingChecklist';
+import { FirstVisitTooltip } from '@/components/onboarding/FirstVisitTooltip';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
 const LEVEL_OPTIONS: { value: LevelFilter; label: string }[] = [
