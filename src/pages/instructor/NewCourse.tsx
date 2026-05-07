@@ -481,7 +481,7 @@ const NewCourse = () => {
     }
     if (step === 4) {
       if (!skillLevel) return 'Skill level is required — go back to Basics and pick a level';
-      if (!isPrelaunch && !skipPublishGuards && !feeAck) return 'Please acknowledge the non-refundable listing fee before publishing';
+      if (!isPrelaunch && !skipPublishGuards && !feeAck) return 'Please acknowledge the listing fee refund policy before publishing';
     }
     return null;
   };
@@ -686,7 +686,7 @@ const NewCourse = () => {
           refundable: false,
           note: redeemedCreditId
             ? 'Listing fee waived — punch-card free credit redeemed'
-            : '10% listing fee at publish (non-refundable)',
+            : '10% listing fee at publish — refunded on timely cancel (≥48h before start), forfeited on late cancel',
         });
       }
 
@@ -1291,7 +1291,7 @@ const NewCourse = () => {
                     </div>
                   </div>
                 )}
-                {/* Listing fee preview — non-refundable disclosure */}
+                {/* Listing fee preview — refund-on-timely-cancel disclosure */}
                 <div className={cn(
                   "tactical-card border-primary/40 bg-primary/10 p-4 space-y-3",
                   availableCredits > 0 && "opacity-50"
@@ -1324,7 +1324,7 @@ const NewCourse = () => {
                         forfeited</strong> and 1 strike is added to your account.
                       </li>
                       <li>
-                        Editing, unpublishing before any bookings, or no students booking does <strong className="text-foreground">not</strong> trigger a refund — the fee covers the cost of listing your course on the platform.
+                        Cancelling <strong className="text-foreground">48+ hours before start</strong> refunds the listing fee back to your original payment method — even if no students booked.
                       </li>
                     </ul>
                   </div>

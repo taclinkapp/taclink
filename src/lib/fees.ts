@@ -5,7 +5,7 @@
 // account 24h after the course ends. TacLink keeps the $25 platform fee.
 
 export const PLATFORM_FEE_CENTS = 2500; // $25 fixed
-export const INSTRUCTOR_LISTING_FEE_PCT = 0.10; // 10% of course price, charged at publish, non-refundable
+export const INSTRUCTOR_LISTING_FEE_PCT = 0.10; // 10% of course price, charged at publish; refunded on timely cancel (≥48h before start), forfeited on late cancel
 
 // Transfer fee charged by the payout processor (Helcim/etc.) on each
 // instructor payout. Flat percentage applied to the gross course price
