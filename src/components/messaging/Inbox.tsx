@@ -103,7 +103,7 @@ export const Inbox = ({ variant, basePath, TabBar }: Props) => {
                 className="tactical-card p-3 flex items-center gap-3 hover:border-primary/50 transition"
               >
                 <img
-                  src={otherPhoto ?? `https://i.pravatar.cc/100?u=${c.id}`}
+                  src={getAvatarSrc(otherPhoto, otherName)}
                   className="h-12 w-12 rounded-full object-cover border border-border shrink-0"
                   alt=""
                 />
