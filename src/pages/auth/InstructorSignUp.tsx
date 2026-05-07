@@ -46,6 +46,23 @@ const InstructorSignUp = () => {
   const [adjusterOpen, setAdjusterOpen] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  // Restore any saved draft so the user can resume after a refresh.
+  useEffect(() => {
+    const d = getInstructorDraft();
+    if (!d) return;
+    setFirst(d.firstName ?? '');
+    setLast(d.lastName ?? '');
+    setEmail(d.email ?? '');
+    setPassword(d.password ?? '');
+    setConfirm(d.password ?? '');
+    setState(d.state ?? '');
+    setBio(d.bio ?? '');
+    if (d.photo) {
+      setPhotoFile(d.photo);
+      setPhotoPreview(URL.createObjectURL(d.photo));
+    }
+  }, []);
+
   const onPickPhoto = (f: File | null | undefined) => {
     if (!f) return;
     if (!['image/jpeg','image/png','image/webp'].includes(f.type)) {
