@@ -79,6 +79,11 @@ const FAQS: { category: string; items: Faq[] }[] = [
         a: 'On the day of the course, open the course in **My Courses** and tap **Check-In**. Mark each student as Attended, No-Show, or Late. This unlocks reviews and triggers payout calculation.',
         tags: ['instructor', 'attendance'],
       },
+      {
+        q: 'What happens if I cancel a course?',
+        a: 'Open **My Courses → [course] → Cancel Course**. Cancelling **48+ hours before start** is timely: every enrolled student is fully refunded, your $25 listing deposit is released, and your **10% listing fee is refunded** to your original payment method — even if no students had booked. Cancelling **under 48 hours** before start refunds students but you forfeit the $25 deposit per booking, your **10% listing fee is NOT refunded**, and 1 strike is added to your account.',
+        tags: ['instructor', 'cancel', 'refund', 'listing fee'],
+      },
     ],
   },
   {
