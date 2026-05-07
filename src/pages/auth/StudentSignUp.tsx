@@ -24,7 +24,7 @@ const StudentSignUp = () => {
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [agree, setAgree] = useState(false);
@@ -90,7 +90,6 @@ const StudentSignUp = () => {
         emailRedirectTo: `${window.location.origin}/student`,
         data: {
           display_name: `${first} ${last}`.trim(),
-          phone,
           role: 'student',
           ...(referralCode ? { referral_code: referralCode } : {}),
           ...(influencerSlug ? { influencer_slug: influencerSlug } : {}),
@@ -168,10 +167,6 @@ const StudentSignUp = () => {
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
             <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
-          </div>
-          <div>
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Phone</Label>
-            <Input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-card border-border h-11 mt-1.5" placeholder="(555) 555-5555" />
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
