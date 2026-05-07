@@ -140,6 +140,9 @@ const App = () => (
             <Route path="/auth/student-signup" element={<StudentSignUp />} />
             <Route path="/auth/instructor-signup" element={<InstructorSignUp />} />
             <Route path="/auth/credential-verification" element={<CredentialVerification />} />
+            <Route path="/auth/instructor/plan" element={<InstructorPlanStep />} />
+            <Route path="/auth/instructor/credential" element={<InstructorCredentialStep />} />
+            <Route path="/auth/instructor/policy" element={<InstructorPolicyStep />} />
             <Route path="/auth/invite/:code" element={<InviteLanding />}/>
             <Route path="/i/:slug" element={<InfluencerLanding />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
