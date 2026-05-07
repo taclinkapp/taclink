@@ -14,7 +14,7 @@ import { validatePassword } from '@/lib/passwordRules';
 import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
-import { PhoneVerificationField } from '@/components/auth/PhoneVerificationField';
+
 
 const StudentSignUp = () => {
   const nav = useNavigate();
@@ -25,7 +25,6 @@ const StudentSignUp = () => {
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [phoneVerified, setPhoneVerified] = useState(false);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [agree, setAgree] = useState(false);
@@ -76,10 +75,6 @@ const StudentSignUp = () => {
     }
     if (!agree) {
       toast.error('You must agree to the terms');
-      return;
-    }
-    if (!phoneVerified) {
-      toast.error('Please verify your phone number');
       return;
     }
     const { data: existing } = await supabase.auth.getSession();
@@ -174,13 +169,10 @@ const StudentSignUp = () => {
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
             <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
           </div>
-          <PhoneVerificationField
-            phone={phone}
-            onPhoneChange={setPhone}
-            verified={phoneVerified}
-            onVerified={(p) => { if (p) { setPhone(p); setPhoneVerified(true); } else { setPhoneVerified(false); } }}
-            required
-          />
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Phone</Label>
+            <Input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-card border-border h-11 mt-1.5" placeholder="(555) 555-5555" />
+          </div>
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
             <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
@@ -202,12 +194,9 @@ const StudentSignUp = () => {
               <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Privacy Policy</a>.
             </label>
           </div>
-          <Button type="submit" disabled={loading || !phoneVerified} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold mt-4">
+          <Button type="submit" disabled={loading} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold mt-4">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Student Account'}
           </Button>
-          {!phoneVerified && (
-            <p className="text-[11px] text-muted-foreground text-center mt-2">Verify your phone number to continue.</p>
-          )}
         </form>
       </div>
     </div>
