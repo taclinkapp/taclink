@@ -577,7 +577,6 @@ const CourseManagement = () => {
               </div>
             )}
           </>
-        )}
       </div>
 
       {scannerOpen && (
