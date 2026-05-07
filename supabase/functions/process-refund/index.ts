@@ -161,8 +161,6 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  let body: { refund_id?: string } = {};
-  try { body = await req.json(); } catch { /* sweep mode */ }
 
   const retryCutoff = new Date(Date.now() - RETRY_AFTER_MIN * 60 * 1000).toISOString();
 
