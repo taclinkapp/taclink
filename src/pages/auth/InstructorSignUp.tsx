@@ -85,7 +85,6 @@ const InstructorSignUp = () => {
       });
     }
     if (!agree) return toast.error('You must agree to the terms');
-    if (!phoneVerified) return toast.error('Please verify your phone number');
     const bioHits = detectContactInfo(bio);
     if (bioHits.length) {
       logBypassAttempt({ userRole: 'instructor', fieldName: 'instructor_bio', originalContent: bio, detections: bioHits, actionTaken: 'blocked' });
