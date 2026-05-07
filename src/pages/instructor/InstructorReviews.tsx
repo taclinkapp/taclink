@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { getAvatarSrc } from '@/lib/avatar';
 
 type Review = {
   id: string;
@@ -206,8 +207,7 @@ const InstructorReviews = () => {
                 <li key={r.id} className="rounded-md border border-border bg-card overflow-hidden">
                   <div className="px-4 py-3 border-b border-border space-y-2">
                     <div className="flex items-center gap-2">
-                      {r.studentPhoto ? (
-                        <img src={r.studentPhoto} alt={r.studentName} className="h-8 w-8 rounded-full object-cover" />
+                      <img src={getAvatarSrc(r.studentPhoto, r.studentName)} alt={r.studentName} className="h-8 w-8 rounded-full object-cover" />
                       ) : (
                         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
                           {r.studentName.charAt(0).toUpperCase()}

@@ -7,6 +7,7 @@ import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { OperatorProfileMini } from '@/components/operator/OperatorProfileMini';
+import { getAvatarSrc } from '@/lib/avatar';
 
 type HistoryRow = {
   id: string;
@@ -68,7 +69,7 @@ const StudentProfile = () => {
   }, [profile, user]);
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Student';
-  const photo = profile?.photo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`;
+  const photo = getAvatarSrc(profile?.photo_url, displayName);
 
   return (
     <MobileShell>
