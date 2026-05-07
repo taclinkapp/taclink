@@ -218,7 +218,14 @@ const InstructorSubscription = () => {
           <div className="pt-2 space-y-3">
             <LegalAcceptanceCard onAcceptedChange={setLegalAccepted} />
             <Button
-              onClick={() => nav('/auth/credential-verification', { replace: true })}
+              onClick={async () => {
+                try {
+                  await supabase.rpc('instructor_choose_free_plan');
+                } catch (err) {
+                  console.error('instructor_choose_free_plan failed', err);
+                }
+                nav('/auth/credential-verification', { replace: true });
+              }}
               disabled={!legalAccepted}
               className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
             >
