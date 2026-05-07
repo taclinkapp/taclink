@@ -271,19 +271,17 @@ function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => v
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(msg.content);
-  const [blanks, setBlanks] = useState<Record<string, string>>({});
+  const blanksRef = useRef<Record<string, string>>({});
   const isUser = msg.role === "user";
 
   useEffect(() => {
     if (!editing) setDraft(msg.content);
   }, [msg.content, editing]);
 
-  const setBlank = (k: string, v: string) => setBlanks((p) => ({ ...p, [k]: v }));
-
   const filled = (text: string) =>
     text.replace(/\[([^\]\n]{1,60})\]/g, (_, raw) => {
       const k = String(raw).trim().toLowerCase();
-      const v = blanks[k];
+      const v = blanksRef.current[k];
       return v && v.trim() ? v : `[${raw}]`;
     });
 
@@ -300,20 +298,25 @@ function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => v
     toast.success("Draft updated");
   };
 
-  const renderWithBlanks = useBlankRenderer(msg.content, blanks, setBlank);
+  // Build the renderer once per message (stable across keystrokes).
+  const renderWithBlanks = React.useMemo(() => makeBlankRenderer(blanksRef), []);
 
-  const mdComponents = !isUser
-    ? {
-        p: ({ children }: any) => <p>{renderWithBlanks(children)}</p>,
-        li: ({ children }: any) => <li>{renderWithBlanks(children)}</li>,
-        strong: ({ children }: any) => <strong>{renderWithBlanks(children)}</strong>,
-        em: ({ children }: any) => <em>{renderWithBlanks(children)}</em>,
-        h1: ({ children }: any) => <h1>{renderWithBlanks(children)}</h1>,
-        h2: ({ children }: any) => <h2>{renderWithBlanks(children)}</h2>,
-        h3: ({ children }: any) => <h3>{renderWithBlanks(children)}</h3>,
-        td: ({ children }: any) => <td>{renderWithBlanks(children)}</td>,
-      }
-    : undefined;
+  const mdComponents = React.useMemo(
+    () =>
+      !isUser
+        ? {
+            p: ({ children }: any) => <p>{renderWithBlanks(children)}</p>,
+            li: ({ children }: any) => <li>{renderWithBlanks(children)}</li>,
+            strong: ({ children }: any) => <strong>{renderWithBlanks(children)}</strong>,
+            em: ({ children }: any) => <em>{renderWithBlanks(children)}</em>,
+            h1: ({ children }: any) => <h1>{renderWithBlanks(children)}</h1>,
+            h2: ({ children }: any) => <h2>{renderWithBlanks(children)}</h2>,
+            h3: ({ children }: any) => <h3>{renderWithBlanks(children)}</h3>,
+            td: ({ children }: any) => <td>{renderWithBlanks(children)}</td>,
+          }
+        : undefined,
+    [isUser, renderWithBlanks],
+  );
 
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
