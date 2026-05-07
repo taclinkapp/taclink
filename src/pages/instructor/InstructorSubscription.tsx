@@ -127,7 +127,6 @@ const InstructorSubscription = () => {
           <ul className="text-xs text-muted-foreground space-y-1.5 pl-1">
             <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> Publish unlimited courses</li>
             <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> Roster, attendance & check-in tools</li>
-            <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> 10% listing fee per course</li>
             <li className="flex gap-2 text-muted-foreground/60"><span className="h-3.5 w-3.5 shrink-0 mt-0.5">—</span> No AI course tools</li>
             <li className="flex gap-2 text-muted-foreground/60"><span className="h-3.5 w-3.5 shrink-0 mt-0.5">—</span> No fee insights or analytics</li>
           </ul>
