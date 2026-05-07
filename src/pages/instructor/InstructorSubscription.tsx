@@ -82,7 +82,7 @@ const InstructorSubscription = () => {
             <div className="text-xs">
               <div className="font-bold">Pro unlocks at launch</div>
               <p className="text-muted-foreground mt-0.5">
-                We're in pre-launch — the Free tier is fully active for instructors to browse the app until we launch. Pro subscriptions go live soon.
+                We're in pre-launch — the Free tier is fully active for instructors to browse the app until we launch.
               </p>
             </div>
           </div>
