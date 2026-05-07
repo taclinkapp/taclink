@@ -203,13 +203,10 @@ const InstructorSignUp = () => {
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
             <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
           </div>
-          <PhoneVerificationField
-            phone={phone}
-            onPhoneChange={setPhone}
-            verified={phoneVerified}
-            onVerified={(p) => { if (p) { setPhone(p); setPhoneVerified(true); } else { setPhoneVerified(false); } }}
-            required
-          />
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Phone</Label>
+            <Input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-card border-border h-11 mt-1.5" placeholder="(555) 555-5555" />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
