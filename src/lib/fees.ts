@@ -16,7 +16,7 @@ export const TRANSFER_FEE_PCT = 0.029; // 2.9% flat across all payout methods
 // Kept for backwards-compat references; no longer used as a split percentage.
 export const INSTRUCTOR_COMMISSION_PCT = 1.0;
 
-export const INSTRUCTOR_SUBSCRIPTION_CENTS = 499; // $4.99/mo (tracked only)
+export const INSTRUCTOR_SUBSCRIPTION_CENTS = 999; // $9.99/mo (tracked only)
 
 export const computeListingFeeCents = (priceCents: number, _capacity?: number): number => {
   const p = Math.max(0, Math.round(priceCents));
