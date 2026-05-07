@@ -4,8 +4,10 @@ import { PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Upload, Clock, ShieldCheck, Camera, ImageIcon, FileText, X } from 'lucide-react';
+import { Upload, Clock, ShieldCheck, Camera, ImageIcon, FileText, X, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const options = [
@@ -17,7 +19,10 @@ const options = [
 
 const CredentialVerification = () => {
   const nav = useNavigate();
+  const { user } = useAuth();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [credentialType, setCredentialType] = useState('nra');
   const [file, setFile] = useState<File | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -35,13 +40,38 @@ const CredentialVerification = () => {
     setFile(f);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
       toast({ title: 'Document required', description: 'Please attach a photo or PDF of your credential.', variant: 'destructive' });
       return;
     }
-    setSubmitted(true);
+    if (!user) {
+      toast({ title: 'Sign in required', description: 'Please sign in to upload your credential.', variant: 'destructive' });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+      const path = `${user.id}/${Date.now()}-${credentialType}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('credentials')
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { error: insErr } = await supabase.from('instructor_credentials').insert({
+        instructor_id: user.id,
+        credential_type: credentialType,
+        display_name: options.find((o) => o.id === credentialType)?.label ?? credentialType,
+        file_path: path,
+        file_mime: file.type,
+      });
+      if (insErr) throw insErr;
+      setSubmitted(true);
+    } catch (err: any) {
+      toast({ title: 'Upload failed', description: err?.message ?? 'Please try again.', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
