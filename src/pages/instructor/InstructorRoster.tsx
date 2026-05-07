@@ -440,6 +440,18 @@ const InstructorRoster = () => {
                           {r.status.replace('_', ' ')}
                         </span>
                       </div>
+                      {r.status === 'cancelled' ? (
+                        <div className="pl-12 text-[11px] text-muted-foreground leading-relaxed">
+                          <span className="inline-flex items-center gap-1 font-bold text-foreground">
+                            <DollarSign className="h-3 w-3 text-emerald-500" />
+                            Refunded to student
+                          </span>
+                          {' — '}
+                          per refund policy: timely cancel = student gets 100%, instructor keeps $0.
+                          Late cancel = instructor keeps 10% of the course price.
+                        </div>
+                      ) : (
+                        <>
                       {r.depositAmountCents > 0 && (
                         <div className="flex flex-wrap items-center gap-2 pl-12">
                           <span
@@ -491,16 +503,14 @@ const InstructorRoster = () => {
                             No-show
                           </button>
                         )}
-                        {r.status !== 'cancelled' && (
-                          <button
-                            disabled={busy}
-                            onClick={() => updateStatus(r.bookingId, 'cancelled')}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-border bg-muted text-muted-foreground text-[11px] font-bold uppercase tracking-wider hover:bg-muted/70 disabled:opacity-50"
-                          >
-                            <XCircle className="h-3 w-3" />
-                            Cancel
-                          </button>
-                        )}
+                        <button
+                          disabled={busy}
+                          onClick={() => updateStatus(r.bookingId, 'cancelled')}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-border bg-muted text-muted-foreground text-[11px] font-bold uppercase tracking-wider hover:bg-muted/70 disabled:opacity-50"
+                        >
+                          <XCircle className="h-3 w-3" />
+                          Cancel
+                        </button>
                         {r.status !== 'reserved' && (
                           <button
                             disabled={busy}
