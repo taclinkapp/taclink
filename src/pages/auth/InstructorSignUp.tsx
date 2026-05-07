@@ -21,6 +21,7 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
+import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
@@ -129,7 +130,14 @@ const InstructorSignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      <video
+        src={splashBg.url}
+        autoPlay loop muted playsInline aria-hidden
+        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
+      />
+      <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
+      <div className="relative z-10">
       <PageHeader title="Instructor Application" back backTo="/" />
       <div className="max-w-md mx-auto px-6 py-6">
         <div className="flex justify-center mb-6">
@@ -243,6 +251,7 @@ const InstructorSignUp = () => {
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply as Instructor'}
           </Button>
         </form>
+      </div>
       </div>
     </div>
   );
