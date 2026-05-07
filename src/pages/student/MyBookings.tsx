@@ -127,7 +127,7 @@ const MyBookings = () => {
 
   const refundSummary = (b: BookingItem) => {
     // Full refund if deposit already refunded (timely cancel or instructor-fault).
-    // Otherwise late-cancel: 90% of course price, $25 platform fee non-refundable.
+    // Otherwise late-cancel: 90% of course price, $25 platform fee non-refundable after the grace window.
     const isFull = b.deposit_status === 'refunded';
     const cents = isFull
       ? (b.online_total_cents ?? 0)

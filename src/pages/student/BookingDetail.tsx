@@ -340,7 +340,7 @@ const BookingDetail = () => {
               <div className="text-xs text-muted-foreground leading-relaxed">
                 {refundCents === b.online_total_cents
                   ? 'Full refund — $25 platform fee + course price returned to your card.'
-                  : '90% of course price refunded (late cancel — instructor keeps 10%, $25 fee non-refundable).'}
+                  : '90% of course price refunded (late cancel — instructor keeps 10%, $25 fee non-refundable after the grace window).'}
                 {' '}Posts back in <strong className="text-foreground">5–10 business days</strong> depending on your bank.
               </div>
             </div>
