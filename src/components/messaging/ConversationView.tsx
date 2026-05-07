@@ -213,6 +213,15 @@ export const ConversationView = ({ variant }: Props) => {
   const handleSend = async () => {
     const body = draft.trim();
     if (!body || !conversation || !user || sending) return;
+    if (cancelledLock) {
+      toast.error('Messaging closed', {
+        description:
+          cancelledLock === 'instructor'
+            ? 'This course was cancelled by the instructor. Messaging is no longer available.'
+            : 'You cancelled this booking. Messaging with this instructor is no longer available.',
+      });
+      return;
+    }
 
     if (draftBlocked) {
       toast.error('Message blocked', {
