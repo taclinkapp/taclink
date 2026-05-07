@@ -79,6 +79,10 @@ export const LegalAcceptanceCard = ({ onAcceptedChange }: { onAcceptedChange?: (
 
   const allAccepted = !!privacyAck && !!termsAck;
 
+  useEffect(() => {
+    onAcceptedChange?.(allAccepted);
+  }, [allAccepted, onAcceptedChange]);
+
   if (loading) {
     return (
       <div className="tactical-card p-4 flex items-center gap-2 text-xs text-muted-foreground">
