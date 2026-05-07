@@ -203,7 +203,13 @@ const NewCourse = () => {
   const [state, setState] = useState('');
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
-  const [feeAck, setFeeAck] = useState(false);
+  const [feeAck, setFeeAck] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('newcourse:feeAck') === '1';
+  });
+  useEffect(() => {
+    try { localStorage.setItem('newcourse:feeAck', feeAck ? '1' : '0'); } catch {}
+  }, [feeAck]);
   const [availableCredits, setAvailableCredits] = useState(0);
 
   // Waiver step state
