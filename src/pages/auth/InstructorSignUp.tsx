@@ -39,6 +39,8 @@ const InstructorSignUp = () => {
   const [loading, setLoading] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [rawPhoto, setRawPhoto] = useState<File | null>(null);
+  const [adjusterOpen, setAdjusterOpen] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const onPickPhoto = (f: File | null | undefined) => {
@@ -49,8 +51,13 @@ const InstructorSignUp = () => {
     if (f.size > 5 * 1024 * 1024) {
       toast.error('Photo must be 5MB or smaller'); return;
     }
-    setPhotoFile(f);
-    setPhotoPreview(URL.createObjectURL(f));
+    setRawPhoto(f);
+    setAdjusterOpen(true);
+  };
+
+  const onAdjusted = (file: File) => {
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   const uploadPhotoIfAny = async (userId: string) => {
