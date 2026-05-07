@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { useInstructorCourses } from '@/hooks/useCourses';
@@ -12,7 +12,12 @@ const tabs = ['Active', 'Draft', 'Past'] as const;
 
 const MyCourses = () => {
   const { user } = useAuth();
-  const [tab, setTab] = useState<typeof tabs[number]>('Active');
+  const [searchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') === 'past' ? 'Past' : 'Active') as typeof tabs[number];
+  const [tab, setTab] = useState<typeof tabs[number]>(initialTab);
+  useEffect(() => {
+    if (searchParams.get('tab') === 'past') setTab('Past');
+  }, [searchParams]);
   const { data: courses = [], isLoading } = useInstructorCourses(user?.id);
 
   const now = Date.now();
