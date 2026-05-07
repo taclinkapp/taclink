@@ -164,6 +164,8 @@ export type NewCourseInput = {
   gallery_urls?: string[];
   skill_level?: SkillLevel;
   in_person_waiver?: boolean;
+  primary_pillar?: string;
+  secondary_pillar?: string;
   status: "draft" | "published";
 };
 
