@@ -429,9 +429,9 @@ const CourseManagement = () => {
               <Lock className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <div className="text-sm font-bold">{tab} is a Pro feature</div>
+              <div className="text-sm font-bold">Check-In is a Pro feature</div>
               <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed max-w-xs mx-auto">
-                Manage your students, track attendance, and run check-ins with the Pro subscription.
+                Track attendance and run QR check-ins with the Pro subscription.
               </p>
             </div>
             {isPrelaunch ? (
