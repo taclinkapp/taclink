@@ -653,7 +653,7 @@ const NewCourse = () => {
         return;
       }
 
-      // Listing fee charge — flat 10% of course price, non-refundable.
+      // Listing fee charge — flat 10% of course price; refunded on timely cancel (≥48h before start), forfeited on late cancel.
       // Subscribers can redeem a punch-card credit to waive the fee on this course.
       const priceCents = Math.round(Number(price) * 100);
       const listingFeeCents = computeListingFeeCents(priceCents);
