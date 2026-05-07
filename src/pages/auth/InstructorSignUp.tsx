@@ -252,6 +252,7 @@ const InstructorSignUp = () => {
           </Button>
         </form>
       </div>
+      </div>
     </div>
   );
 };
