@@ -42,6 +42,7 @@ export const ConversationView = ({ variant }: Props) => {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [gateBlocked, setGateBlocked] = useState(false);
+  const [cancelledLock, setCancelledLock] = useState<null | 'student' | 'instructor' | 'generic'>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Resolve / create conversation
@@ -151,6 +152,56 @@ export const ConversationView = ({ variant }: Props) => {
     };
   }, [conversation?.id]);
 
+  // Cancellation lock: if every booking between this student/instructor (or
+  // for this conversation's course) is cancelled, freeze new messages. The
+  // side that cancelled loses the ability to send — but history stays visible.
+  useEffect(() => {
+    if (!conversation) { setCancelledLock(null); return; }
+    let aborted = false;
+    (async () => {
+      const { data: courses } = await supabase
+        .from('courses')
+        .select('id, status')
+        .eq('instructor_id', conversation.instructor_id);
+      const courseRows = (courses ?? []) as Array<{ id: string; status: string }>;
+      if (courseRows.length === 0) { if (!aborted) setCancelledLock(null); return; }
+
+      const scoped = conversation.course_id
+        ? courseRows.filter((c) => c.id === conversation.course_id)
+        : courseRows;
+      if (scoped.length === 0) { if (!aborted) setCancelledLock(null); return; }
+
+      // If a specific course tied to this conversation was cancelled, that's
+      // an instructor cancellation.
+      if (conversation.course_id) {
+        const c = scoped[0];
+        if (c?.status === 'cancelled') {
+          if (!aborted) setCancelledLock('instructor');
+          return;
+        }
+      }
+
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('status, course_id')
+        .eq('student_id', conversation.student_id)
+        .in('course_id', scoped.map((c) => c.id));
+
+      const rows = (bookings ?? []) as Array<{ status: string; course_id: string }>;
+      if (rows.length === 0) { if (!aborted) setCancelledLock(null); return; }
+      const allCancelled = rows.every((b) => b.status === 'cancelled');
+      if (!allCancelled) { if (!aborted) setCancelledLock(null); return; }
+
+      // If any of the related courses is itself cancelled → instructor side.
+      const courseStatusMap = new Map(scoped.map((c) => [c.id, c.status]));
+      const instructorCancelled = rows.some(
+        (b) => courseStatusMap.get(b.course_id) === 'cancelled',
+      );
+      if (!aborted) setCancelledLock(instructorCancelled ? 'instructor' : 'student');
+    })();
+    return () => { aborted = true; };
+  }, [conversation?.id, conversation?.course_id, conversation?.instructor_id, conversation?.student_id]);
+
   // Auto-scroll to newest
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -162,6 +213,15 @@ export const ConversationView = ({ variant }: Props) => {
   const handleSend = async () => {
     const body = draft.trim();
     if (!body || !conversation || !user || sending) return;
+    if (cancelledLock) {
+      toast.error('Messaging closed', {
+        description:
+          cancelledLock === 'instructor'
+            ? 'This course was cancelled by the instructor. Messaging is no longer available.'
+            : 'You cancelled this booking. Messaging with this instructor is no longer available.',
+      });
+      return;
+    }
 
     if (draftBlocked) {
       toast.error('Message blocked', {
@@ -291,7 +351,18 @@ export const ConversationView = ({ variant }: Props) => {
         </div>
 
         <div className="border-t border-border bg-surface px-3 pt-2 pb-3">
-          {draftBlocked && (
+          {cancelledLock && (
+            <div className="mb-2 rounded-md border border-destructive/40 bg-destructive/10 p-2.5 flex items-start gap-2">
+              <Lock className="h-3.5 w-3.5 text-destructive mt-0.5 flex-shrink-0" />
+              <p className="text-[11px] leading-snug text-foreground">
+                <span className="font-bold text-destructive">Messaging closed.</span>{' '}
+                {cancelledLock === 'instructor'
+                  ? 'This course was cancelled by the instructor, so messaging is no longer available. Past messages remain visible.'
+                  : 'This booking was cancelled by the student, so messaging is no longer available. Past messages remain visible.'}
+              </p>
+            </div>
+          )}
+          {draftBlocked && !cancelledLock && (
             <ContactInfoWarning value={draft} className="mb-2" />
           )}
           <div className="flex items-center gap-2">
@@ -304,22 +375,24 @@ export const ConversationView = ({ variant }: Props) => {
                   handleSend();
                 }
               }}
-              placeholder="Message…"
+              placeholder={cancelledLock ? "Messaging closed after cancellation" : "Message…"}
               className={cn(
                 "flex-1 bg-card border-border h-11 rounded-full px-4",
                 draftBlocked && "border-destructive focus-visible:ring-destructive",
               )}
-              disabled={!user || !conversation}
+              disabled={!user || !conversation || !!cancelledLock}
               aria-invalid={draftBlocked}
             />
             <Button
               onClick={handleSend}
-              disabled={!draft.trim() || sending || !conversation || draftBlocked}
+              disabled={!draft.trim() || sending || !conversation || draftBlocked || !!cancelledLock}
               className="h-11 w-11 rounded-full bg-primary text-primary-foreground p-0 amber-glow"
-              aria-label={draftBlocked ? "Message blocked — remove contact info" : "Send"}
+              aria-label={cancelledLock ? "Messaging closed" : draftBlocked ? "Message blocked — remove contact info" : "Send"}
             >
               {sending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : cancelledLock ? (
+                <Lock className="h-4 w-4" />
               ) : draftBlocked ? (
                 <ShieldAlert className="h-4 w-4" />
               ) : (
