@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ShieldCheck, Lock } from "lucide-react";
 import { toast } from "sonner";
+import splashBg from "@/assets/splash-bg.mp4.asset.json";
 
 const POLICY_VERSION = "v1.0";
 
