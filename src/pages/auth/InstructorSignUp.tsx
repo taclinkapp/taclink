@@ -247,7 +247,7 @@ const InstructorSignUp = () => {
               <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Privacy Policy</a>.
             </label>
           </div>
-          <Button type="submit" disabled={loading} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold mt-4">
+          <Button type="submit" disabled={loading || !agree} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold mt-4 disabled:opacity-50 disabled:cursor-not-allowed">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply as Instructor'}
           </Button>
         </form>
