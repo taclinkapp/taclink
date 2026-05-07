@@ -53,9 +53,13 @@ export const CancelCourseDialog = ({
       return;
     }
     const row = Array.isArray(data) ? data[0] : data;
+    const listingRefund = Number(row?.listing_fee_refunded_cents ?? 0);
+    const listingNote = listingRefund > 0
+      ? ` Listing fee of $${(listingRefund / 100).toFixed(2)} refunded.`
+      : '';
     toast.success(
       row?.was_timely
-        ? `Course cancelled. ${row?.bookings_refunded ?? 0} student(s) refunded — your deposit was released.`
+        ? `Course cancelled. ${row?.bookings_refunded ?? 0} student(s) refunded — your deposit was released.${listingNote}`
         : `Course cancelled. ${row?.bookings_refunded ?? 0} student(s) refunded — deposit forfeited.`,
     );
     onOpenChange(false);
