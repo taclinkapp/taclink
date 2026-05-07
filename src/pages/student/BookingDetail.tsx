@@ -364,13 +364,28 @@ const BookingDetail = () => {
           />
         )}
 
-        <div className="tactical-card border-primary/20 bg-primary/5 p-3 flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-          <div className="text-xs text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">Cancellation policy:</strong>{' '}
-            {REFUND_POLICY_BLURB}
+        {b.status === 'cancelled' || b.deposit_status === 'refunded' ? (
+          <div className="tactical-card border-emerald-500/30 bg-emerald-500/5 p-3 flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              <strong className="text-foreground">Refund on the way.</strong>{' '}
+              Your refund has been issued to the original card. Per our refund policy, the
+              platform fee portion typically posts back within{' '}
+              <strong className="text-foreground">1–3 business days</strong>, and the course
+              price portion within <strong className="text-foreground">5–10 business days</strong>,
+              depending on your bank. If the instructor cancelled, you'll receive a full
+              refund ($25 + course price) within 48 hours.
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="tactical-card border-primary/20 bg-primary/5 p-3 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              <strong className="text-foreground">Cancellation policy:</strong>{' '}
+              {REFUND_POLICY_BLURB}
+            </div>
+          </div>
+        )}
 
         {upcoming && (
           <Button
