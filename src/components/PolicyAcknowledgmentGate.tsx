@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ShieldCheck, Lock } from "lucide-react";
 import { toast } from "sonner";
+import splashBg from "@/assets/splash-bg.mp4.asset.json";
 
 const POLICY_VERSION = "v1.0";
 
@@ -76,8 +77,14 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
 
   if (status === "needs_ack") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-6 py-10">
-        <div className="max-w-md w-full bg-card border border-border rounded-2xl p-6 space-y-5">
+      <div className="relative min-h-screen bg-background flex items-center justify-center px-6 py-10 overflow-hidden">
+        <video
+          src={splashBg.url}
+          autoPlay loop muted playsInline aria-hidden
+          className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
+        />
+        <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
+        <div className="relative z-10 max-w-md w-full bg-card border border-border rounded-2xl p-6 space-y-5">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
               <ShieldCheck className="h-5 w-5 text-primary" />
