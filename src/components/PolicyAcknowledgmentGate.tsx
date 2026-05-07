@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ShieldCheck, Lock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { InstructorOnboardingProgress } from "@/components/InstructorOnboardingProgress";
 import splashBg from "@/assets/splash-bg.mp4.asset.json";
 
 const POLICY_VERSION = "v1.0";
@@ -85,6 +86,7 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
         />
         <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
         <div className="relative z-10 max-w-md w-full bg-card border border-border rounded-2xl p-6 space-y-5">
+          <InstructorOnboardingProgress current="policy" />
           <button
             type="button"
             onClick={async () => {

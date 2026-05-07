@@ -8,6 +8,7 @@ import { Upload, Clock, ShieldCheck, Camera, ImageIcon, FileText, X, Loader2 } f
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { InstructorOnboardingProgress } from '@/components/InstructorOnboardingProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const options = [
@@ -116,6 +117,7 @@ const CredentialVerification = () => {
       <div className="relative z-10">
       <PageHeader title="Verify Credentials" back backTo="/instructor/credentials" />
       <div className="max-w-md mx-auto px-6 py-6">
+        <InstructorOnboardingProgress current="credential" className="mb-6" />
         <div className="flex items-start gap-3 mb-6">
           <ShieldCheck className="h-6 w-6 text-primary shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground">
