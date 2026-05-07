@@ -21,7 +21,7 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
-import { setInstructorDraft } from '@/lib/instructorSignupDraft';
+import { setInstructorDraft, getInstructorDraft } from '@/lib/instructorSignupDraft';
 import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
