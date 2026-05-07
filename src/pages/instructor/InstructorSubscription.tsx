@@ -16,6 +16,7 @@ import { useActivePaymentProvider } from '@/hooks/useActivePaymentProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CountdownClock } from '@/components/CountdownClock';
 import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
+import { InstructorOnboardingProgress } from '@/components/InstructorOnboardingProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const PRICE_ID = 'instructor_pro_monthly';
@@ -82,6 +83,7 @@ const InstructorSubscription = () => {
       <div className="relative z-10">
       <PageHeader title="Subscription" back backTo="/instructor" />
       <div className="px-4 py-4 space-y-4">
+        {isOnboarding && <InstructorOnboardingProgress current="subscription" />}
         <p className="text-xs text-muted-foreground">
           Pro unlocks AI tools and instructor analytics.
         </p>
