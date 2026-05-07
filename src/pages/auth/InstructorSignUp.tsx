@@ -21,7 +21,6 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
-import { PhoneVerificationField } from '@/components/auth/PhoneVerificationField';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
