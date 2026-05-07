@@ -175,6 +175,8 @@ const MyBookings = () => {
           const dateLabel = startsAt
             ? new Date(startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
             : 'TBD';
+          const isCancelled = b.status === 'cancelled';
+          const refund = isCancelled ? refundSummary(b) : null;
           return (
             <Link key={b.id} to={`/student/booking/${b.id}`} className="block tactical-card p-4 hover:border-primary/40 transition">
               <div className="flex items-start gap-3">
@@ -191,7 +193,7 @@ const MyBookings = () => {
                     <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{dateLabel}</span>
                     {b.course?.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{b.course.city}</span>}
                   </div>
-                  {tab === 'upcoming' && (
+                  {tab === 'upcoming' && !isCancelled && (
                     <div className="mt-1.5">
                       <CancelGraceBadge
                         startsAt={startsAt}
@@ -200,8 +202,20 @@ const MyBookings = () => {
                       />
                     </div>
                   )}
+                  {isCancelled && refund && (
+                    <div className="mt-2 rounded-sm border border-destructive/30 bg-destructive/5 p-2">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive">
+                        <XCircle className="h-3 w-3" /> Cancelled
+                      </div>
+                      <div className="mt-1 flex items-center gap-1 text-xs font-bold text-success">
+                        <DollarSign className="h-3 w-3" />
+                        {refund.amount} refund · {refund.label}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{refund.eta}</div>
+                    </div>
+                  )}
                 </div>
-                {tab === 'upcoming' ? (
+                {isCancelled ? null : tab === 'upcoming' ? (
                   <div className="h-10 w-10 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center">
                     <QrCode className="h-5 w-5 text-primary" />
                   </div>
