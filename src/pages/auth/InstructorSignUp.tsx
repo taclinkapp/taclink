@@ -250,9 +250,12 @@ const InstructorSignUp = () => {
               <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Privacy Policy</a>.
             </label>
           </div>
-          <Button type="submit" disabled={loading} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold mt-4">
+          <Button type="submit" disabled={loading || !phoneVerified} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold mt-4">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply as Instructor'}
           </Button>
+          {!phoneVerified && (
+            <p className="text-[11px] text-muted-foreground text-center mt-2">Verify your phone number to continue.</p>
+          )}
         </form>
       </div>
     </div>
