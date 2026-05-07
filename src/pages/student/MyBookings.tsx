@@ -51,12 +51,12 @@ const MyBookings = () => {
         .from('bookings')
         .select(`
           id, status, booked_at, attended_at, cancellation_cutoff_hours,
+          deposit_status, online_total_cents, course_price_cents, platform_fee_cents, updated_at,
           course:courses (
             id, title, category, city, starts_at, ends_at, cover_image_url, instructor_id
           )
         `)
         .eq('student_id', user.id)
-        .neq('status', 'cancelled')
         .order('booked_at', { ascending: false });
       if (error) { toast.error(error.message); setLoading(false); return; }
 
