@@ -153,30 +153,29 @@ export const ConversationView = ({ variant }: Props) => {
   }, [conversation?.id]);
 
   // Cancellation lock: if every booking between this student/instructor (or
-  // for this conversation's course) is cancelled, freeze new messages. Either
-  // party that cancels loses the ability to send — but history stays visible.
+  // for this conversation's course) is cancelled, freeze new messages. The
+  // side that cancelled loses the ability to send — but history stays visible.
   useEffect(() => {
     if (!conversation) { setCancelledLock(null); return; }
     let aborted = false;
     (async () => {
-      // Find courses owned by the instructor.
       const { data: courses } = await supabase
         .from('courses')
         .select('id, status')
         .eq('instructor_id', conversation.instructor_id);
-      const allCourseIds = (courses ?? []).map((c: any) => c.id);
-      if (allCourseIds.length === 0) { if (!aborted) setCancelledLock(null); return; }
+      const courseRows = (courses ?? []) as Array<{ id: string; status: string }>;
+      if (courseRows.length === 0) { if (!aborted) setCancelledLock(null); return; }
 
-      const courseIds = conversation.course_id
-        ? allCourseIds.filter((cid) => cid === conversation.course_id)
-        : allCourseIds;
-      if (courseIds.length === 0) { if (!aborted) setCancelledLock(null); return; }
+      const scoped = conversation.course_id
+        ? courseRows.filter((c) => c.id === conversation.course_id)
+        : courseRows;
+      if (scoped.length === 0) { if (!aborted) setCancelledLock(null); return; }
 
-      // If conversation is tied to a single course and that course was cancelled
-      // by the instructor, lock as instructor-cancelled.
+      // If a specific course tied to this conversation was cancelled, that's
+      // an instructor cancellation.
       if (conversation.course_id) {
-        const c = (courses ?? []).find((x: any) => x.id === conversation.course_id);
-        if (c && (c as any).status === 'cancelled') {
+        const c = scoped[0];
+        if (c?.status === 'cancelled') {
           if (!aborted) setCancelledLock('instructor');
           return;
         }
@@ -184,21 +183,21 @@ export const ConversationView = ({ variant }: Props) => {
 
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('status, cancelled_by')
+        .select('status, course_id')
         .eq('student_id', conversation.student_id)
-        .in('course_id', courseIds);
+        .in('course_id', scoped.map((c) => c.id));
 
-      const rows = (bookings ?? []) as Array<{ status: string; cancelled_by: string | null }>;
+      const rows = (bookings ?? []) as Array<{ status: string; course_id: string }>;
       if (rows.length === 0) { if (!aborted) setCancelledLock(null); return; }
       const allCancelled = rows.every((b) => b.status === 'cancelled');
       if (!allCancelled) { if (!aborted) setCancelledLock(null); return; }
 
-      // Determine which side cancelled (most recent / any match wins for label).
-      const byStudent = rows.some((b) => b.cancelled_by === conversation.student_id);
-      const byInstructor = rows.some((b) => b.cancelled_by === conversation.instructor_id);
-      if (!aborted) {
-        setCancelledLock(byStudent ? 'student' : byInstructor ? 'instructor' : 'generic');
-      }
+      // If any of the related courses is itself cancelled → instructor side.
+      const courseStatusMap = new Map(scoped.map((c) => [c.id, c.status]));
+      const instructorCancelled = rows.some(
+        (b) => courseStatusMap.get(b.course_id) === 'cancelled',
+      );
+      if (!aborted) setCancelledLock(instructorCancelled ? 'instructor' : 'student');
     })();
     return () => { aborted = true; };
   }, [conversation?.id, conversation?.course_id, conversation?.instructor_id, conversation?.student_id]);
