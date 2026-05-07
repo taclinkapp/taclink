@@ -22,7 +22,7 @@ const diff = (target: Date): Parts => {
 const Cell = ({ value, label }: { value: number; label: string }) => (
   <div className="flex flex-col items-center">
     <div className="neu-inset px-3 py-2 min-w-[3.25rem] text-center">
-      <span className="font-stencil text-2xl font-bold text-primary tabular-nums">
+      <span className="font-stencil text-2xl font-bold text-white tabular-nums">
         {value.toString().padStart(2, '0')}
       </span>
     </div>

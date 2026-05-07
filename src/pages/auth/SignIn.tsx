@@ -106,7 +106,13 @@ const SignIn = () => {
       />
       <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
       <div className="relative z-10">
-      <PageHeader back backTo="/" />
+      <button
+        onClick={() => nav('/')}
+        aria-label="Back"
+        className="absolute top-4 left-4 z-20 inline-flex items-center justify-center h-11 w-11 rounded-full text-foreground hover:bg-foreground/10 transition-colors"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </button>
       <div className="max-w-md mx-auto px-6 pt-4">
         <div className="flex justify-center mb-8">
           <Logo showTagline widthPx={180} />
