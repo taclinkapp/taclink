@@ -18,7 +18,7 @@ import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { OnboardingChecklistCard } from '@/components/onboarding/OnboardingChecklist';
+import { OnboardingChecklistCard, OnboardingWelcomeModal } from '@/components/onboarding/OnboardingChecklist';
 import { FirstVisitTooltip } from '@/components/onboarding/FirstVisitTooltip';
 import { useOnboarding } from '@/hooks/useOnboarding';
 
