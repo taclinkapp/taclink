@@ -98,6 +98,7 @@ import AdminUptime from "./pages/admin/AdminUptime";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
+import { InstructorOnboardingGate } from "./components/InstructorOnboardingGate";
 import { MissionCompleteWatcher } from "./components/operator/MissionCompleteWatcher";
 
 const queryClient = new QueryClient();
