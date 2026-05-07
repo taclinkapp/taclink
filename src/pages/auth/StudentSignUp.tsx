@@ -14,7 +14,7 @@ import { validatePassword } from '@/lib/passwordRules';
 import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
-import { PhoneVerificationField } from '@/components/auth/PhoneVerificationField';
+
 
 const StudentSignUp = () => {
   const nav = useNavigate();
