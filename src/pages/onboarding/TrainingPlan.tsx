@@ -7,26 +7,49 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseCard } from "@/components/CourseCard";
 import { dbToViewCourse, type DbCourse } from "@/lib/courses";
+import { useAreaCourseAnalytics } from "@/hooks/useAreaCourseAnalytics";
+import { MapPin, Clock, DollarSign, Users } from "lucide-react";
 
 const TrainingPlan = () => {
   const nav = useNavigate();
   const answers = useMemo(() => loadQuizLocal(), []);
   const selected = new Set<PillarId>(answers.selected_pillars);
+  const radius = answers.travel_radius_miles && answers.travel_radius_miles > 0
+    ? answers.travel_radius_miles
+    : 50;
   const [previewCourses, setPreviewCourses] = useState<any[]>([]);
-  const [count, setCount] = useState<number | null>(null);
+
+  const analytics = useAreaCourseAnalytics({
+    pillars: answers.selected_pillars,
+    radiusMiles: radius,
+  });
 
   useEffect(() => {
     (async () => {
-      let q = supabase.from("courses").select("*", { count: "exact" }).eq("status", "published");
+      let q = supabase.from("courses").select("*").eq("status", "published");
       if (answers.selected_pillars.length) {
         q = q.in("primary_pillar", answers.selected_pillars as any);
       }
-      const { data, count: c } = await q.limit(3);
+      const { data } = await q.limit(3);
       const rows = (data as DbCourse[]) ?? [];
       setPreviewCourses(rows.map((r) => dbToViewCourse(r)));
-      setCount(c ?? rows.length);
     })();
   }, [answers.selected_pillars]);
+
+  const fmtMiles = (m: number | null) =>
+    m == null ? "—" : m < 1 ? `${(m * 5280).toFixed(0)} ft` : `${m.toFixed(1)} mi`;
+  const fmtPrice = (c: number | null) =>
+    c == null ? "—" : `$${Math.round(c / 100)}`;
+  const fmtSoonest = (s: string | null) => {
+    if (!s) return "—";
+    const days = Math.max(0, Math.round((new Date(s).getTime() - Date.now()) / 86_400_000));
+    if (days === 0) return "Today";
+    if (days === 1) return "Tomorrow";
+    if (days < 7) return `In ${days} days`;
+    if (days < 30) return `In ${Math.round(days / 7)} wk`;
+    return `In ${Math.round(days / 30)} mo`;
+  };
+
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -64,14 +87,78 @@ const TrainingPlan = () => {
           })}
         </div>
 
-        {/* Stat */}
+        {/* Live area analytics */}
         <div className="mt-6 neu p-4 rounded-xl">
-          <div className="text-[0.625rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Courses matching your plan
+          <div className="flex items-center justify-between">
+            <div className="text-[0.625rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Courses matching your plan
+            </div>
+            <div className="text-[0.6rem] font-semibold text-muted-foreground flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              {analytics.located ? `${radius} mi radius` : "Nationwide"}
+            </div>
           </div>
           <div className="mt-1 text-3xl font-black text-primary">
-            {count ?? "—"}<span className="text-base text-muted-foreground font-bold ml-2">near you</span>
+            {analytics.loading ? "—" : analytics.matchingPillars}
+            <span className="text-base text-muted-foreground font-bold ml-2">
+              {analytics.located ? "near you" : "available"}
+            </span>
           </div>
+          {!analytics.loading && analytics.totalInArea > analytics.matchingPillars && (
+            <div className="mt-1 text-xs text-muted-foreground">
+              of {analytics.totalInArea} total in your area
+            </div>
+          )}
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-lg bg-muted/40 p-2.5">
+              <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+                <MapPin className="h-3 w-3" /> Nearest
+              </div>
+              <div className="mt-0.5 text-sm font-bold text-foreground">
+                {fmtMiles(analytics.nearestMiles)}
+              </div>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-2.5">
+              <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+                <Clock className="h-3 w-3" /> Next class
+              </div>
+              <div className="mt-0.5 text-sm font-bold text-foreground">
+                {fmtSoonest(analytics.soonestStartAt)}
+              </div>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-2.5">
+              <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+                <DollarSign className="h-3 w-3" /> Avg price
+              </div>
+              <div className="mt-0.5 text-sm font-bold text-foreground">
+                {fmtPrice(analytics.avgPriceCents)}
+              </div>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-2.5">
+              <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+                <Users className="h-3 w-3" /> Instructors
+              </div>
+              <div className="mt-0.5 text-sm font-bold text-foreground">
+                {analytics.instructorsInArea}
+              </div>
+            </div>
+          </div>
+
+          {analytics.topCity && (
+            <div className="mt-3 text-xs text-muted-foreground">
+              Most active hub:{" "}
+              <span className="font-semibold text-foreground">
+                {analytics.topCity.city}
+              </span>{" "}
+              ({analytics.topCity.count} courses)
+            </div>
+          )}
+          {analytics.locationError && (
+            <div className="mt-2 text-[0.65rem] text-muted-foreground italic">
+              {analytics.locationError}
+            </div>
+          )}
         </div>
 
         {/* Preview courses */}
