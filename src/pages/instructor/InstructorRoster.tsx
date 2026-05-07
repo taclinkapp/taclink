@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { CourseWaiverDialog } from '@/components/instructor/CourseWaiverDialog';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 import { AttendanceClaimButton } from '@/components/instructor/AttendanceClaimButton';
+import { TaclinkScoreBadge } from '@/components/operator/TaclinkScoreBadge';
 
 type BookingStatus = 'reserved' | 'attended' | 'cancelled' | 'no_show';
 
