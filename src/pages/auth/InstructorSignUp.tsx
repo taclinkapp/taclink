@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,7 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
-import { setInstructorDraft } from '@/lib/instructorSignupDraft';
+import { setInstructorDraft, getInstructorDraft, updateInstructorDraft, hasInstructorDraft } from '@/lib/instructorSignupDraft';
 import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
@@ -44,7 +44,51 @@ const InstructorSignUp = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [rawPhoto, setRawPhoto] = useState<File | null>(null);
   const [adjusterOpen, setAdjusterOpen] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Restore any saved draft so the user can resume after a refresh.
+  useEffect(() => {
+    const d = getInstructorDraft();
+    if (!d) return;
+    setFirst(d.firstName ?? '');
+    setLast(d.lastName ?? '');
+    setEmail(d.email ?? '');
+    setPassword(d.password ?? '');
+    setConfirm(d.password ?? '');
+    setState(d.state ?? '');
+    setBio(d.bio ?? '');
+    if (d.photo) {
+      setPhotoFile(d.photo);
+      setPhotoPreview(URL.createObjectURL(d.photo));
+    }
+    if (d.firstName || d.lastName || d.email || d.bio) {
+      setDraftRestored(true);
+    }
+  }, []);
+
+  // Auto-save text fields to the draft as the user types so progress
+  // survives a refresh even before they hit "Apply as Instructor".
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const patch = {
+        firstName: first,
+        lastName: last,
+        email,
+        password,
+        state,
+        bio,
+        referralCode: referralCode || undefined,
+        influencerSlug: influencerSlug || undefined,
+      };
+      if (hasInstructorDraft()) {
+        updateInstructorDraft(patch);
+      } else if (first || last || email || bio) {
+        setInstructorDraft({ ...patch, photo: photoFile ?? undefined });
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [first, last, email, password, state, bio, referralCode, influencerSlug, photoFile]);
 
   const onPickPhoto = (f: File | null | undefined) => {
     if (!f) return;
@@ -138,6 +182,15 @@ const InstructorSignUp = () => {
         </div>
         <p className="text-muted-foreground text-sm mb-4">Apply to teach on TacLink™. We'll verify your credentials within 1 hour.</p>
         <InstructorDraftProgress current="account" completed={{}} className="mb-5" />
+
+        {draftRestored && (
+          <div className="tactical-card p-3 mb-5 border-primary/40 bg-primary/5">
+            <div className="text-[10px] uppercase tracking-wider font-bold text-primary mb-1">Draft restored</div>
+            <p className="text-xs text-muted-foreground">
+              We brought back your in-progress application. Re-attach your photo if needed and continue.
+            </p>
+          </div>
+        )}
 
         {referralCode && (
           <div className="tactical-card p-3 mb-5 flex items-center gap-3 border-primary/40">
