@@ -53,9 +53,13 @@ export const CancelCourseDialog = ({
       return;
     }
     const row = Array.isArray(data) ? data[0] : data;
+    const listingRefund = Number(row?.listing_fee_refunded_cents ?? 0);
+    const listingNote = listingRefund > 0
+      ? ` Listing fee of $${(listingRefund / 100).toFixed(2)} refunded.`
+      : '';
     toast.success(
       row?.was_timely
-        ? `Course cancelled. ${row?.bookings_refunded ?? 0} student(s) refunded — your deposit was released.`
+        ? `Course cancelled. ${row?.bookings_refunded ?? 0} student(s) refunded — your deposit was released.${listingNote}`
         : `Course cancelled. ${row?.bookings_refunded ?? 0} student(s) refunded — deposit forfeited.`,
     );
     onOpenChange(false);
@@ -92,6 +96,7 @@ export const CancelCourseDialog = ({
               <ul className="space-y-1 ml-3 list-disc">
                 <li>Every enrolled student is refunded in full (platform fee + 10% deposit) to their card.</li>
                 <li><strong>Your $25 listing deposit is released back to you</strong> within 48 hours.</li>
+                <li><strong>Your 10% listing fee is refunded</strong> back to your original payment method.</li>
                 <li>No strike on your account.</li>
               </ul>
             </>
@@ -103,6 +108,7 @@ export const CancelCourseDialog = ({
               <ul className="space-y-1 ml-3 list-disc">
                 <li>Every enrolled student is refunded in full (platform fee + 10% deposit) to their card.</li>
                 <li><strong>You forfeit your $25 listing deposit on every booking</strong> — it is not returned.</li>
+                <li><strong>Your 10% listing fee is NOT refunded.</strong></li>
                 <li>1 strike is added to your account. Repeated late cancellations may suspend your ability to publish.</li>
               </ul>
             </>

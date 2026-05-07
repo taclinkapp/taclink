@@ -294,7 +294,7 @@ const CourseManagement = () => {
                   </div>
                   <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
                     {Math.round(INSTRUCTOR_LISTING_FEE_PCT * 100)}% of course price was charged when this course was published.{' '}
-                    <strong className="text-destructive">Non-refundable</strong> — not returned for cancellations, edits, unpublish, or zero bookings.
+                    <strong className="text-success">Refundable</strong> only on timely cancellations (≥48h before start). Late cancellations forfeit it.
                   </p>
                   <button
                     type="button"
@@ -343,7 +343,7 @@ const CourseManagement = () => {
                       </div>
                       <div className="flex justify-between gap-2">
                         <span className="text-muted-foreground">Refundable</span>
-                        <span className="text-destructive font-semibold uppercase tracking-wider text-[10px]">No</span>
+                        <span className="text-success font-semibold uppercase tracking-wider text-[10px]">If cancelled ≥48h before start</span>
                       </div>
                       {listingCharge?.note && (
                         <div className="text-[10px] text-muted-foreground italic pt-1 border-t border-primary/20">
