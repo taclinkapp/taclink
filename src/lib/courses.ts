@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Course } from "@/lib/mockData";
+import { getAvatarSrc } from "@/lib/avatar";
 
 export type DbCourse = {
   id: string;
@@ -67,7 +68,7 @@ export const dbToViewCourse = (
     category: cat,
     instructorId: row.instructor_id,
     instructorName: instructor?.display_name ?? "Instructor",
-    instructorPhoto: instructor?.photo_url ?? "https://i.pravatar.cc/150?img=12",
+    instructorPhoto: getAvatarSrc(instructor?.photo_url, instructor?.display_name),
     instructorVerified: true,
     instructorRating: 0,
     heroImage: row.cover_image_url || (row.gallery_urls && row.gallery_urls[0]) || PLACEHOLDER_IMG,

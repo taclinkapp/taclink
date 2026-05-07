@@ -79,7 +79,7 @@ export const ConversationView = ({ variant }: Props) => {
           const conv = await ensureConversation({
             studentId: user.id,
             studentName: user.name,
-            studentPhoto: `https://i.pravatar.cc/100?u=${user.id}`,
+            studentPhoto: undefined,
             instructorId: id,
             instructorName: instructor?.display_name ?? undefined,
             instructorPhoto: instructor?.photo_url ?? undefined,
