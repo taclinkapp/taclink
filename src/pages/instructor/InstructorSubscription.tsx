@@ -15,6 +15,7 @@ import { getPaymentEnvironment } from '@/lib/paymentEnv';
 import { useActivePaymentProvider } from '@/hooks/useActivePaymentProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CountdownClock } from '@/components/CountdownClock';
+import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
 
 const PRICE_ID = 'instructor_pro_monthly';
 
