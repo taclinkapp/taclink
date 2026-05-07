@@ -16,6 +16,7 @@ import { useActivePaymentProvider } from '@/hooks/useActivePaymentProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CountdownClock } from '@/components/CountdownClock';
 import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
+import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const PRICE_ID = 'instructor_pro_monthly';
 
@@ -72,6 +73,13 @@ const InstructorSubscription = () => {
 
   return (
     <MobileShell withTabBar={false}>
+      <video
+        src={splashBg.url}
+        autoPlay loop muted playsInline aria-hidden
+        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none z-0"
+      />
+      <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none z-0" />
+      <div className="relative z-10">
       <PageHeader title="Subscription" back backTo="/instructor" />
       <div className="px-4 py-4 space-y-4">
         <p className="text-xs text-muted-foreground">
@@ -240,6 +248,7 @@ const InstructorSubscription = () => {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </MobileShell>
   );
 };
