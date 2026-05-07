@@ -149,6 +149,7 @@ const BookingDetail = () => {
 
   const [cancelling, setCancelling] = useState(false);
   const [reportingNoShow, setReportingNoShow] = useState(false);
+  const [processingRefund, setProcessingRefund] = useState(false);
 
   const triggerRefund = async (refundId: string | undefined) => {
     if (!refundId) return;
@@ -159,6 +160,29 @@ const BookingDetail = () => {
     } catch (e) {
       console.error('process-refund invoke failed', e);
     }
+  };
+
+  // Poll the booking row for up to ~15s after a cancel until the backend
+  // marks the deposit refunded, then flip the UI to the final refund banner.
+  const pollUntilRefunded = async () => {
+    if (!id) return;
+    setProcessingRefund(true);
+    const start = Date.now();
+    while (Date.now() - start < 15_000) {
+      await new Promise(r => setTimeout(r, 2000));
+      const { data: row } = await supabase
+        .from('bookings')
+        .select('deposit_status, status')
+        .eq('id', id)
+        .maybeSingle();
+      if (row?.deposit_status === 'refunded') {
+        await reload();
+        setProcessingRefund(false);
+        return;
+      }
+    }
+    await reload();
+    setProcessingRefund(false);
   };
 
   const cancelBooking = async () => {
