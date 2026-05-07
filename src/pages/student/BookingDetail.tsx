@@ -301,7 +301,7 @@ const BookingDetail = () => {
           </div>
         )}
 
-        {!isCancelled && instructor && (
+        {instructor && (
           <div className="tactical-card p-4 flex items-center gap-3">
             {instructor.photo_url ? (
               <img src={instructor.photo_url} alt={instructor.display_name ?? 'Instructor'} className="h-12 w-12 rounded-full object-cover border-2 border-primary" />
@@ -309,16 +309,20 @@ const BookingDetail = () => {
               <div className="h-12 w-12 rounded-full bg-muted border-2 border-primary" />
             )}
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Your instructor</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
+                {isCancelled ? 'Instructor' : 'Your instructor'}
+              </div>
               <div className="font-bold truncate">{instructor.display_name ?? 'Instructor'}</div>
             </div>
-            <Button
-              size="sm"
-              onClick={() => nav(`/student/messages/${instructor.id}`)}
-              className="h-9 bg-primary text-primary-foreground font-bold"
-            >
-              <MessageSquare className="h-4 w-4 mr-1.5" /> Message
-            </Button>
+            {!isCancelled && (
+              <Button
+                size="sm"
+                onClick={() => nav(`/student/messages/${instructor.id}`)}
+                className="h-9 bg-primary text-primary-foreground font-bold"
+              >
+                <MessageSquare className="h-4 w-4 mr-1.5" /> Message
+              </Button>
+            )}
           </div>
         )}
 
