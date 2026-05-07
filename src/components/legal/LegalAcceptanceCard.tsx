@@ -12,7 +12,7 @@ const TERMS_VERSION = 'terms-v1.0';
 
 type AckRow = { policy_version: string; created_at: string };
 
-export const LegalAcceptanceCard = () => {
+export const LegalAcceptanceCard = ({ onAcceptedChange }: { onAcceptedChange?: (accepted: boolean) => void } = {}) => {
   const { user } = useAuth();
   const [acks, setAcks] = useState<AckRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +78,10 @@ export const LegalAcceptanceCard = () => {
   };
 
   const allAccepted = !!privacyAck && !!termsAck;
+
+  useEffect(() => {
+    onAcceptedChange?.(allAccepted);
+  }, [allAccepted, onAcceptedChange]);
 
   if (loading) {
     return (
