@@ -15,6 +15,7 @@ import { AutoRefundDisputes } from '@/components/instructor/AutoRefundDisputes';
 import { LapsedSubscriptionBanner } from '@/components/instructor/LapsedSubscriptionBanner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
+import { getAvatarSrc } from '@/lib/avatar';
 
 type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
 
@@ -117,7 +118,7 @@ const InstructorDashboard = () => {
     .slice(0, 4);
 
   const displayName = profile?.display_name ?? 'Instructor';
-  const avatarSrc = profile?.photo_url ?? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`;
+  const avatarSrc = getAvatarSrc(profile?.photo_url, displayName);
 
   return (
     <MobileShell>

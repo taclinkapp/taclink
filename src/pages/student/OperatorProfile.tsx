@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { FirstVisitTooltip } from "@/components/onboarding/FirstVisitTooltip";
+import { getAvatarSrc } from "@/lib/avatar";
 
 const OperatorProfile = () => {
   const { user, profile } = useAuth();
@@ -57,13 +58,11 @@ const OperatorProfile = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
           <div className="relative">
             <div className="mx-auto h-16 w-16 rounded-full bg-surface border border-border overflow-hidden mb-3">
-              {profile?.photo_url ? (
-                <img src={profile.photo_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full grid place-items-center font-stencil text-2xl text-muted-foreground">
-                  {(profile?.display_name ?? "O").charAt(0).toUpperCase()}
-                </div>
-              )}
+              <img
+                src={getAvatarSrc(profile?.photo_url, profile?.display_name)}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="font-stencil text-lg font-bold uppercase tracking-wider">
               {profile?.display_name ?? "Operator"}
