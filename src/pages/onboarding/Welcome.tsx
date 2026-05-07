@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import splashBg from "@/assets/splash-bg.mp4.asset.json";
 
@@ -14,6 +15,13 @@ const Welcome = () => {
       <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
 
       <div className="relative z-10 flex-1 flex flex-col px-6 pt-16 pb-10 max-w-md w-full mx-auto">
+        <button
+          onClick={() => nav(-1)}
+          aria-label="Back"
+          className="inline-flex items-center justify-center h-11 w-11 -ml-2 rounded-full text-foreground hover:bg-foreground/10 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <div className="flex-1 flex flex-col justify-end">
           <h1 className="text-4xl font-black leading-tight tracking-tight text-foreground">
             Find Your Next Mission
