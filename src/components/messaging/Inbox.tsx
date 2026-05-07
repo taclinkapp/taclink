@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { type ConversationRow } from "@/lib/messaging";
 import { useIdentity } from "@/hooks/useIdentity";
 import { MessageSquare, ChevronRight } from "lucide-react";
+import { getAvatarSrc } from "@/lib/avatar";
 
 const formatWhen = (iso: string) => {
   const d = new Date(iso);
