@@ -70,6 +70,7 @@ const CredentialVerification = () => {
             Continue to Dashboard
           </Button>
         </div>
+        </div>
       </div>
     );
   }
