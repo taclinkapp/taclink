@@ -11,6 +11,7 @@ import { lovable } from '@/integrations/lovable/index';
 import { useAuth, homeForRole } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const SignIn = () => {
   const nav = useNavigate();
@@ -97,7 +98,14 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      <video
+        src={splashBg.url}
+        autoPlay loop muted playsInline aria-hidden
+        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
+      />
+      <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
+      <div className="relative z-10">
       <PageHeader back backTo="/" />
       <div className="max-w-md mx-auto px-6 pt-4">
         <div className="flex justify-center mb-8">
@@ -162,8 +170,9 @@ const SignIn = () => {
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to landing page
           </button>
-        </div>
       </div>
+      </div>
+    </div>
     </div>
   );
 };
