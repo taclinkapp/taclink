@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
   const cronOk = !!expectedSecret && providedSecret === expectedSecret;
 
   let adminOk = false;
+  let authedUserId: string | null = null;
   const authHeader = req.headers.get("Authorization");
   if (!cronOk && authHeader?.startsWith("Bearer ")) {
     try {
@@ -109,7 +110,8 @@ Deno.serve(async (req) => {
       );
       const token = authHeader.replace("Bearer ", "");
       const { data: claimsData } = await authClient.auth.getClaims(token);
-      const userId = claimsData?.claims?.sub;
+      const userId = claimsData?.claims?.sub ?? null;
+      authedUserId = userId;
       if (userId) {
         const adminClient = createClient(
           Deno.env.get("SUPABASE_URL")!,
@@ -128,7 +130,26 @@ Deno.serve(async (req) => {
     }
   }
 
-  if (!cronOk && !adminOk) {
+  // Parse body early so we can do owner-scoped auth for a single refund_id.
+  let body: { refund_id?: string } = {};
+  try { body = await req.json(); } catch { /* sweep mode */ }
+
+  let ownerOk = false;
+  if (!cronOk && !adminOk && authedUserId && body.refund_id) {
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: refRow } = await adminClient
+      .from("refunds")
+      .select("booking_id, bookings:booking_id ( student_id )")
+      .eq("id", body.refund_id)
+      .maybeSingle();
+    const studentId = (refRow as any)?.bookings?.student_id ?? null;
+    ownerOk = !!studentId && studentId === authedUserId;
+  }
+
+  if (!cronOk && !adminOk && !ownerOk) {
     return json({ error: "Forbidden" }, 403);
   }
 
