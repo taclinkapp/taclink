@@ -51,7 +51,13 @@ const InstructorPlanStep = () => {
             Pro unlocks AI tools and instructor analytics — available from Settings once your account is active.
           </p>
 
-          <div className="tactical-card p-5 space-y-3 border-primary/60 bg-primary/5">
+          <button
+            type="button"
+            onClick={() => setSelected('free')}
+            className={`tactical-card w-full text-left p-5 space-y-3 transition-all ${
+              selected === 'free' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center">
@@ -62,21 +68,40 @@ const InstructorPlanStep = () => {
                   <div className="text-xs text-muted-foreground">$0 / month</div>
                 </div>
               </div>
-              
+              {selected === 'free' && (
+                <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground grid place-items-center">
+                  <CheckCircle2 className="h-4 w-4" />
+                </div>
+              )}
             </div>
             <ul className="text-xs text-muted-foreground space-y-1.5 pl-1">
               <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> Publish unlimited courses</li>
               <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> Roster, attendance & check-in tools</li>
               <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> 10% listing fee per course</li>
             </ul>
-          </div>
+          </button>
 
-          <div className={`tactical-card p-5 space-y-3 border-primary/30 relative ${isPrelaunch ? 'opacity-70' : ''}`}>
-            {isPrelaunch && (
+          <button
+            type="button"
+            onClick={() => !isPrelaunch && setSelected('pro')}
+            disabled={isPrelaunch}
+            className={`tactical-card w-full text-left p-5 space-y-3 relative transition-all ${
+              isPrelaunch
+                ? 'border-primary/30 opacity-70 cursor-not-allowed'
+                : selected === 'pro'
+                ? 'border-primary bg-primary/10'
+                : 'border-primary/30 hover:border-primary/60'
+            }`}
+          >
+            {isPrelaunch ? (
               <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-sm flex items-center gap-1">
                 <Lock className="h-3 w-3" /> Locked
               </span>
-            )}
+            ) : selected === 'pro' ? (
+              <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-primary text-primary-foreground grid place-items-center">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
+            ) : null}
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center">
                 <Crown className="h-5 w-5 text-primary" />
@@ -100,10 +125,10 @@ const InstructorPlanStep = () => {
                 </p>
               </div>
             )}
-          </div>
+          </button>
 
           <Button onClick={choose} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
-            Continue with Free
+            Continue with {selected === 'pro' ? 'Pro' : 'Free'}
           </Button>
         </div>
       </div>
