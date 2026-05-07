@@ -25,7 +25,6 @@ const StudentSignUp = () => {
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [phoneVerified, setPhoneVerified] = useState(false);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [agree, setAgree] = useState(false);
