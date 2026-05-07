@@ -665,6 +665,8 @@ export type Database = {
           moderation_severity: string | null
           moderation_status: string
           price_cents: number
+          primary_pillar: Database["public"]["Enums"]["skill_pillar"] | null
+          secondary_pillar: Database["public"]["Enums"]["skill_pillar"] | null
           skill_level: string
           starts_at: string | null
           state: string | null
@@ -693,6 +695,8 @@ export type Database = {
           moderation_severity?: string | null
           moderation_status?: string
           price_cents?: number
+          primary_pillar?: Database["public"]["Enums"]["skill_pillar"] | null
+          secondary_pillar?: Database["public"]["Enums"]["skill_pillar"] | null
           skill_level?: string
           starts_at?: string | null
           state?: string | null
@@ -721,6 +725,8 @@ export type Database = {
           moderation_severity?: string | null
           moderation_status?: string
           price_cents?: number
+          primary_pillar?: Database["public"]["Enums"]["skill_pillar"] | null
+          secondary_pillar?: Database["public"]["Enums"]["skill_pillar"] | null
           skill_level?: string
           starts_at?: string | null
           state?: string | null
@@ -2522,6 +2528,57 @@ export type Database = {
         }
         Relationships: []
       }
+      student_xp_awards: {
+        Row: {
+          base_xp: number
+          bonus_first_mission: number
+          bonus_five_star: number
+          bonus_full_day: number
+          bonus_multi_day: number
+          booking_id: string
+          course_id: string
+          created_at: string
+          id: string
+          is_secondary: boolean
+          pillar: Database["public"]["Enums"]["skill_pillar"]
+          student_id: string
+          updated_at: string
+          xp: number
+        }
+        Insert: {
+          base_xp?: number
+          bonus_first_mission?: number
+          bonus_five_star?: number
+          bonus_full_day?: number
+          bonus_multi_day?: number
+          booking_id: string
+          course_id: string
+          created_at?: string
+          id?: string
+          is_secondary?: boolean
+          pillar: Database["public"]["Enums"]["skill_pillar"]
+          student_id: string
+          updated_at?: string
+          xp: number
+        }
+        Update: {
+          base_xp?: number
+          bonus_first_mission?: number
+          bonus_five_star?: number
+          bonus_full_day?: number
+          bonus_multi_day?: number
+          booking_id?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          is_secondary?: boolean
+          pillar?: Database["public"]["Enums"]["skill_pillar"]
+          student_id?: string
+          updated_at?: string
+          xp?: number
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -3108,6 +3165,15 @@ export type Database = {
         }
         Relationships: []
       }
+      student_pillar_xp_v: {
+        Row: {
+          awards_count: number | null
+          pillar: Database["public"]["Enums"]["skill_pillar"] | null
+          student_id: string | null
+          total_xp: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       audit_booking_action: {
@@ -3118,6 +3184,10 @@ export type Database = {
           _booking_id: string
           _reason?: string
         }
+        Returns: undefined
+      }
+      award_pillar_xp_for_booking: {
+        Args: { _booking_id: string }
         Returns: undefined
       }
       award_strike: {
@@ -3293,6 +3363,13 @@ export type Database = {
       app_role: "student" | "instructor" | "admin"
       booking_status: "reserved" | "attended" | "cancelled" | "no_show"
       payment_provider: "stripe" | "authorize_net" | "helcim"
+      skill_pillar:
+        | "firearms"
+        | "combatives"
+        | "protective_ops"
+        | "fieldcraft"
+        | "medical"
+        | "tactics"
       support_message_sender: "user" | "ai" | "admin"
       support_ticket_status: "open" | "awaiting_human" | "resolved" | "closed"
       training_goal_type:
@@ -3430,6 +3507,14 @@ export const Constants = {
       app_role: ["student", "instructor", "admin"],
       booking_status: ["reserved", "attended", "cancelled", "no_show"],
       payment_provider: ["stripe", "authorize_net", "helcim"],
+      skill_pillar: [
+        "firearms",
+        "combatives",
+        "protective_ops",
+        "fieldcraft",
+        "medical",
+        "tactics",
+      ],
       support_message_sender: ["user", "ai", "admin"],
       support_ticket_status: ["open", "awaiting_human", "resolved", "closed"],
       training_goal_type: [

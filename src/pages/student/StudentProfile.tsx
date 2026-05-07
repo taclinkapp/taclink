@@ -6,6 +6,7 @@ import { Settings, ChevronRight, Gift } from 'lucide-react';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { OperatorProfileMini } from '@/components/operator/OperatorProfileMini';
 
 type HistoryRow = {
   id: string;
@@ -99,6 +100,10 @@ const StudentProfile = () => {
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">{s.label}</div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-6">
+          <OperatorProfileMini studentId={user?.id} linkTo="/student/operator" />
         </div>
 
         <Section title="Invite & Earn">

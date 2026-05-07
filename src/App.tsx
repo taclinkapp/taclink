@@ -34,6 +34,7 @@ import CheckoutReturn from "./pages/student/CheckoutReturn";
 import BookingSuccess from "./pages/student/BookingSuccess";
 import MyBookings from "./pages/student/MyBookings";
 import MyProgress from "./pages/student/MyProgress";
+import OperatorProfile from "./pages/student/OperatorProfile";
 import BookingDetail from "./pages/student/BookingDetail";
 import LeaveReview from "./pages/student/LeaveReview";
 import MyReviews from "./pages/student/MyReviews";
@@ -94,6 +95,7 @@ import AdminUptime from "./pages/admin/AdminUptime";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
+import { MissionCompleteWatcher } from "./components/operator/MissionCompleteWatcher";
 
 const queryClient = new QueryClient();
 
@@ -139,6 +141,7 @@ const App = () => (
             <Route path="/student/booking-success/:id" element={<Student><BookingSuccess /></Student>} />
             <Route path="/student/bookings" element={<Student><MyBookings /></Student>} />
             <Route path="/student/progress" element={<Student><MyProgress /></Student>} />
+            <Route path="/student/operator" element={<Student><OperatorProfile /></Student>} />
             <Route path="/student/booking/:id" element={<Student><BookingDetail /></Student>} />
             <Route path="/student/review/:id" element={<Student><LeaveReview /></Student>} />
             <Route path="/student/reviews" element={<Student><MyReviews /></Student>} />
@@ -217,6 +220,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <AIAssistantMount />
+          <MissionCompleteWatcher />
           </NavHistoryProvider>
         </AuthProvider>
       </BrowserRouter>

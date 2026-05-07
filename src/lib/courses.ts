@@ -164,6 +164,8 @@ export type NewCourseInput = {
   gallery_urls?: string[];
   skill_level?: SkillLevel;
   in_person_waiver?: boolean;
+  primary_pillar?: string;
+  secondary_pillar?: string;
   status: "draft" | "published";
 };
 
@@ -173,7 +175,7 @@ export const createCourse = async (
 ) => {
   const { data, error } = await supabase
     .from("courses")
-    .insert({ instructor_id: instructorId, ...input })
+    .insert({ instructor_id: instructorId, ...input } as any)
     .select()
     .single();
   if (error) throw error;

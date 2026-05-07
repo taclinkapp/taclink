@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { CourseWaiverDialog } from '@/components/instructor/CourseWaiverDialog';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 import { AttendanceClaimButton } from '@/components/instructor/AttendanceClaimButton';
+import { TaclinkScoreBadge } from '@/components/operator/TaclinkScoreBadge';
 
 type BookingStatus = 'reserved' | 'attended' | 'cancelled' | 'no_show';
 
@@ -425,7 +426,10 @@ const InstructorRoster = () => {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{r.studentName}</div>
+                          <div className="text-sm font-medium truncate flex items-center gap-2">
+                            <span className="truncate">{r.studentName}</span>
+                            <TaclinkScoreBadge studentId={r.studentId} />
+                          </div>
                           <div className="text-[11px] text-muted-foreground">
                             Booked {new Date(r.bookedAt).toLocaleDateString()}
                           </div>

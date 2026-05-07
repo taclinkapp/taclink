@@ -31,6 +31,7 @@ import ReactMarkdown from 'react-markdown';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PhotoAdjusterDialog, type AdjustAspect } from '@/components/instructor/PhotoAdjusterDialog';
 import { Crop } from 'lucide-react';
+import { PILLARS } from '@/lib/pillars';
 
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Waiver', 'Review'];
@@ -135,6 +136,8 @@ const NewCourse = () => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [skillLevel, setSkillLevel] = useState<SkillLevel | ''>('');
+  const [primaryPillar, setPrimaryPillar] = useState<string>('');
+  const [secondaryPillar, setSecondaryPillar] = useState<string>('');
   const [description, setDescription] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -305,6 +308,8 @@ const NewCourse = () => {
         setTitle(data.title ?? '');
         setCategory(data.category ?? '');
         setSkillLevel((data.skill_level as SkillLevel) ?? '');
+        setPrimaryPillar(((data as any).primary_pillar as string) ?? '');
+        setSecondaryPillar(((data as any).secondary_pillar as string) ?? '');
         setDescription(data.description ?? '');
         if (data.starts_at) {
           const s = new Date(data.starts_at);
@@ -444,6 +449,7 @@ const NewCourse = () => {
       if (!title.trim()) return 'Title is required';
       if (!category) return 'Category is required';
       if (!skillLevel) return 'Please select a skill level before continuing';
+      if (!primaryPillar) return 'Pick a primary skill pillar — this powers student progression';
       if (!coverFile && !coverPreview) return 'A cover photo is required so students can recognize your course on the map and listings';
       const titleHits = detectContactInfo(title);
       const descHits = detectContactInfo(description);
@@ -561,6 +567,8 @@ const NewCourse = () => {
             description: description.trim() || null,
             category,
             skill_level: skillLevel as SkillLevel,
+            primary_pillar: (primaryPillar || null) as any,
+            secondary_pillar: (secondaryPillar || null) as any,
             price_cents: Math.round(Number(price) * 100),
             duration_minutes: durationMin,
             capacity: Number(capacity),
@@ -587,6 +595,8 @@ const NewCourse = () => {
           description: description.trim() || undefined,
           category,
           skill_level: skillLevel as SkillLevel,
+          ...(primaryPillar ? { primary_pillar: primaryPillar } : {}),
+          ...(secondaryPillar ? { secondary_pillar: secondaryPillar } : {}),
           price_cents: Math.round(Number(price) * 100),
           duration_minutes: durationMin,
           capacity: Number(capacity),
@@ -774,6 +784,34 @@ const NewCourse = () => {
                 <SelectContent className="bg-card border-border">
                   {(Object.keys(SKILL_LEVEL_LABELS) as SkillLevel[]).map((lv) => (
                     <SelectItem key={lv} value={lv}>{SKILL_LEVEL_LABELS[lv]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Primary Skill Pillar *">
+              <Select value={primaryPillar} onValueChange={setPrimaryPillar}>
+                <SelectTrigger className={cn('bg-card border-border h-11', !primaryPillar && 'border-destructive/60')}>
+                  <SelectValue placeholder="What does this course primarily teach?" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {PILLARS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.emoji} {p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Students earn XP toward this pillar in their Operator Profile when they complete your course.
+              </p>
+            </Field>
+            <Field label="Secondary Skill Pillar (optional)">
+              <Select value={secondaryPillar || '__none__'} onValueChange={(v) => setSecondaryPillar(v === '__none__' ? '' : v)}>
+                <SelectTrigger className="bg-card border-border h-11">
+                  <SelectValue placeholder="Optional second pillar" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="__none__">— None —</SelectItem>
+                  {PILLARS.filter((p) => p.id !== primaryPillar).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.emoji} {p.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

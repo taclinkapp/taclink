@@ -4,6 +4,8 @@ import { StudentTabBar } from "@/components/StudentTabBar";
 import { Logo } from "@/components/Logo";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { TrainingGoalsSection } from "@/components/TrainingGoalsSection";
+import { OperatorProfileMini } from "@/components/operator/OperatorProfileMini";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMyProgress } from "@/hooks/useMyProgress";
 import { Award, Calendar, MapPin, Target, TrendingUp, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,7 @@ const StatCard = ({
 );
 
 const MyProgress = () => {
+  const { user } = useAuth();
   const { data: bookings = [], isLoading } = useMyProgress();
 
   const attended = bookings.filter((b) => b.status === "attended");
@@ -46,6 +49,8 @@ const MyProgress = () => {
       </header>
 
       <div className="px-4 py-4 pb-32 space-y-5">
+        {/* Operator Profile preview */}
+        <OperatorProfileMini studentId={user?.id} linkTo="/student/operator" />
         {/* Stats */}
         <section className="grid grid-cols-3 gap-3">
           <StatCard icon={CheckCircle2} value={attended.length} label="Attended" />
