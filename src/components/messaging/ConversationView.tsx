@@ -152,6 +152,57 @@ export const ConversationView = ({ variant }: Props) => {
     };
   }, [conversation?.id]);
 
+  // Cancellation lock: if every booking between this student/instructor (or
+  // for this conversation's course) is cancelled, freeze new messages. Either
+  // party that cancels loses the ability to send — but history stays visible.
+  useEffect(() => {
+    if (!conversation) { setCancelledLock(null); return; }
+    let aborted = false;
+    (async () => {
+      // Find courses owned by the instructor.
+      const { data: courses } = await supabase
+        .from('courses')
+        .select('id, status')
+        .eq('instructor_id', conversation.instructor_id);
+      const allCourseIds = (courses ?? []).map((c: any) => c.id);
+      if (allCourseIds.length === 0) { if (!aborted) setCancelledLock(null); return; }
+
+      const courseIds = conversation.course_id
+        ? allCourseIds.filter((cid) => cid === conversation.course_id)
+        : allCourseIds;
+      if (courseIds.length === 0) { if (!aborted) setCancelledLock(null); return; }
+
+      // If conversation is tied to a single course and that course was cancelled
+      // by the instructor, lock as instructor-cancelled.
+      if (conversation.course_id) {
+        const c = (courses ?? []).find((x: any) => x.id === conversation.course_id);
+        if (c && (c as any).status === 'cancelled') {
+          if (!aborted) setCancelledLock('instructor');
+          return;
+        }
+      }
+
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('status, cancelled_by')
+        .eq('student_id', conversation.student_id)
+        .in('course_id', courseIds);
+
+      const rows = (bookings ?? []) as Array<{ status: string; cancelled_by: string | null }>;
+      if (rows.length === 0) { if (!aborted) setCancelledLock(null); return; }
+      const allCancelled = rows.every((b) => b.status === 'cancelled');
+      if (!allCancelled) { if (!aborted) setCancelledLock(null); return; }
+
+      // Determine which side cancelled (most recent / any match wins for label).
+      const byStudent = rows.some((b) => b.cancelled_by === conversation.student_id);
+      const byInstructor = rows.some((b) => b.cancelled_by === conversation.instructor_id);
+      if (!aborted) {
+        setCancelledLock(byStudent ? 'student' : byInstructor ? 'instructor' : 'generic');
+      }
+    })();
+    return () => { aborted = true; };
+  }, [conversation?.id, conversation?.course_id, conversation?.instructor_id, conversation?.student_id]);
+
   // Auto-scroll to newest
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
