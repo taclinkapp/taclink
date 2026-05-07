@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/Logo";
 import splashBg from "@/assets/splash-bg.mp4.asset.json";
 
 const Welcome = () => {
@@ -15,7 +14,6 @@ const Welcome = () => {
       <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
 
       <div className="relative z-10 flex-1 flex flex-col px-6 pt-16 pb-10 max-w-md w-full mx-auto">
-        <Logo widthPx={180} />
         <div className="flex-1 flex flex-col justify-end">
           <h1 className="text-4xl font-black leading-tight tracking-tight text-foreground">
             Find Your Next Mission
