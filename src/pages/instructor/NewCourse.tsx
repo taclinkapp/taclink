@@ -135,6 +135,8 @@ const NewCourse = () => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [skillLevel, setSkillLevel] = useState<SkillLevel | ''>('');
+  const [primaryPillar, setPrimaryPillar] = useState<string>('');
+  const [secondaryPillar, setSecondaryPillar] = useState<string>('');
   const [description, setDescription] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
