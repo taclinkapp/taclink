@@ -41,7 +41,6 @@ const InstructorSignUp = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [rawPhoto, setRawPhoto] = useState<File | null>(null);
   const [adjusterOpen, setAdjusterOpen] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const onPickPhoto = (f: File | null | undefined) => {
