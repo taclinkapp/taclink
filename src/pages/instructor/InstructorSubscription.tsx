@@ -207,12 +207,14 @@ const InstructorSubscription = () => {
         )}
 
         {isOnboarding && (
-          <div className="pt-2 space-y-2">
+          <div className="pt-2 space-y-3">
+            <LegalAcceptanceCard onAcceptedChange={setLegalAccepted} />
             <Button
               onClick={() => nav('/auth/credential-verification', { replace: true })}
+              disabled={!legalAccepted}
               className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
             >
-              Continue with Free · Verify Credentials
+              {legalAccepted ? 'Continue with Free · Verify Credentials' : 'Accept agreement to continue'}
             </Button>
             <p className="text-[10px] text-muted-foreground text-center">
               You'll be able to upgrade to Pro from Settings once we go live.
