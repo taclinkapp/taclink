@@ -17,6 +17,11 @@ import splashBg from '@/assets/splash-bg.mp4.asset.json';
  */
 const InstructorPlanStep = () => {
   const nav = useNavigate();
+  const { data: prelaunch } = usePrelaunch();
+  const isPrelaunch = !!prelaunch?.enabled;
+  const launchDateStr = prelaunch?.launchDateIso
+    ? new Date(prelaunch.launchDateIso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
 
   useEffect(() => {
     if (!getInstructorDraft()) {
