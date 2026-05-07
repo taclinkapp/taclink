@@ -196,6 +196,8 @@ export function AdminAIPanel() {
             <div className="border-t border-border p-3 bg-card">
               <div className="flex gap-2 items-end">
                 <Textarea
+                  key="admin-ai-input"
+                  autoFocus
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
