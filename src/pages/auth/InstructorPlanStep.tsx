@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/MobileShell';
-import { CheckCircle2, Crown, Sparkles, Lock } from 'lucide-react';
+import { CheckCircle2, Crown, Sparkles } from 'lucide-react';
 import { fmt, INSTRUCTOR_SUBSCRIPTION_CENTS } from '@/lib/fees';
 import { getInstructorDraft, updateInstructorDraft } from '@/lib/instructorSignupDraft';
 import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
