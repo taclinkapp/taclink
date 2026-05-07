@@ -59,7 +59,7 @@ const Splash = () => {
         </Button>
         <Button
           size="lg"
-          className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-base amber-glow"
+          className="w-full h-14 bg-[#3C3B6E] text-white hover:bg-[#2f2e57] font-bold text-base"
           onClick={() => nav('/welcome')}
         >
           <GraduationCap className="mr-1" /> Students
