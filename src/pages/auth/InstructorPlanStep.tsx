@@ -22,6 +22,7 @@ const InstructorPlanStep = () => {
   const launchDateStr = prelaunch?.launchDateIso
     ? new Date(prelaunch.launchDateIso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
+  const [selected, setSelected] = useState<'free' | 'pro'>('free');
 
   useEffect(() => {
     if (!getInstructorDraft()) {
@@ -30,7 +31,7 @@ const InstructorPlanStep = () => {
   }, [nav]);
 
   const choose = () => {
-    updateInstructorDraft({ plan: 'free' });
+    updateInstructorDraft({ plan: selected });
     nav('/auth/instructor/credential', { replace: true });
   };
 
