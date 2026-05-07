@@ -275,6 +275,15 @@ const BookingDetail = () => {
     <MobileShell withTabBar={false}>
       <PageHeader title="Booking Detail" back backTo="/student/bookings" />
       <div className="px-4 py-4 space-y-4">
+        {processingRefund && (
+          <div className="tactical-card border-primary/40 bg-primary/5 p-4 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 text-primary animate-spin shrink-0" />
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              <strong className="text-foreground">Processing your cancellation…</strong>{' '}
+              Confirming the refund with your bank. This usually takes a few seconds.
+            </div>
+          </div>
+        )}
         {!isCancelled && (
           <div className="tactical-card p-4">
             <h2 className="font-bold mb-3">{c.title}</h2>
