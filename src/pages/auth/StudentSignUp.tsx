@@ -77,10 +77,6 @@ const StudentSignUp = () => {
       toast.error('You must agree to the terms');
       return;
     }
-    if (!phoneVerified) {
-      toast.error('Please verify your phone number');
-      return;
-    }
     const { data: existing } = await supabase.auth.getSession();
     if (existing.session) {
       await supabase.auth.signOut();
