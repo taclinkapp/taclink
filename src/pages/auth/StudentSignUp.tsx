@@ -14,6 +14,7 @@ import { validatePassword } from '@/lib/passwordRules';
 import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
+import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
 
 
 const StudentSignUp = () => {
@@ -31,6 +32,8 @@ const StudentSignUp = () => {
   const [loading, setLoading] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [rawPhoto, setRawPhoto] = useState<File | null>(null);
+  const [adjusterOpen, setAdjusterOpen] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const onPickPhoto = (f: File | null | undefined) => {
@@ -41,8 +44,13 @@ const StudentSignUp = () => {
     if (f.size > 5 * 1024 * 1024) {
       toast.error('Photo must be 5MB or smaller'); return;
     }
-    setPhotoFile(f);
-    setPhotoPreview(URL.createObjectURL(f));
+    setRawPhoto(f);
+    setAdjusterOpen(true);
+  };
+
+  const onAdjusted = (file: File) => {
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   const uploadPhotoIfAny = async (userId: string) => {
@@ -153,7 +161,23 @@ const StudentSignUp = () => {
               )}
             </button>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{photoFile ? 'Tap to change' : 'Add a photo (optional)'}</span>
+            {photoFile && (
+              <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider">
+                <button type="button" onClick={() => rawPhoto && setAdjusterOpen(true)} className="text-primary font-bold hover:underline">Adjust</button>
+                <button type="button" onClick={() => photoInputRef.current?.click()} className="text-muted-foreground hover:text-foreground">Replace</button>
+              </div>
+            )}
           </div>
+          <PhotoAdjusterDialog
+            open={adjusterOpen}
+            onClose={() => setAdjusterOpen(false)}
+            source={rawPhoto}
+            aspect="1:1"
+            initialMode="fill"
+            outputMaxWidth={800}
+            filename="avatar.jpg"
+            onSave={onAdjusted}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">First Name</Label>
