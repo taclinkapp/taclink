@@ -248,6 +248,7 @@ const InstructorSubscription = () => {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </MobileShell>
   );
 };
