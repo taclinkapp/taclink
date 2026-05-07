@@ -16,9 +16,9 @@ const STEPS: { key: StepKey; label: string; short: string }[] = [
 type StatusRow = {
   complete: boolean;
   next_step: "subscription" | "credential" | "policy" | "complete";
-  subscription_chosen_at: string | null;
-  credential_uploaded_at: string | null;
-  policy_acknowledged_at: string | null;
+  has_subscription: boolean;
+  has_credential: boolean;
+  has_policy_ack: boolean;
 };
 
 interface Props {
