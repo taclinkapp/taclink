@@ -237,15 +237,6 @@ const BookingDetail = () => {
     <MobileShell withTabBar={false}>
       <PageHeader title="Booking Detail" back backTo="/student/bookings" />
       <div className="px-4 py-4 space-y-4">
-        <div className="tactical-card p-4">
-          <h2 className="font-bold mb-3">{c.title}</h2>
-          <div className="space-y-2 text-xs text-muted-foreground">
-            {c.starts_at && (
-              <>
-                <div className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5 text-primary" />{new Date(c.starts_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
-                <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-primary" />{new Date(c.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{c.ends_at ? ` – ${new Date(c.ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}</div>
-              </>
-            )}
         {!isCancelled && (
           <div className="tactical-card p-4">
             <h2 className="font-bold mb-3">{c.title}</h2>
