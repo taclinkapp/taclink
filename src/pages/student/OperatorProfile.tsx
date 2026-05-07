@@ -9,10 +9,13 @@ import { PillarCard } from "@/components/operator/PillarCard";
 import { Award, Clock, Calendar, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { FirstVisitTooltip } from "@/components/onboarding/FirstVisitTooltip";
 
 const OperatorProfile = () => {
   const { user, profile } = useAuth();
   const { data, isLoading } = useOperatorProfile(user?.id);
+  const onboarding = useOnboarding();
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -24,6 +27,7 @@ const OperatorProfile = () => {
         await navigator.clipboard.writeText(`${text}\n${url}`);
         toast.success("Profile link copied");
       }
+      if (!onboarding.checklist.shared_profile) onboarding.checkOff('shared_profile');
     } catch {
       /* user cancelled */
     }
@@ -40,6 +44,12 @@ const OperatorProfile = () => {
           <NotificationsBell className="h-9 w-9 rounded-full bg-card border border-border text-muted-foreground hover:text-primary" />
         </div>
       </header>
+
+      <FirstVisitTooltip
+        id="operator_profile_intro"
+        title="Your Operator Profile"
+        body="Complete courses to earn XP and level up your 6 skill pillars. Hit Operator rank by stacking missions across all six."
+      />
 
       <div className="px-4 py-4 pb-32 space-y-5">
         {/* Top hero card */}

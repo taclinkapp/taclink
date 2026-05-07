@@ -2528,6 +2528,51 @@ export type Database = {
         }
         Relationships: []
       }
+      student_onboarding: {
+        Row: {
+          checklist: Json
+          checklist_dismissed: boolean
+          created_at: string
+          experience_level: string | null
+          notif_prompt_shown: boolean
+          quiz_completed_at: string | null
+          selected_pillars: string[] | null
+          tooltips_seen: string[]
+          training_goal: string | null
+          travel_radius_miles: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checklist?: Json
+          checklist_dismissed?: boolean
+          created_at?: string
+          experience_level?: string | null
+          notif_prompt_shown?: boolean
+          quiz_completed_at?: string | null
+          selected_pillars?: string[] | null
+          tooltips_seen?: string[]
+          training_goal?: string | null
+          travel_radius_miles?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checklist?: Json
+          checklist_dismissed?: boolean
+          created_at?: string
+          experience_level?: string | null
+          notif_prompt_shown?: boolean
+          quiz_completed_at?: string | null
+          selected_pillars?: string[] | null
+          tooltips_seen?: string[]
+          training_goal?: string | null
+          travel_radius_miles?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_xp_awards: {
         Row: {
           base_xp: number

@@ -16,6 +16,9 @@ import HelpCenter from "./pages/support/HelpCenter";
 import ContactSupport from "./pages/support/ContactSupport";
 
 import Splash from "./pages/Splash";
+import Welcome from "./pages/onboarding/Welcome";
+import OnboardingQuiz from "./pages/onboarding/Quiz";
+import OnboardingPlan from "./pages/onboarding/TrainingPlan";
 import SignIn from "./pages/auth/SignIn";
 import StudentSignUp from "./pages/auth/StudentSignUp";
 import InstructorSignUp from "./pages/auth/InstructorSignUp";
@@ -102,6 +105,9 @@ const queryClient = new QueryClient();
 const Student = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute requireRole="student">{children}</ProtectedRoute>
 );
+const StudentOrGuest = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute requireRole="student" allowGuest>{children}</ProtectedRoute>
+);
 const Instructor = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute requireRole="instructor">{children}</ProtectedRoute>
 );
@@ -119,6 +125,9 @@ const App = () => (
           <NavHistoryProvider>
           <Routes>
             <Route path="/" element={<Splash />} />
+            <Route path="/welcome" element={<Welcome />} />
+            <Route path="/welcome/quiz" element={<OnboardingQuiz />} />
+            <Route path="/welcome/plan" element={<OnboardingPlan />} />
 
             {/* Auth */}
             <Route path="/auth/signin" element={<SignIn />} />
@@ -132,10 +141,10 @@ const App = () => (
             <Route path="/auth/change-password" element={<Authed><ChangePassword /></Authed>} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
 
-            {/* Student */}
-            <Route path="/student" element={<Student><Discover /></Student>} />
+            {/* Student (Discover + CourseDetail allow guest browse) */}
+            <Route path="/student" element={<StudentOrGuest><Discover /></StudentOrGuest>} />
             <Route path="/student/discover" element={<Navigate to="/student" replace />} />
-            <Route path="/student/course/:id" element={<Student><CourseDetail /></Student>} />
+            <Route path="/student/course/:id" element={<StudentOrGuest><CourseDetail /></StudentOrGuest>} />
             <Route path="/student/checkout/:id" element={<Student><Checkout /></Student>} />
             <Route path="/student/checkout/:id/return" element={<Student><CheckoutReturn /></Student>} />
             <Route path="/student/booking-success/:id" element={<Student><BookingSuccess /></Student>} />

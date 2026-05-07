@@ -117,7 +117,13 @@ const StudentSignUp = () => {
     setLoading(false);
     toast.success('Welcome to TacLink™!');
     logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'redirected', email });
-    nav('/student', { replace: true });
+    try { sessionStorage.setItem('show_onboarding_welcome', '1'); } catch {}
+    let dest = '/student';
+    try {
+      const intent = sessionStorage.getItem('post_signup_intent');
+      if (intent) { sessionStorage.removeItem('post_signup_intent'); dest = intent; }
+    } catch {}
+    nav(dest, { replace: true });
   };
 
   return (

@@ -18,6 +18,9 @@ import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { OnboardingChecklistCard, OnboardingWelcomeModal } from '@/components/onboarding/OnboardingChecklist';
+import { FirstVisitTooltip } from '@/components/onboarding/FirstVisitTooltip';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
 const LEVEL_OPTIONS: { value: LevelFilter; label: string }[] = [
@@ -58,7 +61,24 @@ const loadPrefs = (): PersistedPrefs => {
 const Discover = () => {
   const nav = useNavigate();
   const { user } = useAuth();
+  const isGuest = !user;
   const tour = useCrashCourseTour('student', user?.id);
+  const onboarding = useOnboarding();
+  const [showWelcome, setShowWelcome] = useState(false);
+  // Show post-signup welcome modal once.
+  useEffect(() => {
+    if (user && typeof window !== 'undefined' && sessionStorage.getItem('show_onboarding_welcome') === '1') {
+      setShowWelcome(true);
+      sessionStorage.removeItem('show_onboarding_welcome');
+    }
+  }, [user]);
+  // Mark "browsed_courses" once an authed student lands on Discover.
+  useEffect(() => {
+    if (user && !onboarding.loading && !onboarding.checklist.browsed_courses) {
+      onboarding.checkOff('browsed_courses');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, onboarding.loading]);
   const initialPrefs = loadPrefs();
   const [view, setView] = useState<'list' | 'map'>(initialPrefs.view ?? 'list');
   const [discipline, setDiscipline] = useState<string>('All');
@@ -473,6 +493,32 @@ const Discover = () => {
         </div>
       </header>
 
+      {!user && (
+        <div className="px-4 pt-3">
+          <div className="tactical-card p-3 flex items-center gap-3 border-primary/40 bg-primary/5">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wider text-primary">Browsing as guest</div>
+              <div className="text-[11px] text-muted-foreground">Create an account to book courses, follow instructors, and earn XP.</div>
+            </div>
+            <Button size="sm" onClick={() => nav('/welcome/quiz')} className="shrink-0 h-9 font-bold">
+              Sign Up
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {user && !onboarding.allDone && (
+        <div className="px-4 pt-3">
+          <OnboardingChecklistCard />
+        </div>
+      )}
+
+      <FirstVisitTooltip
+        id="discover_intro"
+        title="Browse training"
+        body="Filter by discipline, level, and distance to find courses that match your training plan."
+      />
+
       {!bannerDismissed && (
         <div className="px-4 pt-3">
           <div className="tactical-card p-3 flex items-center gap-3 border-primary/40">
@@ -547,6 +593,12 @@ const Discover = () => {
       <StudentTabBar />
       <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} rewardLabel="1 free booking" />
       <CrashCourseTour role="student" open={tour.open} onClose={tour.close} />
+      {showWelcome && user && (
+        <OnboardingWelcomeModal
+          firstName={(user.user_metadata?.display_name as string | undefined)?.split(' ')[0] || ''}
+          onClose={() => setShowWelcome(false)}
+        />
+      )}
     </MobileShell>
   );
 };

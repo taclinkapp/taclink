@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 type Props = {
   children: ReactNode;
   requireRole?: AppRole;
+  /** When true, render children even if the visitor isn't signed in (guest browse mode). */
+  allowGuest?: boolean;
 };
 
-export const ProtectedRoute = ({ children, requireRole }: Props) => {
+export const ProtectedRoute = ({ children, requireRole, allowGuest }: Props) => {
   const { user, primaryRole, roles, loading, rolesError, retryRoles, signOut } = useAuth();
   const location = useLocation();
 
@@ -23,6 +25,7 @@ export const ProtectedRoute = ({ children, requireRole }: Props) => {
   }
 
   if (!user) {
+    if (allowGuest) return <>{children}</>;
     return <Navigate to="/auth/signin" state={{ from: location.pathname }} replace />;
   }
 

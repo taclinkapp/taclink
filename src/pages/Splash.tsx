@@ -65,6 +65,12 @@ const Splash = () => {
         >
           <Shield className="mr-1" /> Reserve as Instructor
         </Button>
+        <button
+          onClick={() => nav('/welcome')}
+          className="w-full h-11 text-sm font-bold uppercase tracking-wider text-muted-foreground hover:text-primary"
+        >
+          Browse Courses First →
+        </button>
         <p className="text-center text-sm text-muted-foreground pt-3">
           Already have an account?{' '}
           <button onClick={() => nav('/auth/signin')} className="text-primary font-semibold hover:underline">

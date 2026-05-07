@@ -103,6 +103,21 @@ export const MissionCompleteWatcher = () => {
       setPayload({ awards: burst, beforeTotals: before, afterTotals: after });
       setOpen(true);
       qc.invalidateQueries({ queryKey: ["operator-profile", user.id] });
+      // Mark "first completion" onboarding step — merge to avoid clobbering other keys.
+      try {
+        const { data: ob } = await (supabase as any)
+          .from("student_onboarding")
+          .select("checklist")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        const current = (ob?.checklist as Record<string, boolean>) ?? {};
+        if (!current.first_completion) {
+          await (supabase as any)
+            .from("student_onboarding")
+            .update({ checklist: { ...current, first_completion: true } })
+            .eq("user_id", user.id);
+        }
+      } catch { /* ignore */ }
     };
 
     seed().then(() => {

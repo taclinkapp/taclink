@@ -10,10 +10,14 @@ import { CourseMap } from '@/components/CourseMap';
 import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, Lock } from 'lucide-react';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { SmartCoverImage } from '@/components/SmartCoverImage';
+import { useAuth } from '@/contexts/AuthContext';
+import { FirstVisitTooltip } from '@/components/onboarding/FirstVisitTooltip';
 
 const CourseDetail = () => {
   const { id } = useParams();
   const nav = useNavigate();
+  const { user } = useAuth();
+  const isGuest = !user;
   const { data: course, isLoading } = useCourse(id);
 
   const { data: reviews = [] } = useQuery({
@@ -229,14 +233,26 @@ const CourseDetail = () => {
             <div className="text-2xl font-black text-primary">${course.bookingFee}</div>
           </div>
           <Button
-            onClick={() => nav(`/student/checkout/${course.id}`)}
+            onClick={() => {
+              if (isGuest) {
+                try { sessionStorage.setItem('post_signup_intent', `/student/course/${course.id}`); } catch {}
+                nav('/auth/student-signup?from=book');
+                return;
+              }
+              nav(`/student/checkout/${course.id}`);
+            }}
             disabled={isFull}
             className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold amber-glow"
           >
-            {isFull ? 'Course Full' : 'Book Now'}
+            {isFull ? 'Course Full' : isGuest ? 'Sign Up to Book' : 'Book Now'}
           </Button>
         </div>
       </div>
+      <FirstVisitTooltip
+        id="course_detail_intro"
+        title="Book your spot"
+        body="Tap Book to reserve. Payment is collected at booking and refundable up to 48 hours before the course."
+      />
     </MobileShell>
   );
 };
