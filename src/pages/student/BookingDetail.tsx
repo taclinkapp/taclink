@@ -129,6 +129,20 @@ const BookingDetail = () => {
 
   useEffect(() => { reload(); /* eslint-disable-next-line */ }, [id]);
 
+  // Realtime: if the instructor cancels (or any backend update flips status /
+  // deposit_status), refresh immediately so the student sees the refund banner.
+  useEffect(() => {
+    if (!id) return;
+    const ch = supabase
+      .channel(`booking-${id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${id}` }, () => {
+        reload();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line
+  }, [id]);
+
   // Deep-link from notifications: ?focus=attendance scrolls to the claim card.
   useEffect(() => {
     if (loading || !b) return;
@@ -149,6 +163,7 @@ const BookingDetail = () => {
 
   const [cancelling, setCancelling] = useState(false);
   const [reportingNoShow, setReportingNoShow] = useState(false);
+  const [processingRefund, setProcessingRefund] = useState(false);
 
   const triggerRefund = async (refundId: string | undefined) => {
     if (!refundId) return;
@@ -159,6 +174,29 @@ const BookingDetail = () => {
     } catch (e) {
       console.error('process-refund invoke failed', e);
     }
+  };
+
+  // Poll the booking row for up to ~15s after a cancel until the backend
+  // marks the deposit refunded, then flip the UI to the final refund banner.
+  const pollUntilRefunded = async () => {
+    if (!id) return;
+    setProcessingRefund(true);
+    const start = Date.now();
+    while (Date.now() - start < 15_000) {
+      await new Promise(r => setTimeout(r, 2000));
+      const { data: row } = await supabase
+        .from('bookings')
+        .select('deposit_status, status')
+        .eq('id', id)
+        .maybeSingle();
+      if (row?.deposit_status === 'refunded') {
+        await reload();
+        setProcessingRefund(false);
+        return;
+      }
+    }
+    await reload();
+    setProcessingRefund(false);
   };
 
   const cancelBooking = async () => {
@@ -173,11 +211,11 @@ const BookingDetail = () => {
       return;
     }
     const refund = (data as any)?.student_refund_cents ?? 0;
-    await triggerRefund((data as any)?.refund_id);
     toast.success('Booking cancelled', {
       description: `Refund of $${(refund / 100).toFixed(2)} on the way to your card.`,
     });
-    reload();
+    await triggerRefund((data as any)?.refund_id);
+    await pollUntilRefunded();
   };
 
   const reportInstructorNoShow = async () => {
@@ -191,11 +229,11 @@ const BookingDetail = () => {
       return;
     }
     const refund = (data as any)?.student_refund_cents ?? 0;
-    await triggerRefund((data as any)?.refund_id);
     toast.success('Report filed — full refund issued', {
       description: `$${(refund / 100).toFixed(2)} on the way to your card.`,
     });
-    reload();
+    await triggerRefund((data as any)?.refund_id);
+    await pollUntilRefunded();
   };
 
   if (loading) {
@@ -237,6 +275,15 @@ const BookingDetail = () => {
     <MobileShell withTabBar={false}>
       <PageHeader title="Booking Detail" back backTo="/student/bookings" />
       <div className="px-4 py-4 space-y-4">
+        {processingRefund && (
+          <div className="tactical-card border-primary/40 bg-primary/5 p-4 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 text-primary animate-spin shrink-0" />
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              <strong className="text-foreground">Processing your cancellation…</strong>{' '}
+              Confirming the refund with your bank. This usually takes a few seconds.
+            </div>
+          </div>
+        )}
         {!isCancelled && (
           <div className="tactical-card p-4">
             <h2 className="font-bold mb-3">{c.title}</h2>
