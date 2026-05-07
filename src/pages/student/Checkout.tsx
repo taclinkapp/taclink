@@ -362,7 +362,7 @@ const Checkout = () => {
           <div className="flex items-start gap-2 mb-3">
             <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
             <div className="text-xs text-muted-foreground leading-relaxed">
-              Cancel within your grace window for a <strong className="text-foreground">100% refund ($25 platform fee + full course price)</strong>. After the grace window, you receive <strong className="text-foreground">90% of the course price</strong> back — instructor keeps 10% for the lost slot, $25 platform fee non-refundable. If the instructor cancels or no-shows: <strong className="text-foreground">100% refund within 48 hours</strong>.
+              Cancel within your grace window for a <strong className="text-foreground">100% refund ($25 platform fee + full course price)</strong>. After the grace window, you receive <strong className="text-foreground">90% of the course price</strong> back — instructor keeps 10% for the lost slot, $25 platform fee non-refundable after the grace window. If the instructor cancels or no-shows: <strong className="text-foreground">100% refund within 48 hours</strong>.
             </div>
           </div>
           <label className="flex items-start gap-3 cursor-pointer">

@@ -8,7 +8,7 @@ const SECTIONS = [
   },
   {
     title: '2. Booking Fee & Online Payment',
-    body: 'TacLink charges the student online at booking for the FULL course price plus a $25 TacLink platform fee. The $25 platform fee is non-refundable outside the cancellation grace window. No payment is owed in person — all course fees flow through TacLink and are paid out to the instructor 24 hours after course completion.',
+    body: 'TacLink charges the student online at booking for the FULL course price plus a $25 TacLink platform fee. The $25 platform fee is fully refunded if the student cancels within their grace window (and on instructor cancel/no-show), but is non-refundable after the grace window. No payment is owed in person — all course fees flow through TacLink and are paid out to the instructor 24 hours after course completion.',
   },
   {
     title: '2a. Instructional Services Only',

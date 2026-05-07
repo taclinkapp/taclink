@@ -138,7 +138,7 @@ const MyBookings = () => {
       label: isFull ? 'Full refund' : '90% refund (late cancel)',
       eta: isFull
         ? 'Posts back in 5–10 business days'
-        : 'Posts back in 5–10 business days · $25 platform fee non-refundable',
+        : 'Posts back in 5–10 business days · $25 platform fee non-refundable after the grace window',
     };
   };
 

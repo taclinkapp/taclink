@@ -74,7 +74,7 @@ export const CancelGraceBadge = ({
             minute: '2-digit',
           })}{' '}
           <span className="font-mono text-primary">({formatCountdown(deadline)})</span>.
-          After this, you'll receive 90% of the course price back; instructor keeps 10%; $25 fee non-refundable.
+          After this, you'll receive 90% of the course price back; instructor keeps 10%; $25 fee non-refundable after the grace window.
         </div>
       </div>
     );

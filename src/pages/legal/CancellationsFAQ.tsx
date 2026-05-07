@@ -98,7 +98,7 @@ const CancellationsFAQ = () => (
             <div>
               <div className="font-semibold text-foreground">After your grace window or no-show</div>
               <div className="text-muted-foreground">
-                You receive <strong className="text-foreground">90% of the course price</strong> back. The instructor keeps the remaining 10% as compensation for the lost slot. The $25 platform fee is non-refundable.
+                You receive <strong className="text-foreground">90% of the course price</strong> back. The instructor keeps the remaining 10% as compensation for the lost slot. The $25 platform fee is non-refundable after the grace window.
               </div>
             </div>
           </div>
