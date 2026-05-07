@@ -47,8 +47,8 @@ const OperatorProfile = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
           <div className="relative">
             <div className="mx-auto h-16 w-16 rounded-full bg-surface border border-border overflow-hidden mb-3">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+              {profile?.photo_url ? (
+                <img src={profile.photo_url} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="h-full w-full grid place-items-center font-stencil text-2xl text-muted-foreground">
                   {(profile?.display_name ?? "O").charAt(0).toUpperCase()}
@@ -58,10 +58,8 @@ const OperatorProfile = () => {
             <div className="font-stencil text-lg font-bold uppercase tracking-wider">
               {profile?.display_name ?? "Operator"}
             </div>
-            {(profile?.city || profile?.state) && (
-              <div className="text-xs text-muted-foreground">
-                {[profile?.city, profile?.state].filter(Boolean).join(", ")}
-              </div>
+            {profile?.state && (
+              <div className="text-xs text-muted-foreground">{profile.state}</div>
             )}
 
             <div className="mt-4">
