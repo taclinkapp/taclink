@@ -98,7 +98,14 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      <video
+        src={splashBg.url}
+        autoPlay loop muted playsInline aria-hidden
+        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
+      />
+      <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
+      <div className="relative z-10">
       <PageHeader back backTo="/" />
       <div className="max-w-md mx-auto px-6 pt-4">
         <div className="flex justify-center mb-8">
