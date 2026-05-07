@@ -158,10 +158,6 @@ const SignIn = () => {
         >
           Continue with Google
         </Button>
-        <div className="mt-8 text-center text-sm text-muted-foreground space-x-4">
-          <button onClick={() => nav('/auth/student-signup')} className="text-primary font-semibold">Student Sign Up</button>
-          <button onClick={() => nav('/auth/instructor-signup')} className="text-primary font-semibold">Instructor Sign Up</button>
-        </div>
         <div className="mt-6 text-center">
           <button
             onClick={() => nav('/')}
