@@ -6,6 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Upload, Clock, ShieldCheck, Camera, ImageIcon, FileText, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const options = [
   { id: 'nra', label: 'NRA Certified Instructor' },
@@ -67,7 +68,14 @@ const CredentialVerification = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      <video
+        src={splashBg.url}
+        autoPlay loop muted playsInline aria-hidden
+        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
+      />
+      <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
+      <div className="relative z-10">
       <PageHeader title="Verify Credentials" back backTo="/instructor/credentials" />
       <div className="max-w-md mx-auto px-6 py-6">
         <div className="flex items-start gap-3 mb-6">
@@ -187,6 +195,7 @@ const CredentialVerification = () => {
             Submit for Review
           </Button>
         </form>
+      </div>
       </div>
     </div>
   );
