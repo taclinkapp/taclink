@@ -196,6 +196,7 @@ const CredentialVerification = () => {
           </Button>
         </form>
       </div>
+      </div>
     </div>
   );
 };
