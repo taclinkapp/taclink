@@ -36,12 +36,6 @@ export const InstructorDraftProgress = ({ current, completed, className }: Props
         <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
           Onboarding · {completedCount}/{STEPS.length}
         </div>
-        {blocking && (
-          <div className="flex items-center gap-1 text-[10px] font-bold text-primary">
-            <Lock className="h-3 w-3" />
-            Account creates after {STEPS[STEPS.length - 1].label}
-          </div>
-        )}
       </div>
       <div className="flex items-center gap-1">
         {STEPS.map((step, i) => {
