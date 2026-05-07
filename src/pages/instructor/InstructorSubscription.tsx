@@ -73,6 +73,13 @@ const InstructorSubscription = () => {
 
   return (
     <MobileShell withTabBar={false}>
+      <video
+        src={splashBg.url}
+        autoPlay loop muted playsInline aria-hidden
+        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none z-0"
+      />
+      <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none z-0" />
+      <div className="relative z-10">
       <PageHeader title="Subscription" back backTo="/instructor" />
       <div className="px-4 py-4 space-y-4">
         <p className="text-xs text-muted-foreground">
