@@ -13,8 +13,6 @@ export function AIAssistantMount() {
   // Hide on auth, splash, admin, checkout/booking-success
   if (
     pathname === "/" ||
-    pathname === "/instructor" ||
-    pathname === "/student" ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/admin") ||
     pathname.includes("/checkout") ||
