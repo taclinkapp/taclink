@@ -1,0 +1,1 @@
+ALTER VIEW public.student_pillar_xp_v SET (security_invoker = true);
