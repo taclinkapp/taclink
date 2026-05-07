@@ -33,6 +33,7 @@ const InstructorSubscription = () => {
   const subscriptionsEnabled = activeProvider !== 'helcim';
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [portalBusy, setPortalBusy] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   if (prelaunchLoading || subLoading) {
     return (
