@@ -6,6 +6,8 @@ import { MobileShell } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Calendar, MapPin, Clock, FileText, ShieldCheck, Loader2 } from 'lucide-react';
 import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
+import { useOnboarding } from '@/hooks/useOnboarding';
+import { NotificationPermissionPrompt } from '@/components/onboarding/NotificationPermissionPrompt';
 
 type Course = {
   id: string;
@@ -38,6 +40,20 @@ const BookingSuccess = () => {
   const [bookedAt, setBookedAt] = useState<string | null>(null);
   const [cutoffHours, setCutoffHours] = useState<number | null>(null);
   const [signature, setSignature] = useState<Signature | null>(null);
+  const [notifPromptOpen, setNotifPromptOpen] = useState(false);
+  const onboarding = useOnboarding();
+
+  // First-booking side effects: check off the step and queue the notif prompt.
+  useEffect(() => {
+    if (!user || onboarding.loading) return;
+    if (!onboarding.checklist.first_booking) {
+      onboarding.checkOff('first_booking');
+    }
+    if (!onboarding.notifPromptShown) {
+      setNotifPromptOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, onboarding.loading]);
 
   useEffect(() => {
     if (!id) return;
@@ -194,6 +210,9 @@ const BookingSuccess = () => {
           <Button onClick={() => nav('/student/bookings')} className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">View My Bookings</Button>
         </div>
       </div>
+      {notifPromptOpen && (
+        <NotificationPermissionPrompt onClose={() => setNotifPromptOpen(false)} />
+      )}
     </MobileShell>
   );
 };
