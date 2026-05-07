@@ -31,6 +31,7 @@ import ReactMarkdown from 'react-markdown';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PhotoAdjusterDialog, type AdjustAspect } from '@/components/instructor/PhotoAdjusterDialog';
 import { Crop } from 'lucide-react';
+import { PILLARS } from '@/lib/pillars';
 
 
 const STEPS = ['Basics', 'Schedule & Location', 'Capacity & Pricing', 'Waiver', 'Review'];
