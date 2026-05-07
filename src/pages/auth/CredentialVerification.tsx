@@ -46,7 +46,14 @@ const CredentialVerification = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="relative min-h-screen bg-background overflow-hidden">
+        <video
+          src={splashBg.url}
+          autoPlay loop muted playsInline aria-hidden
+          className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
+        />
+        <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
+        <div className="relative z-10">
         <PageHeader title="Under Review" />
         <div className="max-w-md mx-auto px-6 py-12 text-center">
           <div className="h-20 w-20 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mx-auto mb-6">
@@ -62,6 +69,7 @@ const CredentialVerification = () => {
           <Button onClick={() => nav('/instructor')} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
             Continue to Dashboard
           </Button>
+        </div>
         </div>
       </div>
     );
