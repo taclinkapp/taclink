@@ -11,6 +11,7 @@ import { CourseWaiverDialog } from '@/components/instructor/CourseWaiverDialog';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 import { AttendanceClaimButton } from '@/components/instructor/AttendanceClaimButton';
 import { TaclinkScoreBadge } from '@/components/operator/TaclinkScoreBadge';
+import { getAvatarSrc } from '@/lib/avatar';
 
 type BookingStatus = 'reserved' | 'attended' | 'cancelled' | 'no_show';
 
@@ -414,17 +415,11 @@ const InstructorRoster = () => {
                   return (
                     <li key={r.bookingId} className="px-4 py-3 space-y-2">
                       <div className="flex items-center gap-3">
-                        {r.studentPhoto ? (
-                          <img
-                            src={r.studentPhoto}
-                            alt={r.studentName}
-                            className="h-9 w-9 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                            {r.studentName.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        <img
+                          src={getAvatarSrc(r.studentPhoto, r.studentName)}
+                          alt={r.studentName}
+                          className="h-9 w-9 rounded-full object-cover"
+                        />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate flex items-center gap-2">
                             <span className="truncate">{r.studentName}</span>

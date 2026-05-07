@@ -18,6 +18,7 @@ import {
 } from '@/lib/refundCopy';
 import { toast } from 'sonner';
 import { paymentEnvironment } from '@/lib/paymentEnv';
+import { getAvatarSrc } from '@/lib/avatar';
 
 type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
 
@@ -303,11 +304,11 @@ const BookingDetail = () => {
 
         {instructor && (
           <div className="tactical-card p-4 flex items-center gap-3">
-            {instructor.photo_url ? (
-              <img src={instructor.photo_url} alt={instructor.display_name ?? 'Instructor'} className="h-12 w-12 rounded-full object-cover border-2 border-primary" />
-            ) : (
-              <div className="h-12 w-12 rounded-full bg-muted border-2 border-primary" />
-            )}
+            <img
+              src={getAvatarSrc(instructor.photo_url, instructor.display_name)}
+              alt={instructor.display_name ?? 'Instructor'}
+              className="h-12 w-12 rounded-full object-cover border-2 border-primary"
+            />
             <div className="flex-1 min-w-0">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
                 {isCancelled ? 'Instructor' : 'Your instructor'}

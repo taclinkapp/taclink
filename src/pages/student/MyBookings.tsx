@@ -6,6 +6,7 @@ import { CategoryPill } from '@/components/CategoryPill';
 import { QrCode, Calendar, MapPin, Star, Loader2, XCircle, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
+import { getAvatarSrc } from '@/lib/avatar';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,7 +32,7 @@ type BookingItem = {
     starts_at: string | null;
     ends_at: string | null;
     cover_image_url: string | null;
-    instructor: { id: string; display_name: string | null; avatar_url: string | null } | null;
+    instructor: { id: string; display_name: string | null; photo_url: string | null } | null;
   } | null;
   reviewed?: boolean;
 };
@@ -66,7 +67,7 @@ const MyBookings = () => {
 
       const [{ data: profiles }, { data: reviews }] = await Promise.all([
         instructorIds.length
-          ? supabase.from('profiles').select('id, display_name, avatar_url').in('id', instructorIds)
+          ? supabase.from('profiles').select('id, display_name, photo_url').in('id', instructorIds)
           : Promise.resolve({ data: [] as any[] }),
         courseIds.length
           ? supabase.from('reviews').select('course_id').eq('student_id', user.id).in('course_id', courseIds)
@@ -98,7 +99,7 @@ const MyBookings = () => {
                 ends_at: r.course.ends_at,
                 cover_image_url: r.course.cover_image_url,
                 instructor: inst
-                  ? { id: inst.id, display_name: inst.display_name, avatar_url: inst.avatar_url }
+                  ? { id: inst.id, display_name: inst.display_name, photo_url: inst.photo_url }
                   : null,
               }
             : null,
@@ -181,7 +182,7 @@ const MyBookings = () => {
             <Link key={b.id} to={`/student/booking/${b.id}`} className="block tactical-card p-4 hover:border-primary/40 transition">
               <div className="flex items-start gap-3">
                 <WatermarkedAvatar
-                  src={b.course?.instructor?.avatar_url ?? undefined}
+                  src={getAvatarSrc(b.course?.instructor?.photo_url, b.course?.instructor?.display_name)}
                   size={48}
                   className="border border-border"
                   alt={b.course?.instructor?.display_name ?? 'Instructor'}

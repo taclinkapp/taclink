@@ -12,6 +12,7 @@ import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { SmartCoverImage } from '@/components/SmartCoverImage';
 import { useAuth } from '@/contexts/AuthContext';
 import { FirstVisitTooltip } from '@/components/onboarding/FirstVisitTooltip';
+import { getAvatarSrc } from '@/lib/avatar';
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -198,9 +199,7 @@ const CourseDetail = () => {
             ) : reviews.map((r) => (
               <div key={r.id} className="tactical-card p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  {r.studentPhoto
-                    ? <img src={r.studentPhoto} className="h-8 w-8 rounded-full object-cover" alt="" />
-                    : <div className="h-8 w-8 rounded-full bg-muted" />}
+                  <img src={getAvatarSrc(r.studentPhoto, r.studentName)} className="h-8 w-8 rounded-full object-cover" alt="" />
                   <div className="flex-1">
                     <div className="text-sm font-semibold">{r.studentName}</div>
                     <div className="flex items-center gap-1">
