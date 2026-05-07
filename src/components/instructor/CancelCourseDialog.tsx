@@ -96,6 +96,7 @@ export const CancelCourseDialog = ({
               <ul className="space-y-1 ml-3 list-disc">
                 <li>Every enrolled student is refunded in full (platform fee + 10% deposit) to their card.</li>
                 <li><strong>Your $25 listing deposit is released back to you</strong> within 48 hours.</li>
+                <li><strong>Your 10% listing fee is refunded</strong> back to your original payment method.</li>
                 <li>No strike on your account.</li>
               </ul>
             </>
@@ -107,6 +108,7 @@ export const CancelCourseDialog = ({
               <ul className="space-y-1 ml-3 list-disc">
                 <li>Every enrolled student is refunded in full (platform fee + 10% deposit) to their card.</li>
                 <li><strong>You forfeit your $25 listing deposit on every booking</strong> — it is not returned.</li>
+                <li><strong>Your 10% listing fee is NOT refunded.</strong></li>
                 <li>1 strike is added to your account. Repeated late cancellations may suspend your ability to publish.</li>
               </ul>
             </>
