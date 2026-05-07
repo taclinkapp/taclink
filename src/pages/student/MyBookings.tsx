@@ -18,6 +18,11 @@ type BookingItem = {
   booked_at: string | null;
   attended_at: string | null;
   cancellation_cutoff_hours: number | null;
+  deposit_status: string | null;
+  online_total_cents: number | null;
+  course_price_cents: number | null;
+  platform_fee_cents: number | null;
+  updated_at: string | null;
   course: {
     id: string;
     title: string;
