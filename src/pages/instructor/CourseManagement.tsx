@@ -343,7 +343,7 @@ const CourseManagement = () => {
                       </div>
                       <div className="flex justify-between gap-2">
                         <span className="text-muted-foreground">Refundable</span>
-                        <span className="text-destructive font-semibold uppercase tracking-wider text-[10px]">No</span>
+                        <span className="text-success font-semibold uppercase tracking-wider text-[10px]">If cancelled ≥48h before start</span>
                       </div>
                       {listingCharge?.note && (
                         <div className="text-[10px] text-muted-foreground italic pt-1 border-t border-primary/20">
