@@ -16,7 +16,7 @@ const Welcome = () => {
 
       <div className="relative z-10 flex-1 flex flex-col px-6 pt-16 pb-10 max-w-md w-full mx-auto">
         <button
-          onClick={() => nav(-1)}
+          onClick={() => nav("/")}
           aria-label="Back"
           className="inline-flex items-center justify-center h-11 w-11 -ml-2 rounded-full text-foreground hover:bg-foreground/10 transition-colors"
         >
