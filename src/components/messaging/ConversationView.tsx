@@ -42,6 +42,7 @@ export const ConversationView = ({ variant }: Props) => {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [gateBlocked, setGateBlocked] = useState(false);
+  const [cancelledLock, setCancelledLock] = useState<null | 'student' | 'instructor' | 'generic'>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Resolve / create conversation
