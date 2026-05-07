@@ -44,6 +44,7 @@ const InstructorSignUp = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [rawPhoto, setRawPhoto] = useState<File | null>(null);
   const [adjusterOpen, setAdjusterOpen] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Restore any saved draft so the user can resume after a refresh.
@@ -61,7 +62,33 @@ const InstructorSignUp = () => {
       setPhotoFile(d.photo);
       setPhotoPreview(URL.createObjectURL(d.photo));
     }
+    if (d.firstName || d.lastName || d.email || d.bio) {
+      setDraftRestored(true);
+    }
   }, []);
+
+  // Auto-save text fields to the draft as the user types so progress
+  // survives a refresh even before they hit "Apply as Instructor".
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const patch = {
+        firstName: first,
+        lastName: last,
+        email,
+        password,
+        state,
+        bio,
+        referralCode: referralCode || undefined,
+        influencerSlug: influencerSlug || undefined,
+      };
+      if (hasInstructorDraft()) {
+        updateInstructorDraft(patch);
+      } else if (first || last || email || bio) {
+        setInstructorDraft({ ...patch, photo: photoFile ?? undefined });
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [first, last, email, password, state, bio, referralCode, influencerSlug, photoFile]);
 
   const onPickPhoto = (f: File | null | undefined) => {
     if (!f) return;
