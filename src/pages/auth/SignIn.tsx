@@ -7,6 +7,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/MobileShell';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable/index';
 import { useAuth, homeForRole } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -75,14 +76,23 @@ const SignIn = () => {
   };
 
   const handleGoogle = async () => {
+    if (loading) return;
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) {
+    try {
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin,
+      });
+      if (result.redirected) return; // browser is navigating to Google
+      if (result.error) {
+        setLoading(false);
+        toast.error(result.error.message || 'Could not start Google sign-in');
+        return;
+      }
+      // Tokens received and session set — redirect handled by useEffect once
+      // primaryRole resolves from AuthContext.
+    } catch (e) {
       setLoading(false);
-      toast.error(error.message);
+      toast.error(e instanceof Error ? e.message : 'Google sign-in failed');
     }
   };
 
