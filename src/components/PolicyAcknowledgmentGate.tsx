@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ShieldCheck, Lock } from "lucide-react";
+import { Loader2, ShieldCheck, Lock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import splashBg from "@/assets/splash-bg.mp4.asset.json";
 
@@ -85,6 +85,18 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
         />
         <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
         <div className="relative z-10 max-w-md w-full bg-card border border-border rounded-2xl p-6 space-y-5">
+          <button
+            type="button"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/";
+            }}
+            aria-label="Back"
+            className="inline-flex items-center gap-1.5 -ml-1 -mt-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
               <ShieldCheck className="h-5 w-5 text-primary" />
