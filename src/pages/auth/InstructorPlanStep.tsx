@@ -63,10 +63,7 @@ const InstructorPlanStep = () => {
             </ul>
           </div>
 
-          <div className="tactical-card p-5 space-y-3 border-primary/30 opacity-70 relative">
-            <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-sm flex items-center gap-1">
-              <Lock className="h-3 w-3" /> After signup
-            </span>
+          <div className="tactical-card p-5 space-y-3 border-primary/30">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center">
                 <Crown className="h-5 w-5 text-primary" />
@@ -76,9 +73,12 @@ const InstructorPlanStep = () => {
                 <div className="text-xs text-muted-foreground">{fmt(INSTRUCTOR_SUBSCRIPTION_CENTS)} / month</div>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              You can upgrade to Pro from Settings once your account is active.
-            </p>
+            <ul className="text-xs text-muted-foreground space-y-1.5 pl-1">
+              <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> Everything in Free</li>
+              <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> <strong className="text-foreground">AI course builder:</strong> auto-suggest titles, descriptions, waivers</li>
+              <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> AI-powered fee insights & payout summaries</li>
+              <li className="flex gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> Local demand & instructor analytics</li>
+            </ul>
           </div>
 
           <Button onClick={choose} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
