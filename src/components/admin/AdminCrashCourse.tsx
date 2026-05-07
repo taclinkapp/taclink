@@ -63,8 +63,9 @@ export const AdminCrashCourse = () => {
   if (!course) return null;
 
   const total = course.steps.length;
-  const current: CrashStep = course.steps[step];
-  const isLast = step === total - 1;
+  const current: CrashStep | undefined = course.steps[step];
+  const isLast = step >= total - 1;
+  if (!current) return null;
 
   const close = (markComplete: boolean) => {
     if (markComplete) markSeen(course.id);
