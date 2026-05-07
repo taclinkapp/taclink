@@ -224,6 +224,14 @@ const BookingDetail = () => {
   const courseStarted =
     !!c.starts_at && new Date(c.starts_at).getTime() < Date.now();
   const inGraceWindow = !!cancelDeadline(c.starts_at, b.booked_at, b.cancellation_cutoff_hours);
+  const isCancelled = b.status === 'cancelled';
+  // Full refund if the deposit was refunded (timely cancel or instructor cancel),
+  // otherwise late-cancel rule: 90% of the course price returned.
+  const refundCents = isCancelled
+    ? (b.deposit_status === 'refunded'
+        ? b.online_total_cents
+        : Math.round(b.course_price_cents * 0.9))
+    : 0;
 
   return (
     <MobileShell withTabBar={false}>
