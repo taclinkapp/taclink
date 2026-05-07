@@ -6,6 +6,7 @@ import { loadQuizLocal } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseCard } from "@/components/CourseCard";
+import { dbToViewCourse, type DbCourse } from "@/lib/courses";
 
 const TrainingPlan = () => {
   const nav = useNavigate();
@@ -21,8 +22,9 @@ const TrainingPlan = () => {
         q = q.in("primary_pillar", answers.selected_pillars as any);
       }
       const { data, count: c } = await q.limit(3);
-      setPreviewCourses((data as any) ?? []);
-      setCount(c ?? (data?.length ?? 0));
+      const rows = (data as DbCourse[]) ?? [];
+      setPreviewCourses(rows.map((r) => dbToViewCourse(r)));
+      setCount(c ?? rows.length);
     })();
   }, [answers.selected_pillars]);
 
