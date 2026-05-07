@@ -534,6 +534,8 @@ const InstructorRoster = () => {
                           />
                         </div>
                       )}
+                        </>
+                      )}
                     </li>
                   );
                 })}
