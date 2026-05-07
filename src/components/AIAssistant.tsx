@@ -225,10 +225,11 @@ export function AIAssistant({ role }: { role: Role }) {
   );
 }
 
-// Replace [placeholder] tokens with inline editable inputs.
-// Each unique placeholder label is one shared input across the message.
-function useBlankRenderer(content: string, blanks: Record<string, string>, setBlank: (k: string, v: string) => void) {
-  const renderChildren = (children: React.ReactNode): React.ReactNode => {
+// Replace [placeholder] tokens with inline uncontrolled inputs.
+// We use a ref-backed store so typing does not trigger re-renders
+// (which would otherwise remount the input and steal focus after 1 char).
+function makeBlankRenderer(blanksRef: React.MutableRefObject<Record<string, string>>) {
+  const render = (children: React.ReactNode): React.ReactNode => {
     return React.Children.map(children, (child, idx) => {
       if (typeof child === "string") {
         const parts = child.split(/(\[[^\]\n]{1,60}\])/g);
@@ -237,14 +238,17 @@ function useBlankRenderer(content: string, blanks: Record<string, string>, setBl
           const m = part.match(/^\[([^\]\n]{1,60})\]$/);
           if (!m) return <React.Fragment key={i}>{part}</React.Fragment>;
           const key = m[1].trim().toLowerCase();
-          const val = blanks[key] ?? "";
-          const width = Math.max(key.length, val.length, 6) + 2;
+          const initial = blanksRef.current[key] ?? "";
+          const width = Math.max(key.length, initial.length, 8) + 2;
           return (
             <input
-              key={`${idx}-${i}-${key}`}
+              key={`blank-${key}-${idx}-${i}`}
               type="text"
-              value={val}
-              onChange={(e) => setBlank(key, e.target.value)}
+              defaultValue={initial}
+              onChange={(e) => {
+                blanksRef.current[key] = e.target.value;
+                // sync any sibling inputs with the same key on blur instead of every keystroke
+              }}
               placeholder={key}
               style={{ width: `${width}ch` }}
               className="inline-block mx-0.5 px-1.5 py-0.5 rounded border border-primary/40 bg-primary/5 text-foreground placeholder:text-muted-foreground/70 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -254,13 +258,13 @@ function useBlankRenderer(content: string, blanks: Record<string, string>, setBl
       }
       if (React.isValidElement(child) && (child as any).props?.children) {
         return React.cloneElement(child as any, {
-          children: renderChildren((child as any).props.children),
+          children: render((child as any).props.children),
         });
       }
       return child;
     });
   };
-  return renderChildren;
+  return render;
 }
 
 function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => void }) {
