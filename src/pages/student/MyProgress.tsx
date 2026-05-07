@@ -49,6 +49,8 @@ const MyProgress = () => {
       </header>
 
       <div className="px-4 py-4 pb-32 space-y-5">
+        {/* Operator Profile preview */}
+        <OperatorProfileMini studentId={user?.id} linkTo="/student/operator" />
         {/* Stats */}
         <section className="grid grid-cols-3 gap-3">
           <StatCard icon={CheckCircle2} value={attended.length} label="Attended" />
