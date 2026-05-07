@@ -10,6 +10,7 @@ import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstructorCourses } from '@/hooks/useCourses';
 import { supabase } from '@/integrations/supabase/client';
+import { getAvatarSrc } from '@/lib/avatar';
 
 const InstructorProfile = () => {
   const nav = useNavigate();
@@ -17,7 +18,7 @@ const InstructorProfile = () => {
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const displayName = profile?.display_name ?? 'Instructor';
-  const avatarSrc = profile?.photo_url ?? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`;
+  const avatarSrc = getAvatarSrc(profile?.photo_url, displayName);
   const city = (profile as any)?.city ?? '';
   const state = (profile as any)?.state ?? '';
   const bio = (profile as any)?.bio ?? '';
