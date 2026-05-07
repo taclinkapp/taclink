@@ -190,6 +190,7 @@ export const AdminLayout = () => {
         <Outlet />
       </main>
       <AdminAIPanel />
+      <AdminCrashCourse />
 
       <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
         <AlertDialogContent>
