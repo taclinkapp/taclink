@@ -224,27 +224,37 @@ const BookingDetail = () => {
   const courseStarted =
     !!c.starts_at && new Date(c.starts_at).getTime() < Date.now();
   const inGraceWindow = !!cancelDeadline(c.starts_at, b.booked_at, b.cancellation_cutoff_hours);
+  const isCancelled = b.status === 'cancelled';
+  // Full refund if the deposit was refunded (timely cancel or instructor cancel),
+  // otherwise late-cancel rule: 90% of the course price returned.
+  const refundCents = isCancelled
+    ? (b.deposit_status === 'refunded'
+        ? b.online_total_cents
+        : Math.round(b.course_price_cents * 0.9))
+    : 0;
 
   return (
     <MobileShell withTabBar={false}>
       <PageHeader title="Booking Detail" back backTo="/student/bookings" />
       <div className="px-4 py-4 space-y-4">
-        <div className="tactical-card p-4">
-          <h2 className="font-bold mb-3">{c.title}</h2>
-          <div className="space-y-2 text-xs text-muted-foreground">
-            {c.starts_at && (
-              <>
-                <div className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5 text-primary" />{new Date(c.starts_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
-                <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-primary" />{new Date(c.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{c.ends_at ? ` – ${new Date(c.ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}</div>
-              </>
-            )}
-            {(c.address || c.city) && (
-              <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-primary" />{[c.address, c.city, c.state].filter(Boolean).join(', ')}</div>
-            )}
+        {!isCancelled && (
+          <div className="tactical-card p-4">
+            <h2 className="font-bold mb-3">{c.title}</h2>
+            <div className="space-y-2 text-xs text-muted-foreground">
+              {c.starts_at && (
+                <>
+                  <div className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5 text-primary" />{new Date(c.starts_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+                  <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-primary" />{new Date(c.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{c.ends_at ? ` – ${new Date(c.ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}</div>
+                </>
+              )}
+              {(c.address || c.city) && (
+                <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-primary" />{[c.address, c.city, c.state].filter(Boolean).join(', ')}</div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {instructor && (
+        {!isCancelled && instructor && (
           <div className="tactical-card p-4 flex items-center gap-3">
             {instructor.photo_url ? (
               <img src={instructor.photo_url} alt={instructor.display_name ?? 'Instructor'} className="h-12 w-12 rounded-full object-cover border-2 border-primary" />
@@ -268,8 +278,22 @@ const BookingDetail = () => {
         {/* Payment summary */}
         <div className="tactical-card p-4">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-            <Wallet className="h-3.5 w-3.5" /> Payment
+            <Wallet className="h-3.5 w-3.5" /> {isCancelled ? 'Refund' : 'Payment'}
           </div>
+          {isCancelled ? (
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-muted-foreground">Refund amount</span>
+                <span className="text-2xl font-black text-emerald-500">{fmt(refundCents)}</span>
+              </div>
+              <div className="text-xs text-muted-foreground leading-relaxed">
+                {refundCents === b.online_total_cents
+                  ? 'Full refund — $25 platform fee + course price returned to your card.'
+                  : '90% of course price refunded (late cancel — instructor keeps 10%, $25 fee non-refundable).'}
+                {' '}Posts back in <strong className="text-foreground">5–10 business days</strong> depending on your bank.
+              </div>
+            </div>
+          ) : (
           <div className="space-y-1.5 text-sm">
             <Row label="Course price" value={fmt(b.course_price_cents)} muted />
             <Row label="TacLink platform fee" value={fmt(b.platform_fee_cents)} muted />
@@ -305,13 +329,16 @@ const BookingDetail = () => {
               <div className="mt-3 text-xs text-muted-foreground">In-person balance marked paid {new Date(b.in_person_paid_at).toLocaleDateString()}.</div>
             )}
           </div>
+          )}
         </div>
 
-        <div ref={attendanceRef} id="attendance-claim" className="scroll-mt-24">
-          <AttendanceClaimResponse bookingId={b.id} />
-        </div>
+        {!isCancelled && (
+          <div ref={attendanceRef} id="attendance-claim" className="scroll-mt-24">
+            <AttendanceClaimResponse bookingId={b.id} />
+          </div>
+        )}
 
-        <WaiverAuditTrail bookingId={b.id} />
+        {!isCancelled && <WaiverAuditTrail bookingId={b.id} />}
 
         {upcoming && (b.deposit_status === 'held_in_escrow' || b.deposit_status === 'confirmed') && (
           <div className="tactical-card p-5 text-center">
