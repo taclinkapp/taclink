@@ -103,6 +103,14 @@ export const MissionCompleteWatcher = () => {
       setPayload({ awards: burst, beforeTotals: before, afterTotals: after });
       setOpen(true);
       qc.invalidateQueries({ queryKey: ["operator-profile", user.id] });
+      // Mark "first completion" onboarding step (best-effort, ignores errors).
+      (supabase as any)
+        .from("student_onboarding")
+        .update({ checklist: { profile_created: true, browsed_courses: true, followed_instructor: false, first_booking: true, first_completion: true, shared_profile: false } })
+        .eq("user_id", user.id)
+        .select("checklist")
+        .maybeSingle()
+        .then(() => {/* ignore */});
     };
 
     seed().then(() => {
