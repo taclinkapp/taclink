@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Sparkles, X, Send, Loader2, Copy, Check, Pencil, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -225,18 +225,67 @@ export function AIAssistant({ role }: { role: Role }) {
   );
 }
 
+// Replace [placeholder] tokens with inline editable inputs.
+// Each unique placeholder label is one shared input across the message.
+function useBlankRenderer(content: string, blanks: Record<string, string>, setBlank: (k: string, v: string) => void) {
+  const renderChildren = (children: React.ReactNode): React.ReactNode => {
+    return React.Children.map(children, (child, idx) => {
+      if (typeof child === "string") {
+        const parts = child.split(/(\[[^\]\n]{1,60}\])/g);
+        if (parts.length === 1) return child;
+        return parts.map((part, i) => {
+          const m = part.match(/^\[([^\]\n]{1,60})\]$/);
+          if (!m) return <React.Fragment key={i}>{part}</React.Fragment>;
+          const key = m[1].trim().toLowerCase();
+          const val = blanks[key] ?? "";
+          const width = Math.max(key.length, val.length, 6) + 2;
+          return (
+            <input
+              key={`${idx}-${i}-${key}`}
+              type="text"
+              value={val}
+              onChange={(e) => setBlank(key, e.target.value)}
+              placeholder={key}
+              style={{ width: `${width}ch` }}
+              className="inline-block mx-0.5 px-1.5 py-0.5 rounded border border-primary/40 bg-primary/5 text-foreground placeholder:text-muted-foreground/70 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          );
+        });
+      }
+      if (React.isValidElement(child) && (child as any).props?.children) {
+        return React.cloneElement(child as any, {
+          children: renderChildren((child as any).props.children),
+        });
+      }
+      return child;
+    });
+  };
+  return renderChildren;
+}
+
 function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => void }) {
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(msg.content);
+  const [blanks, setBlanks] = useState<Record<string, string>>({});
   const isUser = msg.role === "user";
 
   useEffect(() => {
     if (!editing) setDraft(msg.content);
   }, [msg.content, editing]);
 
+  const setBlank = (k: string, v: string) => setBlanks((p) => ({ ...p, [k]: v }));
+
+  const filled = (text: string) =>
+    text.replace(/\[([^\]\n]{1,60})\]/g, (_, raw) => {
+      const k = String(raw).trim().toLowerCase();
+      const v = blanks[k];
+      return v && v.trim() ? v : `[${raw}]`;
+    });
+
   const copy = async () => {
-    await navigator.clipboard.writeText(editing ? draft : msg.content);
+    const base = editing ? draft : msg.content;
+    await navigator.clipboard.writeText(filled(base));
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -246,6 +295,21 @@ function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => v
     setEditing(false);
     toast.success("Draft updated");
   };
+
+  const renderWithBlanks = useBlankRenderer(msg.content, blanks, setBlank);
+
+  const mdComponents = !isUser
+    ? {
+        p: ({ children }: any) => <p>{renderWithBlanks(children)}</p>,
+        li: ({ children }: any) => <li>{renderWithBlanks(children)}</li>,
+        strong: ({ children }: any) => <strong>{renderWithBlanks(children)}</strong>,
+        em: ({ children }: any) => <em>{renderWithBlanks(children)}</em>,
+        h1: ({ children }: any) => <h1>{renderWithBlanks(children)}</h1>,
+        h2: ({ children }: any) => <h2>{renderWithBlanks(children)}</h2>,
+        h3: ({ children }: any) => <h3>{renderWithBlanks(children)}</h3>,
+        td: ({ children }: any) => <td>{renderWithBlanks(children)}</td>,
+      }
+    : undefined;
 
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
@@ -290,7 +354,7 @@ function MessageBubble({ msg, onEdit }: { msg: Msg; onEdit?: (next: string) => v
         ) : (
           <>
             <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-semibold [&_code]:text-xs">
-              <ReactMarkdown>{msg.content}</ReactMarkdown>
+              <ReactMarkdown components={mdComponents as any}>{msg.content}</ReactMarkdown>
             </div>
             {msg.content && (
               <div className="mt-2 flex items-center gap-3">
