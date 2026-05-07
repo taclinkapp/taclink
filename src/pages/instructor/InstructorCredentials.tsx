@@ -154,8 +154,7 @@ const InstructorCredentials = () => {
             <div>
               <p className="text-sm font-bold">AI-verified credentials boost trust</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Upload a clear photo of your certification. Our AI scans for issuer,
-                holder name, and expiration; high-confidence matches are auto-approved.
+                Upload a clear photo of your certification. Our AI cross-references publicly available data from issuers and registries to confirm authenticity; high-confidence matches are auto-approved.
               </p>
             </div>
           </div>
