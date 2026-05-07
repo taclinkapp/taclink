@@ -6,6 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Upload, Clock, ShieldCheck, Camera, ImageIcon, FileText, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const options = [
   { id: 'nra', label: 'NRA Certified Instructor' },
