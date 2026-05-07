@@ -11,6 +11,7 @@ import { lovable } from '@/integrations/lovable/index';
 import { useAuth, homeForRole } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const SignIn = () => {
   const nav = useNavigate();
