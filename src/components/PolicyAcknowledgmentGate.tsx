@@ -89,7 +89,7 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
             type="button"
             onClick={async () => {
               await supabase.auth.signOut();
-              window.location.href = "/";
+              window.location.href = "/auth/instructor-signup";
             }}
             aria-label="Back"
             className="inline-flex items-center gap-1.5 -ml-1 -mt-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
