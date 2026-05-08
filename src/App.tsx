@@ -99,6 +99,7 @@ import AdminHelcimWebhooks from "./pages/admin/AdminHelcimWebhooks";
 import AdminRefundTest from "./pages/admin/AdminRefundTest";
 import AdminUptime from "./pages/admin/AdminUptime";
 import AdminBackgroundVideos from "./pages/admin/AdminBackgroundVideos";
+import AdminDepositReview from "./pages/admin/AdminDepositReview";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
