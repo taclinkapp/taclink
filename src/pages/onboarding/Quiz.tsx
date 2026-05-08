@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PILLARS, type PillarId } from "@/lib/pillars";
+import quizStep1Bg from "@/assets/quiz-step1-bg.mp4";
 import {
   loadQuizLocal,
   saveQuizLocal,
@@ -95,7 +96,18 @@ const Quiz = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      {step === 1 && (
+        <>
+          <video
+            src={quizStep1Bg}
+            autoPlay loop muted playsInline aria-hidden
+            className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none z-0"
+          />
+          <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none z-0" />
+        </>
+      )}
+      <div className="relative z-10 flex flex-col flex-1">
       {/* Progress bar */}
       <div className="h-1 w-full bg-muted">
         <div
@@ -182,6 +194,7 @@ const Quiz = () => {
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );
