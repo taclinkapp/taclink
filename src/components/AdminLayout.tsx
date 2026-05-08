@@ -59,6 +59,7 @@ const items: Item[] = [
   { to: '/admin/uptime', icon: Activity, label: 'Uptime & Domains' },
   { to: '/admin/background-videos', icon: Film, label: 'Background Videos' },
   { to: '/admin/subscription-plans', icon: Package, label: 'Subscription Plans' },
+  { to: '/auth/change-password', icon: KeyRound, label: 'Change Password' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
