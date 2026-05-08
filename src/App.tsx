@@ -98,6 +98,7 @@ import AdminSecurity from "./pages/admin/AdminSecurity";
 import AdminHelcimWebhooks from "./pages/admin/AdminHelcimWebhooks";
 import AdminRefundTest from "./pages/admin/AdminRefundTest";
 import AdminUptime from "./pages/admin/AdminUptime";
+import AdminBackgroundVideos from "./pages/admin/AdminBackgroundVideos";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
