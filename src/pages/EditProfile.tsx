@@ -188,11 +188,23 @@ const EditProfile = () => {
           setUploadProgress(Math.round((e.loaded / e.total) * 100));
         }
       };
-      xhr.onload = () => {
+      xhr.onload = async () => {
         xhrRef.current = null;
         if (xhr.status >= 200 && xhr.status < 300) {
           const { data: pub } = supabase.storage.from(PROFILE_BUCKET).getPublicUrl(path);
           update('photo_url', pub.publicUrl);
+          // Auto-persist photo to the profile so it shows up everywhere
+          // immediately, even if the user navigates away before tapping Save.
+          try {
+            const { error: persistErr } = await supabase
+              .from('profiles')
+              .update({ photo_url: pub.publicUrl })
+              .eq('id', user.id);
+            if (persistErr) throw persistErr;
+            await refreshProfile();
+          } catch (err: any) {
+            return reject(new Error(err?.message || 'Could not save photo to profile'));
+          }
           resolve();
         } else {
           reject(new Error(`Upload failed (${xhr.status})`));
@@ -228,7 +240,7 @@ const EditProfile = () => {
       await uploadWithProgress(file);
       setUploading(false);
       setUploadProgress(100);
-      toast.success('Photo uploaded — remember to save');
+      toast.success('Photo saved');
     } catch (err: any) {
       setUploading(false);
       setUploadError(err?.message || 'Upload failed');
@@ -244,12 +256,20 @@ const EditProfile = () => {
     xhrRef.current?.abort();
   };
 
-  const removePhoto = () => {
+  const removePhoto = async () => {
     update('photo_url', '');
     setUploadError(null);
     setUploadProgress(0);
     setLastFile(null);
-    toast.message('Photo removed — remember to save');
+    if (user?.id) {
+      const { error } = await supabase.from('profiles').update({ photo_url: null }).eq('id', user.id);
+      if (error) {
+        toast.error('Could not remove photo', { description: error.message });
+        return;
+      }
+      await refreshProfile();
+    }
+    toast.message('Photo removed');
   };
 
   const submit = async () => {
