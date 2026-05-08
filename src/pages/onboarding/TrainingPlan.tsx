@@ -61,15 +61,36 @@ const TrainingPlan = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span className="inline-block text-[0.625rem] font-bold uppercase tracking-[0.25em] text-primary">
-          Training Plan
-        </span>
-        <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight">
-          Your Training Plan Is Ready
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Built around the pillars you picked. You can change these any time from your Operator Profile.
-        </p>
+
+        {/* Animated hero */}
+        <div className="relative -mx-6 mb-2 overflow-hidden rounded-b-3xl border-b border-border/40 bg-gradient-to-br from-primary/15 via-primary/5 to-background px-6 pt-4 pb-8">
+          <div aria-hidden className="pointer-events-none absolute -top-16 -left-10 h-48 w-48 rounded-full bg-primary/25 blur-3xl animate-pulse" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-20 -right-10 h-56 w-56 rounded-full bg-primary/15 blur-3xl animate-pulse"
+            style={{ animationDuration: "4s", animationDelay: "0.6s" }}
+          />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent animate-[slide-in-right_2.4s_ease-in-out_infinite]" />
+
+          <div className="relative animate-fade-in">
+            <span className="inline-flex items-center gap-2 text-[0.625rem] font-bold uppercase tracking-[0.25em] text-primary">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+              </span>
+              Training Plan
+            </span>
+            <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight">
+              Your Training Plan{" "}
+              <span className="bg-gradient-to-r from-primary via-primary to-primary/60 bg-clip-text text-transparent">
+                Is Ready
+              </span>
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Built around the pillars you picked. You can change these any time from your Operator Profile.
+            </p>
+          </div>
+        </div>
 
         {/* Pillars grid */}
         <div className="mt-6 grid grid-cols-3 gap-2">
