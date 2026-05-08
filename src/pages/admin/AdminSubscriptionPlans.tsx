@@ -256,6 +256,9 @@ export default function AdminSubscriptionPlans() {
                 <Input value={featureDraft} onChange={(e) => setFeatureDraft(e.target.value)} placeholder="Unlimited course listings"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addFeature(); } }} />
                 <Button type="button" onClick={addFeature}>Add</Button>
+                <Button type="button" variant="outline" onClick={runBrainstorm} disabled={brainstorming} title="AI brainstorms feature ideas for this plan">
+                  {brainstorming ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Lightbulb className="h-4 w-4 mr-1" />Brainstorm</>}
+                </Button>
               </div>
               {editing.features.length > 0 && (
                 <ul className="mt-2 space-y-1">
@@ -266,6 +269,30 @@ export default function AdminSubscriptionPlans() {
                     </li>
                   ))}
                 </ul>
+              )}
+              {brainstorm && (
+                <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold">
+                    <Lightbulb className="h-3.5 w-3.5 text-primary" /> AI suggestions — tap to add
+                  </div>
+                  {brainstorm.rationale && <p className="text-[11px] text-muted-foreground italic">{brainstorm.rationale}</p>}
+                  {brainstorm.features.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">All suggestions added.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {brainstorm.features.map((f, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => addBrainstormFeature(f)}
+                          className="text-xs bg-background hover:bg-primary hover:text-primary-foreground border border-border rounded px-2 py-1 transition"
+                        >
+                          + {f}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </Field>
 
