@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Plus, Trash2, Sparkles, X, AlertTriangle, Check } from 'lucide-react';
+import { Loader2, Plus, Trash2, Sparkles, X, AlertTriangle, Check, Lock, Unlock, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Plan = {
@@ -26,13 +26,15 @@ type Plan = {
   highlight: boolean;
   sort_order: number;
   active: boolean;
+  locked?: boolean;
+  locked_reason?: string | null;
   ai_validation?: any;
 };
 
 const BLANK: Plan = {
   slug: '', name: '', description: '', audience: 'instructor',
   price_cents: 0, currency: 'USD', billing_interval: 'month',
-  features: [], highlight: false, sort_order: 0, active: true,
+  features: [], highlight: false, sort_order: 0, active: true, locked: false,
 };
 
 export default function AdminSubscriptionPlans() {
