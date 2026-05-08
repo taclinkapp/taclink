@@ -192,7 +192,9 @@ Deno.serve(async (req) => {
         ai_issuer: result.issuer ?? null,
         ai_holder_name: result.holder_name ?? null,
         ai_expires_on: expiresOn,
-        ai_reasons: result.reasons ?? null,
+        ai_name_match_score: nameMatch,
+        ai_decided_at: new Date().toISOString(),
+        ai_reasons: (result.reasons ?? "") + reasonAddon,
         ai_raw: data,
       })
       .eq("id", credentialId);
