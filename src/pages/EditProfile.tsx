@@ -256,12 +256,20 @@ const EditProfile = () => {
     xhrRef.current?.abort();
   };
 
-  const removePhoto = () => {
+  const removePhoto = async () => {
     update('photo_url', '');
     setUploadError(null);
     setUploadProgress(0);
     setLastFile(null);
-    toast.message('Photo removed — remember to save');
+    if (user?.id) {
+      const { error } = await supabase.from('profiles').update({ photo_url: null }).eq('id', user.id);
+      if (error) {
+        toast.error('Could not remove photo', { description: error.message });
+        return;
+      }
+      await refreshProfile();
+    }
+    toast.message('Photo removed');
   };
 
   const submit = async () => {
