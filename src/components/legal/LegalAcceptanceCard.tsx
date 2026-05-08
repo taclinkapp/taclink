@@ -83,7 +83,11 @@ export const LegalAcceptanceCard = ({ onAcceptedChange }: { onAcceptedChange?: (
     toast.success('Acceptance recorded');
   };
 
-  const allAccepted = !!privacyAck && !!termsAck;
+  // For unauthenticated/pre-signup flows, treat both boxes checked as
+  // acceptance — the parent flow will record the ack after auth exists.
+  const allAccepted = user?.id
+    ? !!privacyAck && !!termsAck
+    : privacyChecked && termsChecked;
 
   useEffect(() => {
     onAcceptedChange?.(allAccepted);
