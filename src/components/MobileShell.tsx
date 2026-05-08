@@ -38,10 +38,12 @@ export const PageHeader = ({
   const { depthRef } = useNavHistory();
   const handleBack = () => {
     if (onBack) return onBack();
-    // Prefer real browser history so users always return to the page they
-    // actually came from. Fall back to backTo / home for deep links.
-    if (depthRef.current > 0) return navigate(-1);
+    // Prefer the explicit destination — it's the page author's source of
+    // truth and is reliable even when prior navigations used `replace: true`
+    // (which still bumps in-app nav depth but doesn't add a real history
+    // entry to step back to).
     if (backTo) return navigate(backTo);
+    if (depthRef.current > 0) return navigate(-1);
     navigate('/');
   };
   return (
