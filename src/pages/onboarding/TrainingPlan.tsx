@@ -53,8 +53,14 @@ const TrainingPlan = () => {
 
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <div className="max-w-md mx-auto px-6 pt-6">
+    <div className="relative min-h-screen bg-background pb-32 overflow-hidden">
+      <video
+        src={trainingPlanBg}
+        autoPlay loop muted playsInline aria-hidden
+        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none z-0"
+      />
+      <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none z-0" />
+      <div className="relative z-10 max-w-md mx-auto px-6 pt-6">
         <button
           onClick={() => nav("/welcome/quiz")}
           aria-label="Back"
