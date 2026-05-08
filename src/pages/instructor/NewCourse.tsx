@@ -71,6 +71,34 @@ const NewCourse = () => {
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [credStatus, setCredStatus] = useState<'pending' | 'needs_review' | 'rejected' | 'approved' | 'expired' | 'none' | null>(null);
+  const [credWarnOpen, setCredWarnOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user || skipPublishGuards) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('instructor_credentials')
+        .select('status, ai_expires_on')
+        .eq('instructor_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      const status = (data?.status as any) ?? 'none';
+      const expired = data?.ai_expires_on && new Date(data.ai_expires_on) < new Date();
+      const effective = expired ? 'expired' : status;
+      setCredStatus(effective);
+      if (effective !== 'approved') {
+        const dismissedKey = `credWarnDismissed:${user.id}`;
+        if (!sessionStorage.getItem(dismissedKey)) {
+          setCredWarnOpen(true);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, skipPublishGuards]);
 
   useEffect(() => {
     if (!user) return;
