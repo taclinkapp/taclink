@@ -30,10 +30,18 @@ const InstructorSubscription = () => {
   const { data: prelaunch, isLoading: prelaunchLoading } = usePrelaunch();
   const { subscription, isActive, isCanceledGrace, isPastDue, loading: subLoading, refetch } = useSubscription();
   const { provider: activeProvider } = useActivePaymentProvider();
-  // Pro subscriptions currently only run on the legacy rail. When the
-  // platform is on Helcim, hide the upgrade dialog entirely so Stripe never
-  // appears in the instructor UI. Admins can re-enable via the failover card.
   const subscriptionsEnabled = activeProvider !== 'helcim';
+  const { data: proPlan } = useQuery({
+    queryKey: ['plan', PRICE_ID],
+    queryFn: async () => {
+      const { data } = await supabase.from('subscription_plans' as any)
+        .select('locked, locked_reason, active').eq('slug', PRICE_ID).maybeSingle();
+      return (data ?? null) as { locked: boolean; locked_reason: string | null; active: boolean } | null;
+    },
+    staleTime: 30_000,
+  });
+  const proLocked = !!(proPlan?.locked || (proPlan && proPlan.active === false));
+  const proLockReason = proPlan?.locked_reason ?? 'This plan is temporarily unavailable.';
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [portalBusy, setPortalBusy] = useState(false);
   const [legalAccepted, setLegalAccepted] = useState(false);
