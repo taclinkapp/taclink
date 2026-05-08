@@ -72,8 +72,11 @@ const StudentSettings = () => {
           <button onClick={() => setSignOutOpen(true)} className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive font-bold text-sm hover:bg-destructive/10">
             <LogOut className="h-4 w-4" /> Sign Out
           </button>
-          <button className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive/70 font-semibold text-xs hover:bg-destructive/10">
-            <Trash2 className="h-3.5 w-3.5" /> Delete Account
+          <button
+            onClick={() => nav('/support/contact?subject=Delete%20my%20account')}
+            className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive/70 font-semibold text-xs hover:bg-destructive/10"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Request Account Deletion
           </button>
         </div>
       </div>
