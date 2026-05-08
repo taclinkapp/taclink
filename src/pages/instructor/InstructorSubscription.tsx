@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
@@ -29,10 +30,18 @@ const InstructorSubscription = () => {
   const { data: prelaunch, isLoading: prelaunchLoading } = usePrelaunch();
   const { subscription, isActive, isCanceledGrace, isPastDue, loading: subLoading, refetch } = useSubscription();
   const { provider: activeProvider } = useActivePaymentProvider();
-  // Pro subscriptions currently only run on the legacy rail. When the
-  // platform is on Helcim, hide the upgrade dialog entirely so Stripe never
-  // appears in the instructor UI. Admins can re-enable via the failover card.
   const subscriptionsEnabled = activeProvider !== 'helcim';
+  const { data: proPlan } = useQuery({
+    queryKey: ['plan', PRICE_ID],
+    queryFn: async () => {
+      const { data } = await supabase.from('subscription_plans' as any)
+        .select('locked, locked_reason, active').eq('slug', PRICE_ID).maybeSingle();
+      return (data ?? null) as unknown as { locked: boolean; locked_reason: string | null; active: boolean } | null;
+    },
+    staleTime: 30_000,
+  });
+  const proLocked = !!(proPlan?.locked || (proPlan && proPlan.active === false));
+  const proLockReason = proPlan?.locked_reason ?? 'This plan is temporarily unavailable.';
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [portalBusy, setPortalBusy] = useState(false);
   const [legalAccepted, setLegalAccepted] = useState(false);
@@ -186,12 +195,14 @@ const InstructorSubscription = () => {
           {!isActive ? (
             <Button
               onClick={() => setCheckoutOpen(true)}
-              disabled={isPrelaunch || !subscriptionsEnabled}
+              disabled={isPrelaunch || !subscriptionsEnabled || proLocked}
               data-testid="pro-upgrade-button"
               className="w-full h-11 bg-primary text-primary-foreground font-bold disabled:opacity-100"
             >
               {isPrelaunch ? (
                 <><Lock className="h-4 w-4 mr-1.5" />Available {launchDateStr ?? 'at launch'}</>
+              ) : proLocked ? (
+                <><Lock className="h-4 w-4 mr-1.5" />{proLockReason}</>
               ) : !subscriptionsEnabled ? (
                 <><Lock className="h-4 w-4 mr-1.5" />Pro upgrades temporarily unavailable</>
               ) : (

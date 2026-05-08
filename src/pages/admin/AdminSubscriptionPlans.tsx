@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Plus, Trash2, Sparkles, X, AlertTriangle, Check } from 'lucide-react';
+import { Loader2, Plus, Trash2, Sparkles, X, AlertTriangle, Check, Lock, Unlock, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Plan = {
@@ -26,13 +26,15 @@ type Plan = {
   highlight: boolean;
   sort_order: number;
   active: boolean;
+  locked?: boolean;
+  locked_reason?: string | null;
   ai_validation?: any;
 };
 
 const BLANK: Plan = {
   slug: '', name: '', description: '', audience: 'instructor',
   price_cents: 0, currency: 'USD', billing_interval: 'month',
-  features: [], highlight: false, sort_order: 0, active: true,
+  features: [], highlight: false, sort_order: 0, active: true, locked: false,
 };
 
 export default function AdminSubscriptionPlans() {
@@ -41,6 +43,8 @@ export default function AdminSubscriptionPlans() {
   const [featureDraft, setFeatureDraft] = useState('');
   const [saving, setSaving] = useState(false);
   const [validation, setValidation] = useState<any>(null);
+  const [brainstorming, setBrainstorming] = useState(false);
+  const [brainstorm, setBrainstorm] = useState<{ features: string[]; rationale: string } | null>(null);
 
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ['admin-subscription-plans'],
@@ -55,8 +59,8 @@ export default function AdminSubscriptionPlans() {
     },
   });
 
-  const startNew = () => { setEditing({ ...BLANK }); setValidation(null); };
-  const startEdit = (p: Plan) => { setEditing({ ...p, features: p.features ?? [] }); setValidation(p.ai_validation ?? null); };
+  const startNew = () => { setEditing({ ...BLANK }); setValidation(null); setBrainstorm(null); };
+  const startEdit = (p: Plan) => { setEditing({ ...p, features: p.features ?? [] }); setValidation(p.ai_validation ?? null); setBrainstorm(null); };
 
   const addFeature = () => {
     const f = featureDraft.trim();
@@ -109,6 +113,47 @@ export default function AdminSubscriptionPlans() {
     qc.invalidateQueries({ queryKey: ['admin-subscription-plans'] });
   };
 
+  const toggleLock = async (p: Plan) => {
+    const next = !p.locked;
+    let reason: string | null = p.locked_reason ?? null;
+    if (next) {
+      reason = window.prompt('Lock reason (shown to users when they try to subscribe):', reason ?? 'This plan is temporarily unavailable.');
+      if (reason === null) return;
+    }
+    const { error } = await supabase.from('subscription_plans' as any).update({
+      locked: next,
+      locked_reason: next ? reason : null,
+      locked_at: next ? new Date().toISOString() : null,
+    }).eq('id', p.id!);
+    if (error) return toast.error(error.message);
+    toast.success(next ? 'Plan locked — users can no longer choose it' : 'Plan unlocked');
+    qc.invalidateQueries({ queryKey: ['admin-subscription-plans'] });
+  };
+
+  const runBrainstorm = async () => {
+    if (!editing) return;
+    setBrainstorming(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('subscription-plan-ai', {
+        body: { action: 'brainstorm', plan: editing },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setBrainstorm({ features: data.features ?? [], rationale: data.rationale ?? '' });
+    } catch (e: any) {
+      toast.error(e.message ?? 'Brainstorm failed');
+    } finally {
+      setBrainstorming(false);
+    }
+  };
+
+  const addBrainstormFeature = (f: string) => {
+    if (!editing) return;
+    if (editing.features.includes(f)) return;
+    setEditing({ ...editing, features: [...editing.features, f] });
+    setBrainstorm((b) => b ? { ...b, features: b.features.filter((x) => x !== f) } : b);
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -134,11 +179,15 @@ export default function AdminSubscriptionPlans() {
                     <Badge variant="outline">{p.audience}</Badge>
                     {p.highlight && <Badge>Highlighted</Badge>}
                     {!p.active && <Badge variant="destructive">Inactive</Badge>}
+                    {p.locked && <Badge variant="destructive" className="gap-1"><Lock className="h-3 w-3" />Locked</Badge>}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {p.slug} · ${(p.price_cents / 100).toFixed(2)}/{p.billing_interval}
                   </div>
                   {p.description && <p className="text-sm mt-2">{p.description}</p>}
+                  {p.locked && p.locked_reason && (
+                    <p className="text-xs mt-1 text-destructive">Lock reason: {p.locked_reason}</p>
+                  )}
                   {p.features?.length > 0 && (
                     <ul className="mt-2 text-xs space-y-0.5">
                       {p.features.map((f, i) => <li key={i}>• {f}</li>)}
@@ -147,6 +196,9 @@ export default function AdminSubscriptionPlans() {
                 </div>
                 <div className="flex flex-col gap-1.5 shrink-0">
                   <Button size="sm" variant="outline" onClick={() => startEdit(p)}>Edit</Button>
+                  <Button size="sm" variant={p.locked ? 'default' : 'ghost'} onClick={() => toggleLock(p)} title={p.locked ? 'Unlock so users can choose this plan' : 'Lock so users cannot choose this plan'}>
+                    {p.locked ? <><Unlock className="h-3.5 w-3.5 mr-1" />Unlock</> : <><Lock className="h-3.5 w-3.5 mr-1" />Lock</>}
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => toggleActive(p)}>
                     {p.active ? 'Disable' : 'Enable'}
                   </Button>
@@ -204,6 +256,9 @@ export default function AdminSubscriptionPlans() {
                 <Input value={featureDraft} onChange={(e) => setFeatureDraft(e.target.value)} placeholder="Unlimited course listings"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addFeature(); } }} />
                 <Button type="button" onClick={addFeature}>Add</Button>
+                <Button type="button" variant="outline" onClick={runBrainstorm} disabled={brainstorming} title="AI brainstorms feature ideas for this plan">
+                  {brainstorming ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Lightbulb className="h-4 w-4 mr-1" />Brainstorm</>}
+                </Button>
               </div>
               {editing.features.length > 0 && (
                 <ul className="mt-2 space-y-1">
@@ -214,6 +269,30 @@ export default function AdminSubscriptionPlans() {
                     </li>
                   ))}
                 </ul>
+              )}
+              {brainstorm && (
+                <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold">
+                    <Lightbulb className="h-3.5 w-3.5 text-primary" /> AI suggestions — tap to add
+                  </div>
+                  {brainstorm.rationale && <p className="text-[11px] text-muted-foreground italic">{brainstorm.rationale}</p>}
+                  {brainstorm.features.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">All suggestions added.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {brainstorm.features.map((f, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => addBrainstormFeature(f)}
+                          className="text-xs bg-background hover:bg-primary hover:text-primary-foreground border border-border rounded px-2 py-1 transition"
+                        >
+                          + {f}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </Field>
 

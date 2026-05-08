@@ -2804,6 +2804,9 @@ export type Database = {
           features: Json
           highlight: boolean
           id: string
+          locked: boolean
+          locked_at: string | null
+          locked_reason: string | null
           name: string
           price_cents: number
           slug: string
@@ -2823,6 +2826,9 @@ export type Database = {
           features?: Json
           highlight?: boolean
           id?: string
+          locked?: boolean
+          locked_at?: string | null
+          locked_reason?: string | null
           name: string
           price_cents?: number
           slug: string
@@ -2842,6 +2848,9 @@ export type Database = {
           features?: Json
           highlight?: boolean
           id?: string
+          locked?: boolean
+          locked_at?: string | null
+          locked_reason?: string | null
           name?: string
           price_cents?: number
           slug?: string
