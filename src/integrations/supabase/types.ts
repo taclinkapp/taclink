@@ -2578,6 +2578,98 @@ export type Database = {
         }
         Relationships: []
       }
+      smoke_test_findings: {
+        Row: {
+          auto_fixed: boolean
+          category: string
+          check_name: string
+          created_at: string
+          detail: string | null
+          fix_notes: string | null
+          id: string
+          run_id: string
+          status: string
+          target: string | null
+        }
+        Insert: {
+          auto_fixed?: boolean
+          category: string
+          check_name: string
+          created_at?: string
+          detail?: string | null
+          fix_notes?: string | null
+          id?: string
+          run_id: string
+          status: string
+          target?: string | null
+        }
+        Update: {
+          auto_fixed?: boolean
+          category?: string
+          check_name?: string
+          created_at?: string
+          detail?: string | null
+          fix_notes?: string | null
+          id?: string
+          run_id?: string
+          status?: string
+          target?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smoke_test_findings_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "smoke_test_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smoke_test_runs: {
+        Row: {
+          auto_fixed: number
+          duration_ms: number | null
+          failed: number
+          finished_at: string | null
+          id: string
+          passed: number
+          started_at: string
+          status: string
+          summary: Json | null
+          total_checks: number
+          triggered_by: string
+          triggered_by_user: string | null
+        }
+        Insert: {
+          auto_fixed?: number
+          duration_ms?: number | null
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          passed?: number
+          started_at?: string
+          status?: string
+          summary?: Json | null
+          total_checks?: number
+          triggered_by?: string
+          triggered_by_user?: string | null
+        }
+        Update: {
+          auto_fixed?: number
+          duration_ms?: number | null
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          passed?: number
+          started_at?: string
+          status?: string
+          summary?: Json | null
+          total_checks?: number
+          triggered_by?: string
+          triggered_by_user?: string | null
+        }
+        Relationships: []
+      }
       stripe_webhook_events: {
         Row: {
           environment: string
