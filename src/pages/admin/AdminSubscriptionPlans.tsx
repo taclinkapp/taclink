@@ -45,6 +45,8 @@ export default function AdminSubscriptionPlans() {
   const [validation, setValidation] = useState<any>(null);
   const [brainstorming, setBrainstorming] = useState(false);
   const [brainstorm, setBrainstorm] = useState<{ features: string[]; rationale: string } | null>(null);
+  const [describing, setDescribing] = useState(false);
+  const [describeSuggestion, setDescribeSuggestion] = useState<{ description: string; features: string[]; rationale: string } | null>(null);
 
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ['admin-subscription-plans'],
