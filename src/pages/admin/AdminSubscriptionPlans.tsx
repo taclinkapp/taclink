@@ -256,9 +256,63 @@ export default function AdminSubscriptionPlans() {
               <Field label="Name"><Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Operator Pro" /></Field>
             </div>
 
-            <Field label="Description">
-              <Textarea rows={2} value={editing.description ?? ''} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
-            </Field>
+            <div>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Description</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={runDescribe}
+                  disabled={describing}
+                  title="AI drafts a description and complementary features based on your other plans"
+                >
+                  {describing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Sparkles className="h-3.5 w-3.5 mr-1" />Suggest from other plans</>}
+                </Button>
+              </div>
+              <Textarea
+                className="mt-1"
+                rows={2}
+                value={editing.description ?? ''}
+                onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+              />
+              {describeSuggestion && (
+                <div className="mt-2 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" /> AI suggestion
+                  </div>
+                  {describeSuggestion.rationale && (
+                    <p className="text-[11px] text-muted-foreground italic">{describeSuggestion.rationale}</p>
+                  )}
+                  {describeSuggestion.description && (
+                    <div className="space-y-1">
+                      <p className="text-sm bg-background border border-border rounded p-2">{describeSuggestion.description}</p>
+                      <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={applyDescribeDescription}>
+                        Use this description
+                      </Button>
+                    </div>
+                  )}
+                  {describeSuggestion.features.length > 0 && (
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-muted-foreground">Complementary features — tap to add:</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {describeSuggestion.features.map((f, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => applyDescribeFeature(f)}
+                            className="text-xs bg-background hover:bg-primary hover:text-primary-foreground border border-border rounded px-2 py-1 transition"
+                          >
+                            + {f}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-3 gap-3">
               <Field label="Audience">
