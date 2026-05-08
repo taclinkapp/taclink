@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PILLARS, type PillarId } from "@/lib/pillars";
+import quizStep1Bg from "@/assets/quiz-step1-bg.mp4";
 import {
   loadQuizLocal,
   saveQuizLocal,
