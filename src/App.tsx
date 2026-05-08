@@ -101,6 +101,7 @@ import AdminUptime from "./pages/admin/AdminUptime";
 import AdminBackgroundVideos from "./pages/admin/AdminBackgroundVideos";
 import AdminDepositReview from "./pages/admin/AdminDepositReview";
 import AdminFeedback from "./pages/admin/AdminFeedback";
+import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -229,6 +230,7 @@ const App = () => (
               <Route path="refund-test" element={<AdminRefundTest />} />
               <Route path="uptime" element={<AdminUptime />} />
               <Route path="background-videos" element={<AdminBackgroundVideos />} />
+              <Route path="subscription-plans" element={<AdminSubscriptionPlans />} />
               <Route path="deposit-review" element={<AdminDepositReview />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>

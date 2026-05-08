@@ -2698,6 +2698,66 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          active: boolean
+          ai_validated_at: string | null
+          ai_validation: Json | null
+          audience: string
+          billing_interval: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          features: Json
+          highlight: boolean
+          id: string
+          name: string
+          price_cents: number
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          ai_validated_at?: string | null
+          ai_validation?: Json | null
+          audience?: string
+          billing_interval?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          features?: Json
+          highlight?: boolean
+          id?: string
+          name: string
+          price_cents?: number
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          ai_validated_at?: string | null
+          ai_validation?: Json | null
+          audience?: string
+          billing_interval?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          features?: Json
+          highlight?: boolean
+          id?: string
+          name?: string
+          price_cents?: number
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
