@@ -342,8 +342,11 @@ serve(async (req) => {
       });
     }
 
-    const { messages = [] } = await req.json();
-    const convo: any[] = [{ role: "system", content: SYSTEM_PROMPT }, ...messages];
+    const { messages = [], context } = await req.json();
+    const ctxBlock = context?.tab
+      ? `\n\nCURRENT ADMIN CONTEXT\n- Active tab: ${context.tab.label ?? context.tab.path}\n- Route: ${context.tab.path}\n- Purpose: ${context.tab.purpose ?? "(unspecified)"}\n\nSCOPE RULE: Focus your assistance, diagnostics, and proposed actions on this tab's domain. If the admin asks something clearly outside this tab, answer briefly and suggest navigating to the relevant tab. Prefer tools and data relevant to this tab first.`
+      : "";
+    const convo: any[] = [{ role: "system", content: SYSTEM_PROMPT + ctxBlock }, ...messages];
 
     // Loop: allow up to 4 tool-call rounds
     for (let round = 0; round < 4; round++) {

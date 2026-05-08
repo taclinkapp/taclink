@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Sparkles, X, Send, Loader2, ShieldCheck, AlertTriangle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getAdminTabContext } from "@/components/admin/adminTabContext";
 import {
   useAdminUserAction,
   useAdminCourseAction,
@@ -31,6 +33,8 @@ export function AdminAIPanel() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const tab = getAdminTabContext(location.pathname);
 
   const userAction = useAdminUserAction();
   const courseAction = useAdminCourseAction();
@@ -43,6 +47,11 @@ export function AdminAIPanel() {
     if (open) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, open, loading]);
 
+  // Reset conversation when admin navigates to a different tab so context stays clean.
+  useEffect(() => {
+    setMessages([]);
+  }, [tab?.path]);
+
   const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
@@ -52,7 +61,10 @@ export function AdminAIPanel() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("admin-ai", {
-        body: { messages: next.map((m) => ({ role: m.role, content: m.content })) },
+        body: {
+          messages: next.map((m) => ({ role: m.role, content: m.content })),
+          context: tab ? { tab } : undefined,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -130,7 +142,7 @@ export function AdminAIPanel() {
               <div className="flex-1">
                 <div className="text-sm font-bold text-primary-foreground">Admin Copilot</div>
                 <div className="text-[10px] uppercase tracking-wider text-primary-foreground/80">
-                  Diagnostics • Triage • Guided actions
+                  {tab ? `Focused on: ${tab.label}` : "Diagnostics • Triage • Guided actions"}
                 </div>
               </div>
               {messages.length > 0 && (
