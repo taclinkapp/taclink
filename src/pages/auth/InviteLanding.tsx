@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { Gift, GraduationCap, Shield, Loader2, AlertTriangle } from 'lucide-react';
+import { Gift, Shield, Loader2, AlertTriangle, Crosshair } from 'lucide-react';
 
 const InviteLanding = () => {
   const { code: rawCode } = useParams<{ code: string }>();
@@ -18,6 +18,13 @@ const InviteLanding = () => {
       if (!code) {
         setLoading(false);
         return;
+      }
+      // Persist the referral code so downstream signup screens (and the
+      // /welcome → quiz → signup flow) can attach it even without a query param.
+      try {
+        sessionStorage.setItem('pendingReferralCode', code);
+      } catch {
+        /* storage unavailable */
       }
       const { data: rows } = await supabase
         .rpc('lookup_referral_code', { _code: code });
@@ -35,8 +42,8 @@ const InviteLanding = () => {
     };
   }, [code]);
 
-  const studentHref = `/auth/student-signup?ref=${encodeURIComponent(code)}`;
-  const instructorHref = `/auth/instructor-signup?ref=${encodeURIComponent(code)}`;
+  const goFindMission = () => nav('/welcome');
+  const goInstructor = () => nav(`/auth/instructor-signup?ref=${encodeURIComponent(code)}`);
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,12 +59,11 @@ const InviteLanding = () => {
             <div>
               <div className="font-bold uppercase tracking-wider text-sm">Invalid invite</div>
               <p className="text-xs text-muted-foreground mt-1">
-                This referral link is invalid or expired. You can still create an account.
+                This referral link is invalid or expired. You can still explore courses.
               </p>
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <Button onClick={() => nav('/auth/student-signup')} variant="outline" className="h-11 text-xs uppercase font-bold tracking-wider">Student</Button>
-                <Button onClick={() => nav('/auth/instructor-signup')} className="h-11 bg-primary text-xs uppercase font-bold tracking-wider">Instructor</Button>
-              </div>
+              <Button onClick={goFindMission} className="mt-4 h-11 w-full bg-primary text-xs uppercase font-bold tracking-wider">
+                Find Your Next Mission
+              </Button>
             </div>
           </div>
         ) : (
@@ -77,27 +83,19 @@ const InviteLanding = () => {
               </div>
             </div>
 
-            <h2 className="font-stencil uppercase tracking-[0.12em] text-sm mt-8 mb-3">Choose your account</h2>
+            <Button
+              onClick={goFindMission}
+              className="mt-6 h-14 w-full bg-primary text-primary-foreground font-bold uppercase tracking-wider"
+            >
+              <Crosshair className="h-5 w-5" /> Find Your Next Mission
+            </Button>
 
-            <Link to={studentHref} className="tactical-card p-4 flex items-center gap-3 hover:border-primary/40 mb-2 block">
-              <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center text-primary">
-                <GraduationCap className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-sm">Student</div>
-                <div className="text-xs text-muted-foreground">Discover and book tactical training courses.</div>
-              </div>
-            </Link>
-
-            <Link to={instructorHref} className="tactical-card p-4 flex items-center gap-3 hover:border-primary/40 block">
-              <div className="h-10 w-10 rounded-md bg-primary/15 flex items-center justify-center text-primary">
-                <Shield className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <div className="font-bold text-sm">Instructor</div>
-                <div className="text-xs text-muted-foreground">Apply to teach courses on TacLink™.</div>
-              </div>
-            </Link>
+            <button
+              onClick={goInstructor}
+              className="mt-3 w-full h-11 inline-flex items-center justify-center gap-2 text-xs uppercase font-bold tracking-wider text-muted-foreground hover:text-foreground"
+            >
+              <Shield className="h-4 w-4" /> Apply as an instructor instead
+            </button>
           </>
         )}
       </div>

@@ -21,7 +21,7 @@ import splashBg from '@/assets/splash-bg.mp4.asset.json';
 const StudentSignUp = () => {
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const referralCode = (params.get('ref') ?? '').trim().toUpperCase();
+  const referralCode = ((params.get('ref') ?? (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('pendingReferralCode') : '') ?? '')).trim().toUpperCase();
   const influencerSlug = readInfluencerSlug();
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
