@@ -62,12 +62,6 @@ export function AdminAIPanel() {
     if (!trimmed || loading) return;
     const next: Msg[] = [...messages, { role: "user", content: trimmed }];
     setMessages(next);
-
-  const send = async (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed || loading) return;
-    const next: Msg[] = [...messages, { role: "user", content: trimmed }];
-    setMessages(next);
     setInput("");
     setLoading(true);
     try {
