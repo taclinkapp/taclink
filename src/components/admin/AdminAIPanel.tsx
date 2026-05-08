@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { Sparkles, X, Send, Loader2, ShieldCheck, AlertTriangle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getAdminTabContext } from "@/components/admin/adminTabContext";
 import {
   useAdminUserAction,
   useAdminCourseAction,
