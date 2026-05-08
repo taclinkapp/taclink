@@ -43,6 +43,8 @@ export default function AdminSubscriptionPlans() {
   const [featureDraft, setFeatureDraft] = useState('');
   const [saving, setSaving] = useState(false);
   const [validation, setValidation] = useState<any>(null);
+  const [brainstorming, setBrainstorming] = useState(false);
+  const [brainstorm, setBrainstorm] = useState<{ features: string[]; rationale: string } | null>(null);
 
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ['admin-subscription-plans'],
@@ -57,8 +59,8 @@ export default function AdminSubscriptionPlans() {
     },
   });
 
-  const startNew = () => { setEditing({ ...BLANK }); setValidation(null); };
-  const startEdit = (p: Plan) => { setEditing({ ...p, features: p.features ?? [] }); setValidation(p.ai_validation ?? null); };
+  const startNew = () => { setEditing({ ...BLANK }); setValidation(null); setBrainstorm(null); };
+  const startEdit = (p: Plan) => { setEditing({ ...p, features: p.features ?? [] }); setValidation(p.ai_validation ?? null); setBrainstorm(null); };
 
   const addFeature = () => {
     const f = featureDraft.trim();
