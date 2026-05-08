@@ -56,6 +56,7 @@ const items: Item[] = [
   { to: '/admin/helcim-webhooks', icon: Webhook, label: 'Helcim Webhooks' },
   { to: '/admin/refund-test', icon: FlaskConical, label: 'Live Refund Test' },
   { to: '/admin/uptime', icon: Activity, label: 'Uptime & Domains' },
+  { to: '/admin/background-videos', icon: Film, label: 'Background Videos' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
