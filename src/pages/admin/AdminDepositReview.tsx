@@ -62,8 +62,10 @@ export default function AdminDepositReview() {
   async function setStatus(b: Booking, next: 'confirmed' | 'failed') {
     setBusyId(b.id);
     try {
-      const patch: Record<string, any> = { deposit_status: next };
-      if (next === 'confirmed') patch.deposit_confirmed_at = new Date().toISOString();
+      const patch =
+        next === 'confirmed'
+          ? { deposit_status: next, deposit_confirmed_at: new Date().toISOString() }
+          : { deposit_status: next };
       const { error } = await supabase.from('bookings').update(patch).eq('id', b.id);
       if (error) throw error;
       await supabase.rpc('log_admin_action', {
