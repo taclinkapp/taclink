@@ -113,6 +113,47 @@ export default function AdminSubscriptionPlans() {
     qc.invalidateQueries({ queryKey: ['admin-subscription-plans'] });
   };
 
+  const toggleLock = async (p: Plan) => {
+    const next = !p.locked;
+    let reason: string | null = p.locked_reason ?? null;
+    if (next) {
+      reason = window.prompt('Lock reason (shown to users when they try to subscribe):', reason ?? 'This plan is temporarily unavailable.');
+      if (reason === null) return;
+    }
+    const { error } = await supabase.from('subscription_plans' as any).update({
+      locked: next,
+      locked_reason: next ? reason : null,
+      locked_at: next ? new Date().toISOString() : null,
+    }).eq('id', p.id!);
+    if (error) return toast.error(error.message);
+    toast.success(next ? 'Plan locked — users can no longer choose it' : 'Plan unlocked');
+    qc.invalidateQueries({ queryKey: ['admin-subscription-plans'] });
+  };
+
+  const runBrainstorm = async () => {
+    if (!editing) return;
+    setBrainstorming(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('subscription-plan-ai', {
+        body: { action: 'brainstorm', plan: editing },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setBrainstorm({ features: data.features ?? [], rationale: data.rationale ?? '' });
+    } catch (e: any) {
+      toast.error(e.message ?? 'Brainstorm failed');
+    } finally {
+      setBrainstorming(false);
+    }
+  };
+
+  const addBrainstormFeature = (f: string) => {
+    if (!editing) return;
+    if (editing.features.includes(f)) return;
+    setEditing({ ...editing, features: [...editing.features, f] });
+    setBrainstorm((b) => b ? { ...b, features: b.features.filter((x) => x !== f) } : b);
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
