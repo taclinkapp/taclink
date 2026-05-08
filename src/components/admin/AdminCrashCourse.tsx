@@ -48,16 +48,13 @@ export const AdminCrashCourse = () => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
 
-  // Auto-open once per tab
+  // Auto-open every time the admin lands on a tab (persistent crash course)
   useEffect(() => {
     if (!course) return;
     setStep(0);
-    const seen = getSeen();
-    if (!seen[course.id]) {
-      // small delay so it doesn't fight with route transitions
-      const t = setTimeout(() => setOpen(true), 250);
-      return () => clearTimeout(t);
-    }
+    // small delay so it doesn't fight with route transitions
+    const t = setTimeout(() => setOpen(true), 250);
+    return () => clearTimeout(t);
   }, [course?.id]);
 
   if (!course) return null;
