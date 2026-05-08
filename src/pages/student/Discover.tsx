@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { OnboardingChecklistCard, OnboardingWelcomeModal } from '@/components/onboarding/OnboardingChecklist';
 import { FirstVisitTooltip } from '@/components/onboarding/FirstVisitTooltip';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { usePrelaunch } from '@/hooks/usePrelaunch';
 
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
 const LEVEL_OPTIONS: { value: LevelFilter; label: string }[] = [
@@ -61,6 +62,8 @@ const loadPrefs = (): PersistedPrefs => {
 const Discover = () => {
   const nav = useNavigate();
   const { user } = useAuth();
+  const { data: prelaunch } = usePrelaunch();
+  const isPrelaunch = prelaunch?.enabled ?? false;
   const isGuest = !user;
   const tour = useCrashCourseTour('student', user?.id);
   const onboarding = useOnboarding();
@@ -555,10 +558,17 @@ const Discover = () => {
           {isLoading ? (
             <div className="text-center text-muted-foreground text-sm py-12">Loading…</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center text-muted-foreground text-sm py-12">
-              {selectedLocation
-                ? `No courses in ${selectedLocation.label} yet.`
-                : 'No courses available yet.'}
+            <div className="text-center text-muted-foreground text-sm py-12 px-6 space-y-2">
+              {isPrelaunch ? (
+                <>
+                  <p className="font-bold text-foreground">We're in pre-launch.</p>
+                  <p>Instructors are setting up courses now — the first listings drop on launch day. Check back soon.</p>
+                </>
+              ) : selectedLocation ? (
+                <p>No courses in {selectedLocation.label} yet — try widening your search or another discipline.</p>
+              ) : (
+                <p>No courses match your filters yet. Try clearing them or expanding your area.</p>
+              )}
             </div>
           ) : (
             filtered.map((c) => <CourseCard key={c.id} course={c} />)
