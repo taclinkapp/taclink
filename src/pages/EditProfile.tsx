@@ -240,7 +240,7 @@ const EditProfile = () => {
       await uploadWithProgress(file);
       setUploading(false);
       setUploadProgress(100);
-      toast.success('Photo uploaded — remember to save');
+      toast.success('Photo saved');
     } catch (err: any) {
       setUploading(false);
       setUploadError(err?.message || 'Upload failed');
