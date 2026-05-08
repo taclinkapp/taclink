@@ -14,7 +14,8 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 
 const ChangePassword = () => {
   const nav = useNavigate();
-  const { user } = useAuth();
+  const { user, primaryRole } = useAuth();
+  const backTo = primaryRole === 'admin' ? '/admin' : primaryRole === 'instructor' ? '/instructor/settings' : '/student/settings';
   const [current, setCurrent] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
