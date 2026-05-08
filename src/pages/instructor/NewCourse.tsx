@@ -1208,10 +1208,17 @@ const NewCourse = () => {
                   <Button
                     type="button"
                     onClick={() => nav('/instructor/subscription')}
-                    className="w-full h-11 mt-3 bg-primary text-primary-foreground font-bold"
+                    disabled={isPrelaunch}
+                    className="w-full h-11 mt-3 bg-primary text-primary-foreground font-bold disabled:opacity-60"
                   >
-                    <Sparkles className="h-4 w-4 mr-2" /> Upgrade to Pro
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {isPrelaunch ? 'Pro unlocks at launch' : 'Upgrade to Pro'}
                   </Button>
+                  {isPrelaunch && (
+                    <p className="text-[11px] text-center text-muted-foreground mt-2">
+                      Pro upgrades are locked during pre-launch.
+                    </p>
+                  )}
                 </div>
 
                 {/* Free plan responsibility */}
