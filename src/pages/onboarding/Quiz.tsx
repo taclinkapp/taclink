@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { PILLARS, type PillarId } from "@/lib/pillars";
 import quizStep1Bg from "@/assets/quiz-step1-bg.mp4";
 import quizStep2Bg from "@/assets/quiz-step2-bg.mp4";
+import quizStep3Bg from "@/assets/quiz-step3-bg.mp4";
 import {
   loadQuizLocal,
   saveQuizLocal,
