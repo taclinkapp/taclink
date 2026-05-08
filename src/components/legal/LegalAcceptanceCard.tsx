@@ -27,7 +27,13 @@ export const LegalAcceptanceCard = ({ onAcceptedChange }: { onAcceptedChange?: (
   const termsAck = latest(TERMS_VERSION);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      // No auth yet (e.g. pre-signup onboarding). Show the acceptance form
+      // immediately; submission is deferred to whoever owns the flow.
+      setAcks([]);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -77,7 +83,11 @@ export const LegalAcceptanceCard = ({ onAcceptedChange }: { onAcceptedChange?: (
     toast.success('Acceptance recorded');
   };
 
-  const allAccepted = !!privacyAck && !!termsAck;
+  // For unauthenticated/pre-signup flows, treat both boxes checked as
+  // acceptance — the parent flow will record the ack after auth exists.
+  const allAccepted = user?.id
+    ? !!privacyAck && !!termsAck
+    : privacyChecked && termsChecked;
 
   useEffect(() => {
     onAcceptedChange?.(allAccepted);
@@ -130,7 +140,7 @@ export const LegalAcceptanceCard = ({ onAcceptedChange }: { onAcceptedChange?: (
         />
       </div>
 
-      {(!privacyAck || !termsAck) && (
+      {user?.id && (!privacyAck || !termsAck) && (
         <button
           onClick={acceptAll}
           disabled={saving || (!privacyChecked && !termsChecked) || (!privacyAck && !privacyChecked) || (!termsAck && !termsChecked)}

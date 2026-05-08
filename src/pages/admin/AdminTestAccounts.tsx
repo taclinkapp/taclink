@@ -253,13 +253,13 @@ export default function AdminTestAccounts() {
             </div>
             <div className="flex gap-2">
               <Button asChild size="sm" variant="outline">
-                <Link to="/auth/signup/instructor" target="_blank" rel="noopener">
+                <Link to="/auth/instructor-signup" target="_blank" rel="noopener">
                   <ExternalLink className="h-3.5 w-3.5" />
                   Instructor signup
                 </Link>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <Link to="/auth/signup/student" target="_blank" rel="noopener">
+                <Link to="/auth/student-signup" target="_blank" rel="noopener">
                   <ExternalLink className="h-3.5 w-3.5" />
                   Student signup
                 </Link>

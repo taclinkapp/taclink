@@ -323,7 +323,7 @@ const InstructorRoster = () => {
         <HowPaymentsWorkCard audience="instructor" />
         {stuckCount > 0 && (
           <Link
-            to="/instructor/deposit-review"
+            to="/instructor"
             className="block rounded-md border border-amber-500/40 bg-amber-500/5 p-3 hover:bg-amber-500/10"
           >
             <div className="flex items-center gap-3">
