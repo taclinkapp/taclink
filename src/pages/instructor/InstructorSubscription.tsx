@@ -36,7 +36,7 @@ const InstructorSubscription = () => {
     queryFn: async () => {
       const { data } = await supabase.from('subscription_plans' as any)
         .select('locked, locked_reason, active').eq('slug', PRICE_ID).maybeSingle();
-      return (data ?? null) as { locked: boolean; locked_reason: string | null; active: boolean } | null;
+      return (data ?? null) as unknown as { locked: boolean; locked_reason: string | null; active: boolean } | null;
     },
     staleTime: 30_000,
   });
