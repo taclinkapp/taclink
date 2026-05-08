@@ -167,12 +167,16 @@ const EditProfile = () => {
     if (errors[k]) setErrors((e) => ({ ...e, [k]: undefined }));
   };
 
-  const uploadWithProgress = (file: File): Promise<void> => {
-    return new Promise(async (resolve, reject) => {
-      if (!user?.id) return reject(new Error('Not signed in'));
-      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+  // Tunables for automatic retry of transient failures.
+  const MAX_AUTO_RETRIES = 2; // total attempts = 1 + MAX_AUTO_RETRIES
+  const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
+  /**
+   * Upload one file to storage via a signed URL. Resolves with the public URL.
+   * Rejects on HTTP error, network error, or user cancel.
+   */
+  const uploadToStorageOnce = (file: File, path: string): Promise<string> =>
+    new Promise(async (resolve, reject) => {
       const { data: signed, error: signErr } = await supabase.storage
         .from(PROFILE_BUCKET)
         .createSignedUploadUrl(path);
@@ -184,42 +188,87 @@ const EditProfile = () => {
       xhr.setRequestHeader('Content-Type', file.type);
       xhr.setRequestHeader('x-upsert', 'false');
       xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          setUploadProgress(Math.round((e.loaded / e.total) * 100));
-        }
+        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
       };
-      xhr.onload = async () => {
+      xhr.onload = () => {
         xhrRef.current = null;
         if (xhr.status >= 200 && xhr.status < 300) {
           const { data: pub } = supabase.storage.from(PROFILE_BUCKET).getPublicUrl(path);
-          update('photo_url', pub.publicUrl);
-          // Auto-persist photo to the profile so it shows up everywhere
-          // immediately, even if the user navigates away before tapping Save.
-          try {
-            const { error: persistErr } = await supabase
-              .from('profiles')
-              .update({ photo_url: pub.publicUrl })
-              .eq('id', user.id);
-            if (persistErr) throw persistErr;
-            await refreshProfile();
-          } catch (err: any) {
-            return reject(new Error(err?.message || 'Could not save photo to profile'));
-          }
-          resolve();
+          resolve(pub.publicUrl);
         } else {
           reject(new Error(`Upload failed (${xhr.status})`));
         }
       };
-      xhr.onerror = () => {
-        xhrRef.current = null;
-        reject(new Error('Network error during upload'));
-      };
-      xhr.onabort = () => {
-        xhrRef.current = null;
-        reject(new Error('Upload cancelled'));
-      };
+      xhr.onerror = () => { xhrRef.current = null; reject(new Error('Network error during upload')); };
+      xhr.onabort = () => { xhrRef.current = null; reject(new Error('Upload cancelled')); };
       xhr.send(file);
     });
+
+  /**
+   * Full upload + persist pipeline with automatic retries.
+   *
+   * Phase 1 — storage upload: retried with exponential backoff. Each retry
+   *   uses a fresh path so a half-uploaded object can never collide.
+   * Phase 2 — profile DB link: retried independently. If we exhaust retries
+   *   here, we proactively delete the just-uploaded storage object so we
+   *   never leave an orphaned file that isn't linked to the profile.
+   */
+  const uploadWithProgress = async (file: File): Promise<void> => {
+    if (!user?.id) throw new Error('Not signed in');
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+
+    // Phase 1
+    let publicUrl = '';
+    let uploadedPath = '';
+    let lastErr: any = null;
+    for (let attempt = 0; attempt <= MAX_AUTO_RETRIES; attempt++) {
+      const path = `${user.id}/avatar-${Date.now()}-${attempt}.${ext}`;
+      try {
+        setUploadProgress(0);
+        publicUrl = await uploadToStorageOnce(file, path);
+        uploadedPath = path;
+        lastErr = null;
+        break;
+      } catch (err: any) {
+        lastErr = err;
+        // Don't retry user-cancelled uploads.
+        if (/cancelled/i.test(err?.message ?? '')) throw err;
+        if (attempt < MAX_AUTO_RETRIES) {
+          setUploadError(`${err?.message || 'Upload failed'} — retrying…`);
+          await wait(600 * Math.pow(2, attempt));
+          setUploadError(null);
+        }
+      }
+    }
+    if (lastErr) throw lastErr;
+
+    // Phase 2
+    let linkErr: any = null;
+    for (let attempt = 0; attempt <= MAX_AUTO_RETRIES; attempt++) {
+      const { error: persistErr } = await supabase
+        .from('profiles')
+        .update({ photo_url: publicUrl })
+        .eq('id', user.id);
+      if (!persistErr) {
+        linkErr = null;
+        update('photo_url', publicUrl);
+        await refreshProfile();
+        return;
+      }
+      linkErr = persistErr;
+      if (attempt < MAX_AUTO_RETRIES) {
+        setUploadError(`Saving to profile failed — retrying…`);
+        await wait(600 * Math.pow(2, attempt));
+        setUploadError(null);
+      }
+    }
+
+    // Linking failed permanently — clean up the orphan storage object so we
+    // never end up with a file that isn't tied to the user's profile.
+    try {
+      await supabase.storage.from(PROFILE_BUCKET).remove([uploadedPath]);
+    } catch {/* best-effort cleanup */}
+    throw new Error(linkErr?.message || 'Could not save photo to your profile');
   };
 
   const handlePhotoFile = async (file: File) => {
@@ -240,6 +289,7 @@ const EditProfile = () => {
       await uploadWithProgress(file);
       setUploading(false);
       setUploadProgress(100);
+      setUploadError(null);
       toast.success('Photo saved');
     } catch (err: any) {
       setUploading(false);
@@ -255,6 +305,7 @@ const EditProfile = () => {
   const cancelUpload = () => {
     xhrRef.current?.abort();
   };
+
 
   const removePhoto = async () => {
     update('photo_url', '');
