@@ -70,6 +70,56 @@ Deno.serve(async (req) => {
       return json({ features, rationale: parsed.rationale ?? '' });
     }
 
+    // ── Describe action: drafts a description + feature ideas using OTHER plans as reference ──
+    if (action === 'describe') {
+      if (!aiKeyEarly) return json({ error: 'AI is not configured' }, 500);
+      const { data: otherPlans } = await supabase
+        .from('subscription_plans')
+        .select('name,audience,price_cents,billing_interval,description,features,highlight')
+        .order('sort_order');
+      const reference = (otherPlans ?? [])
+        .filter((p: any) => p.name !== plan.name)
+        .map((p: any) =>
+          `• ${p.name} (${p.audience}, $${((p.price_cents ?? 0) / 100).toFixed(2)}/${p.billing_interval}) — ${p.description ?? 'no description'}\n  features: ${(p.features ?? []).join('; ') || 'none'}`,
+        ).join('\n') || '(no other plans yet)';
+
+      const ai = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${aiKeyEarly}` },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You write subscription plan descriptions for TacLink, a tactical-training marketplace. Return strict JSON: {"description":string,"features":string[],"rationale":string}. The "description" must be 1-2 sentences (max 220 chars), benefit-led, tactical tone, no fluff, clearly differentiated from the OTHER plans provided. The "features" array is 4-8 short bullets (~8 words each) that complement existing features without duplicating them or duplicating other plans verbatim. "rationale" explains in 1 sentence how this plan is positioned vs the others.',
+            },
+            {
+              role: 'user',
+              content:
+                `NEW/EDITED PLAN:\nname: ${plan.name ?? '(unnamed)'}\naudience: ${plan.audience ?? 'instructor'}\nprice: $${((plan.price_cents ?? 0) / 100).toFixed(2)}/${plan.billing_interval ?? 'month'}\ncurrent description: ${plan.description ?? '(none)'}\ncurrent features:\n${(plan.features ?? []).map((f: string) => `- ${f}`).join('\n') || '(none)'}\n\nOTHER EXISTING PLANS (for differentiation):\n${reference}\n\nDraft a sharper description and complementary features for the new plan.`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+        }),
+      });
+      if (!ai.ok) {
+        const txt = await ai.text();
+        return json({ error: `AI gateway ${ai.status}: ${txt.slice(0, 200)}` }, 500);
+      }
+      const out = await ai.json();
+      let parsed: any = {};
+      try { parsed = JSON.parse(out.choices?.[0]?.message?.content ?? '{}'); } catch { /* ignore */ }
+      const features = Array.isArray(parsed.features)
+        ? parsed.features.map((s: any) => String(s).trim()).filter(Boolean).slice(0, 10)
+        : [];
+      return json({
+        description: typeof parsed.description === 'string' ? parsed.description.trim() : '',
+        features,
+        rationale: parsed.rationale ?? '',
+      });
+    }
+
     if (!plan.name) return json({ error: 'plan.name required' }, 400);
 
     // Ask Lovable AI to validate + normalize.
