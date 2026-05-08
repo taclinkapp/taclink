@@ -77,6 +77,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Look up the signup name for name-match scoring
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("display_name, full_name, first_name, last_name")
+      .eq("id", cred.instructor_id as string)
+      .maybeSingle();
+
+    const signupName = (
+      (profile as any)?.full_name ||
+      [((profile as any)?.first_name ?? ""), ((profile as any)?.last_name ?? "")].join(" ").trim() ||
+      (profile as any)?.display_name ||
+      ""
+    ).toString().trim();
+
     // Signed URL so the AI can fetch the private file (1-hour TTL is plenty)
     const { data: signed, error: signErr } = await admin.storage
       .from("credentials")
