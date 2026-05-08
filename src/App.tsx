@@ -100,6 +100,7 @@ import AdminRefundTest from "./pages/admin/AdminRefundTest";
 import AdminUptime from "./pages/admin/AdminUptime";
 import AdminBackgroundVideos from "./pages/admin/AdminBackgroundVideos";
 import AdminDepositReview from "./pages/admin/AdminDepositReview";
+import AdminFeedback from "./pages/admin/AdminFeedback";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
