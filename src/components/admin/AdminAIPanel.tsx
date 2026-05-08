@@ -142,7 +142,7 @@ export function AdminAIPanel() {
               <div className="flex-1">
                 <div className="text-sm font-bold text-primary-foreground">Admin Copilot</div>
                 <div className="text-[10px] uppercase tracking-wider text-primary-foreground/80">
-                  Diagnostics • Triage • Guided actions
+                  {tab ? `Focused on: ${tab.label}` : "Diagnostics • Triage • Guided actions"}
                 </div>
               </div>
               {messages.length > 0 && (
