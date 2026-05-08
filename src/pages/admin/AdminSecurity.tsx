@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PaymentFailoverCard } from '@/components/admin/PaymentFailoverCard';
 import { BackupRailsCard } from '@/components/admin/BackupRailsCard';
+import { ProfilePhotoBackfillCard } from '@/components/admin/ProfilePhotoBackfillCard';
 
 type Policy = {
   minLength: number;
