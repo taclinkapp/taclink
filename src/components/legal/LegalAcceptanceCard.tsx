@@ -140,7 +140,7 @@ export const LegalAcceptanceCard = ({ onAcceptedChange }: { onAcceptedChange?: (
         />
       </div>
 
-      {(!privacyAck || !termsAck) && (
+      {user?.id && (!privacyAck || !termsAck) && (
         <button
           onClick={acceptAll}
           disabled={saving || (!privacyChecked && !termsChecked) || (!privacyAck && !privacyChecked) || (!termsAck && !termsChecked)}
