@@ -55,10 +55,13 @@ export function AdminAIPanel() {
     if (open) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, open, loading]);
 
-  // Reset conversation when admin navigates to a different tab so context stays clean.
-  useEffect(() => {
-    setMessages([]);
-  }, [tab?.path]);
+  // Per-tab threads are preserved across navigation; no reset on tab change.
+
+  const send = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || loading) return;
+    const next: Msg[] = [...messages, { role: "user", content: trimmed }];
+    setMessages(next);
 
   const send = async (text: string) => {
     const trimmed = text.trim();
