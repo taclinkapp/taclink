@@ -98,10 +98,11 @@ const Quiz = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {step === 1 && (
+      {(step === 1 || step === 2) && (
         <>
           <video
-            src={quizStep1Bg}
+            key={step}
+            src={step === 1 ? quizStep1Bg : quizStep2Bg}
             autoPlay loop muted playsInline aria-hidden
             className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none z-0"
           />
