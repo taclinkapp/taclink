@@ -33,6 +33,8 @@ export function AdminAIPanel() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const tab = getAdminTabContext(location.pathname);
 
   const userAction = useAdminUserAction();
   const courseAction = useAdminCourseAction();
@@ -44,6 +46,11 @@ export function AdminAIPanel() {
   useEffect(() => {
     if (open) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, open, loading]);
+
+  // Reset conversation when admin navigates to a different tab so context stays clean.
+  useEffect(() => {
+    setMessages([]);
+  }, [tab?.path]);
 
   const send = async (text: string) => {
     const trimmed = text.trim();
