@@ -188,11 +188,23 @@ const EditProfile = () => {
           setUploadProgress(Math.round((e.loaded / e.total) * 100));
         }
       };
-      xhr.onload = () => {
+      xhr.onload = async () => {
         xhrRef.current = null;
         if (xhr.status >= 200 && xhr.status < 300) {
           const { data: pub } = supabase.storage.from(PROFILE_BUCKET).getPublicUrl(path);
           update('photo_url', pub.publicUrl);
+          // Auto-persist photo to the profile so it shows up everywhere
+          // immediately, even if the user navigates away before tapping Save.
+          try {
+            const { error: persistErr } = await supabase
+              .from('profiles')
+              .update({ photo_url: pub.publicUrl })
+              .eq('id', user.id);
+            if (persistErr) throw persistErr;
+            await refreshProfile();
+          } catch (err: any) {
+            return reject(new Error(err?.message || 'Could not save photo to profile'));
+          }
           resolve();
         } else {
           reject(new Error(`Upload failed (${xhr.status})`));
