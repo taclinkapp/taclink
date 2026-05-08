@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CourseCard } from "@/components/CourseCard";
 import { dbToViewCourse, type DbCourse } from "@/lib/courses";
 import { useAreaCourseAnalytics } from "@/hooks/useAreaCourseAnalytics";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Clock, DollarSign, Users, ArrowLeft } from "lucide-react";
 
 const TrainingPlan = () => {
@@ -18,6 +19,7 @@ const TrainingPlan = () => {
     ? answers.travel_radius_miles
     : 50;
   const [previewCourses, setPreviewCourses] = useState<any[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(true);
 
   const analytics = useAreaCourseAnalytics({
     pillars: answers.selected_pillars,
@@ -25,16 +27,25 @@ const TrainingPlan = () => {
   });
 
   useEffect(() => {
+    let cancelled = false;
+    setPreviewLoading(true);
     (async () => {
       let q = supabase.from("courses").select("*").eq("status", "published");
       if (answers.selected_pillars.length) {
         q = q.in("primary_pillar", answers.selected_pillars as any);
       }
       const { data } = await q.limit(3);
+      if (cancelled) return;
       const rows = (data as DbCourse[]) ?? [];
       setPreviewCourses(rows.map((r) => dbToViewCourse(r)));
+      setPreviewLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [answers.selected_pillars]);
+
+  const planLoading = analytics.loading || previewLoading;
 
   const fmtMiles = (m: number | null) =>
     m == null ? "—" : m < 1 ? `${(m * 5280).toFixed(0)} ft` : `${m.toFixed(1)} mi`;
@@ -115,92 +126,124 @@ const TrainingPlan = () => {
           })}
         </div>
 
-        {/* Live area analytics */}
-        <div className="mt-6 neu p-4 rounded-xl">
-          <div className="flex items-center justify-between">
-            <div className="text-[0.625rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Courses matching your plan
+        {planLoading ? (
+          <>
+            {/* Analytics skeleton */}
+            <div className="mt-6 neu p-4 rounded-xl space-y-4" aria-busy="true" aria-label="Loading your training plan">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3 w-40" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+              <Skeleton className="h-9 w-32" />
+              <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="rounded-lg bg-muted/40 p-2.5 space-y-2">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                ))}
+              </div>
+              <Skeleton className="h-3 w-48" />
             </div>
-            <div className="text-[0.6rem] font-semibold text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              {analytics.located ? `${radius} mi radius` : "Nationwide"}
-            </div>
-          </div>
-          <div className="mt-1 text-3xl font-black text-primary">
-            {analytics.loading ? "—" : analytics.matchingPillars}
-            <span className="text-base text-muted-foreground font-bold ml-2">
-              {analytics.located ? "near you" : "available"}
-            </span>
-          </div>
-          {!analytics.loading && analytics.totalInArea > analytics.matchingPillars && (
-            <div className="mt-1 text-xs text-muted-foreground">
-              of {analytics.totalInArea} total in your area
-            </div>
-          )}
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-muted/40 p-2.5">
-              <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
-                <MapPin className="h-3 w-3" /> Nearest
-              </div>
-              <div className="mt-0.5 text-sm font-bold text-foreground">
-                {fmtMiles(analytics.nearestMiles)}
-              </div>
+            {/* Preview courses skeleton */}
+            <div className="mt-6 space-y-3">
+              <Skeleton className="h-3 w-44" />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-32 w-full rounded-xl" />
+              ))}
             </div>
-            <div className="rounded-lg bg-muted/40 p-2.5">
-              <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
-                <Clock className="h-3 w-3" /> Next class
+          </>
+        ) : (
+          <>
+            {/* Live area analytics */}
+            <div className="mt-6 neu p-4 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div className="text-[0.625rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                  Courses matching your plan
+                </div>
+                <div className="text-[0.6rem] font-semibold text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {analytics.located ? `${radius} mi radius` : "Nationwide"}
+                </div>
               </div>
-              <div className="mt-0.5 text-sm font-bold text-foreground">
-                {fmtSoonest(analytics.soonestStartAt)}
+              <div className="mt-1 text-3xl font-black text-primary">
+                {analytics.matchingPillars}
+                <span className="text-base text-muted-foreground font-bold ml-2">
+                  {analytics.located ? "near you" : "available"}
+                </span>
               </div>
-            </div>
-            <div className="rounded-lg bg-muted/40 p-2.5">
-              <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
-                <DollarSign className="h-3 w-3" /> Avg price
-              </div>
-              <div className="mt-0.5 text-sm font-bold text-foreground">
-                {fmtPrice(analytics.avgPriceCents)}
-              </div>
-            </div>
-            <div className="rounded-lg bg-muted/40 p-2.5">
-              <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
-                <Users className="h-3 w-3" /> Instructors
-              </div>
-              <div className="mt-0.5 text-sm font-bold text-foreground">
-                {analytics.instructorsInArea}
-              </div>
-            </div>
-          </div>
+              {analytics.totalInArea > analytics.matchingPillars && (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  of {analytics.totalInArea} total in your area
+                </div>
+              )}
 
-          {analytics.topCity && (
-            <div className="mt-3 text-xs text-muted-foreground">
-              Most active hub:{" "}
-              <span className="font-semibold text-foreground">
-                {analytics.topCity.city}
-              </span>{" "}
-              ({analytics.topCity.count} courses)
-            </div>
-          )}
-          {analytics.locationError && (
-            <div className="mt-2 text-[0.65rem] text-muted-foreground italic">
-              {analytics.locationError}
-            </div>
-          )}
-        </div>
-
-        {/* Preview courses */}
-        {previewCourses.length > 0 && (
-          <div className="mt-6 space-y-3">
-            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              A taste of what's available
-            </div>
-            {previewCourses.map((c) => (
-              <div key={c.id} className="pointer-events-none opacity-95">
-                <CourseCard course={c as any} />
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-muted/40 p-2.5">
+                  <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+                    <MapPin className="h-3 w-3" /> Nearest
+                  </div>
+                  <div className="mt-0.5 text-sm font-bold text-foreground">
+                    {fmtMiles(analytics.nearestMiles)}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-muted/40 p-2.5">
+                  <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+                    <Clock className="h-3 w-3" /> Next class
+                  </div>
+                  <div className="mt-0.5 text-sm font-bold text-foreground">
+                    {fmtSoonest(analytics.soonestStartAt)}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-muted/40 p-2.5">
+                  <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+                    <DollarSign className="h-3 w-3" /> Avg price
+                  </div>
+                  <div className="mt-0.5 text-sm font-bold text-foreground">
+                    {fmtPrice(analytics.avgPriceCents)}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-muted/40 p-2.5">
+                  <div className="flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+                    <Users className="h-3 w-3" /> Instructors
+                  </div>
+                  <div className="mt-0.5 text-sm font-bold text-foreground">
+                    {analytics.instructorsInArea}
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
+
+              {analytics.topCity && (
+                <div className="mt-3 text-xs text-muted-foreground">
+                  Most active hub:{" "}
+                  <span className="font-semibold text-foreground">
+                    {analytics.topCity.city}
+                  </span>{" "}
+                  ({analytics.topCity.count} courses)
+                </div>
+              )}
+              {analytics.locationError && (
+                <div className="mt-2 text-[0.65rem] text-muted-foreground italic">
+                  {analytics.locationError}
+                </div>
+              )}
+            </div>
+
+            {/* Preview courses */}
+            {previewCourses.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  A taste of what's available
+                </div>
+                {previewCourses.map((c) => (
+                  <div key={c.id} className="pointer-events-none opacity-95">
+                    <CourseCard course={c as any} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

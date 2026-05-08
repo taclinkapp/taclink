@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft, TrendingUp, Star, Sparkles, Edit3, Percent, Menu, X, Megaphone, FlaskConical, Sword, KeyRound, Webhook, Activity, FileSignature } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft, TrendingUp, Star, Sparkles, Edit3, Percent, Menu, X, Megaphone, FlaskConical, Sword, KeyRound, Webhook, Activity, FileSignature, Film } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,6 +56,7 @@ const items: Item[] = [
   { to: '/admin/helcim-webhooks', icon: Webhook, label: 'Helcim Webhooks' },
   { to: '/admin/refund-test', icon: FlaskConical, label: 'Live Refund Test' },
   { to: '/admin/uptime', icon: Activity, label: 'Uptime & Domains' },
+  { to: '/admin/background-videos', icon: Film, label: 'Background Videos' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
