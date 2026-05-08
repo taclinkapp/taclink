@@ -47,6 +47,7 @@ const items: Item[] = [
   { to: '/admin/reliability', icon: Activity, label: 'Reliability' },
   
   { to: '/admin/reports', icon: Bug, label: 'Issue Reports' },
+  { to: '/admin/feedback', icon: Lightbulb, label: 'User Suggestions' },
   { to: '/admin/support', icon: LifeBuoy, label: 'Support Tickets' },
   { to: '/admin/activity', icon: ScrollText, label: 'Audit Log' },
   { to: '/admin/flags', icon: ToggleLeft, label: 'Feature Flags' },
