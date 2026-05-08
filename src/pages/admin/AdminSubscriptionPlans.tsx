@@ -61,8 +61,39 @@ export default function AdminSubscriptionPlans() {
     },
   });
 
-  const startNew = () => { setEditing({ ...BLANK }); setValidation(null); setBrainstorm(null); };
-  const startEdit = (p: Plan) => { setEditing({ ...p, features: p.features ?? [] }); setValidation(p.ai_validation ?? null); setBrainstorm(null); };
+  const startNew = () => { setEditing({ ...BLANK }); setValidation(null); setBrainstorm(null); setDescribeSuggestion(null); };
+  const startEdit = (p: Plan) => { setEditing({ ...p, features: p.features ?? [] }); setValidation(p.ai_validation ?? null); setBrainstorm(null); setDescribeSuggestion(null); };
+
+  const runDescribe = async () => {
+    if (!editing) return;
+    if (!editing.name) { toast.error('Add a plan name first'); return; }
+    setDescribing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('subscription-plan-ai', {
+        body: { action: 'describe', plan: editing },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setDescribeSuggestion({ description: data.description ?? '', features: data.features ?? [], rationale: data.rationale ?? '' });
+    } catch (e: any) {
+      toast.error(e.message ?? 'Suggestion failed');
+    } finally {
+      setDescribing(false);
+    }
+  };
+
+  const applyDescribeDescription = () => {
+    if (!editing || !describeSuggestion) return;
+    setEditing({ ...editing, description: describeSuggestion.description });
+    toast.success('Description applied');
+  };
+
+  const applyDescribeFeature = (f: string) => {
+    if (!editing) return;
+    if (editing.features.includes(f)) return;
+    setEditing({ ...editing, features: [...editing.features, f] });
+    setDescribeSuggestion((s) => s ? { ...s, features: s.features.filter((x) => x !== f) } : s);
+  };
 
   const addFeature = () => {
     const f = featureDraft.trim();
