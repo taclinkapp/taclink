@@ -211,6 +211,7 @@ const AdminSecurity = () => {
       {/* Backup payment processor in case the primary rail goes down */}
       <PaymentFailoverCard />
       <BackupRailsCard />
+      <ProfilePhotoBackfillCard />
     </div>
   );
 };
