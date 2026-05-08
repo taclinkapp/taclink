@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PILLARS, type PillarId } from "@/lib/pillars";
 import quizStep1Bg from "@/assets/quiz-step1-bg.mp4";
+import quizStep2Bg from "@/assets/quiz-step2-bg.mp4";
 import {
   loadQuizLocal,
   saveQuizLocal,
@@ -97,10 +98,11 @@ const Quiz = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {step === 1 && (
+      {(step === 1 || step === 2) && (
         <>
           <video
-            src={quizStep1Bg}
+            key={step}
+            src={step === 1 ? quizStep1Bg : quizStep2Bg}
             autoPlay loop muted playsInline aria-hidden
             className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none z-0"
           />
