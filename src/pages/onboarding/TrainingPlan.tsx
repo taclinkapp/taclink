@@ -9,7 +9,6 @@ import { CourseCard } from "@/components/CourseCard";
 import { dbToViewCourse, type DbCourse } from "@/lib/courses";
 import { useAreaCourseAnalytics } from "@/hooks/useAreaCourseAnalytics";
 import { MapPin, Clock, DollarSign, Users, ArrowLeft } from "lucide-react";
-import trainingPlanBg from "@/assets/training-plan-bg.mp4";
 
 const TrainingPlan = () => {
   const nav = useNavigate();
