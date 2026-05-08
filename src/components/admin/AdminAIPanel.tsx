@@ -29,12 +29,20 @@ const QUICK = [
 
 export function AdminAIPanel() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [threads, setThreads] = useState<Record<string, Msg[]>>({});
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const tab = getAdminTabContext(location.pathname);
+  const threadKey = tab?.path ?? "__global__";
+  const messages = threads[threadKey] ?? [];
+  const setMessages = (updater: Msg[] | ((prev: Msg[]) => Msg[])) =>
+    setThreads((prev) => {
+      const current = prev[threadKey] ?? [];
+      const next = typeof updater === "function" ? (updater as (p: Msg[]) => Msg[])(current) : updater;
+      return { ...prev, [threadKey]: next };
+    });
 
   const userAction = useAdminUserAction();
   const courseAction = useAdminCourseAction();
@@ -47,10 +55,7 @@ export function AdminAIPanel() {
     if (open) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, open, loading]);
 
-  // Reset conversation when admin navigates to a different tab so context stays clean.
-  useEffect(() => {
-    setMessages([]);
-  }, [tab?.path]);
+  // Per-tab threads are preserved across navigation; no reset on tab change.
 
   const send = async (text: string) => {
     const trimmed = text.trim();
