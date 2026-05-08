@@ -28,11 +28,33 @@ function walk(dir) {
 
 function loadRoutes() {
   const src = readFileSync(APP, "utf8");
-  const re = /<Route\s+[^>]*path=["'`]([^"'`]+)["'`]/g;
-  const routes = [];
+  // Walk the file, tracking a stack of parent <Route path="..."> elements so
+  // nested children compose into their full absolute path.
+  const tokenRe =
+    /<Route\b([^>]*?)(\/?)>|<\/Route>/g;
+  const pathRe = /\bpath=["'`]([^"'`]+)["'`]/;
+  const routes = new Set();
+  const stack = []; // array of parent absolute paths
   let m;
-  while ((m = re.exec(src))) routes.push(m[1]);
-  return routes;
+  while ((m = tokenRe.exec(src))) {
+    const full = m[0];
+    if (full === "</Route>") {
+      stack.pop();
+      continue;
+    }
+    const attrs = m[1] || "";
+    const selfClose = m[2] === "/";
+    const pm = pathRe.exec(attrs);
+    let absolute = stack[stack.length - 1] ?? "";
+    if (pm) {
+      const p = pm[1];
+      if (p.startsWith("/")) absolute = p;
+      else absolute = (absolute.endsWith("/") ? absolute.slice(0, -1) : absolute) + "/" + p;
+      routes.add(absolute);
+    }
+    if (!selfClose) stack.push(absolute);
+  }
+  return [...routes];
 }
 
 function pathMatchesRoute(linkPath, routes) {
