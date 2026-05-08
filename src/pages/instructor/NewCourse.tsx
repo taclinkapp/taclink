@@ -29,6 +29,7 @@ import { AddressMapPreview } from '@/components/AddressMapPreview';
 import { generateCourseWaiver, type WaiverCriteria } from '@/lib/courseAI';
 import ReactMarkdown from 'react-markdown';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { PhotoAdjusterDialog, type AdjustAspect } from '@/components/instructor/PhotoAdjusterDialog';
 import { Crop } from 'lucide-react';
 import { PILLARS } from '@/lib/pillars';
