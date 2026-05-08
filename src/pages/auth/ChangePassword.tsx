@@ -14,7 +14,8 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 
 const ChangePassword = () => {
   const nav = useNavigate();
-  const { user } = useAuth();
+  const { user, primaryRole } = useAuth();
+  const backTo = primaryRole === 'admin' ? '/admin' : primaryRole === 'instructor' ? '/instructor/settings' : '/student/settings';
   const [current, setCurrent] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -61,7 +62,7 @@ const ChangePassword = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="Change Password" back backTo="/student/settings" />
+      <PageHeader title="Change Password" back backTo={backTo} />
       <div className="max-w-md mx-auto px-6 py-6">
         <p className="text-muted-foreground text-sm mb-6">
           Enter your current password, then choose a new one that meets the requirements below.
