@@ -61,7 +61,10 @@ export function AdminAIPanel() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("admin-ai", {
-        body: { messages: next.map((m) => ({ role: m.role, content: m.content })) },
+        body: {
+          messages: next.map((m) => ({ role: m.role, content: m.content })),
+          context: tab ? { tab } : undefined,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
