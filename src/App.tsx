@@ -100,6 +100,7 @@ import AdminRefundTest from "./pages/admin/AdminRefundTest";
 import AdminUptime from "./pages/admin/AdminUptime";
 import AdminBackgroundVideos from "./pages/admin/AdminBackgroundVideos";
 import AdminDepositReview from "./pages/admin/AdminDepositReview";
+import AdminFeedback from "./pages/admin/AdminFeedback";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
@@ -207,6 +208,7 @@ const App = () => (
               <Route path="reliability" element={<AdminReliability />} />
               
               <Route path="reports" element={<AdminReports />} />
+              <Route path="feedback" element={<AdminFeedback />} />
               <Route path="support" element={<AdminSupportTickets />} />
               <Route path="conversations" element={<AdminConversations />} />
               <Route path="conversations/:id" element={<AdminConversationDetail />} />
