@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CourseCard } from "@/components/CourseCard";
 import { dbToViewCourse, type DbCourse } from "@/lib/courses";
 import { useAreaCourseAnalytics } from "@/hooks/useAreaCourseAnalytics";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Clock, DollarSign, Users, ArrowLeft } from "lucide-react";
 
 const TrainingPlan = () => {
