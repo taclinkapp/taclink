@@ -13,6 +13,7 @@ export function AIAssistantMount() {
   // Hide on auth, splash, admin, checkout/booking-success, and any onboarding flow
   const isOnboarding =
     pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/welcome") ||
     new URLSearchParams(search).get("onboarding") === "1";
 
   if (
