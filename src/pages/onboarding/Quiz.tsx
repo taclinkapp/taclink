@@ -195,6 +195,7 @@ const Quiz = () => {
           </Button>
         </div>
       </div>
+      </div>
     </div>
   );
 };
