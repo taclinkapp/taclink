@@ -29,8 +29,48 @@ Deno.serve(async (req) => {
     if (!isAdmin) return json({ error: 'Admins only' }, 403);
 
     const body = await req.json();
-    const { plan, apply = true } = body ?? {};
-    if (!plan || !plan.name) return json({ error: 'plan.name required' }, 400);
+    const { plan, apply = true, action } = body ?? {};
+    if (!plan) return json({ error: 'plan required' }, 400);
+
+    const aiKeyEarly = Deno.env.get('LOVABLE_API_KEY');
+
+    // ── Brainstorm action: returns a list of suggested feature bullets ──
+    if (action === 'brainstorm') {
+      if (!aiKeyEarly) return json({ error: 'AI is not configured' }, 500);
+      const ai = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${aiKeyEarly}` },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You brainstorm subscription plan features for TacLink, a tactical-training marketplace connecting students with firearms / combatives instructors. Return strict JSON: {"features":string[],"rationale":string}. Generate 6-10 SHORT, concrete, benefit-led bullets (max ~8 words each). Avoid duplicates of existing features. Tone: tactical, precise, no marketing fluff. Match the audience (instructor vs student) and price tier.',
+            },
+            {
+              role: 'user',
+              content:
+                `Plan context:\nname: ${plan.name ?? '(unnamed)'}\naudience: ${plan.audience ?? 'instructor'}\nprice: $${((plan.price_cents ?? 0) / 100).toFixed(2)}/${plan.billing_interval ?? 'month'}\ndescription: ${plan.description ?? '(none)'}\nexisting features:\n${(plan.features ?? []).map((f: string) => `- ${f}`).join('\n') || '(none)'}\n\nBrainstorm new features that would make this tier compelling.`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+        }),
+      });
+      if (!ai.ok) {
+        const txt = await ai.text();
+        return json({ error: `AI gateway ${ai.status}: ${txt.slice(0, 200)}` }, 500);
+      }
+      const out = await ai.json();
+      let parsed: any = {};
+      try { parsed = JSON.parse(out.choices?.[0]?.message?.content ?? '{}'); } catch { /* ignore */ }
+      const features = Array.isArray(parsed.features)
+        ? parsed.features.map((s: any) => String(s).trim()).filter(Boolean).slice(0, 12)
+        : [];
+      return json({ features, rationale: parsed.rationale ?? '' });
+    }
+
+    if (!plan.name) return json({ error: 'plan.name required' }, 400);
 
     // Ask Lovable AI to validate + normalize.
     const aiKey = Deno.env.get('LOVABLE_API_KEY');

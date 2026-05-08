@@ -47,6 +47,32 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Admin lock check: reject if the plan is locked or inactive in our DB.
+    try {
+      const sbUrl = Deno.env.get("SUPABASE_URL");
+      const anon = Deno.env.get("SUPABASE_ANON_KEY");
+      if (sbUrl && anon) {
+        const planRes = await fetch(
+          `${sbUrl}/rest/v1/subscription_plans?slug=eq.${encodeURIComponent(priceId)}&select=locked,active,locked_reason`,
+          { headers: { apikey: anon, Authorization: `Bearer ${anon}` } },
+        );
+        if (planRes.ok) {
+          const rows = (await planRes.json()) as Array<{ locked: boolean; active: boolean; locked_reason: string | null }>;
+          const plan = rows?.[0];
+          if (plan && (plan.locked || !plan.active)) {
+            return new Response(
+              JSON.stringify({
+                error: plan.locked_reason || "This plan is currently unavailable.",
+              }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+            );
+          }
+        }
+      }
+    } catch (e) {
+      console.error("plan lock check failed:", e);
+    }
+
     const env: StripeEnv = environment;
     const stripe = createStripeClient(env);
 
