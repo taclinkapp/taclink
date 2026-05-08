@@ -29,6 +29,7 @@ import { AddressMapPreview } from '@/components/AddressMapPreview';
 import { generateCourseWaiver, type WaiverCriteria } from '@/lib/courseAI';
 import ReactMarkdown from 'react-markdown';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { PhotoAdjusterDialog, type AdjustAspect } from '@/components/instructor/PhotoAdjusterDialog';
 import { Crop } from 'lucide-react';
 import { PILLARS } from '@/lib/pillars';
@@ -70,6 +71,34 @@ const NewCourse = () => {
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [credStatus, setCredStatus] = useState<'pending' | 'needs_review' | 'rejected' | 'approved' | 'expired' | 'none' | null>(null);
+  const [credWarnOpen, setCredWarnOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user || skipPublishGuards) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('instructor_credentials')
+        .select('status, ai_expires_on')
+        .eq('instructor_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      const status = (data?.status as any) ?? 'none';
+      const expired = data?.ai_expires_on && new Date(data.ai_expires_on) < new Date();
+      const effective = expired ? 'expired' : status;
+      setCredStatus(effective);
+      if (effective !== 'approved') {
+        const dismissedKey = `credWarnDismissed:${user.id}`;
+        if (!sessionStorage.getItem(dismissedKey)) {
+          setCredWarnOpen(true);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, skipPublishGuards]);
 
   useEffect(() => {
     if (!user) return;
@@ -717,6 +746,42 @@ const NewCourse = () => {
 
   return (
     <MobileShell withTabBar={false}>
+      <Dialog
+        open={credWarnOpen}
+        onOpenChange={(open) => {
+          setCredWarnOpen(open);
+          if (!open && user) sessionStorage.setItem(`credWarnDismissed:${user.id}`, '1');
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <div className="mx-auto h-12 w-12 rounded-full bg-warning/10 grid place-items-center mb-2">
+              <AlertTriangle className="h-6 w-6 text-warning" />
+            </div>
+            <DialogTitle className="text-center">Credentials still under review</DialogTitle>
+            <DialogDescription className="text-center">
+              {credStatus === 'rejected'
+                ? 'Your last credential submission was rejected. Please upload a new credential — you won’t be able to publish a course until it is approved.'
+                : credStatus === 'expired'
+                ? 'Your credential on file has expired. Upload a current one — you won’t be able to publish a course until it is approved.'
+                : credStatus === 'needs_review'
+                ? 'Your credential is waiting on a human reviewer. You can build and save your course as a draft, but it can’t be published until your credential is approved.'
+                : credStatus === 'none'
+                ? 'You haven’t uploaded a credential yet. You can build and save your course as a draft, but it can’t be published until a credential is approved.'
+                : 'Our AI verifier usually decides within an hour. You can build and save your course as a draft, but the Publish button stays locked until your credential is approved.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            {(credStatus === 'rejected' || credStatus === 'expired' || credStatus === 'none') ? (
+              <Button onClick={() => { setCredWarnOpen(false); nav('/instructor/credentials'); }}>
+                Upload credential
+              </Button>
+            ) : (
+              <Button onClick={() => setCredWarnOpen(false)}>Got it</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <PageHeader title={isEdit ? 'Edit Draft' : 'New Course'} back onBack={back} />
       <div className="px-4 pt-3">
         <Breadcrumbs
