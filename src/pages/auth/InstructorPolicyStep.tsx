@@ -155,11 +155,11 @@ const InstructorPolicyStep = () => {
     }
 
     try {
-      await supabase.from('policy_acknowledgments').insert({
-        user_id: userId,
-        policy_version: POLICY_VERSION,
-        user_agent: navigator.userAgent,
-      });
+      await supabase.from('policy_acknowledgments').insert([
+        { user_id: userId, policy_version: POLICY_VERSION, user_agent: navigator.userAgent },
+        { user_id: userId, policy_version: 'privacy-v1.0', user_agent: navigator.userAgent },
+        { user_id: userId, policy_version: 'terms-v1.0', user_agent: navigator.userAgent },
+      ]);
     } catch (err) {
       console.error('policy ack insert failed', err);
     }
