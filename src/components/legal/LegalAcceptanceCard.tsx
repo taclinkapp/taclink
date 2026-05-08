@@ -27,7 +27,13 @@ export const LegalAcceptanceCard = ({ onAcceptedChange }: { onAcceptedChange?: (
   const termsAck = latest(TERMS_VERSION);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      // No auth yet (e.g. pre-signup onboarding). Show the acceptance form
+      // immediately; submission is deferred to whoever owns the flow.
+      setAcks([]);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       setLoading(true);
