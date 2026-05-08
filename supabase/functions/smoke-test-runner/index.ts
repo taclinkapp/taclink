@@ -213,12 +213,59 @@ Deno.serve(async (req) => {
   const startedAt = Date.now();
   const findings: Finding[] = [];
 
-  // Route probes
+  // Route probes — every page declared in App.tsx (parameterized routes use sample IDs).
+  const SAMPLE_ID = "00000000-0000-0000-0000-000000000000";
   const routes = [
-    "/", "/auth/signin", "/auth/student-signup", "/auth/instructor-signup",
-    "/student", "/admin/login", "/welcome",
+    // public / onboarding
+    "/", "/welcome", "/welcome/quiz", "/welcome/plan",
+    "/notifications", "/profile/edit", "/unsubscribe",
+    "/support", "/support/contact",
+    "/legal/terms", "/legal/privacy", "/legal/cancellations",
+    // auth
+    "/auth/signin", "/auth/student-signup", "/auth/instructor-signup",
+    "/auth/credential-verification", "/auth/forgot-password", "/auth/reset-password",
+    "/auth/change-password",
+    "/auth/instructor/plan", "/auth/instructor/credential", "/auth/instructor/policy",
+    `/auth/invite/${SAMPLE_ID}`, `/i/${SAMPLE_ID}`,
+    // student
+    "/student", "/student/discover", "/student/bookings", "/student/progress",
+    "/student/operator", "/student/reviews", "/student/profile", "/student/settings",
+    "/student/payment-methods", "/student/messages",
+    `/student/course/${SAMPLE_ID}`, `/student/checkout/${SAMPLE_ID}`,
+    `/student/checkout/${SAMPLE_ID}/return`, `/student/booking-success/${SAMPLE_ID}`,
+    `/student/booking/${SAMPLE_ID}`, `/student/review/${SAMPLE_ID}`,
+    `/student/messages/${SAMPLE_ID}`,
+    // instructor
+    "/instructor", "/instructor/dashboard", "/instructor/courses",
+    "/instructor/courses/new", "/instructor/profile", "/instructor/settings",
+    "/instructor/messages", "/instructor/credentials", "/instructor/roster",
+    "/instructor/reviews", "/instructor/payment-methods", "/instructor/payouts",
+    "/instructor/payout-methods", "/instructor/subscription",
+    `/instructor/courses/${SAMPLE_ID}`, `/instructor/courses/${SAMPLE_ID}/edit`,
+    `/instructor/messages/${SAMPLE_ID}`,
+    // admin
+    "/admin/login", "/admin", "/admin/owner-console", "/admin/cockpit", "/admin/brief",
+    "/admin/influencers", "/admin/users", "/admin/instructors", "/admin/courses",
+    "/admin/waivers", "/admin/course-editor", "/admin/featured", "/admin/conversations",
+    `/admin/conversations/${SAMPLE_ID}`,
+    "/admin/moderation", "/admin/deposit-review", "/admin/financials",
+    "/admin/fee-overrides", "/admin/refunds", "/admin/bug-triage", "/admin/reliability",
+    "/admin/reports", "/admin/feedback", "/admin/support", "/admin/activity",
+    "/admin/flags", "/admin/test-accounts", "/admin/warrior-quotes", "/admin/security",
+    "/admin/helcim-webhooks", "/admin/refund-test", "/admin/uptime",
+    "/admin/background-videos", "/admin/subscription-plans", "/admin/settings",
   ];
-  for (const r of routes) findings.push(await probeUrl(`${APP_URL}${r}`));
+  // Run probes in parallel batches of 8 to stay within edge runtime time budget.
+  const BATCH = 8;
+  for (let i = 0; i < routes.length; i += BATCH) {
+    const slice = routes.slice(i, i + BATCH);
+    const results = await Promise.all(slice.map((r) => probeUrl(`${APP_URL}${r}`)));
+    findings.push(...results);
+  }
+  // Verify the SPA isn't serving the 404 fallback for declared routes by
+  // sampling the HTML body for the NotFound marker.
+  // (probeUrl already flagged HTTP errors; this catches client-side 404s.)
+  // Skipped here for runtime budget; relies on `route_404_events` collected from real users.
 
   // Edge function reachability
   const fns = [
