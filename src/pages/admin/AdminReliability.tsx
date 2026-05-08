@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, Loader2, RefreshCw, ExternalLink, CheckCircle2, Wrench } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw, ExternalLink, CheckCircle2, Wrench, PlayCircle, ShieldCheck, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { SmokeTestPanel } from "@/components/admin/SmokeTestPanel";
 
 type Event = {
   id: string;
@@ -153,6 +154,8 @@ export default function AdminReliability() {
           <span className="ml-2">Refresh</span>
         </Button>
       </div>
+
+      <SmokeTestPanel />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Tile label="404s last 24h" value={last24h} tone={last24h > 0 ? "destructive" : "ok"} />
