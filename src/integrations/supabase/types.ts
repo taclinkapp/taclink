@@ -736,6 +736,56 @@ export type Database = {
         }
         Relationships: []
       }
+      credential_decision_log: {
+        Row: {
+          ai_confidence: number | null
+          ai_name_match_score: number | null
+          created_at: string
+          credential_id: string
+          decided_by: string | null
+          decided_by_kind: string
+          id: string
+          instructor_id: string
+          new_status: string
+          old_status: string | null
+          reason: string | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_name_match_score?: number | null
+          created_at?: string
+          credential_id: string
+          decided_by?: string | null
+          decided_by_kind?: string
+          id?: string
+          instructor_id: string
+          new_status: string
+          old_status?: string | null
+          reason?: string | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_name_match_score?: number | null
+          created_at?: string
+          credential_id?: string
+          decided_by?: string | null
+          decided_by_kind?: string
+          id?: string
+          instructor_id?: string
+          new_status?: string
+          old_status?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credential_decision_log_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "instructor_credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domain_status: {
         Row: {
           created_at: string
@@ -1460,14 +1510,17 @@ export type Database = {
         Row: {
           admin_notes: string | null
           ai_confidence: number | null
+          ai_decided_at: string | null
           ai_expires_on: string | null
           ai_holder_name: string | null
           ai_issuer: string | null
+          ai_name_match_score: number | null
           ai_raw: Json | null
           ai_reasons: string | null
           created_at: string
           credential_type: string
           display_name: string | null
+          expired_at: string | null
           file_mime: string | null
           file_path: string
           id: string
@@ -1480,14 +1533,17 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           ai_confidence?: number | null
+          ai_decided_at?: string | null
           ai_expires_on?: string | null
           ai_holder_name?: string | null
           ai_issuer?: string | null
+          ai_name_match_score?: number | null
           ai_raw?: Json | null
           ai_reasons?: string | null
           created_at?: string
           credential_type: string
           display_name?: string | null
+          expired_at?: string | null
           file_mime?: string | null
           file_path: string
           id?: string
@@ -1500,14 +1556,17 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           ai_confidence?: number | null
+          ai_decided_at?: string | null
           ai_expires_on?: string | null
           ai_holder_name?: string | null
           ai_issuer?: string | null
+          ai_name_match_score?: number | null
           ai_raw?: Json | null
           ai_reasons?: string | null
           created_at?: string
           credential_type?: string
           display_name?: string | null
+          expired_at?: string | null
           file_mime?: string | null
           file_path?: string
           id?: string
@@ -3295,6 +3354,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_stale_credentials: { Args: never; Returns: number }
       generate_referral_code: { Args: never; Returns: string }
       get_active_payment_provider: {
         Args: never
@@ -3327,6 +3387,10 @@ export type Database = {
       instructor_dispute_refund: {
         Args: { _reason: string; _refund_id: string }
         Returns: Json
+      }
+      instructor_has_approved_credential: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       instructor_no_show_refund: {
         Args: { _booking_id: string; _reason?: string }

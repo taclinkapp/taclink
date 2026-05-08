@@ -77,6 +77,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Look up the signup name for name-match scoring
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("display_name, full_name, first_name, last_name")
+      .eq("id", cred.instructor_id as string)
+      .maybeSingle();
+
+    const signupName = (
+      (profile as any)?.full_name ||
+      [((profile as any)?.first_name ?? ""), ((profile as any)?.last_name ?? "")].join(" ").trim() ||
+      (profile as any)?.display_name ||
+      ""
+    ).toString().trim();
+
     // Signed URL so the AI can fetch the private file (1-hour TTL is plenty)
     const { data: signed, error: signErr } = await admin.storage
       .from("credentials")
@@ -134,21 +148,41 @@ Deno.serve(async (req) => {
     if (!args) throw new Error("AI did not return a tool call");
     const result = JSON.parse(args);
 
-    let status: string;
-    if (!result.is_credential) {
-      status = "rejected";
-    } else if (result.tampering_signs) {
-      status = "needs_review";
-    } else if (typeof result.confidence === "number" && result.confidence >= 0.85) {
-      status = "approved";
-    } else {
-      status = "needs_review";
+    // Name-match score: token overlap between signup name and credential holder name
+    const norm = (s: string) =>
+      s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length >= 2);
+    const signupTokens = new Set(norm(signupName));
+    const holderTokens = norm(String(result.holder_name ?? ""));
+    let nameMatch = 0;
+    if (signupTokens.size > 0 && holderTokens.length > 0) {
+      const hits = holderTokens.filter((t) => signupTokens.has(t)).length;
+      nameMatch = hits / Math.max(signupTokens.size, holderTokens.length);
     }
 
+    // Expiration check
     const expiresOn =
       typeof result.expires_on === "string" && /^\d{4}-\d{2}-\d{2}/.test(result.expires_on)
         ? result.expires_on.slice(0, 10)
         : null;
+    const isExpired = expiresOn ? new Date(expiresOn) < new Date(new Date().toISOString().slice(0, 10)) : false;
+
+    let status: string;
+    let reasonAddon = "";
+    if (!result.is_credential) {
+      status = "rejected";
+    } else if (result.tampering_signs) {
+      status = "needs_review";
+    } else if (isExpired) {
+      status = "rejected";
+      reasonAddon = ` Credential expired on ${expiresOn}.`;
+    } else if (signupTokens.size > 0 && nameMatch < 0.4) {
+      status = "needs_review";
+      reasonAddon = ` Name on credential ("${result.holder_name}") does not match signup name ("${signupName}").`;
+    } else if (typeof result.confidence === "number" && result.confidence >= 0.85 && (signupTokens.size === 0 || nameMatch >= 0.6)) {
+      status = "approved";
+    } else {
+      status = "needs_review";
+    }
 
     await admin
       .from("instructor_credentials")
@@ -158,7 +192,9 @@ Deno.serve(async (req) => {
         ai_issuer: result.issuer ?? null,
         ai_holder_name: result.holder_name ?? null,
         ai_expires_on: expiresOn,
-        ai_reasons: result.reasons ?? null,
+        ai_name_match_score: nameMatch,
+        ai_decided_at: new Date().toISOString(),
+        ai_reasons: (result.reasons ?? "") + reasonAddon,
         ai_raw: data,
       })
       .eq("id", credentialId);
