@@ -19,6 +19,7 @@ const TrainingPlan = () => {
     ? answers.travel_radius_miles
     : 50;
   const [previewCourses, setPreviewCourses] = useState<any[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(true);
 
   const analytics = useAreaCourseAnalytics({
     pillars: answers.selected_pillars,
@@ -26,16 +27,25 @@ const TrainingPlan = () => {
   });
 
   useEffect(() => {
+    let cancelled = false;
+    setPreviewLoading(true);
     (async () => {
       let q = supabase.from("courses").select("*").eq("status", "published");
       if (answers.selected_pillars.length) {
         q = q.in("primary_pillar", answers.selected_pillars as any);
       }
       const { data } = await q.limit(3);
+      if (cancelled) return;
       const rows = (data as DbCourse[]) ?? [];
       setPreviewCourses(rows.map((r) => dbToViewCourse(r)));
+      setPreviewLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [answers.selected_pillars]);
+
+  const planLoading = analytics.loading || previewLoading;
 
   const fmtMiles = (m: number | null) =>
     m == null ? "—" : m < 1 ? `${(m * 5280).toFixed(0)} ft` : `${m.toFixed(1)} mi`;
