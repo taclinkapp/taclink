@@ -98,7 +98,7 @@ async function probeEdgeFn(name: string): Promise<Finding> {
   }
 }
 
-serve(async () => {});
+
 
 async function dbChecks(admin: ReturnType<typeof createClient>): Promise<Finding[]> {
   const out: Finding[] = [];
