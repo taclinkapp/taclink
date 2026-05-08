@@ -225,6 +225,7 @@ const App = () => (
               <Route path="helcim-webhooks" element={<AdminHelcimWebhooks />} />
               <Route path="refund-test" element={<AdminRefundTest />} />
               <Route path="uptime" element={<AdminUptime />} />
+              <Route path="background-videos" element={<AdminBackgroundVideos />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
 
