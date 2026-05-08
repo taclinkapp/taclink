@@ -179,11 +179,15 @@ export default function AdminSubscriptionPlans() {
                     <Badge variant="outline">{p.audience}</Badge>
                     {p.highlight && <Badge>Highlighted</Badge>}
                     {!p.active && <Badge variant="destructive">Inactive</Badge>}
+                    {p.locked && <Badge variant="destructive" className="gap-1"><Lock className="h-3 w-3" />Locked</Badge>}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {p.slug} · ${(p.price_cents / 100).toFixed(2)}/{p.billing_interval}
                   </div>
                   {p.description && <p className="text-sm mt-2">{p.description}</p>}
+                  {p.locked && p.locked_reason && (
+                    <p className="text-xs mt-1 text-destructive">Lock reason: {p.locked_reason}</p>
+                  )}
                   {p.features?.length > 0 && (
                     <ul className="mt-2 text-xs space-y-0.5">
                       {p.features.map((f, i) => <li key={i}>• {f}</li>)}
@@ -192,6 +196,9 @@ export default function AdminSubscriptionPlans() {
                 </div>
                 <div className="flex flex-col gap-1.5 shrink-0">
                   <Button size="sm" variant="outline" onClick={() => startEdit(p)}>Edit</Button>
+                  <Button size="sm" variant={p.locked ? 'default' : 'ghost'} onClick={() => toggleLock(p)} title={p.locked ? 'Unlock so users can choose this plan' : 'Lock so users cannot choose this plan'}>
+                    {p.locked ? <><Unlock className="h-3.5 w-3.5 mr-1" />Unlock</> : <><Lock className="h-3.5 w-3.5 mr-1" />Lock</>}
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => toggleActive(p)}>
                     {p.active ? 'Disable' : 'Enable'}
                   </Button>
