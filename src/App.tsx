@@ -140,6 +140,7 @@ const App = () => (
             <Route path="/welcome/plan" element={<OnboardingPlan />} />
 
             {/* Auth */}
+            <Route path="/auth" element={<Navigate to="/auth/signin" replace />} />
             <Route path="/auth/signin" element={<SignIn />} />
             <Route path="/auth/student-signup" element={<StudentSignUp />} />
             <Route path="/auth/instructor-signup" element={<InstructorSignUp />} />
