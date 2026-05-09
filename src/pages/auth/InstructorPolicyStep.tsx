@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/MobileShell';
@@ -18,6 +18,7 @@ import { logSignupRedirect } from '@/lib/signupLogging';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const POLICY_VERSION = 'v1.0';
+const POST_VERIFY_UPLOAD_KEY = 'taclink_instructor_finalize_after_verify';
 
 /**
  * Final onboarding step. Acknowledging the policy triggers the FIRST and
@@ -27,9 +28,11 @@ const POLICY_VERSION = 'v1.0';
  */
 const InstructorPolicyStep = () => {
   const nav = useNavigate();
+  const [params] = useSearchParams();
   const [agree, setAgree] = useState(false);
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const resumeAfterVerify = params.get('resume') === '1';
 
   useEffect(() => {
     const draft = getInstructorDraft();
@@ -48,7 +51,7 @@ const InstructorPolicyStep = () => {
 
   const finalize = async () => {
     const draft = getInstructorDraft();
-    if (!draft || !draft.credentialFile || !draft.photo) {
+    if (!draft || (!resumeAfterVerify && (!draft.credentialFile || !draft.photo))) {
       toast.error('Your application is incomplete. Please start over.');
       nav('/auth/instructor-signup', { replace: true });
       return;
@@ -69,7 +72,7 @@ const InstructorPolicyStep = () => {
       email: draft.email,
       password: draft.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/instructor`,
+        emailRedirectTo: `${window.location.origin}/auth/verify-email?email=${encodeURIComponent(draft.email)}&role=instructor`,
         data: {
           display_name: `${draft.firstName} ${draft.lastName}`.trim(),
           state: draft.state,
@@ -89,20 +92,11 @@ const InstructorPolicyStep = () => {
     // Make sure we have a session before doing authenticated writes.
     let userId = signUpData.user?.id;
     if (!signUpData.session) {
-      const { data: signIn, error: signInErr } = await supabase.auth.signInWithPassword({
-        email: draft.email,
-        password: draft.password,
-      });
-      if (signInErr || !signIn.user) {
-        setSubmitting(false);
-        toast.success('Account created', {
-          description: 'Confirm your email to finish setup.',
-        });
-        clearInstructorDraft();
-        nav(`/auth/verify-email?email=${encodeURIComponent(draft.email)}&role=instructor`, { replace: true });
-        return;
-      }
-      userId = signIn.user.id;
+      try { sessionStorage.setItem(POST_VERIFY_UPLOAD_KEY, '1'); } catch {}
+      setSubmitting(false);
+      toast.success('Account created', { description: 'Enter the email code to finish setup.' });
+      nav(`/auth/verify-email?email=${encodeURIComponent(draft.email)}&role=instructor`, { replace: true });
+      return;
     }
     if (!userId) {
       setSubmitting(false);
