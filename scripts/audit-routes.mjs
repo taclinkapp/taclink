@@ -3,7 +3,7 @@
 /**
  * Route audit:
  *   - Parses every <Route path="..."> from src/App.tsx
- *   - Greps every backTo="...", to="...", navigate("..."), href="/..."
+  *   - Greps every backTo="...", to="...", navigate("..."), nav("..."), href="/..."
  *     in src/ that uses a literal string starting with "/"
  *   - Reports any link that points at a path with no matching route
  *
@@ -83,6 +83,7 @@ function findLinks(file) {
     /\bbackTo=["'`](\/[^"'`${}]*)["'`]/g,
     /\bto=["'`](\/[^"'`${}]*)["'`]/g,
     /\bnavigate\(\s*["'`](\/[^"'`${}]*)["'`]/g,
+    /\bnav\(\s*["'`](\/[^"'`${}]*)["'`]/g,
     /\bhref=["'`](\/[^"'`${}]*)["'`]/g,
   ];
   for (const re of patterns) {
