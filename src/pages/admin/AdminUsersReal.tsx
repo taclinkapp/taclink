@@ -20,10 +20,24 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+/**
+ * Refresh the auth session before any privileged admin call. If the session
+ * is gone server-side (revoked, expired, signed out elsewhere) we surface
+ * a clear "please sign in again" error instead of the generic "Not
+ * authenticated" coming back from the edge function.
+ */
+async function ensureFreshAdminSession(): Promise<void> {
+  const { data, error } = await supabase.auth.refreshSession();
+  if (error || !data.session) {
+    throw new Error('Your admin session expired. Please sign out and sign back in, then retry.');
+  }
+}
+
 function useDeleteAccount() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) => {
+      await ensureFreshAdminSession();
       const { data, error } = await supabase.functions.invoke('admin-delete-user', {
         body: { userId, reason },
       });
@@ -44,6 +58,7 @@ function useSoftDeleteAccount() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId, reason, mode }: { userId: string; reason?: string; mode: 'disable' | 'restore' }) => {
+      await ensureFreshAdminSession();
       const { data, error } = await supabase.functions.invoke('admin-soft-delete-user', {
         body: { userId, reason, mode },
       });
