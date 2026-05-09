@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
 import { useNavHistory } from '@/contexts/NavHistoryContext';
+import { homeForRole, useAuth } from '@/contexts/AuthContext';
 
 export const MobileShell = ({ children, className, withTabBar = true }: { children: ReactNode; className?: string; withTabBar?: boolean }) => (
   <div className="min-h-screen bg-background">
@@ -36,6 +37,7 @@ export const PageHeader = ({
 }) => {
   const navigate = useNavigate();
   const { depthRef } = useNavHistory();
+  const { primaryRole } = useAuth();
   const handleBack = () => {
     if (onBack) return onBack();
     // Prefer the explicit destination — it's the page author's source of
@@ -44,7 +46,7 @@ export const PageHeader = ({
     // entry to step back to).
     if (backTo) return navigate(backTo);
     if (depthRef.current > 0) return navigate(-1);
-    navigate('/');
+    navigate(primaryRole ? homeForRole(primaryRole) : '/');
   };
   return (
   <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
