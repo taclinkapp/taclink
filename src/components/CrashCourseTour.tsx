@@ -76,18 +76,22 @@ export function CrashCourseTour({ role, open, onClose }: { role: Role; open: boo
 
 const tourKey = (role: Role, userId: string | undefined) => `taclink_tour_seen:${role}:${userId ?? 'anon'}`;
 
-export function useCrashCourseTour(role: Role, userId: string | undefined) {
+export function useCrashCourseTour(
+  role: Role,
+  userId: string | undefined,
+  { autoOpen = true }: { autoOpen?: boolean } = {},
+) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!autoOpen || !userId) return;
     const seen = localStorage.getItem(tourKey(role, userId));
     if (!seen) {
       // small delay so the page renders first
       const t = setTimeout(() => setOpen(true), 400);
       return () => clearTimeout(t);
     }
-  }, [role, userId]);
+  }, [autoOpen, role, userId]);
 
   const close = () => {
     if (userId) localStorage.setItem(tourKey(role, userId), '1');
