@@ -7,6 +7,7 @@ import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { OperatorProfileMini } from '@/components/operator/OperatorProfileMini';
+import { TrainingPlanCard } from '@/components/student/TrainingPlanCard';
 import { getAvatarSrc } from '@/lib/avatar';
 
 type HistoryRow = {
@@ -104,6 +105,10 @@ const StudentProfile = () => {
         </div>
 
         <div className="mt-6">
+          <TrainingPlanCard />
+        </div>
+
+        <div className="mt-4">
           <OperatorProfileMini studentId={user?.id} linkTo="/student/operator" />
         </div>
 
