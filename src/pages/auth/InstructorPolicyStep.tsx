@@ -73,42 +73,44 @@ const InstructorPolicyStep = () => {
       email: draft.email,
     });
 
-    // 1) Create the auth user. This is the first server write of the flow.
-    const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
-      email: draft.email,
-      password: draft.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/verify-email?email=${encodeURIComponent(draft.email)}&role=instructor`,
-        data: {
-          display_name: `${draft.firstName} ${draft.lastName}`.trim(),
-          state: draft.state,
-          bio: draft.bio,
-          role: 'instructor',
-          ...(draft.referralCode ? { referral_code: draft.referralCode } : {}),
-          ...(draft.influencerSlug ? { influencer_slug: draft.influencerSlug } : {}),
+    let userId = user?.id;
+    if (!resumeAfterVerify) {
+      // 1) Create the auth user. This is the first server write of the flow.
+      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+        email: draft.email,
+        password: draft.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/verify-email?email=${encodeURIComponent(draft.email)}&role=instructor`,
+          data: {
+            display_name: `${draft.firstName} ${draft.lastName}`.trim(),
+            state: draft.state,
+            bio: draft.bio,
+            role: 'instructor',
+            ...(draft.referralCode ? { referral_code: draft.referralCode } : {}),
+            ...(draft.influencerSlug ? { influencer_slug: draft.influencerSlug } : {}),
+          },
         },
-      },
-    });
-    if (signUpErr) {
-      setSubmitting(false);
-      toast.error('Could not create your account', { description: signUpErr.message });
-      return;
-    }
+      });
+      if (signUpErr) {
+        setSubmitting(false);
+        toast.error('Could not create your account', { description: signUpErr.message });
+        return;
+      }
 
-    // Make sure we have a session before doing authenticated writes.
-    let userId = signUpData.user?.id;
-    if (!signUpData.session) {
-      try { sessionStorage.setItem(POST_VERIFY_UPLOAD_KEY, '1'); } catch {}
-      setSubmitting(false);
-      toast.success('Account created', { description: 'Enter the email code to finish setup.' });
-      nav(`/auth/verify-email?email=${encodeURIComponent(draft.email)}&role=instructor`, { replace: true });
-      return;
+      userId = signUpData.user?.id;
+      if (!signUpData.session) {
+        updateInstructorDraft({ policyAcknowledged: true, authAccountCreated: true });
+        try { sessionStorage.setItem(POST_VERIFY_UPLOAD_KEY, '1'); } catch {}
+        setSubmitting(false);
+        toast.success('Account created', { description: 'Enter the email code to finish setup.' });
+        nav(`/auth/verify-email?email=${encodeURIComponent(draft.email)}&role=instructor`, { replace: true });
+        return;
+      }
     }
     if (!userId) {
       setSubmitting(false);
-      toast.error('Account created but session missing — please sign in.');
-      clearInstructorDraft();
-      nav('/auth/signin', { replace: true });
+      toast.error('Confirm your email first', { description: 'Enter the code from your email to finish setup.' });
+      nav(`/auth/verify-email?email=${encodeURIComponent(draft.email)}&role=instructor`, { replace: true });
       return;
     }
 
