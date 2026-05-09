@@ -482,6 +482,7 @@ const InstructorDashboard = () => {
         </SheetContent>
       </Sheet>
       <CrashCourseTour role="instructor" open={tour.open} onClose={tour.close} />
+      <FounderBioModal userId={user?.id} />
     </MobileShell>
   );
 };
