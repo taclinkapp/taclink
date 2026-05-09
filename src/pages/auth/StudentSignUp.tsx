@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -15,11 +15,13 @@ import { PasswordRequirements } from '@/components/PasswordRequirements';
 import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
+import { homeForRole, useAuth } from '@/contexts/AuthContext';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 
 const StudentSignUp = () => {
   const nav = useNavigate();
+  const { user, primaryRole, loading: authLoading } = useAuth();
   const [params] = useSearchParams();
   const referralCode = ((params.get('ref') ?? (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('pendingReferralCode') : '') ?? '')).trim().toUpperCase();
   const influencerSlug = readInfluencerSlug();
@@ -86,10 +88,6 @@ const StudentSignUp = () => {
       toast.error('You must agree to the terms');
       return;
     }
-    const { data: existing } = await supabase.auth.getSession();
-    if (existing.session) {
-      await supabase.auth.signOut();
-    }
     setLoading(true);
     logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'submitted', email });
     const { error } = await supabase.auth.signUp({
@@ -118,7 +116,6 @@ const StudentSignUp = () => {
     setLoading(false);
     toast.success('Welcome to TacLink™!');
     logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'redirected', email });
-    try { sessionStorage.setItem('show_onboarding_welcome', '1'); } catch {}
     let dest = '/student';
     try {
       const intent = sessionStorage.getItem('post_signup_intent');
@@ -126,6 +123,18 @@ const StudentSignUp = () => {
     } catch {}
     nav(dest, { replace: true });
   };
+
+  if (authLoading || (user && !primaryRole)) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (user && primaryRole) {
+    return <Navigate to={homeForRole(primaryRole)} replace />;
+  }
 
   return (
     <div className="relative min-h-screen bg-background overflow-hidden">
