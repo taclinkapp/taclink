@@ -285,6 +285,7 @@ Deno.serve(async (req) => {
 
   const startedAt = Date.now();
   const findings: Finding[] = [];
+  const routeFindings: Finding[] = [];
 
   // Route probes — every page declared in App.tsx (parameterized routes use sample IDs).
   const SAMPLE_ID = "00000000-0000-0000-0000-000000000000";
@@ -333,6 +334,7 @@ Deno.serve(async (req) => {
   for (let i = 0; i < routes.length; i += BATCH) {
     const slice = routes.slice(i, i + BATCH);
     const results = await Promise.all(slice.map((r) => probeUrl(`${APP_URL}${r}`)));
+    routeFindings.push(...results);
     findings.push(...results);
   }
   // Verify the SPA isn't serving the 404 fallback for declared routes by
@@ -346,6 +348,9 @@ Deno.serve(async (req) => {
     "verify-checkin-qr", "subscription-plan-ai", "ai-propose",
   ];
   for (const f of fns) findings.push(await probeEdgeFn(f));
+
+  // Onboarding redirect safety + routing telemetry
+  findings.push(...(await onboardingReliabilityChecks(admin, routeFindings)));
 
   // DB checks
   findings.push(...(await dbChecks(admin)));
