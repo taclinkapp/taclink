@@ -6,6 +6,8 @@ import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, P
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { CrashCourseTour } from '@/components/CrashCourseTour';
+import { DeleteAccountDialog } from '@/components/account/DeleteAccountDialog';
+import { AccountDeletionBanner } from '@/components/account/AccountDeletionBanner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -17,6 +19,7 @@ const StudentSettings = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
