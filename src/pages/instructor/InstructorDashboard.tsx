@@ -482,7 +482,7 @@ const InstructorDashboard = () => {
         </SheetContent>
       </Sheet>
       <CrashCourseTour role="instructor" open={tour.open} onClose={tour.close} />
-      <FounderBioModal userId={user?.id} onContinue={() => tour.replay()} />
+      <FounderBioModal userId={user?.id} onContinue={() => setTimeout(tour.replay, 250)} />
     </MobileShell>
   );
 };
