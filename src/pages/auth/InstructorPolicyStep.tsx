@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/MobileShell';
-import { ShieldCheck, Lock, Loader2, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,7 +53,7 @@ const InstructorPolicyStep = () => {
       setAgree(true);
       setLegalAccepted(true);
     }
-  }, [nav]);
+  }, [nav, resumeAfterVerify]);
 
   const finalize = async () => {
     const draft = getInstructorDraft();
@@ -173,8 +173,10 @@ const InstructorPolicyStep = () => {
 
     clearInstructorDraft();
     setSubmitting(false);
-    toast.success('Account created', {
-      description: 'Welcome to TacLink — your credential is being reviewed.',
+    toast.success('Account ready', {
+      description: draft.credentialFile
+        ? 'Welcome to TacLink — your credential is being reviewed.'
+        : 'Welcome to TacLink — finish credential upload to complete onboarding.',
     });
     requestFounderBio();
     nav('/instructor', { replace: true });
