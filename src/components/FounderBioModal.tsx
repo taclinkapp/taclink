@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { homeForRole, useAuth, type AppRole } from "@/contexts/AuthContext";
 import founderBio from "@/assets/founder-bio.png";
 
-const STORAGE_KEY = (userId: string) => `taclink_founder_bio_seen:${userId}`;
+const STORAGE_KEY = (userId: string) => `taclink_founder_bio_seen_v2:${userId}`;
 
 export function FounderBioModal({
   userId,
@@ -39,7 +39,11 @@ export function FounderBioModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) close(); }}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden bg-background border-2">
+      <DialogContent
+        className="max-w-lg p-0 overflow-hidden bg-background border-2 [&>button]:hidden"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogTitle className="sr-only">Welcome to TacLink</DialogTitle>
         <DialogDescription className="sr-only">
           Continue to your TacLink profile.
