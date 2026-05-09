@@ -66,7 +66,7 @@ const Discover = () => {
   const { data: prelaunch } = usePrelaunch();
   const isPrelaunch = prelaunch?.enabled ?? false;
   const isGuest = !user;
-  const tour = useCrashCourseTour('student', user?.id);
+  const tour = useCrashCourseTour('student', user?.id, { autoOpen: false });
   const onboarding = useOnboarding();
   useEffect(() => {
     if (user && typeof window !== 'undefined') sessionStorage.removeItem('show_onboarding_welcome');
@@ -599,7 +599,7 @@ const Discover = () => {
       <StudentTabBar />
       <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} rewardLabel="1 free booking" />
       <CrashCourseTour role="student" open={tour.open} onClose={tour.close} />
-      <FounderBioModal userId={user?.id} />
+      <FounderBioModal userId={user?.id} onContinue={() => tour.replay()} />
     </MobileShell>
   );
 };
