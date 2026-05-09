@@ -115,11 +115,5 @@ const Row = ({ label, onClick }: { label: string; onClick?: () => void }) => (
     <ChevronRight className="h-4 w-4 text-muted-foreground" />
   </button>
 );
-const ToggleRow = ({ label, defaultOn }: { label: string; defaultOn?: boolean }) => (
-  <div className="px-4 py-3.5 flex items-center justify-between">
-    <span className="text-sm font-medium">{label}</span>
-    <Switch defaultChecked={defaultOn} />
-  </div>
-);
 
 export default InstructorSettings;
