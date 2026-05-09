@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
-import { Switch } from '@/components/ui/switch';
+
 import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, PlayCircle } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { CrashCourseTour } from '@/components/CrashCourseTour';
+import { DeleteAccountDialog } from '@/components/account/DeleteAccountDialog';
+import { AccountDeletionBanner } from '@/components/account/AccountDeletionBanner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -17,6 +19,7 @@ const StudentSettings = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -27,17 +30,12 @@ const StudentSettings = () => {
   return (
     <MobileShell withTabBar={false}>
       <PageHeader title="Settings" back backTo="/student/profile" />
+      <AccountDeletionBanner />
       <div className="px-4 py-4 space-y-6">
         <Section title="Account">
           <Row label="Edit Profile" onClick={() => nav('/profile/edit')} />
           <Row label="Change Password" onClick={() => nav('/auth/change-password')} />
           <Row label="Payment Methods" onClick={() => nav('/student/payment-methods')} />
-        </Section>
-
-        <Section title="Notifications">
-          <ToggleRow label="Booking confirmations" defaultOn />
-          
-          <ToggleRow label="New courses nearby" />
         </Section>
 
         <Section title="Support">
@@ -73,13 +71,14 @@ const StudentSettings = () => {
             <LogOut className="h-4 w-4" /> Sign Out
           </button>
           <button
-            onClick={() => nav('/support/contact?subject=Delete%20my%20account')}
-            className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive/70 font-semibold text-xs hover:bg-destructive/10"
+            onClick={() => setDeleteOpen(true)}
+            className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive/80 font-semibold text-xs hover:bg-destructive/10"
           >
-            <Trash2 className="h-3.5 w-3.5" /> Request Account Deletion
+            <Trash2 className="h-3.5 w-3.5" /> Delete my account
           </button>
         </div>
       </div>
+      <DeleteAccountDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
       <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <CrashCourseTour role="student" open={tourOpen} onClose={() => setTourOpen(false)} />
@@ -110,12 +109,6 @@ const Row = ({ label, onClick }: { label: string; onClick?: () => void }) => (
     <span className="text-sm font-medium">{label}</span>
     <ChevronRight className="h-4 w-4 text-muted-foreground" />
   </button>
-);
-const ToggleRow = ({ label, defaultOn }: { label: string; defaultOn?: boolean }) => (
-  <div className="px-4 py-3.5 flex items-center justify-between">
-    <span className="text-sm font-medium">{label}</span>
-    <Switch defaultChecked={defaultOn} />
-  </div>
 );
 
 export default StudentSettings;
