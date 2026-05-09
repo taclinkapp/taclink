@@ -29,6 +29,7 @@ import InstructorPolicyStep from "./pages/auth/InstructorPolicyStep";
 import InviteLanding from "./pages/auth/InviteLanding";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import VerifyEmail from "./pages/auth/VerifyEmail";
 import ChangePassword from "./pages/auth/ChangePassword";
 import Unsubscribe from "./pages/Unsubscribe";
 import InfluencerLanding from "./pages/auth/InfluencerLanding";
@@ -150,6 +151,7 @@ const App = () => (
             <Route path="/auth" element={<Navigate to="/auth/signin" replace />} />
             <Route path="/auth/signin" element={<SignIn />} />
             <Route path="/auth/student-signup" element={<StudentSignUp />} />
+            <Route path="/auth/verify-email" element={<VerifyEmail />} />
             <Route path="/auth/instructor-signup" element={<InstructorSignUp />} />
             <Route path="/auth/credential-verification" element={<CredentialVerification />} />
             <Route path="/auth/instructor/plan" element={<InstructorPlanStep />} />

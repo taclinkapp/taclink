@@ -91,7 +91,7 @@ const StudentSignUp = () => {
     }
     setLoading(true);
     logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'submitted', email });
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -110,9 +110,20 @@ const StudentSignUp = () => {
       toast.error(error.message);
       return;
     }
+
+    // If email confirmation is required, signUp returns no session. We MUST NOT
+    // navigate the user into /student — ProtectedRoute would just bounce them
+    // back to the splash. Park them on a "check your email" screen instead.
+    if (!signUpData.session) {
+      setLoading(false);
+      logSignupRedirect({ role: 'student', intendedPath: '/auth/verify-email', status: 'redirected', email });
+      requestFounderBio(); // pop the bio after they confirm + sign in
+      nav(`/auth/verify-email?email=${encodeURIComponent(email)}&role=student`, { replace: true });
+      return;
+    }
+
     // Upload photo if user provided one (best-effort)
-    const { data: sess } = await supabase.auth.getSession();
-    const uid = sess.session?.user?.id;
+    const uid = signUpData.session.user.id;
     if (uid) await uploadPhotoIfAny(uid);
     setLoading(false);
     toast.success('Welcome to TacLink™!');

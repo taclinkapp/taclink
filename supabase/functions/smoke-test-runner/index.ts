@@ -182,6 +182,7 @@ async function probeEdgeFn(name: string): Promise<Finding> {
 const CRITICAL_ONBOARDING_ROUTES = [
   "/", "/welcome", "/welcome/quiz", "/welcome/plan",
   "/student", "/instructor", "/auth/student-signup", "/auth/instructor-signup",
+  "/auth/verify-email",
 ];
 
 const LEGACY_ONBOARDING_PATHS = new Set([
@@ -268,6 +269,46 @@ async function onboardingReliabilityChecks(
     detail: authFinding.detail,
     target: authFinding.target,
   });
+
+  // Post-signup safety: when email confirmation is required, signUp returns no
+  // session. The signup pages MUST redirect to /auth/verify-email instead of
+  // pushing the unverified user into a protected role home (where ProtectedRoute
+  // would just bounce them back to splash — the exact "kicked out after
+  // signup" symptom we keep regressing on).
+  try {
+    const bundleResp = await fetch(`${APP_URL}/`, { headers: { "user-agent": "TacLink-SmokeTest" } });
+    const html = await bundleResp.text();
+    const scriptMatches = Array.from(html.matchAll(/src="(\/assets\/[^"]+\.js)"/g)).map((m) => m[1]);
+    let combined = "";
+    for (const src of scriptMatches.slice(0, 8)) {
+      try {
+        const r = await fetch(`${APP_URL}${src}`);
+        if (r.ok) combined += "\n" + (await r.text());
+      } catch { /* ignore */ }
+    }
+    const hasVerifyRoute = combined.includes("/auth/verify-email");
+    const studentSignupGuards = /signUpData\.session|data\.session/.test(combined);
+    const issues: string[] = [];
+    if (!hasVerifyRoute) issues.push("'/auth/verify-email' route not found in bundle");
+    if (!studentSignupGuards) issues.push("signup flow does not appear to guard on returned session");
+    out.push({
+      category: "onboarding",
+      check_name: "Post-signup email-confirmation guard",
+      status: issues.length ? "fail" : "pass",
+      detail: issues.length
+        ? issues.join("; ")
+        : "Signup flows guard on session and route to /auth/verify-email when email confirmation is required",
+      target: "StudentSignUp,InstructorPolicyStep,VerifyEmail",
+    });
+  } catch (e: any) {
+    out.push({
+      category: "onboarding",
+      check_name: "Post-signup email-confirmation guard",
+      status: "fail",
+      detail: `bundle inspection failed: ${e?.message ?? e}`,
+      target: "bundle",
+    });
+  }
 
   const since1h = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   const [{ error: routeErr, count: routeCount }, { error: resolutionErr, count: resolutionCount }] = await Promise.all([

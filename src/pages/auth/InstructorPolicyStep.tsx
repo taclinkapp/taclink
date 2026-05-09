@@ -96,10 +96,10 @@ const InstructorPolicyStep = () => {
       if (signInErr || !signIn.user) {
         setSubmitting(false);
         toast.success('Account created', {
-          description: 'Please verify your email, then sign in to finish setup.',
+          description: 'Confirm your email to finish setup.',
         });
         clearInstructorDraft();
-        nav('/auth/signin', { replace: true });
+        nav(`/auth/verify-email?email=${encodeURIComponent(draft.email)}&role=instructor`, { replace: true });
         return;
       }
       userId = signIn.user.id;
