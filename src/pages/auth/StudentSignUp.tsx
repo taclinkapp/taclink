@@ -122,6 +122,7 @@ const StudentSignUp = () => {
       const intent = sessionStorage.getItem('post_signup_intent');
       if (intent) { sessionStorage.removeItem('post_signup_intent'); dest = intent; }
     } catch {}
+    requestFounderBio();
     nav(dest, { replace: true });
   };
 
