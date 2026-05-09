@@ -604,6 +604,7 @@ const Discover = () => {
       <StudentTabBar />
       <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} rewardLabel="1 free booking" />
       <CrashCourseTour role="student" open={tour.open} onClose={tour.close} />
+      <FounderBioModal userId={user?.id} />
       {showWelcome && user && (
         <OnboardingWelcomeModal
           firstName={(user.user_metadata?.display_name as string | undefined)?.split(' ')[0] || ''}
