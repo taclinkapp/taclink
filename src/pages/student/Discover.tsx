@@ -19,6 +19,7 @@ import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTou
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { OnboardingChecklistCard, OnboardingWelcomeModal } from '@/components/onboarding/OnboardingChecklist';
+import { FounderBioModal } from '@/components/FounderBioModal';
 import { FirstVisitTooltip } from '@/components/onboarding/FirstVisitTooltip';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
