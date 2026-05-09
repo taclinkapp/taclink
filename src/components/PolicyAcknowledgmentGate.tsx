@@ -19,7 +19,8 @@ type Status = "loading" | "needs_ack" | "ok";
  * we ship a new POLICY_VERSION.
  */
 export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, primaryRole } = useAuth();
+  const isInstructor = primaryRole === "instructor";
   const [status, setStatus] = useState<Status>("loading");
   const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
