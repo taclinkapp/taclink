@@ -153,6 +153,27 @@ async function onboardingReliabilityChecks(
     target: Array.from(LEGACY_ONBOARDING_PATHS).join(","),
   });
 
+  // Regression test: every onboarding route + every legacy /onboarding/* path
+  // must resolve safely (HTTP 2xx/3xx — SPA fallback returns 200 + index.html).
+  // This guards against future router edits that drop the legacy redirects.
+  const regressionTargets = [
+    ...CRITICAL_ONBOARDING_ROUTES,
+    ...Array.from(LEGACY_ONBOARDING_PATHS),
+  ];
+  const regressionResults = await Promise.all(
+    regressionTargets.map((p) => probeUrl(`${APP_URL}${p}`)),
+  );
+  const regressionFails = regressionResults.filter((r) => r.status === "fail");
+  out.push({
+    category: "onboarding",
+    check_name: "Onboarding & legacy route regression",
+    status: regressionFails.length ? "fail" : "pass",
+    detail: regressionFails.length
+      ? `Unsafe/404 routes: ${regressionFails.map((f) => f.target).join(", ")}`
+      : `${regressionTargets.length} onboarding + legacy /onboarding/* paths resolve safely (no 404, no unsafe navigation)`,
+    target: regressionTargets.join(","),
+  });
+
   const since1h = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   const [{ error: routeErr, count: routeCount }, { error: resolutionErr, count: resolutionCount }] = await Promise.all([
     admin.from("route_404_events").select("*", { count: "exact", head: true }).gte("created_at", since1h),
