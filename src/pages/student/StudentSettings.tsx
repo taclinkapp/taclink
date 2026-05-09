@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
-import { Switch } from '@/components/ui/switch';
+
 import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, PlayCircle } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
