@@ -32,6 +32,8 @@ export type InstructorSignupDraft = {
   credentialFile?: File;
   // Policy
   policyAcknowledged?: boolean;
+  // Email verification
+  authAccountCreated?: boolean;
 };
 
 // Files are kept separately because they aren't serializable.
