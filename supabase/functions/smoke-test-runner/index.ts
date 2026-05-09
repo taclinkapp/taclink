@@ -360,10 +360,8 @@ Deno.serve(async (req) => {
     routeFindings.push(...results);
     findings.push(...results);
   }
-  // Verify the SPA isn't serving the 404 fallback for declared routes by
-  // sampling the HTML body for the NotFound marker.
-  // (probeUrl already flagged HTTP errors; this catches client-side 404s.)
-  // Skipped here for runtime budget; relies on `route_404_events` collected from real users.
+  // `probeUrl` also samples the HTML body for the NotFound marker so SPA
+  // fallback pages that return HTTP 200 but render the client 404 are caught.
 
   // Edge function reachability
   const fns = [
