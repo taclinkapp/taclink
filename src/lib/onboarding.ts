@@ -34,7 +34,7 @@ export const CHECKLIST_ORDER: { key: ChecklistKey; label: string }[] = [
   
   { key: "first_booking", label: "Book your first course" },
   { key: "first_completion", label: "Complete a course and earn XP" },
-  { key: "shared_profile", label: "Share your Operator Profile" },
+  { key: "shared_profile", label: "Share your Student Profile" },
 ];
 
 const QUIZ_KEY = "taclink_onboarding_quiz_v1";

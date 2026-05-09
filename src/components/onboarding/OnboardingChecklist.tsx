@@ -28,7 +28,7 @@ export const OnboardingChecklistCard = () => {
       >
         <div className="flex-1 text-left min-w-0">
           <div className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-primary">
-            Operator Onboarding
+            Student Onboarding
           </div>
           <div className="text-sm font-bold text-foreground truncate">
             {completedCount}/{totalCount} steps complete
@@ -44,10 +44,10 @@ export const OnboardingChecklistCard = () => {
       <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-primary">
-            Operator Onboarding
+            Student Onboarding
           </div>
           <div className="mt-1 text-base font-black text-foreground">
-            Unlock your full Operator Profile
+            Unlock your full Student Profile
           </div>
         </div>
         <button
@@ -111,7 +111,7 @@ export const OnboardingWelcomeModal = ({ onClose, firstName }: { onClose: () => 
           Welcome
         </div>
         <h1 className="mt-2 text-3xl font-black leading-tight">
-          Welcome, {firstName || "Operator"}
+          Welcome, {firstName || "Student"}
         </h1>
 
         {/* Founder note */}
@@ -130,7 +130,7 @@ export const OnboardingWelcomeModal = ({ onClose, firstName }: { onClose: () => 
         </div>
 
         <p className="mt-6 text-sm text-muted-foreground">
-          Complete these to unlock your full Operator Profile:
+          Complete these to unlock your full Student Profile:
         </p>
 
         <ul className="mt-3 space-y-2.5">
