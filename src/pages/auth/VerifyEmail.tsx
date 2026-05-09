@@ -110,22 +110,48 @@ const VerifyEmail = () => {
         <Logo className="h-10 w-auto mx-auto" />
 
         <div className="mx-auto h-16 w-16 rounded-full bg-primary/15 flex items-center justify-center">
-          <Mail className="h-8 w-8 text-primary" />
+          <KeyRound className="h-8 w-8 text-primary" />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-black tracking-tight">Confirm your email</h1>
+          <h1 className="text-2xl font-black tracking-tight">Enter your email code</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            We sent a confirmation link to{' '}
+            We sent a 6-digit confirmation code to{' '}
             <span className="font-semibold text-foreground">{email || 'your email'}</span>.
-            Click the link in that message to activate your account, then come back to sign in.
           </p>
         </div>
+
+        <form onSubmit={verifyCode} className="space-y-3 text-left">
+          {!emailParam && (
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="h-12 bg-card border-border"
+            />
+          )}
+          <Input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]*"
+            maxLength={CODE_LENGTH}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+            placeholder="000000"
+            aria-label="6-digit verification code"
+            className="h-14 bg-card border-border text-center text-2xl font-black tracking-[0.35em]"
+          />
+          <Button type="submit" disabled={verifying || code.length !== CODE_LENGTH || !email.trim()} className="w-full h-12 font-bold">
+            {verifying ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirming…</> : 'Confirm & continue'}
+          </Button>
+        </form>
 
         <div className="rounded-lg border bg-card p-4 text-left space-y-2">
           <div className="flex items-start gap-2 text-sm">
             <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <span>Your account is created but inactive until you confirm.</span>
+            <span>Your account is inactive until this code is confirmed.</span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -145,15 +171,8 @@ const VerifyEmail = () => {
             ) : cooldown > 0 ? (
               `Resend in ${cooldown}s`
             ) : (
-              'Resend confirmation email'
+              'Resend verification code'
             )}
-          </Button>
-
-          <Button
-            onClick={() => nav('/auth/signin')}
-            className="w-full h-12 font-bold"
-          >
-            I've confirmed — sign in
           </Button>
 
           <button
