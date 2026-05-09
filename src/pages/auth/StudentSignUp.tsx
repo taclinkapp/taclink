@@ -95,7 +95,7 @@ const StudentSignUp = () => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/student`,
+        emailRedirectTo: `${window.location.origin}/auth/verify-email?email=${encodeURIComponent(email)}&role=student`,
         data: {
           display_name: `${first} ${last}`.trim(),
           role: 'student',
@@ -112,8 +112,7 @@ const StudentSignUp = () => {
     }
 
     // If email confirmation is required, signUp returns no session. We MUST NOT
-    // navigate the user into /student — ProtectedRoute would just bounce them
-    // back to the splash. Park them on a "check your email" screen instead.
+    // navigate the user into /student — keep them on the in-app code screen.
     if (!signUpData.session) {
       setLoading(false);
       logSignupRedirect({ role: 'student', intendedPath: '/auth/verify-email', status: 'redirected', email });
