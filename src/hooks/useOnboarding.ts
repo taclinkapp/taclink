@@ -7,7 +7,10 @@ import {
   DEFAULT_CHECKLIST,
   loadQuizLocal,
   clearQuizLocal,
+  type TrainingGoal,
 } from "@/lib/onboarding";
+import type { PillarId } from "@/lib/pillars";
+import { seedInitialPlan } from "@/lib/trainingPlan";
 
 type Row = {
   user_id: string;
@@ -54,6 +57,13 @@ export function useOnboarding() {
       setRow((inserted as any) ?? (seed as any));
     } else {
       setRow(data as any);
+    }
+    // Bridge onboarding answers → trackable Training Plan (idempotent).
+    const finalRow = (data as any) ?? null;
+    const goal = (finalRow?.training_goal ?? loadQuizLocal().training_goal) as TrainingGoal | null;
+    const pillars = (finalRow?.selected_pillars ?? loadQuizLocal().selected_pillars ?? []) as PillarId[];
+    if (goal) {
+      seedInitialPlan(user.id, goal, pillars).catch(() => {});
     }
     setLoading(false);
   }, [user]);
