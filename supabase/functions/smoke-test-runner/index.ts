@@ -287,9 +287,16 @@ async function onboardingReliabilityChecks(
       } catch { /* ignore */ }
     }
     const hasVerifyRoute = combined.includes("/auth/verify-email");
+    const redirectsConfirmationToVerify = combined.includes("/auth/verify-email?email=");
+    const usesInAppOtp = combined.includes("verifyOtp") && combined.includes("type:\"signup\"");
+    const avoidsRoleHomeEmailRedirect = !combined.includes("emailRedirectTo:`${window.location.origin}/student`")
+      && !combined.includes("emailRedirectTo:`${window.location.origin}/instructor`");
     const studentSignupGuards = /signUpData\.session|data\.session/.test(combined);
     const issues: string[] = [];
     if (!hasVerifyRoute) issues.push("'/auth/verify-email' route not found in bundle");
+    if (!redirectsConfirmationToVerify) issues.push("confirmation redirect does not point back to the in-app verification screen");
+    if (!usesInAppOtp) issues.push("verification screen does not appear to confirm numeric signup OTP codes in-app");
+    if (!avoidsRoleHomeEmailRedirect) issues.push("signup emailRedirectTo still targets a protected role home");
     if (!studentSignupGuards) issues.push("signup flow does not appear to guard on returned session");
     out.push({
       category: "onboarding",
@@ -297,7 +304,7 @@ async function onboardingReliabilityChecks(
       status: issues.length ? "fail" : "pass",
       detail: issues.length
         ? issues.join("; ")
-        : "Signup flows guard on session and route to /auth/verify-email when email confirmation is required",
+        : "Signup flows guard on session, route confirmation back to /auth/verify-email, and verify numeric signup codes in-app",
       target: "StudentSignUp,InstructorPolicyStep,VerifyEmail",
     });
   } catch (e: any) {

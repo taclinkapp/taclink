@@ -1,20 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { Mail, Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Logo } from '@/components/Logo';
 import { supabase } from '@/integrations/supabase/client';
-import { homeForRole, useAuth } from '@/contexts/AuthContext';
+import { homeForRole, useAuth, type AppRole } from '@/contexts/AuthContext';
+import { requestFounderBio } from '@/components/FounderBioModal';
 import { toast } from 'sonner';
 
 const COOLDOWN_SECONDS = 30;
+const CODE_LENGTH = 6;
 
 const VerifyEmail = () => {
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const email = params.get('email') ?? '';
-  const role = params.get('role') ?? 'student';
+  const emailParam = params.get('email') ?? '';
+  const roleParam = params.get('role');
+  const requestedRole = roleParam === 'instructor' || roleParam === 'student' ? roleParam : null;
   const { user, primaryRole, loading } = useAuth();
+  const [email, setEmail] = useState(emailParam);
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
@@ -27,16 +34,66 @@ const VerifyEmail = () => {
   // If the user confirms in another tab, AuthContext will pick it up via
   // onAuthStateChange. As soon as we have a session + role, send them home.
   if (!loading && user && primaryRole) {
-    return <Navigate to={homeForRole(primaryRole)} replace />;
+    const dest = requestedRole === 'instructor' && primaryRole === 'instructor'
+      ? '/auth/instructor/policy?resume=1'
+      : homeForRole(primaryRole);
+    return <Navigate to={dest} replace />;
   }
 
+  const resolveVerifiedRole = async (fallback: AppRole | null, userId?: string): Promise<AppRole | null> => {
+    if (fallback) return fallback;
+    if (!userId) return null;
+    const { data } = await supabase.from('user_roles').select('role').eq('user_id', userId);
+    const roles = ((data ?? []) as { role: AppRole }[]).map((r) => r.role);
+    return roles.includes('admin') ? 'admin' : roles.includes('instructor') ? 'instructor' : roles.includes('student') ? 'student' : null;
+  };
+
+  const verifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
+    const token = code.replace(/\D/g, '');
+    if (!normalizedEmail) {
+      toast.error('Enter your email address');
+      return;
+    }
+    if (token.length !== CODE_LENGTH) {
+      toast.error('Enter the 6-digit code');
+      return;
+    }
+    setVerifying(true);
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: normalizedEmail,
+      token,
+      type: 'signup',
+    });
+    if (error) {
+      setVerifying(false);
+      toast.error('Code could not be verified', { description: error.message });
+      return;
+    }
+
+    const role = await resolveVerifiedRole(requestedRole, data.user?.id);
+    requestFounderBio();
+    toast.success('Email confirmed');
+    setVerifying(false);
+    if (role === 'instructor') {
+      nav('/auth/instructor/policy?resume=1', { replace: true });
+    } else if (role === 'admin') {
+      nav('/admin', { replace: true });
+    } else {
+      nav('/student', { replace: true });
+    }
+  };
+
   const resend = async () => {
-    if (!email || resending || cooldown > 0) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || resending || cooldown > 0) return;
     setResending(true);
+    const roleQuery = requestedRole ? `&role=${requestedRole}` : '';
     const { error } = await supabase.auth.resend({
       type: 'signup',
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/${role === 'instructor' ? 'instructor' : 'student'}` },
+      email: normalizedEmail,
+      options: { emailRedirectTo: `${window.location.origin}/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}${roleQuery}` },
     });
     setResending(false);
     if (error) {
@@ -44,7 +101,7 @@ const VerifyEmail = () => {
       return;
     }
     setCooldown(COOLDOWN_SECONDS);
-    toast.success('Confirmation email resent');
+    toast.success('Verification code resent');
   };
 
   return (
@@ -53,22 +110,48 @@ const VerifyEmail = () => {
         <Logo className="h-10 w-auto mx-auto" />
 
         <div className="mx-auto h-16 w-16 rounded-full bg-primary/15 flex items-center justify-center">
-          <Mail className="h-8 w-8 text-primary" />
+          <KeyRound className="h-8 w-8 text-primary" />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-black tracking-tight">Confirm your email</h1>
+          <h1 className="text-2xl font-black tracking-tight">Enter your email code</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            We sent a confirmation link to{' '}
+            We sent a 6-digit confirmation code to{' '}
             <span className="font-semibold text-foreground">{email || 'your email'}</span>.
-            Click the link in that message to activate your account, then come back to sign in.
           </p>
         </div>
+
+        <form onSubmit={verifyCode} className="space-y-3 text-left">
+          {!emailParam && (
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="h-12 bg-card border-border"
+            />
+          )}
+          <Input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]*"
+            maxLength={CODE_LENGTH}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+            placeholder="000000"
+            aria-label="6-digit verification code"
+            className="h-14 bg-card border-border text-center text-2xl font-black tracking-[0.35em]"
+          />
+          <Button type="submit" disabled={verifying || code.length !== CODE_LENGTH || !email.trim()} className="w-full h-12 font-bold">
+            {verifying ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirming…</> : 'Confirm & continue'}
+          </Button>
+        </form>
 
         <div className="rounded-lg border bg-card p-4 text-left space-y-2">
           <div className="flex items-start gap-2 text-sm">
             <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <span>Your account is created but inactive until you confirm.</span>
+            <span>Your account is inactive until this code is confirmed.</span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -88,15 +171,8 @@ const VerifyEmail = () => {
             ) : cooldown > 0 ? (
               `Resend in ${cooldown}s`
             ) : (
-              'Resend confirmation email'
+              'Resend verification code'
             )}
-          </Button>
-
-          <Button
-            onClick={() => nav('/auth/signin')}
-            className="w-full h-12 font-bold"
-          >
-            I've confirmed — sign in
           </Button>
 
           <button

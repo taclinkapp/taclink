@@ -2,28 +2,28 @@
 
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Html, Preview, Section, Text, Button,
+  Body, Container, Head, Heading, Html, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
 import * as s from './_brand.ts'
 
-interface Props { siteName: string; confirmationUrl: string }
+interface Props { siteName: string; token: string }
 
-export const SignupEmail = ({ siteName, confirmationUrl }: Props) => (
+export const SignupEmail = ({ siteName, token }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirm your {siteName} account</Preview>
+    <Preview>Your {siteName} verification code is {token}</Preview>
     <Body style={s.main}>
       <Container style={s.container}>
         <Section style={s.header}>
           <Text style={s.brand}>{siteName}</Text>
         </Section>
         <Section style={s.inner}>
-          <Heading style={s.h1}>Confirm your account</Heading>
+          <Heading style={s.h1}>Your verification code</Heading>
           <Text style={s.text}>
-            Welcome to {siteName}. Confirm your email to activate your account
-            and get into the field.
+            Welcome to {siteName}. Enter this code in the app to activate your
+            account and keep onboarding right where you left off.
           </Text>
-          <Button style={s.button} href={confirmationUrl}>Confirm email</Button>
+          <Text style={s.code}>{token}</Text>
           <Text style={s.muted}>
             Didn't sign up? You can ignore this email and the account won't be created.
           </Text>
