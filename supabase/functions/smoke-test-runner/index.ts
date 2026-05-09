@@ -44,13 +44,14 @@ async function probeUrl(url: string, expect = 200): Promise<Finding> {
   const t = setTimeout(() => ctrl.abort(), TIMEOUT);
   try {
     const res = await fetch(url, { method: "GET", signal: ctrl.signal, redirect: "follow" });
-    await res.text().catch(() => {});
-    const ok = res.status === expect || (res.status >= 200 && res.status < 400);
+    const body = await res.text().catch(() => "");
+    const client404 = body.includes("We couldn't find the page you're looking for.") || body.includes("Page not found · TacLink");
+    const ok = (res.status === expect || (res.status >= 200 && res.status < 400)) && !client404;
     return {
       category: "route",
       check_name: `GET ${new URL(url).pathname}`,
       status: ok ? "pass" : "fail",
-      detail: `HTTP ${res.status}`,
+      detail: client404 ? `HTTP ${res.status} but rendered client 404` : `HTTP ${res.status}`,
       target: url,
     };
   } catch (e) {
@@ -105,6 +106,7 @@ const CRITICAL_ONBOARDING_ROUTES = [
 
 const LEGACY_ONBOARDING_PATHS = new Set([
   "/onboarding", "/onboarding/welcome", "/onboarding/quiz", "/onboarding/plan",
+  "/onboarding/profile", "/onboarding/student", "/onboarding/instructor", "/onboarding/dashboard",
 ]);
 
 async function onboardingReliabilityChecks(
@@ -358,10 +360,8 @@ Deno.serve(async (req) => {
     routeFindings.push(...results);
     findings.push(...results);
   }
-  // Verify the SPA isn't serving the 404 fallback for declared routes by
-  // sampling the HTML body for the NotFound marker.
-  // (probeUrl already flagged HTTP errors; this catches client-side 404s.)
-  // Skipped here for runtime budget; relies on `route_404_events` collected from real users.
+  // `probeUrl` also samples the HTML body for the NotFound marker so SPA
+  // fallback pages that return HTTP 200 but render the client 404 are caught.
 
   // Edge function reachability
   const fns = [

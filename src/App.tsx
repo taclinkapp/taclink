@@ -142,6 +142,7 @@ const App = () => (
             <Route path="/onboarding/welcome" element={<Navigate to="/welcome" replace />} />
             <Route path="/onboarding/quiz" element={<Navigate to="/welcome/quiz" replace />} />
             <Route path="/onboarding/plan" element={<Navigate to="/welcome/plan" replace />} />
+            <Route path="/onboarding/*" element={<Navigate to="/welcome" replace />} />
 
             {/* Auth */}
             <Route path="/auth" element={<Navigate to="/auth/signin" replace />} />
