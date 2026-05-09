@@ -12,7 +12,7 @@ type Props = {
   title?: string;
 };
 
-export const OperatorProfileMini = ({ studentId, linkTo, className, title = "Operator Profile" }: Props) => {
+export const OperatorProfileMini = ({ studentId, linkTo, className, title = "Student Profile" }: Props) => {
   const { data, isLoading } = useOperatorProfile(studentId);
 
   const Inner = (

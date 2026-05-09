@@ -865,7 +865,7 @@ const NewCourse = () => {
                 </SelectContent>
               </Select>
               <p className="text-[11px] text-muted-foreground mt-1">
-                Students earn XP toward this pillar in their Operator Profile when they complete your course.
+                Students earn XP toward this pillar in their Student Profile when they complete your course.
               </p>
             </Field>
             <Field label="Secondary Skill Pillar (optional)">

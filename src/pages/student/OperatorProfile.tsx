@@ -23,7 +23,7 @@ const OperatorProfile = () => {
     const text = `My TacLink Score: ${data?.taclinkScore ?? 0} — ${data?.rankLabel ?? ""}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "My Operator Profile", text, url });
+        await navigator.share({ title: "My Student Profile", text, url });
       } else {
         await navigator.clipboard.writeText(`${text}\n${url}`);
         toast.success("Profile link copied");
@@ -40,7 +40,7 @@ const OperatorProfile = () => {
         <div className="px-4 h-14 grid grid-cols-[auto_1fr_auto] items-center gap-3">
           <Logo showTagline className="h-7 w-auto" />
           <h1 className="font-stencil text-xl font-bold uppercase tracking-[0.12em] text-center">
-            Operator Profile
+            Student Profile
           </h1>
           <NotificationsBell className="h-9 w-9 rounded-full bg-card border border-border text-muted-foreground hover:text-primary" />
         </div>
@@ -48,8 +48,8 @@ const OperatorProfile = () => {
 
       <FirstVisitTooltip
         id="operator_profile_intro"
-        title="Your Operator Profile"
-        body="Complete courses to earn XP and level up your 6 skill pillars. Hit Operator rank by stacking missions across all six."
+        title="Your Student Profile"
+        body="Complete courses to earn XP and level up your 6 skill pillars. Hit top rank by stacking missions across all six."
       />
 
       <div className="px-4 py-4 pb-32 space-y-5">
@@ -65,7 +65,7 @@ const OperatorProfile = () => {
               />
             </div>
             <div className="font-stencil text-lg font-bold uppercase tracking-wider">
-              {profile?.display_name ?? "Operator"}
+              {profile?.display_name ?? "Student"}
             </div>
             {profile?.state && (
               <div className="text-xs text-muted-foreground">{profile.state}</div>

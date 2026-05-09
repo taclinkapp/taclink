@@ -98,7 +98,7 @@ const TrainingPlan = () => {
               </span>
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
-              Built around the pillars you picked. You can change these any time from your Operator Profile.
+              Built around the pillars you picked. You can change these any time from your Student Profile.
             </p>
           </div>
         </div>
