@@ -45,6 +45,12 @@ vi.mock('@/components/MobileShell', () => ({
   PageHeader: ({ title }: { title: string }) => <header>{title}</header>,
 }));
 vi.mock('@/components/Logo', () => ({ Logo: () => <div>Logo</div> }));
+vi.mock('@/components/instructor/PhotoAdjusterDialog', () => ({
+  PhotoAdjusterDialog: ({ open, source, onSave }: any) => {
+    if (open && source) setTimeout(() => onSave(source), 0);
+    return null;
+  },
+}));
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: null, primaryRole: null, loading: false }),
   homeForRole: (role: string | null) => role === 'instructor' ? '/instructor' : role === 'admin' ? '/admin' : '/student',
@@ -74,12 +80,14 @@ const renderWith = (Page: React.ComponentType, useStrict = false) => {
 };
 
 const fillCommon = () => {
-  fireEvent.change(screen.getAllByDisplayValue('')[0], { target: { value: 'A' } }); // first
-  fireEvent.change(screen.getAllByDisplayValue('')[0], { target: { value: 'B' } }); // last
-  // email + passwords by type
   const inputs = document.querySelectorAll('input');
   const byType = (t: string) =>
     Array.from(inputs).filter((i) => (i as HTMLInputElement).type === t) as HTMLInputElement[];
+  const textInputs = byType('text');
+  fireEvent.change(textInputs[0], { target: { value: 'A' } });
+  fireEvent.change(textInputs[1], { target: { value: 'B' } });
+  const files = byType('file');
+  if (files[0]) fireEvent.change(files[0], { target: { files: [new File(['x'], 'photo.jpg', { type: 'image/jpeg' })] } });
   fireEvent.change(byType('email')[0], { target: { value: 'x@y.com' } });
   const pws = byType('password');
   fireEvent.change(pws[0], { target: { value: 'GoodPass1!' } });
