@@ -138,6 +138,10 @@ const App = () => (
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/welcome/quiz" element={<OnboardingQuiz />} />
             <Route path="/welcome/plan" element={<OnboardingPlan />} />
+            <Route path="/onboarding" element={<Navigate to="/welcome" replace />} />
+            <Route path="/onboarding/welcome" element={<Navigate to="/welcome" replace />} />
+            <Route path="/onboarding/quiz" element={<Navigate to="/welcome/quiz" replace />} />
+            <Route path="/onboarding/plan" element={<Navigate to="/welcome/plan" replace />} />
 
             {/* Auth */}
             <Route path="/auth" element={<Navigate to="/auth/signin" replace />} />
