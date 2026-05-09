@@ -117,35 +117,39 @@ const InstructorPolicyStep = () => {
     // 2) Replay the rest of the draft. Failures here are non-fatal — we
     // toast and let the in-app onboarding gate guide the user to fix them.
     try {
-      const photo = draft.photo;
-      const ext = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const path = `${userId}/avatar-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from('profile-photos')
-        .upload(path, photo, { contentType: photo.type, upsert: false });
-      if (!upErr) {
-        const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
-        await supabase.from('profiles').update({ photo_url: pub.publicUrl }).eq('id', userId);
+      if (draft.photo) {
+        const photo = draft.photo;
+        const ext = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+        const path = `${userId}/avatar-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('profile-photos')
+          .upload(path, photo, { contentType: photo.type, upsert: false });
+        if (!upErr) {
+          const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
+          await supabase.from('profiles').update({ photo_url: pub.publicUrl }).eq('id', userId);
+        }
       }
     } catch (err) {
       console.error('Photo upload failed', err);
     }
 
     try {
-      const cred = draft.credentialFile;
-      const cExt = cred.name.split('.').pop()?.toLowerCase() ?? 'bin';
-      const cPath = `${userId}/${Date.now()}-${draft.credentialType ?? 'credential'}.${cExt}`;
-      const { error: cUpErr } = await supabase.storage
-        .from('credentials')
-        .upload(cPath, cred, { contentType: cred.type, upsert: false });
-      if (cUpErr) throw cUpErr;
-      await supabase.from('instructor_credentials').insert({
-        instructor_id: userId,
-        credential_type: draft.credentialType ?? 'other',
-        display_name: draft.credentialDisplayName ?? draft.credentialType ?? 'Credential',
-        file_path: cPath,
-        file_mime: cred.type,
-      });
+      if (draft.credentialFile) {
+        const cred = draft.credentialFile;
+        const cExt = cred.name.split('.').pop()?.toLowerCase() ?? 'bin';
+        const cPath = `${userId}/${Date.now()}-${draft.credentialType ?? 'credential'}.${cExt}`;
+        const { error: cUpErr } = await supabase.storage
+          .from('credentials')
+          .upload(cPath, cred, { contentType: cred.type, upsert: false });
+        if (cUpErr) throw cUpErr;
+        await supabase.from('instructor_credentials').insert({
+          instructor_id: userId,
+          credential_type: draft.credentialType ?? 'other',
+          display_name: draft.credentialDisplayName ?? draft.credentialType ?? 'Credential',
+          file_path: cPath,
+          file_mime: cred.type,
+        });
+      }
     } catch (err: any) {
       console.error('Credential upload failed', err);
       toast.error('Credential upload failed', { description: err?.message });
