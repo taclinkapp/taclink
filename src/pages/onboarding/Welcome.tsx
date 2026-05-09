@@ -1,10 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { homeForRole, useAuth } from "@/contexts/AuthContext";
 import splashBg from "@/assets/splash-bg.mp4.asset.json";
 
 const Welcome = () => {
   const nav = useNavigate();
+  const { primaryRole } = useAuth();
+  const backTarget = primaryRole ? homeForRole(primaryRole) : "/";
+
   return (
     <div className="relative min-h-screen flex flex-col bg-background overflow-hidden">
       <video
@@ -16,7 +20,7 @@ const Welcome = () => {
 
       <div className="relative z-10 flex-1 flex flex-col px-6 pt-16 pb-10 max-w-md w-full mx-auto">
         <button
-          onClick={() => nav("/")}
+          onClick={() => nav(backTarget)}
           aria-label="Back"
           className="inline-flex items-center justify-center h-11 w-11 -ml-2 rounded-full text-foreground hover:bg-foreground/10 transition-colors"
         >
