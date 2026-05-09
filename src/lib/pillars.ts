@@ -86,9 +86,9 @@ export const RANKS = [
   { min: 0,    label: "Civilian" },
   { min: 100,  label: "Trained Civilian" },
   { min: 300,  label: "Tactical Student" },
-  { min: 600,  label: "Operator Candidate" },
-  { min: 900,  label: "Operator" },
-  { min: 1200, label: "Elite Operator" },
+  { min: 600,  label: "Advanced Student" },
+  { min: 900,  label: "Senior Student" },
+  { min: 1200, label: "Elite Student" },
 ] as const;
 
 export function getRankLabel(score: number): string {
