@@ -151,6 +151,7 @@ const App = () => (
             <Route path="/auth" element={<Navigate to="/auth/signin" replace />} />
             <Route path="/auth/signin" element={<SignIn />} />
             <Route path="/auth/student-signup" element={<StudentSignUp />} />
+            <Route path="/auth/verify-email" element={<VerifyEmail />} />
             <Route path="/auth/instructor-signup" element={<InstructorSignUp />} />
             <Route path="/auth/credential-verification" element={<CredentialVerification />} />
             <Route path="/auth/instructor/plan" element={<InstructorPlanStep />} />
