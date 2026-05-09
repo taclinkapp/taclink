@@ -15,6 +15,7 @@ import { AutoRefundDisputes } from '@/components/instructor/AutoRefundDisputes';
 import { LapsedSubscriptionBanner } from '@/components/instructor/LapsedSubscriptionBanner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
+import { FounderBioModal } from '@/components/FounderBioModal';
 import { getAvatarSrc } from '@/lib/avatar';
 
 type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
@@ -481,6 +482,7 @@ const InstructorDashboard = () => {
         </SheetContent>
       </Sheet>
       <CrashCourseTour role="instructor" open={tour.open} onClose={tour.close} />
+      <FounderBioModal userId={user?.id} />
     </MobileShell>
   );
 };

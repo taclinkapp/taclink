@@ -19,6 +19,7 @@ import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTou
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { OnboardingChecklistCard, OnboardingWelcomeModal } from '@/components/onboarding/OnboardingChecklist';
+import { FounderBioModal } from '@/components/FounderBioModal';
 import { FirstVisitTooltip } from '@/components/onboarding/FirstVisitTooltip';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
@@ -603,6 +604,7 @@ const Discover = () => {
       <StudentTabBar />
       <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} rewardLabel="1 free booking" />
       <CrashCourseTour role="student" open={tour.open} onClose={tour.close} />
+      <FounderBioModal userId={user?.id} />
       {showWelcome && user && (
         <OnboardingWelcomeModal
           firstName={(user.user_metadata?.display_name as string | undefined)?.split(' ')[0] || ''}
