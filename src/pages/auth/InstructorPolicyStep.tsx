@@ -13,6 +13,7 @@ import {
   getInstructorDraft,
   updateInstructorDraft,
 } from '@/lib/instructorSignupDraft';
+import { requestFounderBio } from '@/components/FounderBioModal';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
@@ -169,6 +170,7 @@ const InstructorPolicyStep = () => {
     toast.success('Account created', {
       description: 'Welcome to TacLink — your credential is being reviewed.',
     });
+    requestFounderBio();
     nav('/instructor', { replace: true });
   };
 

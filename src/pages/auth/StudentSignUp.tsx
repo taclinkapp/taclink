@@ -16,6 +16,7 @@ import { readInfluencerSlug } from '@/lib/influencer';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
 import { homeForRole, useAuth } from '@/contexts/AuthContext';
+import { requestFounderBio } from '@/components/FounderBioModal';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 
@@ -121,6 +122,7 @@ const StudentSignUp = () => {
       const intent = sessionStorage.getItem('post_signup_intent');
       if (intent) { sessionStorage.removeItem('post_signup_intent'); dest = intent; }
     } catch {}
+    requestFounderBio();
     nav(dest, { replace: true });
   };
 

@@ -6,6 +6,15 @@ import { homeForRole, useAuth, type AppRole } from "@/contexts/AuthContext";
 import founderBio from "@/assets/founder-bio.png";
 
 const STORAGE_KEY = (userId: string) => `taclink_founder_bio_seen_v2:${userId}`;
+const PENDING_KEY = "taclink_founder_bio_pending";
+
+/**
+ * Force the founder-bio modal to pop on the next page that mounts it
+ * (e.g., right after signup, before AuthContext finishes hydrating roles).
+ */
+export function requestFounderBio() {
+  try { sessionStorage.setItem(PENDING_KEY, "1"); } catch { /* ignore */ }
+}
 
 export function FounderBioModal({
   userId,
@@ -19,8 +28,21 @@ export function FounderBioModal({
   const { primaryRole, loading } = useAuth();
 
   useEffect(() => {
-    if (!userId || loading || !primaryRole) return;
+    if (!userId) return;
     if (localStorage.getItem(STORAGE_KEY(userId))) return;
+
+    // Fast-path: explicit post-signup request — open as soon as we have a userId,
+    // even if roles are still loading. This prevents the welcome bio from being
+    // missed due to an auth-context race.
+    let pending = false;
+    try { pending = sessionStorage.getItem(PENDING_KEY) === "1"; } catch { /* ignore */ }
+    if (pending) {
+      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
+      const t = setTimeout(() => setOpen(true), 200);
+      return () => clearTimeout(t);
+    }
+
+    if (loading || !primaryRole) return;
     const t = setTimeout(() => setOpen(true), 300);
     return () => clearTimeout(t);
   }, [userId, loading, primaryRole]);
@@ -31,10 +53,13 @@ export function FounderBioModal({
   };
 
   const handleContinue = () => {
-    if (!primaryRole) return;
     close();
-    onContinue?.(primaryRole);
-    nav(homeForRole(primaryRole), { replace: true });
+    if (primaryRole) {
+      onContinue?.(primaryRole);
+      nav(homeForRole(primaryRole), { replace: true });
+    }
+    // If role isn't ready yet, just close — the user is already on their home page
+    // (the modal is mounted there) and AuthContext will finish hydrating shortly.
   };
 
   return (
