@@ -276,13 +276,13 @@ async function onboardingReliabilityChecks(
   // would just bounce them back to splash — the exact "kicked out after
   // signup" symptom we keep regressing on).
   try {
-    const bundleResp = await fetch(`${APP_BASE_URL}/`, { headers: { "user-agent": "TacLink-SmokeTest" } });
+    const bundleResp = await fetch(`${APP_URL}/`, { headers: { "user-agent": "TacLink-SmokeTest" } });
     const html = await bundleResp.text();
     const scriptMatches = Array.from(html.matchAll(/src="(\/assets\/[^"]+\.js)"/g)).map((m) => m[1]);
     let combined = "";
     for (const src of scriptMatches.slice(0, 8)) {
       try {
-        const r = await fetch(`${APP_BASE_URL}${src}`);
+        const r = await fetch(`${APP_URL}${src}`);
         if (r.ok) combined += "\n" + (await r.text());
       } catch { /* ignore */ }
     }
