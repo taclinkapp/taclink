@@ -45,6 +45,10 @@ vi.mock('@/components/MobileShell', () => ({
   PageHeader: ({ title }: { title: string }) => <header>{title}</header>,
 }));
 vi.mock('@/components/Logo', () => ({ Logo: () => <div>Logo</div> }));
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: null, primaryRole: null, loading: false }),
+  homeForRole: (role: string | null) => role === 'instructor' ? '/instructor' : role === 'admin' ? '/admin' : '/student',
+}));
 
 import StudentSignUp from './StudentSignUp';
 import InstructorSignUp from './InstructorSignUp';
@@ -57,6 +61,8 @@ const renderWith = (Page: React.ComponentType, useStrict = false) => {
       <Routes>
         <Route path="/signup" element={<Page />} />
         <Route path="/student" element={<Landing label="student" />} />
+        <Route path="/auth/verify-email" element={<Landing label="verify-email" />} />
+        <Route path="/auth/instructor/plan" element={<Landing label="instructor-plan" />} />
         <Route
           path="/instructor/subscription"
           element={<Landing label="instructor-sub" />}
@@ -86,7 +92,7 @@ const fillCommon = () => {
 beforeEach(() => {
   cleanup();
   signUpMock.mockReset();
-  signUpMock.mockResolvedValue({ data: {}, error: null });
+    signUpMock.mockResolvedValue({ data: { session: null, user: { id: 'new-user' } }, error: null });
   getSessionMock.mockReset();
   getSessionMock.mockResolvedValue({ data: { session: null }, error: null });
   signOutMock.mockReset();
@@ -98,14 +104,14 @@ beforeEach(() => {
 });
 
 describe('Signup redirects', () => {
-  it('Student signup redirects to /student', async () => {
+  it('Student signup redirects to in-app email verification when confirmation is required', async () => {
     renderWith(StudentSignUp);
     fillCommon();
     fireEvent.click(screen.getByRole('button', { name: /Create Student Account/i }));
-    await waitFor(() => screen.getByText('LANDED:student'));
+    await waitFor(() => screen.getByText('LANDED:verify-email'));
     expect(signUpMock).toHaveBeenCalled();
     expect(signUpMock.mock.calls[0][0].options.data.role).toBe('student');
-    expect(signUpMock.mock.calls[0][0].options.emailRedirectTo).toContain('/student');
+    expect(signUpMock.mock.calls[0][0].options.emailRedirectTo).toContain('/auth/verify-email');
     const log = JSON.parse(sessionStorage.getItem('taclink:signupRedirectLog') || '[]');
     expect(log.some((e: any) => e.role === 'student' && e.status === 'redirected')).toBe(true);
   });
@@ -114,37 +120,35 @@ describe('Signup redirects', () => {
     renderWith(StudentSignUp, true);
     fillCommon();
     fireEvent.click(screen.getByRole('button', { name: /Create Student Account/i }));
-    await waitFor(() => screen.getByText('LANDED:student'));
+    await waitFor(() => screen.getByText('LANDED:verify-email'));
     expect(signUpMock).toHaveBeenCalled();
   });
 
-  it('Instructor signup redirects to /instructor/subscription', async () => {
+  it('Instructor signup starts the deferred onboarding plan step', async () => {
     renderWith(InstructorSignUp);
     fillCommon();
     // state select + bio are optional; submit straight away
     fireEvent.click(screen.getByRole('button', { name: /Apply as Instructor/i }));
-    await waitFor(() => screen.getByText('LANDED:instructor-sub'));
-    expect(signUpMock.mock.calls[0][0].options.data.role).toBe('instructor');
-    expect(signUpMock.mock.calls[0][0].options.emailRedirectTo).toContain('/instructor/subscription?onboarding=1');
+    await waitFor(() => screen.getByText('LANDED:instructor-plan'));
+    expect(signUpMock).not.toHaveBeenCalled();
     const log = JSON.parse(sessionStorage.getItem('taclink:signupRedirectLog') || '[]');
     expect(log.some((e: any) => e.role === 'instructor' && e.status === 'redirected')).toBe(true);
   });
 
-  it('Instructor signup first clears an existing student session before creating the account', async () => {
+  it('Instructor signup does not create auth before final policy step', async () => {
     getSessionMock.mockResolvedValueOnce({ data: { session: { user: { id: 'student-session' } } }, error: null });
     renderWith(InstructorSignUp);
     fillCommon();
     fireEvent.click(screen.getByRole('button', { name: /Apply as Instructor/i }));
-    await waitFor(() => screen.getByText('LANDED:instructor-sub'));
-    expect(signOutMock).toHaveBeenCalled();
-    expect(signOutMock.mock.invocationCallOrder[0]).toBeLessThan(signUpMock.mock.invocationCallOrder[0]);
+    await waitFor(() => screen.getByText('LANDED:instructor-plan'));
+    expect(signUpMock).not.toHaveBeenCalled();
   });
 
   it('Instructor signup redirects correctly under StrictMode', async () => {
     renderWith(InstructorSignUp, true);
     fillCommon();
     fireEvent.click(screen.getByRole('button', { name: /Apply as Instructor/i }));
-    await waitFor(() => screen.getByText('LANDED:instructor-sub'));
-    expect(signUpMock).toHaveBeenCalled();
+    await waitFor(() => screen.getByText('LANDED:instructor-plan'));
+    expect(signUpMock).not.toHaveBeenCalled();
   });
 });
