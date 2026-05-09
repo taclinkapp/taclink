@@ -30,6 +30,7 @@ const InstructorSettings = () => {
   return (
     <MobileShell withTabBar={false}>
       <PageHeader title="Settings" back backTo="/instructor/profile" />
+      <AccountDeletionBanner />
       <div className="px-4 py-4 space-y-6">
         <Section title="Account">
           <Row label="Edit Profile" onClick={() => nav('/profile/edit')} />
@@ -42,12 +43,6 @@ const InstructorSettings = () => {
             <span className="text-sm font-medium flex items-center gap-2"><Star className="h-4 w-4 text-primary" />View My Reviews</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
-        </Section>
-        <Section title="Notifications">
-          <ToggleRow label="New bookings" defaultOn />
-          <ToggleRow label="Check-ins" defaultOn />
-          <ToggleRow label="Reviews" defaultOn />
-          <ToggleRow label="Weekly demand digest" defaultOn />
         </Section>
         <Section title="Support">
           <button onClick={() => setTourOpen(true)} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
