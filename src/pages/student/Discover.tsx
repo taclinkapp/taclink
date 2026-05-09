@@ -18,7 +18,7 @@ import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { OnboardingChecklistCard, OnboardingWelcomeModal } from '@/components/onboarding/OnboardingChecklist';
+import { OnboardingChecklistCard } from '@/components/onboarding/OnboardingChecklist';
 import { FounderBioModal } from '@/components/FounderBioModal';
 import { FirstVisitTooltip } from '@/components/onboarding/FirstVisitTooltip';
 import { useOnboarding } from '@/hooks/useOnboarding';
@@ -68,13 +68,8 @@ const Discover = () => {
   const isGuest = !user;
   const tour = useCrashCourseTour('student', user?.id);
   const onboarding = useOnboarding();
-  const [showWelcome, setShowWelcome] = useState(false);
-  // Show post-signup welcome modal once.
   useEffect(() => {
-    if (user && typeof window !== 'undefined' && sessionStorage.getItem('show_onboarding_welcome') === '1') {
-      setShowWelcome(true);
-      sessionStorage.removeItem('show_onboarding_welcome');
-    }
+    if (user && typeof window !== 'undefined') sessionStorage.removeItem('show_onboarding_welcome');
   }, [user]);
   // Mark "browsed_courses" once an authed student lands on Discover.
   useEffect(() => {
@@ -605,12 +600,6 @@ const Discover = () => {
       <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} rewardLabel="1 free booking" />
       <CrashCourseTour role="student" open={tour.open} onClose={tour.close} />
       <FounderBioModal userId={user?.id} />
-      {showWelcome && user && (
-        <OnboardingWelcomeModal
-          firstName={(user.user_metadata?.display_name as string | undefined)?.split(' ')[0] || ''}
-          onClose={() => setShowWelcome(false)}
-        />
-      )}
     </MobileShell>
   );
 };
