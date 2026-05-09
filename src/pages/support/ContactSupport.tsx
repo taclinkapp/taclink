@@ -15,9 +15,10 @@ type ChatMsg = { role: 'user' | 'assistant'; content: string };
 
 const ContactSupport = () => {
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const [subject, setSubject] = useState('');
-  const [initial, setInitial] = useState('');
+  const [subject, setSubject] = useState(() => (searchParams.get('subject') ?? '').slice(0, 200));
+  const [initial, setInitial] = useState(() => (searchParams.get('message') ?? '').slice(0, 4000));
   const [contactEmail, setContactEmail] = useState(user?.email ?? '');
   const [creating, setCreating] = useState(false);
   const [ticketId, setTicketId] = useState<string | null>(null);
