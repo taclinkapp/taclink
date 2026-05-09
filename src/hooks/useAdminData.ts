@@ -135,6 +135,13 @@ export function useAdminUserAction() {
       reason?: string;
     }) => {
       const { action, userId, reason } = args;
+      // Make sure the admin's session is still valid server-side. If it was
+      // revoked elsewhere the JWT would silently fail RLS / role checks and
+      // surface as a confusing generic error.
+      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+      if (refreshErr || !refreshed.session) {
+        throw new Error('Your admin session expired. Please sign out and sign back in, then retry.');
+      }
       let before: any = null;
       let after: any = null;
 
