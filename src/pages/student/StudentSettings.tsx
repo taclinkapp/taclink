@@ -71,13 +71,14 @@ const StudentSettings = () => {
             <LogOut className="h-4 w-4" /> Sign Out
           </button>
           <button
-            onClick={() => nav('/support/contact?subject=Delete%20my%20account')}
-            className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive/70 font-semibold text-xs hover:bg-destructive/10"
+            onClick={() => setDeleteOpen(true)}
+            className="w-full tactical-card p-4 flex items-center justify-center gap-2 text-destructive/80 font-semibold text-xs hover:bg-destructive/10"
           >
-            <Trash2 className="h-3.5 w-3.5" /> Request Account Deletion
+            <Trash2 className="h-3.5 w-3.5" /> Delete my account
           </button>
         </div>
       </div>
+      <DeleteAccountDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
       <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <CrashCourseTour role="student" open={tourOpen} onClose={() => setTourOpen(false)} />
