@@ -98,6 +98,79 @@ async function probeEdgeFn(name: string): Promise<Finding> {
   }
 }
 
+const CRITICAL_ONBOARDING_ROUTES = [
+  "/", "/welcome", "/welcome/quiz", "/welcome/plan",
+  "/student", "/instructor", "/auth/student-signup", "/auth/instructor-signup",
+];
+
+const LEGACY_ONBOARDING_PATHS = new Set([
+  "/onboarding", "/onboarding/welcome", "/onboarding/quiz", "/onboarding/plan",
+]);
+
+async function onboardingReliabilityChecks(
+  admin: ReturnType<typeof createClient>,
+  routeFindings: Finding[],
+): Promise<Finding[]> {
+  const out: Finding[] = [];
+
+  const failedCritical = routeFindings.filter((f) => {
+    try {
+      return CRITICAL_ONBOARDING_ROUTES.includes(new URL(f.target ?? "").pathname) && f.status === "fail";
+    } catch {
+      return false;
+    }
+  });
+  out.push({
+    category: "onboarding",
+    check_name: "Audit onboarding redirects",
+    status: failedCritical.length ? "fail" : "pass",
+    detail: failedCritical.length
+      ? `Broken onboarding/profile route(s): ${failedCritical.map((f) => f.target).join(", ")}`
+      : `${CRITICAL_ONBOARDING_ROUTES.length} onboarding, auth, and role landing routes respond safely`,
+    target: CRITICAL_ONBOARDING_ROUTES.join(","),
+  });
+
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: recent404s, error: recent404Err } = await admin
+    .from("route_404_events")
+    .select("path, referrer, user_role, created_at")
+    .gte("created_at", since24h)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  const legacyHits = ((recent404s ?? []) as Array<{ path: string; referrer: string | null }>).filter((row) => {
+    const basePath = row.path.split("?")[0].split("#")[0];
+    return LEGACY_ONBOARDING_PATHS.has(basePath);
+  });
+  out.push({
+    category: "onboarding",
+    check_name: "Fix unsafe onboarding navigation",
+    status: recent404Err ? "fail" : legacyHits.length ? "fail" : "pass",
+    detail: recent404Err
+      ? recent404Err.message
+      : legacyHits.length
+        ? `Legacy onboarding route hits detected: ${legacyHits.slice(0, 5).map((h) => h.path).join(", ")}`
+        : "No legacy onboarding paths or unsafe welcome-flow links hit 404 in the last 24h",
+    target: Array.from(LEGACY_ONBOARDING_PATHS).join(","),
+  });
+
+  const since1h = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const [{ error: routeErr, count: routeCount }, { error: resolutionErr, count: resolutionCount }] = await Promise.all([
+    admin.from("route_404_events").select("*", { count: "exact", head: true }).gte("created_at", since1h),
+    admin.from("route_404_resolutions").select("*", { count: "exact", head: true }),
+  ]);
+  out.push({
+    category: "reliability",
+    check_name: "Validate routing signals",
+    status: routeErr || resolutionErr ? "fail" : "pass",
+    detail: routeErr || resolutionErr
+      ? (routeErr?.message ?? resolutionErr?.message)
+      : `Routing telemetry online: ${routeCount ?? 0} 404 event(s) last hour, ${resolutionCount ?? 0} resolved path(s) tracked`,
+    target: "route_404_events,route_404_resolutions",
+  });
+
+  return out;
+}
+
 
 
 async function dbChecks(admin: ReturnType<typeof createClient>): Promise<Finding[]> {
@@ -212,6 +285,7 @@ Deno.serve(async (req) => {
 
   const startedAt = Date.now();
   const findings: Finding[] = [];
+  const routeFindings: Finding[] = [];
 
   // Route probes — every page declared in App.tsx (parameterized routes use sample IDs).
   const SAMPLE_ID = "00000000-0000-0000-0000-000000000000";
@@ -260,6 +334,7 @@ Deno.serve(async (req) => {
   for (let i = 0; i < routes.length; i += BATCH) {
     const slice = routes.slice(i, i + BATCH);
     const results = await Promise.all(slice.map((r) => probeUrl(`${APP_URL}${r}`)));
+    routeFindings.push(...results);
     findings.push(...results);
   }
   // Verify the SPA isn't serving the 404 fallback for declared routes by
@@ -273,6 +348,9 @@ Deno.serve(async (req) => {
     "verify-checkin-qr", "subscription-plan-ai", "ai-propose",
   ];
   for (const f of fns) findings.push(await probeEdgeFn(f));
+
+  // Onboarding redirect safety + routing telemetry
+  findings.push(...(await onboardingReliabilityChecks(admin, routeFindings)));
 
   // DB checks
   findings.push(...(await dbChecks(admin)));
