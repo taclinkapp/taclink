@@ -1,12 +1,27 @@
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { CountdownClock } from '@/components/CountdownClock';
-import { GraduationCap, Shield } from 'lucide-react';
+import { GraduationCap, Loader2, Shield } from 'lucide-react';
+import { homeForRole, useAuth } from '@/contexts/AuthContext';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const Splash = () => {
   const nav = useNavigate();
+  const { user, primaryRole, loading } = useAuth();
+
+  if (loading || (user && !primaryRole)) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (user && primaryRole) {
+    return <Navigate to={homeForRole(primaryRole)} replace />;
+  }
+
   return (
     <div className="relative min-h-screen bg-background flex flex-col overflow-hidden">
       {/* Ambient background video */}
