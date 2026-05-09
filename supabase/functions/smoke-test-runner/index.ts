@@ -182,6 +182,7 @@ async function probeEdgeFn(name: string): Promise<Finding> {
 const CRITICAL_ONBOARDING_ROUTES = [
   "/", "/welcome", "/welcome/quiz", "/welcome/plan",
   "/student", "/instructor", "/auth/student-signup", "/auth/instructor-signup",
+  "/auth/verify-email",
 ];
 
 const LEGACY_ONBOARDING_PATHS = new Set([
