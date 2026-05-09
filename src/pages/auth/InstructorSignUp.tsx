@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -23,10 +23,12 @@ import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
 import { setInstructorDraft, getInstructorDraft, updateInstructorDraft, hasInstructorDraft } from '@/lib/instructorSignupDraft';
 import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
+import { homeForRole, useAuth } from '@/contexts/AuthContext';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
+  const { user, primaryRole, loading: authLoading } = useAuth();
   const [params] = useSearchParams();
   const referralCode = (params.get('ref') ?? '').trim().toUpperCase();
   const influencerSlug = readInfluencerSlug();
@@ -138,11 +140,6 @@ const InstructorSignUp = () => {
       logBypassAttempt({ userRole: 'instructor', fieldName: 'instructor_bio', originalContent: bio, detections: bioHits, actionTaken: 'blocked' });
       return toast.error('Remove contact info from your bio before submitting.');
     }
-    // Make sure no stale session interferes with the deferred flow.
-    const { data: existing } = await supabase.auth.getSession();
-    if (existing.session) {
-      await supabase.auth.signOut();
-    }
     setLoading(true);
     // Persist draft to memory only — NO auth account is created yet. The
     // account is only created after the user finishes plan + credential +
@@ -165,6 +162,18 @@ const InstructorSignUp = () => {
     });
     nav('/auth/instructor/plan', { replace: true });
   };
+
+  if (authLoading || (user && !primaryRole)) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (user && primaryRole) {
+    return <Navigate to={homeForRole(primaryRole)} replace />;
+  }
 
   return (
     <div className="relative min-h-screen bg-background overflow-hidden">
