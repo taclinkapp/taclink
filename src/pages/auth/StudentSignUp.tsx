@@ -116,7 +116,7 @@ const StudentSignUp = () => {
     // back to the splash. Park them on a "check your email" screen instead.
     if (!signUpData.session) {
       setLoading(false);
-      logSignupRedirect({ role: 'student', intendedPath: '/auth/verify-email', status: 'awaiting_email_confirm', email });
+      logSignupRedirect({ role: 'student', intendedPath: '/auth/verify-email', status: 'redirected', email });
       requestFounderBio(); // pop the bio after they confirm + sign in
       nav(`/auth/verify-email?email=${encodeURIComponent(email)}&role=student`, { replace: true });
       return;
