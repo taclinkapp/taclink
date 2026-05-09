@@ -2,12 +2,18 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { homeForRole, useAuth } from "@/contexts/AuthContext";
+import { homeForRole, useAuth, type AppRole } from "@/contexts/AuthContext";
 import founderBio from "@/assets/founder-bio.png";
 
 const STORAGE_KEY = (userId: string) => `taclink_founder_bio_seen:${userId}`;
 
-export function FounderBioModal({ userId }: { userId: string | undefined }) {
+export function FounderBioModal({
+  userId,
+  onContinue,
+}: {
+  userId: string | undefined;
+  onContinue?: (role: AppRole) => void;
+}) {
   const [open, setOpen] = useState(false);
   const nav = useNavigate();
   const { primaryRole, loading } = useAuth();
@@ -25,7 +31,9 @@ export function FounderBioModal({ userId }: { userId: string | undefined }) {
   };
 
   const handleContinue = () => {
+    if (!primaryRole) return;
     close();
+    onContinue?.(primaryRole);
     nav(homeForRole(primaryRole), { replace: true });
   };
 
