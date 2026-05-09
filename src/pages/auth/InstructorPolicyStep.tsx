@@ -3,9 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/MobileShell';
-import { ShieldCheck, Lock, Loader2 } from 'lucide-react';
+import { ShieldCheck, Lock, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
 import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import {
@@ -29,6 +30,7 @@ const POST_VERIFY_UPLOAD_KEY = 'taclink_instructor_finalize_after_verify';
 const InstructorPolicyStep = () => {
   const nav = useNavigate();
   const [params] = useSearchParams();
+  const { user } = useAuth();
   const [agree, setAgree] = useState(false);
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -46,6 +48,10 @@ const InstructorPolicyStep = () => {
     }
     if (!draft.credentialType) {
       nav('/auth/instructor/credential', { replace: true });
+    }
+    if (resumeAfterVerify && draft.policyAcknowledged) {
+      setAgree(true);
+      setLegalAccepted(true);
     }
   }, [nav]);
 
