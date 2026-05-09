@@ -36,12 +36,9 @@ const Splash = () => {
         </span>
 
         <p className="mt-4 text-center text-muted-foreground max-w-xs text-sm leading-relaxed">
-          TacLink™ is in pre-launch. Sign up now to reserve your spot for launch day,
-          browse the app, and help shape what's coming. Your info is collected by our
-          team to get you onboarded the moment we go live.
+          The first marketplace built exclusively for tactical, firearms, and combatives training — connecting serious students with vetted instructors. No one else is doing this for our community.
           <span className="block mt-2 text-foreground/80 font-semibold">
-            Heads up: during pre-launch, students can't book courses and instructors can't
-            accept bookings or payments yet. Everything unlocks on launch day.
+            Reserve your spot now. Booking and payments unlock on launch day.
           </span>
         </p>
 
