@@ -236,14 +236,16 @@ async function onboardingReliabilityChecks(
   });
 
   // Regression test: every onboarding route + every legacy /onboarding/* path
-  // must resolve safely (HTTP 2xx/3xx — SPA fallback returns 200 + index.html).
-  // This guards against future router edits that drop the legacy redirects.
+  // must resolve safely (HTTP 2xx/3xx — SPA fallback returns 200 + index.html)
+  // AND its route literal must still be present in the shipped JS bundle. The
+  // bundle check catches the case where someone deletes a <Route> definition
+  // but the SPA fallback continues serving HTTP 200 (masking a client 404).
   const regressionTargets = [
     ...CRITICAL_ONBOARDING_ROUTES,
     ...Array.from(LEGACY_ONBOARDING_PATHS),
   ];
   const regressionResults = await Promise.all(
-    regressionTargets.map((p) => probeUrl(`${APP_URL}${p}`)),
+    regressionTargets.map((p) => probeRouteWithComponent(p)),
   );
   const regressionFails = regressionResults.filter((r) => r.status === "fail");
   out.push({
@@ -251,9 +253,20 @@ async function onboardingReliabilityChecks(
     check_name: "Onboarding & legacy route regression",
     status: regressionFails.length ? "fail" : "pass",
     detail: regressionFails.length
-      ? `Unsafe/404 routes: ${regressionFails.map((f) => f.target).join(", ")}`
-      : `${regressionTargets.length} onboarding + legacy /onboarding/* paths resolve safely (no 404, no unsafe navigation)`,
+      ? `Unsafe/missing routes: ${regressionFails.map((f) => `${f.target} (${f.detail})`).join("; ")}`
+      : `${regressionTargets.length} onboarding + legacy /onboarding/* paths resolve safely AND their route literals are present in the shipped bundle (rendered component validated)`,
     target: regressionTargets.join(","),
+  });
+
+  // Component-aware check for /auth — must both respond and have its route
+  // literal in the bundle.
+  const authFinding = await probeRouteWithComponent("/auth");
+  out.push({
+    category: "onboarding",
+    check_name: "Auth landing route component",
+    status: authFinding.status,
+    detail: authFinding.detail,
+    target: authFinding.target,
   });
 
   const since1h = new Date(Date.now() - 60 * 60 * 1000).toISOString();
