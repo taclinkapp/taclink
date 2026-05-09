@@ -218,7 +218,17 @@ const InstructorPolicyStep = () => {
               </p>
             </div>
 
-            <LegalAcceptanceCard onAcceptedChange={setLegalAccepted} />
+            {resumeAfterVerify ? (
+              <div className="tactical-card p-4 flex items-start gap-3 text-sm">
+                <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-bold">Agreement accepted</div>
+                  <p className="text-xs text-muted-foreground mt-1">Finish setup to record it on your verified account.</p>
+                </div>
+              </div>
+            ) : (
+              <LegalAcceptanceCard onAcceptedChange={setLegalAccepted} />
+            )}
 
             <div className="flex items-start gap-3 pt-1">
               <Checkbox id="ack" checked={agree} onCheckedChange={(v) => setAgree(!!v)} className="mt-0.5" />
@@ -232,7 +242,7 @@ const InstructorPolicyStep = () => {
               disabled={!agree || !legalAccepted || submitting}
               className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
             >
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Acknowledge & Create Account'}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : resumeAfterVerify ? 'Finish Instructor Setup' : 'Acknowledge & Create Account'}
             </Button>
             <p className="text-[10px] text-muted-foreground text-center">
               Your account is created only after you tap the button above.
