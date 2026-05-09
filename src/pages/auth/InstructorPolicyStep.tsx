@@ -170,6 +170,7 @@ const InstructorPolicyStep = () => {
     toast.success('Account created', {
       description: 'Welcome to TacLink — your credential is being reviewed.',
     });
+    requestFounderBio();
     nav('/instructor', { replace: true });
   };
 
