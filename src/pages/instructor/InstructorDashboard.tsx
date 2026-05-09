@@ -22,7 +22,7 @@ type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
 
 const InstructorDashboard = () => {
   const { user, profile } = useAuth();
-  const tour = useCrashCourseTour('instructor', user?.id);
+  const tour = useCrashCourseTour('instructor', user?.id, { autoOpen: false });
   const [open, setOpen] = useState<StatKey | null>(null);
   const [revenueDrill, setRevenueDrill] = useState<string | null>(null);
   const monthLabel = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -482,7 +482,7 @@ const InstructorDashboard = () => {
         </SheetContent>
       </Sheet>
       <CrashCourseTour role="instructor" open={tour.open} onClose={tour.close} />
-      <FounderBioModal userId={user?.id} />
+      <FounderBioModal userId={user?.id} onContinue={() => setTimeout(tour.replay, 250)} />
     </MobileShell>
   );
 };

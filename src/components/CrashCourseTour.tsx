@@ -75,19 +75,36 @@ export function CrashCourseTour({ role, open, onClose }: { role: Role; open: boo
 }
 
 const tourKey = (role: Role, userId: string | undefined) => `taclink_tour_seen:${role}:${userId ?? 'anon'}`;
+const pendingTourKey = (role: Role, userId: string | undefined) => `taclink_tour_pending:${role}:${userId ?? 'anon'}`;
 
-export function useCrashCourseTour(role: Role, userId: string | undefined) {
+export function requestCrashCourseTour(role: Role, userId: string | undefined) {
+  if (!userId) return;
+  sessionStorage.setItem(pendingTourKey(role, userId), '1');
+}
+
+export function useCrashCourseTour(
+  role: Role,
+  userId: string | undefined,
+  { autoOpen = true }: { autoOpen?: boolean } = {},
+) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
+    const pendingKey = pendingTourKey(role, userId);
+    if (sessionStorage.getItem(pendingKey)) {
+      sessionStorage.removeItem(pendingKey);
+      const t = setTimeout(() => setOpen(true), 400);
+      return () => clearTimeout(t);
+    }
+    if (!autoOpen) return;
     const seen = localStorage.getItem(tourKey(role, userId));
     if (!seen) {
       // small delay so the page renders first
       const t = setTimeout(() => setOpen(true), 400);
       return () => clearTimeout(t);
     }
-  }, [role, userId]);
+  }, [autoOpen, role, userId]);
 
   const close = () => {
     if (userId) localStorage.setItem(tourKey(role, userId), '1');

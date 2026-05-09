@@ -27,7 +27,7 @@ export const TrainingPlanCard = ({ className }: { className?: string }) => {
   if (!row?.training_goal) {
     return (
       <Link
-        to="/onboarding/quiz"
+        to="/welcome/quiz"
         className={cn(
           "tactical-card p-4 flex items-center gap-3 hover:border-primary/40 transition",
           className,
