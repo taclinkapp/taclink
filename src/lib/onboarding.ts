@@ -14,7 +14,6 @@ export type QuizAnswers = {
 export type ChecklistKey =
   | "profile_created"
   | "browsed_courses"
-  | "followed_instructor"
   | "first_booking"
   | "first_completion"
   | "shared_profile";
@@ -24,7 +23,6 @@ export type ChecklistState = Record<ChecklistKey, boolean>;
 export const DEFAULT_CHECKLIST: ChecklistState = {
   profile_created: true,
   browsed_courses: false,
-  followed_instructor: false,
   first_booking: false,
   first_completion: false,
   shared_profile: false,
@@ -33,7 +31,7 @@ export const DEFAULT_CHECKLIST: ChecklistState = {
 export const CHECKLIST_ORDER: { key: ChecklistKey; label: string }[] = [
   { key: "profile_created", label: "Create your profile" },
   { key: "browsed_courses", label: "Browse courses near you" },
-  { key: "followed_instructor", label: "Follow your first instructor" },
+  
   { key: "first_booking", label: "Book your first course" },
   { key: "first_completion", label: "Complete a course and earn XP" },
   { key: "shared_profile", label: "Share your Operator Profile" },
