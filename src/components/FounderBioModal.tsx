@@ -53,10 +53,13 @@ export function FounderBioModal({
   };
 
   const handleContinue = () => {
-    if (!primaryRole) return;
     close();
-    onContinue?.(primaryRole);
-    nav(homeForRole(primaryRole), { replace: true });
+    if (primaryRole) {
+      onContinue?.(primaryRole);
+      nav(homeForRole(primaryRole), { replace: true });
+    }
+    // If role isn't ready yet, just close — the user is already on their home page
+    // (the modal is mounted there) and AuthContext will finish hydrating shortly.
   };
 
   return (
