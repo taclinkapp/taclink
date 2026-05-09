@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ShieldCheck, Lock, ArrowLeft } from "lucide-react";
+import { Loader2, ShieldCheck, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { InstructorOnboardingProgress } from "@/components/InstructorOnboardingProgress";
 import splashBg from "@/assets/splash-bg.mp4.asset.json";
