@@ -67,6 +67,86 @@ async function probeUrl(url: string, expect = 200): Promise<Finding> {
   }
 }
 
+// Loads the live app bundle once per run so we can validate that every route
+// path string still exists in the shipped React Router config. The SPA shell
+// returns the same index.html for every URL, so HTTP 200 is not enough — we
+// must look at the JS bundle to confirm the route component is actually wired.
+let _bundleCache: string | null = null;
+async function loadAppBundle(): Promise<string | null> {
+  if (_bundleCache !== null) return _bundleCache;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), TIMEOUT);
+    const indexRes = await fetch(APP_URL, { signal: ctrl.signal });
+    const indexHtml = await indexRes.text();
+    clearTimeout(t);
+
+    // Extract every <script src="/assets/...js"> reference (Vite emits one main
+    // chunk + several lazy chunks; route definitions live in main).
+    const srcRe = /<script[^>]+src=["']([^"']+\.js)["']/g;
+    const srcs: string[] = [];
+    let m;
+    while ((m = srcRe.exec(indexHtml)) !== null) srcs.push(m[1]);
+    if (srcs.length === 0) {
+      _bundleCache = "";
+      return _bundleCache;
+    }
+
+    // Pull the entry chunks (limit to first few for safety) in parallel.
+    const texts = await Promise.all(
+      srcs.slice(0, 3).map(async (src) => {
+        const u = src.startsWith("http") ? src : `${APP_URL}${src.startsWith("/") ? "" : "/"}${src}`;
+        const c = new AbortController();
+        const tt = setTimeout(() => c.abort(), TIMEOUT);
+        try {
+          const r = await fetch(u, { signal: c.signal });
+          return await r.text();
+        } catch {
+          return "";
+        } finally {
+          clearTimeout(tt);
+        }
+      }),
+    );
+    _bundleCache = texts.join("\n");
+    return _bundleCache;
+  } catch {
+    _bundleCache = "";
+    return _bundleCache;
+  }
+}
+
+// Returns true if the route literal is present in the shipped bundle (proves
+// the React Router definition or Navigate redirect was not removed).
+function bundleHasRoute(bundle: string, path: string): boolean {
+  if (!bundle) return true; // bundle unavailable — don't false-fail
+  // Match either '"/path"' or "'/path'" or template literal — minified bundles
+  // keep string literals intact.
+  const escaped = path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`["'\`]${escaped}["'\`]`);
+  return re.test(bundle);
+}
+
+async function probeRouteWithComponent(path: string): Promise<Finding> {
+  const httpFinding = await probeUrl(`${APP_URL}${path}`);
+  if (httpFinding.status === "fail") return httpFinding;
+  const bundle = await loadAppBundle();
+  if (!bundleHasRoute(bundle, path)) {
+    return {
+      category: "route",
+      check_name: `Route wiring ${path}`,
+      status: "fail",
+      detail: `HTTP 200 served but route literal "${path}" was not found in the shipped JS bundle — the React Router definition (or Navigate redirect) for this path is missing. SPA fallback is masking a 404.`,
+      target: `${APP_URL}${path}`,
+    };
+  }
+  return {
+    ...httpFinding,
+    check_name: `Route wiring ${path}`,
+    detail: `${httpFinding.detail} + route literal present in bundle`,
+  };
+}
+
 async function probeEdgeFn(name: string): Promise<Finding> {
   const url = `${SUPABASE_URL}/functions/v1/${name}`;
   const ctrl = new AbortController();
@@ -156,14 +236,16 @@ async function onboardingReliabilityChecks(
   });
 
   // Regression test: every onboarding route + every legacy /onboarding/* path
-  // must resolve safely (HTTP 2xx/3xx — SPA fallback returns 200 + index.html).
-  // This guards against future router edits that drop the legacy redirects.
+  // must resolve safely (HTTP 2xx/3xx — SPA fallback returns 200 + index.html)
+  // AND its route literal must still be present in the shipped JS bundle. The
+  // bundle check catches the case where someone deletes a <Route> definition
+  // but the SPA fallback continues serving HTTP 200 (masking a client 404).
   const regressionTargets = [
     ...CRITICAL_ONBOARDING_ROUTES,
     ...Array.from(LEGACY_ONBOARDING_PATHS),
   ];
   const regressionResults = await Promise.all(
-    regressionTargets.map((p) => probeUrl(`${APP_URL}${p}`)),
+    regressionTargets.map((p) => probeRouteWithComponent(p)),
   );
   const regressionFails = regressionResults.filter((r) => r.status === "fail");
   out.push({
@@ -171,9 +253,20 @@ async function onboardingReliabilityChecks(
     check_name: "Onboarding & legacy route regression",
     status: regressionFails.length ? "fail" : "pass",
     detail: regressionFails.length
-      ? `Unsafe/404 routes: ${regressionFails.map((f) => f.target).join(", ")}`
-      : `${regressionTargets.length} onboarding + legacy /onboarding/* paths resolve safely (no 404, no unsafe navigation)`,
+      ? `Unsafe/missing routes: ${regressionFails.map((f) => `${f.target} (${f.detail})`).join("; ")}`
+      : `${regressionTargets.length} onboarding + legacy /onboarding/* paths resolve safely AND their route literals are present in the shipped bundle (rendered component validated)`,
     target: regressionTargets.join(","),
+  });
+
+  // Component-aware check for /auth — must both respond and have its route
+  // literal in the bundle.
+  const authFinding = await probeRouteWithComponent("/auth");
+  out.push({
+    category: "onboarding",
+    check_name: "Auth landing route component",
+    status: authFinding.status,
+    detail: authFinding.detail,
+    target: authFinding.target,
   });
 
   const since1h = new Date(Date.now() - 60 * 60 * 1000).toISOString();
