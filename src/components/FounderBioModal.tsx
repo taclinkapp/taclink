@@ -31,19 +31,13 @@ export function FounderBioModal({
     if (!userId) return;
     if (localStorage.getItem(STORAGE_KEY(userId))) return;
 
-    // Fast-path: explicit post-signup request — open as soon as we have a userId,
-    // even if roles are still loading. This prevents the welcome bio from being
-    // missed due to an auth-context race.
+    // Only auto-open right after a signup (pending flag set by the signup flow).
+    // Regular sign-ins should NOT trigger the founder bio.
     let pending = false;
     try { pending = sessionStorage.getItem(PENDING_KEY) === "1"; } catch { /* ignore */ }
-    if (pending) {
-      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
-      const t = setTimeout(() => setOpen(true), 200);
-      return () => clearTimeout(t);
-    }
-
-    if (loading || !primaryRole) return;
-    const t = setTimeout(() => setOpen(true), 300);
+    if (!pending) return;
+    try { sessionStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
+    const t = setTimeout(() => setOpen(true), 200);
     return () => clearTimeout(t);
   }, [userId, loading, primaryRole]);
 
