@@ -224,9 +224,29 @@ const NotificationSettings = () => {
               )}
             </div>
             {permission === "denied" && (
-              <div className="px-4 py-3 text-xs text-amber-600 dark:text-amber-400">
-                Notifications are blocked at the browser level. Update your browser site settings to
-                re-enable.
+              <div className="px-4 py-3 space-y-2 bg-amber-500/5">
+                <div className="flex items-start gap-2">
+                  <ShieldOff className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-bold text-amber-600 dark:text-amber-400">
+                      Notifications blocked by {browserInfo.name}
+                    </p>
+                    <p className="text-muted-foreground mt-1">
+                      We can't ask again from inside the page — browsers require you to flip this
+                      switch yourself in site settings.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pl-6">
+                  <Button size="sm" variant="outline" onClick={() => setHelpOpen(true)}>
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    How to unblock
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={copySiteUrl}>
+                    <Copy className="h-3.5 w-3.5 mr-1.5" />
+                    Copy site URL
+                  </Button>
+                </div>
               </div>
             )}
           </div>
