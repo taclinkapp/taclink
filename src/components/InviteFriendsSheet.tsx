@@ -36,14 +36,26 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
   const onShare = async () => {
     if (!link) return;
     const text = `Train with me on TacLink. Sign up with my link and we both win.`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'TacLink', text, url: link });
-      } catch {
-        /* user cancelled */
-      }
-    } else {
-      onCopy();
+    const payload = { title: 'TacLink', text, url: link };
+    const canShare =
+      typeof navigator !== 'undefined' &&
+      typeof navigator.share === 'function' &&
+      (typeof (navigator as any).canShare !== 'function' || (navigator as any).canShare(payload));
+
+    if (!canShare) {
+      await onCopy();
+      toast.message('Sharing not available here — link copied instead');
+      return;
+    }
+
+    try {
+      await navigator.share(payload);
+    } catch (err: any) {
+      // User dismissed the share sheet — stay silent
+      if (err?.name === 'AbortError') return;
+      // Permissions policy (e.g. inside an iframe preview) or other failure — fall back
+      await onCopy();
+      toast.message('Sharing blocked — link copied instead');
     }
   };
 
