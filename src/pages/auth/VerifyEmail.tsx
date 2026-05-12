@@ -10,7 +10,8 @@ import { requestFounderBio } from '@/components/FounderBioModal';
 import { toast } from 'sonner';
 
 const COOLDOWN_SECONDS = 30;
-const CODE_LENGTH = 6;
+const CODE_MIN_LENGTH = 6;
+const CODE_MAX_LENGTH = 10;
 const CODE_TTL_SECONDS = 180;
 
 const VerifyEmail = () => {
@@ -70,8 +71,8 @@ const VerifyEmail = () => {
       toast.error('Code expired', { description: 'Request a new one to continue.' });
       return;
     }
-    if (token.length !== CODE_LENGTH) {
-      toast.error('Enter the 6-digit code');
+    if (token.length < CODE_MIN_LENGTH) {
+      toast.error(`Enter the code from your email`);
       return;
     }
     setVerifying(true);
@@ -152,14 +153,14 @@ const VerifyEmail = () => {
             inputMode="numeric"
             autoComplete="one-time-code"
             pattern="[0-9]*"
-            maxLength={CODE_LENGTH}
+            maxLength={CODE_MAX_LENGTH}
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
-            placeholder="000000"
-            aria-label="6-digit verification code"
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, CODE_MAX_LENGTH))}
+            placeholder="Enter code"
+            aria-label="Verification code from email"
             className="h-14 bg-card border-border text-center text-2xl font-black tracking-[0.35em]"
           />
-          <Button type="submit" disabled={verifying || expired || code.length !== CODE_LENGTH || !email.trim()} className="w-full h-12 font-bold">
+          <Button type="submit" disabled={verifying || expired || code.length < CODE_MIN_LENGTH || !email.trim()} className="w-full h-12 font-bold">
             {verifying ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirming…</> : expired ? 'Code expired' : 'Confirm & continue'}
           </Button>
           <p className={`text-xs text-center ${expired ? 'text-destructive' : 'text-muted-foreground'}`}>
