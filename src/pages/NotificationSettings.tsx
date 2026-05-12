@@ -30,6 +30,75 @@ const NotificationSettings = () => {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  const browserInfo = (() => {
+    if (typeof navigator === "undefined") return { name: "your browser", steps: [] as string[] };
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
+    const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
+    const isFirefox = /firefox|fxios/i.test(ua);
+    const isEdge = /edg\//i.test(ua);
+    const isChrome = /chrome|crios/i.test(ua) && !isEdge;
+
+    if (isIOS) return {
+      name: "iOS Safari",
+      steps: [
+        "Open the iOS Settings app",
+        "Scroll down and tap Safari → Advanced → Website Data",
+        "Or go to Settings → Notifications and re-enable for this site (PWA only)",
+      ],
+    };
+    if (isSafari) return {
+      name: "Safari",
+      steps: [
+        "Open Safari → Settings (⌘,) → Websites → Notifications",
+        "Find this site in the list and set it to Allow",
+        "Reload this page",
+      ],
+    };
+    if (isFirefox) return {
+      name: "Firefox",
+      steps: [
+        "Click the lock icon in the address bar",
+        "Click Clear permission next to Send Notifications",
+        "Reload this page and click Allow when prompted",
+      ],
+    };
+    if (isEdge) return {
+      name: "Edge",
+      steps: [
+        "Click the lock icon in the address bar",
+        "Set Notifications to Allow",
+        "Reload this page",
+      ],
+    };
+    if (isChrome) return {
+      name: "Chrome",
+      steps: [
+        "Click the lock / tune icon at the left of the address bar",
+        "Click Site settings",
+        "Set Notifications to Allow, then reload this page",
+      ],
+    };
+    return {
+      name: "your browser",
+      steps: [
+        "Click the lock icon in the address bar",
+        "Find Notifications in the site permissions list",
+        "Set it to Allow, then reload this page",
+      ],
+    };
+  })();
+
+  const copySiteUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin);
+      toast.success("Site URL copied");
+    } catch {
+      toast.error("Could not copy URL");
+    }
+  };
 
   const refreshState = async () => {
     if (!supported) { setLoading(false); return; }
