@@ -135,6 +135,7 @@ const StudentSignUp = () => {
       if (intent) { sessionStorage.removeItem('post_signup_intent'); dest = intent; }
     } catch {}
     requestFounderBio();
+    requestCrashCourseTour('student');
     nav(dest, { replace: true });
   };
 
