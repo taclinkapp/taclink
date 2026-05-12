@@ -49,9 +49,23 @@ export const useReferral = () => {
   return { ...stats, loading };
 };
 
-export const buildReferralUrl = (code: string) => {
+export type InviteSource = 'qr' | 'share' | 'copy' | 'link';
+
+/**
+ * Build a referral URL. Always tags the link with attribution params so we can
+ * tell QR scans apart from copied/shared links once the recipient lands on
+ * /auth/invite/:code.
+ */
+export const buildReferralUrl = (code: string, source: InviteSource = 'link') => {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${origin}/auth/invite/${encodeURIComponent(code)}`;
+  const params = new URLSearchParams({
+    src: source,
+    utm_source: 'taclink_invite',
+    utm_medium: source === 'qr' ? 'qr' : source === 'share' ? 'share' : 'link',
+    utm_campaign: 'referral',
+    ref: code,
+  });
+  return `${origin}/auth/invite/${encodeURIComponent(code)}?${params.toString()}`;
 };
 
 // Extract a referral code from a scanned QR payload. Accepts:
