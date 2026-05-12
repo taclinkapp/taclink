@@ -24,13 +24,40 @@ const NotificationSettings = () => {
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
 
+  const refreshState = async () => {
+    if (!supported) { setLoading(false); return; }
+    const perm = typeof Notification !== "undefined" ? Notification.permission : "default";
+    setPermission(perm);
+    const sub = await getPushSubscription();
+    setEnabled(!!sub && perm === "granted");
+    setLoading(false);
+  };
+
   useEffect(() => {
+    refreshState();
+    if (!supported) return;
+
+    // Listen for permission changes via the Permissions API (Chrome/Edge/Firefox).
+    let permStatus: PermissionStatus | null = null;
+    const onPermChange = () => refreshState();
     (async () => {
-      if (!supported) { setLoading(false); return; }
-      const sub = await getPushSubscription();
-      setEnabled(!!sub && Notification.permission === "granted");
-      setLoading(false);
+      try {
+        permStatus = await navigator.permissions?.query({ name: "notifications" as PermissionName });
+        permStatus?.addEventListener("change", onPermChange);
+      } catch { /* Safari may not support querying notifications */ }
     })();
+
+    // Fallback: re-check when the tab regains focus (e.g. after closing the
+    // browser site settings panel).
+    const onVisible = () => { if (document.visibilityState === "visible") refreshState(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+
+    return () => {
+      permStatus?.removeEventListener("change", onPermChange);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, [supported]);
 
   const handleToggle = async (next: boolean) => {
