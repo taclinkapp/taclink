@@ -311,7 +311,6 @@ const NotificationSettings = () => {
           </div>
         </DialogContent>
       </Dialog>
-      </div>
     </MobileShell>
   );
 };
