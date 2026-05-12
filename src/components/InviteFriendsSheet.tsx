@@ -41,29 +41,34 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
     }
   };
 
+  const isIOS =
+    typeof navigator !== 'undefined' &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+    !(window as any).MSStream;
+  const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+
   const onShare = async () => {
-    if (!link) return;
-    const text = `Train with me on TacLink. Sign up with my link and we both win.`;
-    const payload = { title: 'TacLink', text, url: link };
-    const canShare =
+    if (!shareLink) return;
+    const payload = { title: 'TacLink', text: SHARE_TEXT, url: shareLink };
+    const hasShareApi =
       typeof navigator !== 'undefined' &&
       typeof navigator.share === 'function' &&
       (typeof (navigator as any).canShare !== 'function' || (navigator as any).canShare(payload));
 
-    if (!canShare) {
-      await onCopy();
-      toast.message('Sharing not available here — link copied instead');
+    // iOS Safari blocks navigator.share() inside cross-origin iframes even when
+    // the API exists — go straight to the fallback sheet there.
+    if (!hasShareApi || (isIOS && isInIframe)) {
+      setFallbackOpen(true);
       return;
     }
 
     try {
       await navigator.share(payload);
     } catch (err: any) {
-      // User dismissed the share sheet — stay silent
-      if (err?.name === 'AbortError') return;
-      // Permissions policy (e.g. inside an iframe preview) or other failure — fall back
-      await onCopy();
-      toast.message('Sharing blocked — link copied instead');
+      if (err?.name === 'AbortError') return; // user dismissed share sheet
+      // NotAllowedError / SecurityError (iframe permissions policy, http context, etc.)
+      // → show the in-app fallback share menu instead of silently copying.
+      setFallbackOpen(true);
     }
   };
 
