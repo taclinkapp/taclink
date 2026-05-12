@@ -11,6 +11,12 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    headers: {
+      // Allow the Web Share API when this app is embedded in a same-origin or
+      // cross-origin iframe (e.g. Lovable preview). Without this header browsers
+      // block navigator.share() inside iframes.
+      "Permissions-Policy": "web-share=*, clipboard-write=*",
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
