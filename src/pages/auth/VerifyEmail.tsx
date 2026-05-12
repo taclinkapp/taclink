@@ -90,6 +90,7 @@ const VerifyEmail = () => {
 
     const role = await resolveVerifiedRole(requestedRole, data.user?.id);
     requestFounderBio();
+    if (role === 'instructor' || role === 'student') requestCrashCourseTour(role);
     toast.success('Email confirmed');
     setVerifying(false);
     if (role === 'instructor') {
