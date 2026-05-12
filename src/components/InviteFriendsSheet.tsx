@@ -147,6 +147,91 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
         )}
       </SheetContent>
       {scanning && <QrScanner onDecode={onScanned} onClose={() => setScanning(false)} />}
+      <ShareFallbackSheet
+        open={fallbackOpen}
+        onOpenChange={setFallbackOpen}
+        url={shareLink}
+        text={SHARE_TEXT}
+        onCopy={onCopy}
+        isIOS={isIOS}
+        isInIframe={isInIframe}
+      />
+    </Sheet>
+  );
+};
+
+type FallbackProps = {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  url: string;
+  text: string;
+  onCopy: () => void;
+  isIOS: boolean;
+  isInIframe: boolean;
+};
+
+const ShareFallbackSheet = ({ open, onOpenChange, url, text, onCopy, isIOS, isInIframe }: FallbackProps) => {
+  if (!url) return null;
+  const enc = encodeURIComponent;
+  const body = `${text} ${url}`;
+  // iOS uses sms:?&body=… (note the &), Android uses sms:?body=…
+  const smsHref = isIOS ? `sms:&body=${enc(body)}` : `sms:?body=${enc(body)}`;
+  const channels = [
+    { label: 'Messages', icon: MessageSquare, href: smsHref },
+    { label: 'Email',    icon: Mail,          href: `mailto:?subject=${enc('Train with me on TacLink')}&body=${enc(body)}` },
+    { label: 'WhatsApp', icon: Send,          href: `https://wa.me/?text=${enc(body)}` },
+    { label: 'Telegram', icon: Send,          href: `https://t.me/share/url?url=${enc(url)}&text=${enc(text)}` },
+    { label: 'X',        icon: XIcon,         href: `https://twitter.com/intent/tweet?text=${enc(body)}` },
+  ];
+
+  // When embedded in an iframe (Lovable preview), window.open with _blank may
+  // be blocked by the parent. Force top-level navigation/new tab.
+  const openExternal = (href: string) => {
+    try {
+      if (isInIframe && window.top) {
+        window.open(href, '_blank', 'noopener,noreferrer');
+      } else {
+        window.location.href = href;
+      }
+    } catch {
+      window.location.href = href;
+    }
+    onOpenChange(false);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="bg-background border-border">
+        <SheetHeader className="text-left">
+          <SheetTitle className="font-stencil uppercase tracking-[0.12em] flex items-center gap-2">
+            <Share2 className="h-4 w-4 text-primary" /> Share invite
+          </SheetTitle>
+        </SheetHeader>
+        <p className="text-xs text-muted-foreground mt-2">
+          {isInIframe
+            ? "Native share is blocked inside this preview. Pick a channel below or open the published app."
+            : "Your browser doesn't support the native share sheet. Pick a channel below."}
+        </p>
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          {channels.map((c) => (
+            <button
+              key={c.label}
+              onClick={() => openExternal(c.href)}
+              className="tactical-card p-3 flex flex-col items-center gap-1.5 hover:border-primary/40"
+            >
+              <c.icon className="h-5 w-5 text-primary" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">{c.label}</span>
+            </button>
+          ))}
+          <button
+            onClick={() => { onCopy(); onOpenChange(false); }}
+            className="tactical-card p-3 flex flex-col items-center gap-1.5 hover:border-primary/40"
+          >
+            <Copy className="h-5 w-5 text-primary" />
+            <span className="text-[11px] font-bold uppercase tracking-wider">Copy</span>
+          </button>
+        </div>
+      </SheetContent>
     </Sheet>
   );
 };
