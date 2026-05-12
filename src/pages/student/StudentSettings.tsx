@@ -35,6 +35,7 @@ const StudentSettings = () => {
         <Section title="Account">
           <Row label="Edit Profile" onClick={() => nav('/profile/edit')} />
           <Row label="Change Password" onClick={() => nav('/auth/change-password')} />
+          <Row label="Notifications" onClick={() => nav('/settings/notifications')} />
           <Row label="Payment Methods" onClick={() => nav('/student/payment-methods')} />
         </Section>
 

@@ -23,7 +23,6 @@ const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
 export const registerPushSW = async (): Promise<ServiceWorkerRegistration | null> => {
   if (!isPushSupported()) return null;
   try {
-    // Avoid registering inside the Lovable editor iframe.
     const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
     if (inIframe) return null;
     return await navigator.serviceWorker.register("/sw.js");
@@ -31,6 +30,13 @@ export const registerPushSW = async (): Promise<ServiceWorkerRegistration | null
     console.warn("[push] sw register failed", e);
     return null;
   }
+};
+
+export const getPushSubscription = async (): Promise<PushSubscription | null> => {
+  if (!isPushSupported()) return null;
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg) return null;
+  return reg.pushManager.getSubscription();
 };
 
 export const subscribeToPush = async (): Promise<boolean> => {
@@ -72,4 +78,31 @@ export const subscribeToPush = async (): Promise<boolean> => {
     return false;
   }
   return true;
+};
+
+export const unsubscribeFromPush = async (): Promise<boolean> => {
+  const sub = await getPushSubscription();
+  if (!sub) return true;
+  const endpoint = sub.endpoint;
+  try {
+    await sub.unsubscribe();
+  } catch (e) {
+    console.warn("[push] unsubscribe failed", e);
+  }
+  await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint);
+  return true;
+};
+
+export const sendTestPush = async (): Promise<{ ok: boolean; error?: string }> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in" };
+  const { error } = await supabase.from("notifications").insert({
+    recipient_id: user.id,
+    type: "test",
+    title: "Test notification",
+    body: "If you see this, Web Push is working 🎉",
+    link: "/notifications",
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 };
