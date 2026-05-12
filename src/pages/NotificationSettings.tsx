@@ -71,8 +71,6 @@ const NotificationSettings = () => {
     return { permission: perm, deliveryReady: ready };
   };
 
-  const refreshState = () => reconcile({ autoSubscribe: false });
-
   const handleCheckAgain = async () => {
     setChecking(true);
     const before = Notification.permission;
@@ -80,7 +78,7 @@ const NotificationSettings = () => {
     setChecking(false);
     if (result.permission === "granted") {
       if (result.deliveryReady) toast.success(before !== "granted" ? "Permission granted — push enabled" : "Push is already enabled");
-      else toast("Notifications are allowed. Tap the toggle once to finish delivery setup.");
+      else toast("Notifications are allowed. Use Finish setup to enable delivery.");
     } else if (result.permission === "denied") {
       toast.error("Still blocked — update your browser site settings");
     } else {
@@ -312,6 +310,10 @@ const NotificationSettings = () => {
                   <p className="text-sm font-medium">Push notifications</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Get notified about bookings, messages, and reminders even when the app is closed.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Browser: {permission === "granted" ? "Allowed" : permission === "denied" ? "Blocked" : "Not allowed yet"}
+                    {permission === "granted" ? ` · Delivery: ${deliveryReady ? "Ready" : "Pending"}` : ""}
                   </p>
                 </div>
               </div>
