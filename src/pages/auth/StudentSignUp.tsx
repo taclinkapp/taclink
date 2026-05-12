@@ -118,6 +118,7 @@ const StudentSignUp = () => {
       setLoading(false);
       logSignupRedirect({ role: 'student', intendedPath: '/auth/verify-email', status: 'redirected', email });
       requestFounderBio(); // pop the bio after they confirm + sign in
+      requestCrashCourseTour('student');
       nav(`/auth/verify-email?email=${encodeURIComponent(email)}&role=student`, { replace: true });
       return;
     }
