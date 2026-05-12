@@ -180,6 +180,7 @@ const InstructorPolicyStep = () => {
         : 'Welcome to TacLink — finish credential upload to complete onboarding.',
     });
     requestFounderBio();
+    requestCrashCourseTour('instructor');
     nav('/instructor', { replace: true });
   };
 
