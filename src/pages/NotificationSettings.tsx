@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
@@ -43,7 +43,7 @@ const NotificationSettings = () => {
   // Reconcile UI state with the live browser permission. If the user has
   // granted permission but no push subscription exists yet, we transparently
   // create one so the toggle reflects reality.
-  const reconcile = async (opts: { autoSubscribe?: boolean } = {}) => {
+  const reconcile = useCallback(async (opts: { autoSubscribe?: boolean } = {}) => {
     if (!supported) {
       setLoading(false);
       setEnabled(false);
@@ -69,7 +69,7 @@ const NotificationSettings = () => {
     if (ready) setSetupMessage(null);
     setLoading(false);
     return { permission: perm, deliveryReady: ready };
-  };
+  }, [supported]);
 
   const handleCheckAgain = async () => {
     setChecking(true);
@@ -206,7 +206,7 @@ const NotificationSettings = () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
     };
-  }, [supported]);
+  }, [reconcile, supported]);
 
   const handleToggle = async (next: boolean) => {
     setBusy(true);
