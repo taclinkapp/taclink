@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, BellOff, Send, Loader2, AlertCircle, ShieldOff, Copy, ExternalLink } from "lucide-react";
+import { Bell, BellOff, Send, Loader2, AlertCircle, ShieldOff, Copy, ExternalLink, RefreshCw, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
