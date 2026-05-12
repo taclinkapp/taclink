@@ -31,6 +31,27 @@ const NotificationSettings = () => {
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  const handleCheckAgain = async () => {
+    setChecking(true);
+    const before = typeof Notification !== "undefined" ? Notification.permission : "default";
+    await refreshState();
+    const after = typeof Notification !== "undefined" ? Notification.permission : "default";
+    setChecking(false);
+    if (after === "granted") {
+      if (before !== "granted") toast.success("Permission granted — subscribing now");
+      const ok = await subscribeToPush();
+      if (ok) {
+        setEnabled(true);
+        toast.success("Web Push enabled");
+      }
+    } else if (after === "denied") {
+      toast.error("Still blocked — update your browser site settings");
+    } else {
+      toast("Permission not granted yet");
+    }
+  };
 
   const browserInfo = (() => {
     if (typeof navigator === "undefined") return { name: "your browser", steps: [] as string[] };
