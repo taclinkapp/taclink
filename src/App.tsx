@@ -247,6 +247,7 @@ const App = () => (
             </Route>
 
             <Route path="/notifications" element={<Authed><Notifications /></Authed>} />
+            <Route path="/settings/notifications" element={<Authed><NotificationSettings /></Authed>} />
             <Route path="/legal/terms" element={<TermsOfService />} />
             <Route path="/legal/privacy" element={<PrivacyPolicy />} />
             <Route path="/legal/cancellations" element={<CancellationsFAQ />} />
