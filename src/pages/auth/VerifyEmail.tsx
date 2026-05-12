@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 const COOLDOWN_SECONDS = 30;
 const CODE_LENGTH = 6;
-const CODE_TTL_SECONDS = 60;
+const CODE_TTL_SECONDS = 180;
 
 const VerifyEmail = () => {
   const nav = useNavigate();
