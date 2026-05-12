@@ -107,7 +107,7 @@ const VerifyEmail = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-10">
       <div className="max-w-md w-full text-center space-y-6">
-        <Logo className="h-10 w-auto mx-auto" />
+        <Logo showTagline widthPx={180} className="mx-auto" />
 
         <div className="mx-auto h-16 w-16 rounded-full bg-primary/15 flex items-center justify-center">
           <KeyRound className="h-8 w-8 text-primary" />
