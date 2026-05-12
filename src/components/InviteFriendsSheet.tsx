@@ -108,7 +108,7 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
           <>
             <div className="flex justify-center">
               <div className="bg-white p-4 rounded-md border-4 border-primary">
-                <QRCodeSVG value={link} size={208} level="M" includeMargin={false} />
+                <QRCodeSVG value={qrLink} size={208} level="M" includeMargin={false} />
               </div>
             </div>
 
