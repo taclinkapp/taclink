@@ -1,6 +1,7 @@
 import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { isPushSupported, subscribeToPush } from "@/lib/webPush";
 
 /**
  * Shown after a user's first booking. Soft-asks for push notification permission.
@@ -15,7 +16,10 @@ export const NotificationPermissionPrompt = ({ onClose }: { onClose: () => void 
       if (typeof Notification !== "undefined" && Notification.permission === "default") {
         await Notification.requestPermission();
       }
-    } catch { /* ignore */ }
+      if (isPushSupported() && Notification.permission === "granted") {
+        await subscribeToPush();
+      }
+    } catch (e) { console.warn("[push] subscribe failed", e); }
     await markNotifPromptShown();
     onClose();
   };
