@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import {
   isPushSupported,
   getPushSubscription,
-  subscribeToPush,
+  subscribeToPushDetailed,
   unsubscribeFromPush,
   sendTestPush,
 } from "@/lib/webPush";
@@ -32,6 +32,8 @@ const NotificationSettings = () => {
     typeof Notification !== "undefined" ? Notification.permission : "default",
   );
   const [enabled, setEnabled] = useState(false);
+  const [deliveryReady, setDeliveryReady] = useState(false);
+  const [setupMessage, setSetupMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -41,35 +43,68 @@ const NotificationSettings = () => {
   // Reconcile UI state with the live browser permission. If the user has
   // granted permission but no push subscription exists yet, we transparently
   // create one so the toggle reflects reality.
-  const reconcile = async (opts: { autoSubscribe?: boolean } = {}) => {
-    if (!supported) { setLoading(false); return Notification?.permission ?? "default"; }
+  const reconcile = useCallback(async (opts: { autoSubscribe?: boolean } = {}) => {
+    if (!supported) {
+      setLoading(false);
+      setEnabled(false);
+      setDeliveryReady(false);
+      return { permission: "default" as NotificationPermission, deliveryReady: false };
+    }
     const perm = Notification.permission;
     setPermission(perm);
     let sub = await getPushSubscription();
     if (!sub && perm === "granted" && opts.autoSubscribe && !inIframe) {
-      const ok = await subscribeToPush();
-      if (ok) sub = await getPushSubscription();
+      const result = await subscribeToPushDetailed();
+      if (result.ok) {
+        sub = await getPushSubscription();
+        setSetupMessage(null);
+      } else {
+        setSetupMessage(result.error || "Browser permission is allowed, but delivery setup did not finish.");
+      }
     }
-    setEnabled(!!sub && perm === "granted");
+    const ready = !!sub && perm === "granted";
+    setEnabled(perm === "granted");
+    setDeliveryReady(ready);
+    if (perm !== "granted") setSetupMessage(null);
+    if (ready) setSetupMessage(null);
     setLoading(false);
-    return perm;
-  };
-
-  const refreshState = () => reconcile({ autoSubscribe: false });
+    return { permission: perm, deliveryReady: ready };
+  }, [supported]);
 
   const handleCheckAgain = async () => {
     setChecking(true);
     const before = Notification.permission;
-    const after = await reconcile({ autoSubscribe: true });
+    const result = await reconcile({ autoSubscribe: true });
     setChecking(false);
-    if (after === "granted") {
-      if (before !== "granted") toast.success("Permission granted — push enabled");
-      else if (!enabled) toast("Permission granted, but subscription failed — try the toggle");
-      else toast.success("Push is already enabled");
-    } else if (after === "denied") {
+    if (result.permission === "granted") {
+      if (result.deliveryReady) toast.success(before !== "granted" ? "Permission granted — push enabled" : "Push is already enabled");
+      else toast("Notifications are allowed. Use Finish setup to enable delivery.");
+    } else if (result.permission === "denied") {
       toast.error("Still blocked — update your browser site settings");
     } else {
       toast("Permission not granted yet");
+    }
+  };
+
+  const finishDeliverySetup = async () => {
+    setBusy(true);
+    try {
+      const result = await subscribeToPushDetailed();
+      const sub = result.ok ? await getPushSubscription() : null;
+      setPermission(Notification.permission);
+      setEnabled(Notification.permission === "granted");
+      setDeliveryReady(!!sub && Notification.permission === "granted");
+      if (result.ok && sub) {
+        setSetupMessage(null);
+        toast.success("Push delivery enabled");
+      } else if (result.reason === "auth") {
+        toast.error("Sign in again to finish notification setup");
+      } else {
+        setSetupMessage(result.error || "Delivery setup did not finish. Try again.");
+        toast.error("Could not finish push delivery setup");
+      }
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -171,7 +206,7 @@ const NotificationSettings = () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
     };
-  }, [supported]);
+  }, [reconcile, supported]);
 
   const handleToggle = async (next: boolean) => {
     setBusy(true);
@@ -189,16 +224,22 @@ const NotificationSettings = () => {
             return;
           }
         }
-        const ok = await subscribeToPush();
-        if (ok) {
-          setEnabled(true);
+        const result = await subscribeToPushDetailed();
+        const sub = result.ok ? await getPushSubscription() : null;
+        setEnabled(Notification.permission === "granted");
+        setDeliveryReady(!!sub && Notification.permission === "granted");
+        if (result.ok && sub) {
+          setSetupMessage(null);
           toast.success("Web Push enabled");
         } else {
-          toast.error("Could not subscribe to push");
+          setSetupMessage(result.error || "Browser permission is allowed, but delivery setup did not finish.");
+          toast.error(result.reason === "auth" ? "Sign in again to finish notification setup" : "Could not finish push delivery setup");
         }
       } else {
         await unsubscribeFromPush();
         setEnabled(false);
+        setDeliveryReady(false);
+        setSetupMessage(null);
         toast.success("Web Push disabled");
       }
     } finally {
@@ -237,8 +278,8 @@ const NotificationSettings = () => {
             <div className="text-sm">
               <p className="font-bold">You're in the Lovable preview</p>
               <p className="text-muted-foreground text-xs mt-1">
-                Browsers block service workers and push subscriptions inside iframes, so the toggle
-                here will stay off no matter what permission you grant. Open the published app at
+                Browsers block service workers and push delivery inside iframes, so the page can
+                detect permission but can't complete delivery here. Open the published app at
                 <a
                   href="https://taclink.app/settings/notifications"
                   target="_blank"
@@ -269,6 +310,10 @@ const NotificationSettings = () => {
                   <p className="text-sm font-medium">Push notifications</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Get notified about bookings, messages, and reminders even when the app is closed.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Browser: {permission === "granted" ? "Allowed" : permission === "denied" ? "Blocked" : "Not allowed yet"}
+                    {permission === "granted" ? ` · Delivery: ${deliveryReady ? "Ready" : "Pending"}` : ""}
                   </p>
                 </div>
               </div>
@@ -316,6 +361,35 @@ const NotificationSettings = () => {
                 </div>
               </div>
             )}
+            {permission === "granted" && !deliveryReady && (
+              <div className="px-4 py-3 space-y-2 bg-amber-500/5">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-bold text-amber-600 dark:text-amber-400">
+                      Notifications are allowed — delivery setup is pending
+                    </p>
+                    <p className="text-muted-foreground mt-1">
+                      {inIframe
+                        ? "Open the published app to finish push delivery; browser previews cannot create push subscriptions."
+                        : setupMessage || "Tap Finish setup to create the push subscription used for delivery and testing."}
+                    </p>
+                  </div>
+                </div>
+                {!inIframe && (
+                  <div className="pl-6">
+                    <Button size="sm" onClick={finishDeliverySetup} disabled={busy}>
+                      {busy ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      Finish setup
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -329,7 +403,7 @@ const NotificationSettings = () => {
             </p>
             <Button
               onClick={handleTest}
-              disabled={testing || !enabled}
+              disabled={testing || !deliveryReady}
               className="w-full"
             >
               {testing ? (
@@ -342,6 +416,11 @@ const NotificationSettings = () => {
             {!enabled && (
               <p className="text-[11px] text-muted-foreground text-center">
                 Enable Web Push above to send a test.
+              </p>
+            )}
+            {enabled && !deliveryReady && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                Notifications are allowed. Finish delivery setup to send a test.
               </p>
             )}
           </div>

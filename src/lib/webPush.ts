@@ -25,7 +25,13 @@ export const registerPushSW = async (): Promise<ServiceWorkerRegistration | null
   try {
     const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
     if (inIframe) return null;
-    return await navigator.serviceWorker.register("/sw.js");
+    const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    try {
+      await navigator.serviceWorker.ready;
+    } catch {
+      // The registration object is still usable even if `ready` is delayed.
+    }
+    return reg;
   } catch (e) {
     console.warn("[push] sw register failed", e);
     return null;
@@ -34,50 +40,73 @@ export const registerPushSW = async (): Promise<ServiceWorkerRegistration | null
 
 export const getPushSubscription = async (): Promise<PushSubscription | null> => {
   if (!isPushSupported()) return null;
-  const reg = await navigator.serviceWorker.getRegistration();
+  const reg =
+    (await navigator.serviceWorker.getRegistration("/")) ||
+    (await navigator.serviceWorker.getRegistration());
   if (!reg) return null;
   return reg.pushManager.getSubscription();
 };
 
+export type PushSubscribeResult = {
+  ok: boolean;
+  reason?: "unsupported" | "permission" | "registration" | "subscription" | "auth" | "save" | "unknown";
+  error?: string;
+};
+
+export const subscribeToPushDetailed = async (): Promise<PushSubscribeResult> => {
+  if (!isPushSupported()) return { ok: false, reason: "unsupported" };
+  if (Notification.permission !== "granted") return { ok: false, reason: "permission" };
+
+  try {
+    const reg =
+      (await navigator.serviceWorker.getRegistration("/")) ||
+      (await navigator.serviceWorker.getRegistration()) ||
+      (await registerPushSW());
+    if (!reg) return { ok: false, reason: "registration" };
+
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+      });
+    }
+
+    const json = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+      return { ok: false, reason: "subscription" };
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { ok: false, reason: "auth" };
+
+    const { error } = await supabase
+      .from("push_subscriptions")
+      .upsert(
+        {
+          user_id: user.id,
+          endpoint: json.endpoint,
+          p256dh: json.keys.p256dh,
+          auth: json.keys.auth,
+          user_agent: navigator.userAgent,
+          last_used_at: new Date().toISOString(),
+        },
+        { onConflict: "endpoint" },
+      );
+    if (error) {
+      console.warn("[push] save subscription failed", error);
+      return { ok: false, reason: "save", error: error.message };
+    }
+    return { ok: true };
+  } catch (e) {
+    console.warn("[push] subscribe failed", e);
+    return { ok: false, reason: "unknown", error: e instanceof Error ? e.message : String(e) };
+  }
+};
+
 export const subscribeToPush = async (): Promise<boolean> => {
-  if (!isPushSupported()) return false;
-  if (Notification.permission !== "granted") return false;
-
-  const reg = (await navigator.serviceWorker.getRegistration()) || (await registerPushSW());
-  if (!reg) return false;
-
-  let sub = await reg.pushManager.getSubscription();
-  if (!sub) {
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
-    });
-  }
-
-  const json = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
-  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return false;
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-
-  const { error } = await supabase
-    .from("push_subscriptions")
-    .upsert(
-      {
-        user_id: user.id,
-        endpoint: json.endpoint,
-        p256dh: json.keys.p256dh,
-        auth: json.keys.auth,
-        user_agent: navigator.userAgent,
-        last_used_at: new Date().toISOString(),
-      },
-      { onConflict: "endpoint" },
-    );
-  if (error) {
-    console.warn("[push] save subscription failed", error);
-    return false;
-  }
-  return true;
+  const result = await subscribeToPushDetailed();
+  return result.ok;
 };
 
 export const unsubscribeFromPush = async (): Promise<boolean> => {
