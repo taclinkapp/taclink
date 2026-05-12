@@ -52,6 +52,9 @@ const Splash = () => {
 
         <p className="mt-4 text-center text-muted-foreground max-w-xs text-sm leading-relaxed">
           The first marketplace built exclusively for tactical, firearms, and combatives training — connecting serious students with vetted instructors. No one else is doing this for our community.
+          <span className="block mt-3 text-[0.7rem] text-muted-foreground/80 italic leading-relaxed">
+            We're a web app by design. As a Second Amendment–aligned platform, mainstream app store policies place heavy restrictions on firearms-related services — staying on the open web keeps us accessible to every lawful instructor and student, no gatekeepers. Add to your home screen for an app-like experience.
+          </span>
           <span className="block mt-2 text-foreground/80 font-semibold">
             Reserve your spot now. Booking and payments unlock on launch day.
           </span>
