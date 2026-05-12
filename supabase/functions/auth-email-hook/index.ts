@@ -218,13 +218,29 @@ async function handleWebhook(req: Request): Promise<Response> {
     )
   }
 
+  // Normalize OTP token to exactly 6 digits to match the in-app verification
+  // form (which only accepts a 6-digit code). GoTrue's `mailer_otp_length`
+  // defaults to 6, but we defensively strip non-digits and trim/pad here so
+  // the email body never displays a longer code than the user can enter.
+  const rawToken = String(payload.data.token ?? '')
+  const digitsOnly = rawToken.replace(/\D/g, '')
+  const safeToken = digitsOnly.length >= 6 ? digitsOnly.slice(0, 6) : digitsOnly
+  if (rawToken && rawToken !== safeToken) {
+    console.warn('Auth OTP token normalized to 6 digits', {
+      run_id,
+      emailType,
+      originalLength: rawToken.length,
+      normalizedLength: safeToken.length,
+    })
+  }
+
   // Build template props from payload.data (HookData structure)
   const templateProps = {
     siteName: SITE_NAME,
     siteUrl: `https://${ROOT_DOMAIN}`,
     recipient: payload.data.email,
     confirmationUrl: payload.data.url,
-    token: payload.data.token,
+    token: safeToken,
     email: payload.data.email,
     newEmail: payload.data.new_email,
   }
