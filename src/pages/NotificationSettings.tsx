@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, BellOff, Send, Loader2, AlertCircle, ShieldOff, Copy, ExternalLink } from "lucide-react";
+import { Bell, BellOff, Send, Loader2, AlertCircle, ShieldOff, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,27 @@ const NotificationSettings = () => {
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  const handleCheckAgain = async () => {
+    setChecking(true);
+    const before = typeof Notification !== "undefined" ? Notification.permission : "default";
+    await refreshState();
+    const after = typeof Notification !== "undefined" ? Notification.permission : "default";
+    setChecking(false);
+    if (after === "granted") {
+      if (before !== "granted") toast.success("Permission granted — subscribing now");
+      const ok = await subscribeToPush();
+      if (ok) {
+        setEnabled(true);
+        toast.success("Web Push enabled");
+      }
+    } else if (after === "denied") {
+      toast.error("Still blocked — update your browser site settings");
+    } else {
+      toast("Permission not granted yet");
+    }
+  };
 
   const browserInfo = (() => {
     if (typeof navigator === "undefined") return { name: "your browser", steps: [] as string[] };
@@ -237,7 +258,15 @@ const NotificationSettings = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2 pl-6">
+                <div className="flex flex-wrap gap-2 pl-6">
+                  <Button size="sm" onClick={handleCheckAgain} disabled={checking}>
+                    {checking ? (
+                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                    )}
+                    Check again
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => setHelpOpen(true)}>
                     <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                     How to unblock
