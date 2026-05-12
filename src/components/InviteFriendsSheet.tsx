@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Share2, Gift, Loader2, ScanLine } from 'lucide-react';
+import { Copy, Check, Share2, Gift, Loader2, ScanLine, Mail, MessageSquare, Send, X as XIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useReferral, buildReferralUrl, extractReferralCode } from '@/hooks/useReferral';
 import { QrScanner } from '@/components/QrScanner';
@@ -14,12 +14,20 @@ type Props = {
   rewardLabel?: string;
 };
 
+const SHARE_TEXT = 'Train with me on TacLink. Sign up with my link and we both win.';
+
 export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) => {
   const { code, totalInvites, rewardedInvites, pendingInvites, loading } = useReferral();
   const [copied, setCopied] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [fallbackOpen, setFallbackOpen] = useState(false);
   const nav = useNavigate();
-  const link = useMemo(() => (code ? buildReferralUrl(code) : ''), [code]);
+  // QR encodes a separate URL so we can attribute scans vs shares server-side
+  // (both still resolve to /auth/invite/:code via extractReferralCode).
+  const qrLink = useMemo(() => (code ? buildReferralUrl(code, 'qr') : ''), [code]);
+  const shareLink = useMemo(() => (code ? buildReferralUrl(code, 'share') : ''), [code]);
+  const copyLink = useMemo(() => (code ? buildReferralUrl(code, 'copy') : ''), [code]);
+  const link = copyLink; // visible link uses the copy attribution
 
   const onCopy = async () => {
     if (!link) return;
@@ -33,29 +41,34 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
     }
   };
 
+  const isIOS =
+    typeof navigator !== 'undefined' &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+    !(window as any).MSStream;
+  const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+
   const onShare = async () => {
-    if (!link) return;
-    const text = `Train with me on TacLink. Sign up with my link and we both win.`;
-    const payload = { title: 'TacLink', text, url: link };
-    const canShare =
+    if (!shareLink) return;
+    const payload = { title: 'TacLink', text: SHARE_TEXT, url: shareLink };
+    const hasShareApi =
       typeof navigator !== 'undefined' &&
       typeof navigator.share === 'function' &&
       (typeof (navigator as any).canShare !== 'function' || (navigator as any).canShare(payload));
 
-    if (!canShare) {
-      await onCopy();
-      toast.message('Sharing not available here — link copied instead');
+    // iOS Safari blocks navigator.share() inside cross-origin iframes even when
+    // the API exists — go straight to the fallback sheet there.
+    if (!hasShareApi || (isIOS && isInIframe)) {
+      setFallbackOpen(true);
       return;
     }
 
     try {
       await navigator.share(payload);
     } catch (err: any) {
-      // User dismissed the share sheet — stay silent
-      if (err?.name === 'AbortError') return;
-      // Permissions policy (e.g. inside an iframe preview) or other failure — fall back
-      await onCopy();
-      toast.message('Sharing blocked — link copied instead');
+      if (err?.name === 'AbortError') return; // user dismissed share sheet
+      // NotAllowedError / SecurityError (iframe permissions policy, http context, etc.)
+      // → show the in-app fallback share menu instead of silently copying.
+      setFallbackOpen(true);
     }
   };
 
@@ -95,7 +108,7 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
           <>
             <div className="flex justify-center">
               <div className="bg-white p-4 rounded-md border-4 border-primary">
-                <QRCodeSVG value={link} size={208} level="M" includeMargin={false} />
+                <QRCodeSVG value={qrLink} size={208} level="M" includeMargin={false} />
               </div>
             </div>
 
@@ -134,6 +147,91 @@ export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) =
         )}
       </SheetContent>
       {scanning && <QrScanner onDecode={onScanned} onClose={() => setScanning(false)} />}
+      <ShareFallbackSheet
+        open={fallbackOpen}
+        onOpenChange={setFallbackOpen}
+        url={shareLink}
+        text={SHARE_TEXT}
+        onCopy={onCopy}
+        isIOS={isIOS}
+        isInIframe={isInIframe}
+      />
+    </Sheet>
+  );
+};
+
+type FallbackProps = {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  url: string;
+  text: string;
+  onCopy: () => void;
+  isIOS: boolean;
+  isInIframe: boolean;
+};
+
+const ShareFallbackSheet = ({ open, onOpenChange, url, text, onCopy, isIOS, isInIframe }: FallbackProps) => {
+  if (!url) return null;
+  const enc = encodeURIComponent;
+  const body = `${text} ${url}`;
+  // iOS uses sms:?&body=… (note the &), Android uses sms:?body=…
+  const smsHref = isIOS ? `sms:&body=${enc(body)}` : `sms:?body=${enc(body)}`;
+  const channels = [
+    { label: 'Messages', icon: MessageSquare, href: smsHref },
+    { label: 'Email',    icon: Mail,          href: `mailto:?subject=${enc('Train with me on TacLink')}&body=${enc(body)}` },
+    { label: 'WhatsApp', icon: Send,          href: `https://wa.me/?text=${enc(body)}` },
+    { label: 'Telegram', icon: Send,          href: `https://t.me/share/url?url=${enc(url)}&text=${enc(text)}` },
+    { label: 'X',        icon: XIcon,         href: `https://twitter.com/intent/tweet?text=${enc(body)}` },
+  ];
+
+  // When embedded in an iframe (Lovable preview), window.open with _blank may
+  // be blocked by the parent. Force top-level navigation/new tab.
+  const openExternal = (href: string) => {
+    try {
+      if (isInIframe && window.top) {
+        window.open(href, '_blank', 'noopener,noreferrer');
+      } else {
+        window.location.href = href;
+      }
+    } catch {
+      window.location.href = href;
+    }
+    onOpenChange(false);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="bg-background border-border">
+        <SheetHeader className="text-left">
+          <SheetTitle className="font-stencil uppercase tracking-[0.12em] flex items-center gap-2">
+            <Share2 className="h-4 w-4 text-primary" /> Share invite
+          </SheetTitle>
+        </SheetHeader>
+        <p className="text-xs text-muted-foreground mt-2">
+          {isInIframe
+            ? "Native share is blocked inside this preview. Pick a channel below or open the published app."
+            : "Your browser doesn't support the native share sheet. Pick a channel below."}
+        </p>
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          {channels.map((c) => (
+            <button
+              key={c.label}
+              onClick={() => openExternal(c.href)}
+              className="tactical-card p-3 flex flex-col items-center gap-1.5 hover:border-primary/40"
+            >
+              <c.icon className="h-5 w-5 text-primary" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">{c.label}</span>
+            </button>
+          ))}
+          <button
+            onClick={() => { onCopy(); onOpenChange(false); }}
+            className="tactical-card p-3 flex flex-col items-center gap-1.5 hover:border-primary/40"
+          >
+            <Copy className="h-5 w-5 text-primary" />
+            <span className="text-[11px] font-bold uppercase tracking-wider">Copy</span>
+          </button>
+        </div>
+      </SheetContent>
     </Sheet>
   );
 };
