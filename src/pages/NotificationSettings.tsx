@@ -231,6 +231,28 @@ const NotificationSettings = () => {
           </div>
         )}
 
+        {supported && inIframe && (
+          <div className="tactical-card p-4 flex gap-3 border border-amber-500/30 bg-amber-500/5">
+            <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-bold">You're in the Lovable preview</p>
+              <p className="text-muted-foreground text-xs mt-1">
+                Browsers block service workers and push subscriptions inside iframes, so the toggle
+                here will stay off no matter what permission you grant. Open the published app at
+                <a
+                  href="https://taclink.app/settings/notifications"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-primary underline ml-1"
+                >
+                  taclink.app
+                </a>{" "}
+                to test push end-to-end.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div>
           <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2 px-1">
             Web Push
