@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 const COOLDOWN_SECONDS = 30;
 const CODE_LENGTH = 6;
+const CODE_TTL_SECONDS = 60;
 
 const VerifyEmail = () => {
   const nav = useNavigate();
@@ -24,12 +25,21 @@ const VerifyEmail = () => {
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [ttl, setTtl] = useState(CODE_TTL_SECONDS);
 
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
     return () => clearInterval(t);
   }, [cooldown]);
+
+  useEffect(() => {
+    if (ttl <= 0) return;
+    const t = setInterval(() => setTtl((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [ttl]);
+
+  const expired = ttl <= 0;
 
   // If the user confirms in another tab, AuthContext will pick it up via
   // onAuthStateChange. As soon as we have a session + role, send them home.
@@ -54,6 +64,10 @@ const VerifyEmail = () => {
     const token = code.replace(/\D/g, '');
     if (!normalizedEmail) {
       toast.error('Enter your email address');
+      return;
+    }
+    if (expired) {
+      toast.error('Code expired', { description: 'Request a new one to continue.' });
       return;
     }
     if (token.length !== CODE_LENGTH) {
@@ -101,6 +115,8 @@ const VerifyEmail = () => {
       return;
     }
     setCooldown(COOLDOWN_SECONDS);
+    setTtl(CODE_TTL_SECONDS);
+    setCode('');
     toast.success('Verification code resent');
   };
 
@@ -143,9 +159,14 @@ const VerifyEmail = () => {
             aria-label="6-digit verification code"
             className="h-14 bg-card border-border text-center text-2xl font-black tracking-[0.35em]"
           />
-          <Button type="submit" disabled={verifying || code.length !== CODE_LENGTH || !email.trim()} className="w-full h-12 font-bold">
-            {verifying ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirming…</> : 'Confirm & continue'}
+          <Button type="submit" disabled={verifying || expired || code.length !== CODE_LENGTH || !email.trim()} className="w-full h-12 font-bold">
+            {verifying ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirming…</> : expired ? 'Code expired' : 'Confirm & continue'}
           </Button>
+          <p className={`text-xs text-center ${expired ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {expired
+              ? 'This code has expired. Request a new one below.'
+              : `Code expires in ${String(Math.floor(ttl / 60)).padStart(1, '0')}:${String(ttl % 60).padStart(2, '0')}`}
+          </p>
         </form>
 
         <div className="rounded-lg border bg-card p-4 text-left space-y-2">
