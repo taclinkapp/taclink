@@ -258,7 +258,15 @@ const NotificationSettings = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2 pl-6">
+                <div className="flex flex-wrap gap-2 pl-6">
+                  <Button size="sm" onClick={handleCheckAgain} disabled={checking}>
+                    {checking ? (
+                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                    )}
+                    Check again
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => setHelpOpen(true)}>
                     <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                     How to unblock
