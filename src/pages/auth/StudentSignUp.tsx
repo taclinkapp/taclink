@@ -17,6 +17,7 @@ import { logSignupRedirect } from '@/lib/signupLogging';
 import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog';
 import { homeForRole, useAuth } from '@/contexts/AuthContext';
 import { requestFounderBio } from '@/components/FounderBioModal';
+import { requestCrashCourseTour } from '@/components/CrashCourseTour';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 
@@ -117,6 +118,7 @@ const StudentSignUp = () => {
       setLoading(false);
       logSignupRedirect({ role: 'student', intendedPath: '/auth/verify-email', status: 'redirected', email });
       requestFounderBio(); // pop the bio after they confirm + sign in
+      requestCrashCourseTour('student');
       nav(`/auth/verify-email?email=${encodeURIComponent(email)}&role=student`, { replace: true });
       return;
     }
@@ -133,6 +135,7 @@ const StudentSignUp = () => {
       if (intent) { sessionStorage.removeItem('post_signup_intent'); dest = intent; }
     } catch {}
     requestFounderBio();
+    requestCrashCourseTour('student');
     nav(dest, { replace: true });
   };
 

@@ -76,10 +76,15 @@ export function CrashCourseTour({ role, open, onClose }: { role: Role; open: boo
 
 const tourKey = (role: Role, userId: string | undefined) => `taclink_tour_seen:${role}:${userId ?? 'anon'}`;
 const pendingTourKey = (role: Role, userId: string | undefined) => `taclink_tour_pending:${role}:${userId ?? 'anon'}`;
+const signupPendingTourKey = (role: Role) => `taclink_tour_pending_signup:${role}`;
 
-export function requestCrashCourseTour(role: Role, userId: string | undefined) {
-  if (!userId) return;
-  sessionStorage.setItem(pendingTourKey(role, userId), '1');
+export function requestCrashCourseTour(role: Role, userId?: string | undefined) {
+  try {
+    if (userId) sessionStorage.setItem(pendingTourKey(role, userId), '1');
+    // userId-less flag so the tour also fires on the first dashboard mount
+    // right after signup, before AuthContext finishes hydrating.
+    sessionStorage.setItem(signupPendingTourKey(role), '1');
+  } catch { /* ignore */ }
 }
 
 export function useCrashCourseTour(
@@ -92,18 +97,19 @@ export function useCrashCourseTour(
   useEffect(() => {
     if (!userId) return;
     const pendingKey = pendingTourKey(role, userId);
-    if (sessionStorage.getItem(pendingKey)) {
+    const signupKey = signupPendingTourKey(role);
+    const isPending =
+      sessionStorage.getItem(pendingKey) !== null ||
+      sessionStorage.getItem(signupKey) !== null;
+    // Only auto-open right after a signup. Regular sign-ins never trigger it.
+    if (!autoOpen || !isPending) return;
+    try {
       sessionStorage.removeItem(pendingKey);
-      const t = setTimeout(() => setOpen(true), 400);
-      return () => clearTimeout(t);
-    }
-    if (!autoOpen) return;
-    const seen = localStorage.getItem(tourKey(role, userId));
-    if (!seen) {
-      // small delay so the page renders first
-      const t = setTimeout(() => setOpen(true), 400);
-      return () => clearTimeout(t);
-    }
+      sessionStorage.removeItem(signupKey);
+      localStorage.setItem(tourKey(role, userId), '1');
+    } catch { /* ignore */ }
+    const t = setTimeout(() => setOpen(true), 400);
+    return () => clearTimeout(t);
   }, [autoOpen, role, userId]);
 
   const close = () => {

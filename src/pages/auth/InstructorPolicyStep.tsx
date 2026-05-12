@@ -15,6 +15,7 @@ import {
   updateInstructorDraft,
 } from '@/lib/instructorSignupDraft';
 import { requestFounderBio } from '@/components/FounderBioModal';
+import { requestCrashCourseTour } from '@/components/CrashCourseTour';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
@@ -179,6 +180,7 @@ const InstructorPolicyStep = () => {
         : 'Welcome to TacLink — finish credential upload to complete onboarding.',
     });
     requestFounderBio();
+    requestCrashCourseTour('instructor');
     nav('/instructor', { replace: true });
   };
 

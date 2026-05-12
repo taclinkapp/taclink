@@ -7,6 +7,7 @@ import { Logo } from '@/components/Logo';
 import { supabase } from '@/integrations/supabase/client';
 import { homeForRole, useAuth, type AppRole } from '@/contexts/AuthContext';
 import { requestFounderBio } from '@/components/FounderBioModal';
+import { requestCrashCourseTour } from '@/components/CrashCourseTour';
 import { toast } from 'sonner';
 
 const COOLDOWN_SECONDS = 30;
@@ -89,6 +90,7 @@ const VerifyEmail = () => {
 
     const role = await resolveVerifiedRole(requestedRole, data.user?.id);
     requestFounderBio();
+    if (role === 'instructor' || role === 'student') requestCrashCourseTour(role);
     toast.success('Email confirmed');
     setVerifying(false);
     if (role === 'instructor') {
