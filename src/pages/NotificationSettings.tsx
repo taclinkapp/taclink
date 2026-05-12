@@ -3,7 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, BellOff, Send, Loader2, AlertCircle } from "lucide-react";
+import { Bell, BellOff, Send, Loader2, AlertCircle, ShieldOff, Copy, ExternalLink } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   isPushSupported,
@@ -23,6 +30,75 @@ const NotificationSettings = () => {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  const browserInfo = (() => {
+    if (typeof navigator === "undefined") return { name: "your browser", steps: [] as string[] };
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
+    const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
+    const isFirefox = /firefox|fxios/i.test(ua);
+    const isEdge = /edg\//i.test(ua);
+    const isChrome = /chrome|crios/i.test(ua) && !isEdge;
+
+    if (isIOS) return {
+      name: "iOS Safari",
+      steps: [
+        "Open the iOS Settings app",
+        "Scroll down and tap Safari → Advanced → Website Data",
+        "Or go to Settings → Notifications and re-enable for this site (PWA only)",
+      ],
+    };
+    if (isSafari) return {
+      name: "Safari",
+      steps: [
+        "Open Safari → Settings (⌘,) → Websites → Notifications",
+        "Find this site in the list and set it to Allow",
+        "Reload this page",
+      ],
+    };
+    if (isFirefox) return {
+      name: "Firefox",
+      steps: [
+        "Click the lock icon in the address bar",
+        "Click Clear permission next to Send Notifications",
+        "Reload this page and click Allow when prompted",
+      ],
+    };
+    if (isEdge) return {
+      name: "Edge",
+      steps: [
+        "Click the lock icon in the address bar",
+        "Set Notifications to Allow",
+        "Reload this page",
+      ],
+    };
+    if (isChrome) return {
+      name: "Chrome",
+      steps: [
+        "Click the lock / tune icon at the left of the address bar",
+        "Click Site settings",
+        "Set Notifications to Allow, then reload this page",
+      ],
+    };
+    return {
+      name: "your browser",
+      steps: [
+        "Click the lock icon in the address bar",
+        "Find Notifications in the site permissions list",
+        "Set it to Allow, then reload this page",
+      ],
+    };
+  })();
+
+  const copySiteUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin);
+      toast.success("Site URL copied");
+    } catch {
+      toast.error("Could not copy URL");
+    }
+  };
 
   const refreshState = async () => {
     if (!supported) { setLoading(false); return; }
@@ -148,9 +224,29 @@ const NotificationSettings = () => {
               )}
             </div>
             {permission === "denied" && (
-              <div className="px-4 py-3 text-xs text-amber-600 dark:text-amber-400">
-                Notifications are blocked at the browser level. Update your browser site settings to
-                re-enable.
+              <div className="px-4 py-3 space-y-2 bg-amber-500/5">
+                <div className="flex items-start gap-2">
+                  <ShieldOff className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-bold text-amber-600 dark:text-amber-400">
+                      Notifications blocked by {browserInfo.name}
+                    </p>
+                    <p className="text-muted-foreground mt-1">
+                      We can't ask again from inside the page — browsers require you to flip this
+                      switch yourself in site settings.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pl-6">
+                  <Button size="sm" variant="outline" onClick={() => setHelpOpen(true)}>
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    How to unblock
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={copySiteUrl}>
+                    <Copy className="h-3.5 w-3.5 mr-1.5" />
+                    Copy site URL
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -184,6 +280,37 @@ const NotificationSettings = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Re-enable notifications in {browserInfo.name}</DialogTitle>
+            <DialogDescription>
+              Browsers don't let websites open their own settings — follow these steps, then come
+              back. The toggle here will update automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <ol className="space-y-2 text-sm">
+            {browserInfo.steps.map((step, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="h-6 w-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center flex-shrink-0">
+                  {i + 1}
+                </span>
+                <span className="pt-0.5 text-muted-foreground">{step}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={copySiteUrl}>
+              <Copy className="h-4 w-4 mr-2" />
+              Copy site URL
+            </Button>
+            <Button className="flex-1" onClick={() => setHelpOpen(false)}>
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MobileShell>
   );
 };
