@@ -66,6 +66,10 @@ const VerifyEmail = () => {
       toast.error('Enter your email address');
       return;
     }
+    if (expired) {
+      toast.error('Code expired', { description: 'Request a new one to continue.' });
+      return;
+    }
     if (token.length !== CODE_LENGTH) {
       toast.error('Enter the 6-digit code');
       return;
