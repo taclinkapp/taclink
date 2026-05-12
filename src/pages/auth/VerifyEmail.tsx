@@ -159,9 +159,14 @@ const VerifyEmail = () => {
             aria-label="6-digit verification code"
             className="h-14 bg-card border-border text-center text-2xl font-black tracking-[0.35em]"
           />
-          <Button type="submit" disabled={verifying || code.length !== CODE_LENGTH || !email.trim()} className="w-full h-12 font-bold">
-            {verifying ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirming…</> : 'Confirm & continue'}
+          <Button type="submit" disabled={verifying || expired || code.length !== CODE_LENGTH || !email.trim()} className="w-full h-12 font-bold">
+            {verifying ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirming…</> : expired ? 'Code expired' : 'Confirm & continue'}
           </Button>
+          <p className={`text-xs text-center ${expired ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {expired
+              ? 'This code has expired. Request a new one below.'
+              : `Code expires in ${String(Math.floor(ttl / 60)).padStart(1, '0')}:${String(ttl % 60).padStart(2, '0')}`}
+          </p>
         </form>
 
         <div className="rounded-lg border bg-card p-4 text-left space-y-2">
