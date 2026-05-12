@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import {
   isPushSupported,
   getPushSubscription,
+  subscribeToPushDetailed,
   subscribeToPush,
   unsubscribeFromPush,
   sendTestPush,
@@ -32,6 +33,8 @@ const NotificationSettings = () => {
     typeof Notification !== "undefined" ? Notification.permission : "default",
   );
   const [enabled, setEnabled] = useState(false);
+  const [deliveryReady, setDeliveryReady] = useState(false);
+  const [setupMessage, setSetupMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -42,17 +45,31 @@ const NotificationSettings = () => {
   // granted permission but no push subscription exists yet, we transparently
   // create one so the toggle reflects reality.
   const reconcile = async (opts: { autoSubscribe?: boolean } = {}) => {
-    if (!supported) { setLoading(false); return Notification?.permission ?? "default"; }
+    if (!supported) {
+      setLoading(false);
+      setEnabled(false);
+      setDeliveryReady(false);
+      return { permission: "default" as NotificationPermission, deliveryReady: false };
+    }
     const perm = Notification.permission;
     setPermission(perm);
     let sub = await getPushSubscription();
     if (!sub && perm === "granted" && opts.autoSubscribe && !inIframe) {
-      const ok = await subscribeToPush();
-      if (ok) sub = await getPushSubscription();
+      const result = await subscribeToPushDetailed();
+      if (result.ok) {
+        sub = await getPushSubscription();
+        setSetupMessage(null);
+      } else {
+        setSetupMessage(result.error || "Browser permission is allowed, but delivery setup did not finish.");
+      }
     }
-    setEnabled(!!sub && perm === "granted");
+    const ready = !!sub && perm === "granted";
+    setEnabled(perm === "granted");
+    setDeliveryReady(ready);
+    if (perm !== "granted") setSetupMessage(null);
+    if (ready) setSetupMessage(null);
     setLoading(false);
-    return perm;
+    return { permission: perm, deliveryReady: ready };
   };
 
   const refreshState = () => reconcile({ autoSubscribe: false });
@@ -60,16 +77,37 @@ const NotificationSettings = () => {
   const handleCheckAgain = async () => {
     setChecking(true);
     const before = Notification.permission;
-    const after = await reconcile({ autoSubscribe: true });
+    const result = await reconcile({ autoSubscribe: true });
     setChecking(false);
-    if (after === "granted") {
-      if (before !== "granted") toast.success("Permission granted — push enabled");
-      else if (!enabled) toast("Permission granted, but subscription failed — try the toggle");
-      else toast.success("Push is already enabled");
-    } else if (after === "denied") {
+    if (result.permission === "granted") {
+      if (result.deliveryReady) toast.success(before !== "granted" ? "Permission granted — push enabled" : "Push is already enabled");
+      else toast("Notifications are allowed. Tap the toggle once to finish delivery setup.");
+    } else if (result.permission === "denied") {
       toast.error("Still blocked — update your browser site settings");
     } else {
       toast("Permission not granted yet");
+    }
+  };
+
+  const finishDeliverySetup = async () => {
+    setBusy(true);
+    try {
+      const result = await subscribeToPushDetailed();
+      const sub = result.ok ? await getPushSubscription() : null;
+      setPermission(Notification.permission);
+      setEnabled(Notification.permission === "granted");
+      setDeliveryReady(!!sub && Notification.permission === "granted");
+      if (result.ok && sub) {
+        setSetupMessage(null);
+        toast.success("Push delivery enabled");
+      } else if (result.reason === "auth") {
+        toast.error("Sign in again to finish notification setup");
+      } else {
+        setSetupMessage(result.error || "Delivery setup did not finish. Try again.");
+        toast.error("Could not finish push delivery setup");
+      }
+    } finally {
+      setBusy(false);
     }
   };
 
