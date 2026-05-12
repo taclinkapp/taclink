@@ -141,22 +141,15 @@ const NotificationSettings = () => {
     }
   };
 
-  const refreshState = async () => {
-    if (!supported) { setLoading(false); return; }
-    const perm = typeof Notification !== "undefined" ? Notification.permission : "default";
-    setPermission(perm);
-    const sub = await getPushSubscription();
-    setEnabled(!!sub && perm === "granted");
-    setLoading(false);
-  };
-
   useEffect(() => {
-    refreshState();
+    // On mount, auto-subscribe if permission is already granted (e.g. user
+    // granted via the browser site settings while the page was closed).
+    reconcile({ autoSubscribe: true });
     if (!supported) return;
 
     // Listen for permission changes via the Permissions API (Chrome/Edge/Firefox).
     let permStatus: PermissionStatus | null = null;
-    const onPermChange = () => refreshState();
+    const onPermChange = () => reconcile({ autoSubscribe: true });
     (async () => {
       try {
         permStatus = await navigator.permissions?.query({ name: "notifications" as PermissionName });
@@ -165,8 +158,11 @@ const NotificationSettings = () => {
     })();
 
     // Fallback: re-check when the tab regains focus (e.g. after closing the
-    // browser site settings panel).
-    const onVisible = () => { if (document.visibilityState === "visible") refreshState(); };
+    // browser site settings panel). Auto-subscribe so flipping the OS/browser
+    // toggle is reflected here without an extra click.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") reconcile({ autoSubscribe: true });
+    };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
 
