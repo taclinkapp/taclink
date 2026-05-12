@@ -115,6 +115,8 @@ const VerifyEmail = () => {
       return;
     }
     setCooldown(COOLDOWN_SECONDS);
+    setTtl(CODE_TTL_SECONDS);
+    setCode('');
     toast.success('Verification code resent');
   };
 
