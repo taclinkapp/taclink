@@ -280,8 +280,8 @@ const NotificationSettings = () => {
             <div className="text-sm">
               <p className="font-bold">You're in the Lovable preview</p>
               <p className="text-muted-foreground text-xs mt-1">
-                Browsers block service workers and push subscriptions inside iframes, so the toggle
-                here will stay off no matter what permission you grant. Open the published app at
+                Browsers block service workers and push delivery inside iframes, so the page can
+                detect permission but can't complete delivery here. Open the published app at
                 <a
                   href="https://taclink.app/settings/notifications"
                   target="_blank"
@@ -359,6 +359,35 @@ const NotificationSettings = () => {
                 </div>
               </div>
             )}
+            {permission === "granted" && !deliveryReady && (
+              <div className="px-4 py-3 space-y-2 bg-amber-500/5">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-bold text-amber-600 dark:text-amber-400">
+                      Notifications are allowed — delivery setup is pending
+                    </p>
+                    <p className="text-muted-foreground mt-1">
+                      {inIframe
+                        ? "Open the published app to finish push delivery; browser previews cannot create push subscriptions."
+                        : setupMessage || "Tap Finish setup to create the push subscription used for delivery and testing."}
+                    </p>
+                  </div>
+                </div>
+                {!inIframe && (
+                  <div className="pl-6">
+                    <Button size="sm" onClick={finishDeliverySetup} disabled={busy}>
+                      {busy ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      Finish setup
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -372,7 +401,7 @@ const NotificationSettings = () => {
             </p>
             <Button
               onClick={handleTest}
-              disabled={testing || !enabled}
+              disabled={testing || !deliveryReady}
               className="w-full"
             >
               {testing ? (
@@ -385,6 +414,11 @@ const NotificationSettings = () => {
             {!enabled && (
               <p className="text-[11px] text-muted-foreground text-center">
                 Enable Web Push above to send a test.
+              </p>
+            )}
+            {enabled && !deliveryReady && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                Notifications are allowed. Finish delivery setup to send a test.
               </p>
             )}
           </div>
