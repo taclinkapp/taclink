@@ -20,6 +20,11 @@ import {
   sendTestPush,
 } from "@/lib/webPush";
 
+const inIframe = (() => {
+  try { return typeof window !== "undefined" && window.self !== window.top; }
+  catch { return true; }
+})();
+
 const NotificationSettings = () => {
   const nav = useNavigate();
   const supported = isPushSupported();
@@ -33,19 +38,34 @@ const NotificationSettings = () => {
   const [helpOpen, setHelpOpen] = useState(false);
   const [checking, setChecking] = useState(false);
 
+  // Reconcile UI state with the live browser permission. If the user has
+  // granted permission but no push subscription exists yet, we transparently
+  // create one so the toggle reflects reality.
+  const reconcile = async (opts: { autoSubscribe?: boolean } = {}) => {
+    if (!supported) { setLoading(false); return Notification?.permission ?? "default"; }
+    const perm = Notification.permission;
+    setPermission(perm);
+    let sub = await getPushSubscription();
+    if (!sub && perm === "granted" && opts.autoSubscribe && !inIframe) {
+      const ok = await subscribeToPush();
+      if (ok) sub = await getPushSubscription();
+    }
+    setEnabled(!!sub && perm === "granted");
+    setLoading(false);
+    return perm;
+  };
+
+  const refreshState = () => reconcile({ autoSubscribe: false });
+
   const handleCheckAgain = async () => {
     setChecking(true);
-    const before = typeof Notification !== "undefined" ? Notification.permission : "default";
-    await refreshState();
-    const after = typeof Notification !== "undefined" ? Notification.permission : "default";
+    const before = Notification.permission;
+    const after = await reconcile({ autoSubscribe: true });
     setChecking(false);
     if (after === "granted") {
-      if (before !== "granted") toast.success("Permission granted — subscribing now");
-      const ok = await subscribeToPush();
-      if (ok) {
-        setEnabled(true);
-        toast.success("Web Push enabled");
-      }
+      if (before !== "granted") toast.success("Permission granted — push enabled");
+      else if (!enabled) toast("Permission granted, but subscription failed — try the toggle");
+      else toast.success("Push is already enabled");
     } else if (after === "denied") {
       toast.error("Still blocked — update your browser site settings");
     } else {
