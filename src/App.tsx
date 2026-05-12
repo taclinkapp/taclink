@@ -8,6 +8,7 @@ import { NavHistoryProvider } from "@/contexts/NavHistoryContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import NotFound from "./pages/NotFound.tsx";
 import Notifications from "./pages/Notifications";
+import NotificationSettings from "./pages/NotificationSettings";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import CancellationsFAQ from "./pages/legal/CancellationsFAQ";
