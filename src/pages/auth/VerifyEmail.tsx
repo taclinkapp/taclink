@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 const COOLDOWN_SECONDS = 30;
 const CODE_LENGTH = 6;
+const CODE_TTL_SECONDS = 60;
 
 const VerifyEmail = () => {
   const nav = useNavigate();
@@ -24,12 +25,21 @@ const VerifyEmail = () => {
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [ttl, setTtl] = useState(CODE_TTL_SECONDS);
 
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
     return () => clearInterval(t);
   }, [cooldown]);
+
+  useEffect(() => {
+    if (ttl <= 0) return;
+    const t = setInterval(() => setTtl((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [ttl]);
+
+  const expired = ttl <= 0;
 
   // If the user confirms in another tab, AuthContext will pick it up via
   // onAuthStateChange. As soon as we have a session + role, send them home.
