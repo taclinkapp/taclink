@@ -20,6 +20,11 @@ import {
   sendTestPush,
 } from "@/lib/webPush";
 
+const inIframe = (() => {
+  try { return typeof window !== "undefined" && window.self !== window.top; }
+  catch { return true; }
+})();
+
 const NotificationSettings = () => {
   const nav = useNavigate();
   const supported = isPushSupported();
@@ -33,19 +38,34 @@ const NotificationSettings = () => {
   const [helpOpen, setHelpOpen] = useState(false);
   const [checking, setChecking] = useState(false);
 
+  // Reconcile UI state with the live browser permission. If the user has
+  // granted permission but no push subscription exists yet, we transparently
+  // create one so the toggle reflects reality.
+  const reconcile = async (opts: { autoSubscribe?: boolean } = {}) => {
+    if (!supported) { setLoading(false); return Notification?.permission ?? "default"; }
+    const perm = Notification.permission;
+    setPermission(perm);
+    let sub = await getPushSubscription();
+    if (!sub && perm === "granted" && opts.autoSubscribe && !inIframe) {
+      const ok = await subscribeToPush();
+      if (ok) sub = await getPushSubscription();
+    }
+    setEnabled(!!sub && perm === "granted");
+    setLoading(false);
+    return perm;
+  };
+
+  const refreshState = () => reconcile({ autoSubscribe: false });
+
   const handleCheckAgain = async () => {
     setChecking(true);
-    const before = typeof Notification !== "undefined" ? Notification.permission : "default";
-    await refreshState();
-    const after = typeof Notification !== "undefined" ? Notification.permission : "default";
+    const before = Notification.permission;
+    const after = await reconcile({ autoSubscribe: true });
     setChecking(false);
     if (after === "granted") {
-      if (before !== "granted") toast.success("Permission granted — subscribing now");
-      const ok = await subscribeToPush();
-      if (ok) {
-        setEnabled(true);
-        toast.success("Web Push enabled");
-      }
+      if (before !== "granted") toast.success("Permission granted — push enabled");
+      else if (!enabled) toast("Permission granted, but subscription failed — try the toggle");
+      else toast.success("Push is already enabled");
     } else if (after === "denied") {
       toast.error("Still blocked — update your browser site settings");
     } else {
@@ -121,22 +141,15 @@ const NotificationSettings = () => {
     }
   };
 
-  const refreshState = async () => {
-    if (!supported) { setLoading(false); return; }
-    const perm = typeof Notification !== "undefined" ? Notification.permission : "default";
-    setPermission(perm);
-    const sub = await getPushSubscription();
-    setEnabled(!!sub && perm === "granted");
-    setLoading(false);
-  };
-
   useEffect(() => {
-    refreshState();
+    // On mount, auto-subscribe if permission is already granted (e.g. user
+    // granted via the browser site settings while the page was closed).
+    reconcile({ autoSubscribe: true });
     if (!supported) return;
 
     // Listen for permission changes via the Permissions API (Chrome/Edge/Firefox).
     let permStatus: PermissionStatus | null = null;
-    const onPermChange = () => refreshState();
+    const onPermChange = () => reconcile({ autoSubscribe: true });
     (async () => {
       try {
         permStatus = await navigator.permissions?.query({ name: "notifications" as PermissionName });
@@ -145,8 +158,11 @@ const NotificationSettings = () => {
     })();
 
     // Fallback: re-check when the tab regains focus (e.g. after closing the
-    // browser site settings panel).
-    const onVisible = () => { if (document.visibilityState === "visible") refreshState(); };
+    // browser site settings panel). Auto-subscribe so flipping the OS/browser
+    // toggle is reflected here without an extra click.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") reconcile({ autoSubscribe: true });
+    };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
 
@@ -210,6 +226,28 @@ const NotificationSettings = () => {
               <p className="text-muted-foreground text-xs mt-1">
                 Your browser doesn't support push notifications. On iOS, install this app to your
                 home screen first.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {supported && inIframe && (
+          <div className="tactical-card p-4 flex gap-3 border border-amber-500/30 bg-amber-500/5">
+            <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-bold">You're in the Lovable preview</p>
+              <p className="text-muted-foreground text-xs mt-1">
+                Browsers block service workers and push subscriptions inside iframes, so the toggle
+                here will stay off no matter what permission you grant. Open the published app at
+                <a
+                  href="https://taclink.app/settings/notifications"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-primary underline ml-1"
+                >
+                  taclink.app
+                </a>{" "}
+                to test push end-to-end.
               </p>
             </div>
           </div>
