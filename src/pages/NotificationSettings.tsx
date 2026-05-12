@@ -42,8 +42,7 @@ const NotificationSettings = () => {
     const onPermChange = () => refreshState();
     (async () => {
       try {
-        // @ts-expect-error - "notifications" is a valid PermissionName
-        permStatus = await navigator.permissions?.query({ name: "notifications" });
+        permStatus = await navigator.permissions?.query({ name: "notifications" as PermissionName });
         permStatus?.addEventListener("change", onPermChange);
       } catch { /* Safari may not support querying notifications */ }
     })();
