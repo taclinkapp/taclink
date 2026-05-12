@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Share2, Gift, Loader2, ScanLine } from 'lucide-react';
+import { Copy, Check, Share2, Gift, Loader2, ScanLine, Mail, MessageSquare, Send, X as XIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useReferral, buildReferralUrl, extractReferralCode } from '@/hooks/useReferral';
 import { QrScanner } from '@/components/QrScanner';
@@ -14,12 +14,20 @@ type Props = {
   rewardLabel?: string;
 };
 
+const SHARE_TEXT = 'Train with me on TacLink. Sign up with my link and we both win.';
+
 export const InviteFriendsSheet = ({ open, onOpenChange, rewardLabel }: Props) => {
   const { code, totalInvites, rewardedInvites, pendingInvites, loading } = useReferral();
   const [copied, setCopied] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [fallbackOpen, setFallbackOpen] = useState(false);
   const nav = useNavigate();
-  const link = useMemo(() => (code ? buildReferralUrl(code) : ''), [code]);
+  // QR encodes a separate URL so we can attribute scans vs shares server-side
+  // (both still resolve to /auth/invite/:code via extractReferralCode).
+  const qrLink = useMemo(() => (code ? buildReferralUrl(code, 'qr') : ''), [code]);
+  const shareLink = useMemo(() => (code ? buildReferralUrl(code, 'share') : ''), [code]);
+  const copyLink = useMemo(() => (code ? buildReferralUrl(code, 'copy') : ''), [code]);
+  const link = copyLink; // visible link uses the copy attribution
 
   const onCopy = async () => {
     if (!link) return;
