@@ -280,6 +280,38 @@ const NotificationSettings = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Re-enable notifications in {browserInfo.name}</DialogTitle>
+            <DialogDescription>
+              Browsers don't let websites open their own settings — follow these steps, then come
+              back. The toggle here will update automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <ol className="space-y-2 text-sm">
+            {browserInfo.steps.map((step, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="h-6 w-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center flex-shrink-0">
+                  {i + 1}
+                </span>
+                <span className="pt-0.5 text-muted-foreground">{step}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={copySiteUrl}>
+              <Copy className="h-4 w-4 mr-2" />
+              Copy site URL
+            </Button>
+            <Button className="flex-1" onClick={() => setHelpOpen(false)}>
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      </div>
     </MobileShell>
   );
 };
