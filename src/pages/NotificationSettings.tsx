@@ -16,7 +16,6 @@ import {
   isPushSupported,
   getPushSubscription,
   subscribeToPushDetailed,
-  subscribeToPush,
   unsubscribeFromPush,
   sendTestPush,
 } from "@/lib/webPush";
@@ -227,16 +226,22 @@ const NotificationSettings = () => {
             return;
           }
         }
-        const ok = await subscribeToPush();
-        if (ok) {
-          setEnabled(true);
+        const result = await subscribeToPushDetailed();
+        const sub = result.ok ? await getPushSubscription() : null;
+        setEnabled(Notification.permission === "granted");
+        setDeliveryReady(!!sub && Notification.permission === "granted");
+        if (result.ok && sub) {
+          setSetupMessage(null);
           toast.success("Web Push enabled");
         } else {
-          toast.error("Could not subscribe to push");
+          setSetupMessage(result.error || "Browser permission is allowed, but delivery setup did not finish.");
+          toast.error(result.reason === "auth" ? "Sign in again to finish notification setup" : "Could not finish push delivery setup");
         }
       } else {
         await unsubscribeFromPush();
         setEnabled(false);
+        setDeliveryReady(false);
+        setSetupMessage(null);
         toast.success("Web Push disabled");
       }
     } finally {
