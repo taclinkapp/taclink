@@ -489,7 +489,38 @@ const NotificationSettings = () => {
             )}
           </div>
         </div>
+
+        {(canInstall || appInstalled) && (
+          <div>
+            <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2 px-1">
+              Install app
+            </h3>
+            <div className="tactical-card px-4 py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <Smartphone className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {appInstalled ? "TacLink is installed" : "Add TacLink to your home screen"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {appInstalled
+                      ? "You're using the installed app — push notifications can be delivered."
+                      : "Opens like an app and unlocks push notifications on iPhone."}
+                  </p>
+                </div>
+              </div>
+              {!appInstalled && (
+                <Button size="sm" variant="outline" onClick={() => setInstallOpen(true)}>
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Show steps
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      <InstallAppDialog open={installOpen} onOpenChange={setInstallOpen} />
 
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
         <DialogContent className="max-w-md">
