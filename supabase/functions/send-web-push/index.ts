@@ -50,16 +50,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (test === true) {
-      await admin.from("notifications").insert({
-        recipient_id,
-        type,
-        title,
-        body,
-        link,
-      });
-    }
-
     const { data: subs, error } = await admin
       .from("push_subscriptions")
       .select("id, endpoint, p256dh, auth")
