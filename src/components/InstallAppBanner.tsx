@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Download, X } from "lucide-react";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
@@ -7,55 +7,16 @@ import { InstallAppDialog } from "./InstallAppDialog";
 const HIDDEN_PREFIXES = ["/admin", "/auth", "/welcome", "/unsubscribe", "/i/"];
 const HIDDEN_EXACT = new Set(["/", "/onboarding"]);
 
-const hasPendingTour = () => {
-  try {
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const k = sessionStorage.key(i);
-      if (k && k.startsWith('taclink_tour_pending')) return true;
-    }
-  } catch { /* ignore */ }
-  return false;
-};
-
-const isArmed = () => {
-  try { return sessionStorage.getItem('taclink_install_banner_armed') === '1'; }
-  catch { return false; }
-};
-
 export const InstallAppBanner = () => {
-  const { showBanner, snooze } = useInstallPrompt();
+  const { showBanner, dismiss } = useInstallPrompt();
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
-  const [tourBlocking, setTourBlocking] = useState<boolean>(() => hasPendingTour());
-  // Armed = the user has finished/skipped the crash-course tour at least once
-  // this session, OR they had no pending tour to begin with (existing users).
-  const [armed, setArmed] = useState<boolean>(() => isArmed() || !hasPendingTour());
-
-  useEffect(() => {
-    const onOpen = () => { setTourBlocking(true); setArmed(false); };
-    const onClosed = () => setTourBlocking(false);
-    const onCompleted = () => { setTourBlocking(false); setArmed(true); };
-    const recheck = () => {
-      if (hasPendingTour()) { setTourBlocking(true); setArmed(false); }
-      else if (isArmed()) setArmed(true);
-    };
-    window.addEventListener('taclink:tour-open', onOpen);
-    window.addEventListener('taclink:tour-closed', onClosed);
-    window.addEventListener('taclink:tour-completed', onCompleted);
-    const interval = window.setInterval(recheck, 1500);
-    return () => {
-      window.removeEventListener('taclink:tour-open', onOpen);
-      window.removeEventListener('taclink:tour-closed', onClosed);
-      window.removeEventListener('taclink:tour-completed', onCompleted);
-      window.clearInterval(interval);
-    };
-  }, []);
 
   const hidden =
     HIDDEN_EXACT.has(pathname) ||
     HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
 
-  if (!showBanner || hidden || tourBlocking || !armed) return <InstallAppDialog open={open} onOpenChange={setOpen} />;
+  if (!showBanner || hidden) return <InstallAppDialog open={open} onOpenChange={setOpen} />;
 
   return (
     <>
@@ -87,21 +48,13 @@ export const InstallAppBanner = () => {
               </span>
             </span>
           </button>
-          <div className="relative flex flex-col items-end gap-1 flex-shrink-0">
-            <button
-              onClick={() => snooze(7)}
-              className="text-muted-foreground hover:text-foreground p-1 -mr-1"
-              aria-label="Hide install reminder for 7 days"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => snooze(3)}
-              className="text-[10px] font-medium text-muted-foreground hover:text-foreground underline-offset-2 hover:underline whitespace-nowrap"
-            >
-              Remind me later
-            </button>
-          </div>
+          <button
+            onClick={dismiss}
+            className="relative text-muted-foreground hover:text-foreground p-1 -mr-1 flex-shrink-0"
+            aria-label="Dismiss install reminder"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
       <InstallAppDialog open={open} onOpenChange={setOpen} />
