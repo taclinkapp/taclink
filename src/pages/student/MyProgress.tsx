@@ -38,7 +38,10 @@ const MyProgress = () => {
 
   return (
     <MobileShell>
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
+      <header
+        className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="px-4 h-14 grid grid-cols-[auto_1fr_auto] items-center gap-3">
           <Logo showTagline className="h-7 w-auto" />
           <h1 className="font-stencil text-xl font-bold uppercase tracking-[0.12em] text-center">
