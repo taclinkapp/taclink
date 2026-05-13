@@ -66,7 +66,9 @@ Deno.serve(async (req) => {
       .eq("user_id", recipient_id);
     if (error) throw error;
     if (!subs || subs.length === 0) {
-      return new Response(JSON.stringify({ ok: true, sent: 0 }), {
+      return new Response(JSON.stringify(test === true
+        ? { ok: false, sent: 0, error: "No active push subscription found. Turn Web Push off, then on again." }
+        : { ok: true, sent: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -81,6 +83,7 @@ Deno.serve(async (req) => {
 
     let sent = 0;
     const stale: string[] = [];
+    const failed: Array<{ id: string; status?: number; reason?: string }> = [];
     await Promise.all(
       subs.map(async (s: any) => {
         try {
@@ -92,8 +95,12 @@ Deno.serve(async (req) => {
           sent++;
         } catch (e: any) {
           const code = e?.statusCode;
-          if (code === 404 || code === 410) stale.push(s.id);
-          else console.error("push failed", code, e?.body || e?.message);
+          let reason = "";
+          try { reason = e?.body ? JSON.parse(e.body)?.reason ?? e.body : e?.message ?? ""; }
+          catch { reason = e?.body || e?.message || ""; }
+          if (code === 404 || code === 410 || reason === "VapidPkHashMismatch") stale.push(s.id);
+          failed.push({ id: s.id, status: code, reason });
+          console.error("push failed", code, e?.body || e?.message);
         }
       }),
     );
@@ -102,7 +109,21 @@ Deno.serve(async (req) => {
       await admin.from("push_subscriptions").delete().in("id", stale);
     }
 
-    return new Response(JSON.stringify({ ok: true, sent, pruned: stale.length }), {
+    if (test === true && sent === 0) {
+      return new Response(JSON.stringify({
+        ok: false,
+        sent,
+        pruned: stale.length,
+        failed: failed.length,
+        error: stale.length
+          ? "Your phone had an old push setup. I cleared it — turn Web Push off, then on again."
+          : "No test notification was delivered. Try turning Web Push off, then on again.",
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ ok: true, sent, pruned: stale.length, failed: failed.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e: any) {
