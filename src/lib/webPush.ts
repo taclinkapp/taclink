@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Public VAPID key (safe to ship to the client).
 export const VAPID_PUBLIC_KEY =
-  "BCdiwuBfarxq04NesayCjuSTgLiuH_J8TH4kO-yOtKVnQjIsiW45Xn5HjCOuWRCRbM5BVgS-dXxhz96Nkr3ro_U";
+  "BHsD8tWB_Bpjo3etmVmwbrx2v8vdAmKgUFiKlJyaD8CAWPq_fjrlcCTiIeJ-Dklj8F8dog6Ys2CxaWozxhw3pgg";
 
 export const isPushSupported = (): boolean =>
   typeof window !== "undefined" &&
@@ -65,6 +65,25 @@ export const subscribeToPushDetailed = async (): Promise<PushSubscribeResult> =>
     if (!reg) return { ok: false, reason: "registration" };
 
     let sub = await reg.pushManager.getSubscription();
+    // If existing subscription was created with a different VAPID key, drop it and re-subscribe.
+    if (sub) {
+      const existingKey = sub.options?.applicationServerKey;
+      const expected = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      const matches =
+        existingKey instanceof ArrayBuffer &&
+        new Uint8Array(existingKey).length === expected.length &&
+        new Uint8Array(existingKey).every((b, i) => b === expected[i]);
+      if (!matches) {
+        try {
+          const oldEndpoint = sub.endpoint;
+          await sub.unsubscribe();
+          await supabase.from("push_subscriptions").delete().eq("endpoint", oldEndpoint);
+        } catch (e) {
+          console.warn("[push] failed to drop stale subscription", e);
+        }
+        sub = null;
+      }
+    }
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
