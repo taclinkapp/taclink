@@ -42,15 +42,16 @@ const StudentSignUp = () => {
   const [adjusterOpen, setAdjusterOpen] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  const onPickPhoto = (f: File | null | undefined) => {
+  const onPickPhoto = async (f: File | null | undefined) => {
     if (!f) return;
-    if (!['image/jpeg','image/png','image/webp'].includes(f.type)) {
+    if (!/^image\/(jpeg|png|webp|heic|heif)$/i.test(f.type)) {
       toast.error('Photo must be JPG, PNG, or WEBP'); return;
     }
-    if (f.size > 5 * 1024 * 1024) {
-      toast.error('Photo must be 5MB or smaller'); return;
+    if (f.size > 25 * 1024 * 1024) {
+      toast.error('Photo must be 25MB or smaller'); return;
     }
-    setRawPhoto(f);
+    const compressed = await compressImageFile(f);
+    setRawPhoto(compressed);
     setAdjusterOpen(true);
   };
 

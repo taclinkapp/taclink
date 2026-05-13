@@ -271,14 +271,19 @@ const EditProfile = () => {
     throw new Error(linkErr?.message || 'Could not save photo to your profile');
   };
 
-  const handlePhotoFile = async (file: File) => {
+  const handlePhotoFile = async (rawFile: File) => {
     if (!user?.id) return;
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+    if (!/^image\/(jpeg|png|webp|heic|heif)$/i.test(rawFile.type)) {
       toast.error('Photo must be JPG, PNG, or WEBP');
       return;
     }
+    if (rawFile.size > 25 * 1024 * 1024) {
+      toast.error('Photo must be 25MB or smaller');
+      return;
+    }
+    const file = await compressImageFile(rawFile, { maxBytes: MAX_PHOTO_BYTES });
     if (file.size > MAX_PHOTO_BYTES) {
-      toast.error('Photo must be 5MB or smaller');
+      toast.error('Photo could not be compressed under 5MB — try a smaller image');
       return;
     }
     setLastFile(file);
