@@ -17,22 +17,36 @@ const hasPendingTour = () => {
   return false;
 };
 
+const isArmed = () => {
+  try { return sessionStorage.getItem('taclink_install_banner_armed') === '1'; }
+  catch { return false; }
+};
+
 export const InstallAppBanner = () => {
   const { showBanner, snooze } = useInstallPrompt();
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
   const [tourBlocking, setTourBlocking] = useState<boolean>(() => hasPendingTour());
+  // Armed = the user has finished/skipped the crash-course tour at least once
+  // this session, OR they had no pending tour to begin with (existing users).
+  const [armed, setArmed] = useState<boolean>(() => isArmed() || !hasPendingTour());
 
   useEffect(() => {
-    const onOpen = () => setTourBlocking(true);
+    const onOpen = () => { setTourBlocking(true); setArmed(false); };
     const onClosed = () => setTourBlocking(false);
-    const recheck = () => { if (hasPendingTour()) setTourBlocking(true); };
+    const onCompleted = () => { setTourBlocking(false); setArmed(true); };
+    const recheck = () => {
+      if (hasPendingTour()) { setTourBlocking(true); setArmed(false); }
+      else if (isArmed()) setArmed(true);
+    };
     window.addEventListener('taclink:tour-open', onOpen);
     window.addEventListener('taclink:tour-closed', onClosed);
+    window.addEventListener('taclink:tour-completed', onCompleted);
     const interval = window.setInterval(recheck, 1500);
     return () => {
       window.removeEventListener('taclink:tour-open', onOpen);
       window.removeEventListener('taclink:tour-closed', onClosed);
+      window.removeEventListener('taclink:tour-completed', onCompleted);
       window.clearInterval(interval);
     };
   }, []);
@@ -41,7 +55,7 @@ export const InstallAppBanner = () => {
     HIDDEN_EXACT.has(pathname) ||
     HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
 
-  if (!showBanner || hidden || tourBlocking) return <InstallAppDialog open={open} onOpenChange={setOpen} />;
+  if (!showBanner || hidden || tourBlocking || !armed) return <InstallAppDialog open={open} onOpenChange={setOpen} />;
 
   return (
     <>

@@ -38,12 +38,20 @@ export function CrashCourseTour({ role, open, onClose }: { role: Role; open: boo
     } catch { /* ignore */ }
   }, [open]);
 
+  const completeAndClose = () => {
+    try {
+      sessionStorage.setItem('taclink_install_banner_armed', '1');
+      window.dispatchEvent(new CustomEvent('taclink:tour-completed'));
+    } catch { /* ignore */ }
+    onClose();
+  };
+
   const slide = slides[i];
   const Icon = slide.icon;
   const isLast = i === slides.length - 1;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) completeAndClose(); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <div className="mx-auto h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center mb-2">
@@ -63,14 +71,14 @@ export function CrashCourseTour({ role, open, onClose }: { role: Role; open: boo
         </div>
 
         <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={completeAndClose} className="text-muted-foreground">
             <X className="h-3.5 w-3.5 mr-1" /> Skip
           </Button>
           <div className="flex gap-2">
             {i > 0 && (
               <Button variant="outline" size="sm" onClick={() => setI(i - 1)}>Back</Button>
             )}
-            <Button size="sm" onClick={() => (isLast ? onClose() : setI(i + 1))} className="bg-primary text-primary-foreground">
+            <Button size="sm" onClick={() => (isLast ? completeAndClose() : setI(i + 1))} className="bg-primary text-primary-foreground">
               {isLast ? 'Get started' : 'Next'}
             </Button>
           </div>
