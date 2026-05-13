@@ -78,11 +78,7 @@ const CredentialVerification = () => {
   if (submitted) {
     return (
       <div className="relative min-h-screen bg-background overflow-hidden">
-        <video
-          src={splashBg.url}
-          autoPlay loop muted playsInline aria-hidden
-          className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
-        />
+        <DeferredBackgroundVideo src={splashBg.url} className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none" />
         <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
         <div className="relative z-10">
         <PageHeader title="Under Review" />
@@ -108,11 +104,7 @@ const CredentialVerification = () => {
 
   return (
     <div className="relative min-h-screen bg-background overflow-hidden">
-      <video
-        src={splashBg.url}
-        autoPlay loop muted playsInline aria-hidden
-        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
-      />
+      <DeferredBackgroundVideo src={splashBg.url} className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none" />
       <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
       <div className="relative z-10">
       <PageHeader title="Verify Credentials" back backTo="/instructor/credentials" />
