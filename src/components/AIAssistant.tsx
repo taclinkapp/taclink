@@ -201,14 +201,18 @@ export function AIAssistant({ role }: { role: Role }) {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button — draggable, sits above the bottom tab bar by default */}
       <button
-        aria-label="Open AI assistant"
-        onClick={() => setOpen(true)}
+        aria-label="Open AI assistant — drag to reposition"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        style={{ left: pos.x, top: pos.y, touchAction: "none" }}
         className={cn(
-          "fixed z-50 bottom-24 right-4 h-14 w-14 rounded-full shadow-xl",
+          "fixed z-50 h-14 w-14 rounded-full shadow-xl select-none cursor-grab active:cursor-grabbing",
           "bg-gradient-to-br text-primary-foreground flex items-center justify-center",
-          "hover:scale-105 active:scale-95 transition-transform",
+          "active:scale-95 transition-transform",
           accent,
         )}
       >
