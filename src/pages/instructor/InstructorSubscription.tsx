@@ -19,6 +19,7 @@ import { CountdownClock } from '@/components/CountdownClock';
 import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
 import { InstructorOnboardingProgress } from '@/components/InstructorOnboardingProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 
 const PRICE_ID = 'instructor_pro_monthly';
 

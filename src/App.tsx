@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -6,105 +7,129 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NavHistoryProvider } from "@/contexts/NavHistoryContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import NotFound from "./pages/NotFound.tsx";
-import Notifications from "./pages/Notifications";
-import NotificationSettings from "./pages/NotificationSettings";
-import TermsOfService from "./pages/legal/TermsOfService";
-import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
-import CancellationsFAQ from "./pages/legal/CancellationsFAQ";
-import EditProfile from "./pages/EditProfile";
-import HelpCenter from "./pages/support/HelpCenter";
-import ContactSupport from "./pages/support/ContactSupport";
+import { Loader2 } from "lucide-react";
 
+// Splash is the landing page — keep eager so the first paint is instant
 import Splash from "./pages/Splash";
-import Welcome from "./pages/onboarding/Welcome";
-import OnboardingQuiz from "./pages/onboarding/Quiz";
-import OnboardingPlan from "./pages/onboarding/TrainingPlan";
-import SignIn from "./pages/auth/SignIn";
-import StudentSignUp from "./pages/auth/StudentSignUp";
-import InstructorSignUp from "./pages/auth/InstructorSignUp";
-import CredentialVerification from "./pages/auth/CredentialVerification";
-import InstructorPlanStep from "./pages/auth/InstructorPlanStep";
-import InstructorCredentialStep from "./pages/auth/InstructorCredentialStep";
-import InstructorPolicyStep from "./pages/auth/InstructorPolicyStep";
-import InviteLanding from "./pages/auth/InviteLanding";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import VerifyEmail from "./pages/auth/VerifyEmail";
-import ChangePassword from "./pages/auth/ChangePassword";
-import Unsubscribe from "./pages/Unsubscribe";
-import InfluencerLanding from "./pages/auth/InfluencerLanding";
 
-import Discover from "./pages/student/Discover";
-import CourseDetail from "./pages/student/CourseDetail";
-import Checkout from "./pages/student/Checkout";
-import CheckoutReturn from "./pages/student/CheckoutReturn";
-import BookingSuccess from "./pages/student/BookingSuccess";
-import MyBookings from "./pages/student/MyBookings";
-import MyProgress from "./pages/student/MyProgress";
-import OperatorProfile from "./pages/student/OperatorProfile";
-import BookingDetail from "./pages/student/BookingDetail";
-import LeaveReview from "./pages/student/LeaveReview";
-import MyReviews from "./pages/student/MyReviews";
-import StudentProfile from "./pages/student/StudentProfile";
-import StudentSettings from "./pages/student/StudentSettings";
-import PaymentMethods from "./pages/student/PaymentMethods";
-import StudentMessages from "./pages/student/StudentMessages";
-import StudentConversation from "./pages/student/StudentConversation";
+// Everything else is code-split. Each route's bundle only loads when visited.
+const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
+const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
+const CancellationsFAQ = lazy(() => import("./pages/legal/CancellationsFAQ"));
+const EditProfile = lazy(() => import("./pages/EditProfile"));
+const HelpCenter = lazy(() => import("./pages/support/HelpCenter"));
+const ContactSupport = lazy(() => import("./pages/support/ContactSupport"));
 
-import InstructorDashboard from "./pages/instructor/InstructorDashboard";
-import MyCourses from "./pages/instructor/MyCourses";
-import NewCourse from "./pages/instructor/NewCourse";
-import CourseManagement from "./pages/instructor/CourseManagement";
-import InstructorProfile from "./pages/instructor/InstructorProfile";
-import InstructorSettings from "./pages/instructor/InstructorSettings";
+const Welcome = lazy(() => import("./pages/onboarding/Welcome"));
+const OnboardingQuiz = lazy(() => import("./pages/onboarding/Quiz"));
+const OnboardingPlan = lazy(() => import("./pages/onboarding/TrainingPlan"));
+const SignIn = lazy(() => import("./pages/auth/SignIn"));
+const StudentSignUp = lazy(() => import("./pages/auth/StudentSignUp"));
+const InstructorSignUp = lazy(() => import("./pages/auth/InstructorSignUp"));
+const CredentialVerification = lazy(() => import("./pages/auth/CredentialVerification"));
+const InstructorPlanStep = lazy(() => import("./pages/auth/InstructorPlanStep"));
+const InstructorCredentialStep = lazy(() => import("./pages/auth/InstructorCredentialStep"));
+const InstructorPolicyStep = lazy(() => import("./pages/auth/InstructorPolicyStep"));
+const InviteLanding = lazy(() => import("./pages/auth/InviteLanding"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
+const ChangePassword = lazy(() => import("./pages/auth/ChangePassword"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const InfluencerLanding = lazy(() => import("./pages/auth/InfluencerLanding"));
 
-import PayoutMethods from "./pages/instructor/PayoutMethods";
-import InstructorMessages from "./pages/instructor/InstructorMessages";
-import InstructorConversation from "./pages/instructor/InstructorConversation";
-import InstructorCredentials from "./pages/instructor/InstructorCredentials";
-import InstructorRoster from "./pages/instructor/InstructorRoster";
+const Discover = lazy(() => import("./pages/student/Discover"));
+const CourseDetail = lazy(() => import("./pages/student/CourseDetail"));
+const Checkout = lazy(() => import("./pages/student/Checkout"));
+const CheckoutReturn = lazy(() => import("./pages/student/CheckoutReturn"));
+const BookingSuccess = lazy(() => import("./pages/student/BookingSuccess"));
+const MyBookings = lazy(() => import("./pages/student/MyBookings"));
+const MyProgress = lazy(() => import("./pages/student/MyProgress"));
+const OperatorProfile = lazy(() => import("./pages/student/OperatorProfile"));
+const BookingDetail = lazy(() => import("./pages/student/BookingDetail"));
+const LeaveReview = lazy(() => import("./pages/student/LeaveReview"));
+const MyReviews = lazy(() => import("./pages/student/MyReviews"));
+const StudentProfile = lazy(() => import("./pages/student/StudentProfile"));
+const StudentSettings = lazy(() => import("./pages/student/StudentSettings"));
+const PaymentMethods = lazy(() => import("./pages/student/PaymentMethods"));
+const StudentMessages = lazy(() => import("./pages/student/StudentMessages"));
+const StudentConversation = lazy(() => import("./pages/student/StudentConversation"));
 
-import InstructorReviews from "./pages/instructor/InstructorReviews";
-import InstructorSubscription from "./pages/instructor/InstructorSubscription";
+const InstructorDashboard = lazy(() => import("./pages/instructor/InstructorDashboard"));
+const MyCourses = lazy(() => import("./pages/instructor/MyCourses"));
+const NewCourse = lazy(() => import("./pages/instructor/NewCourse"));
+const CourseManagement = lazy(() => import("./pages/instructor/CourseManagement"));
+const InstructorProfile = lazy(() => import("./pages/instructor/InstructorProfile"));
+const InstructorSettings = lazy(() => import("./pages/instructor/InstructorSettings"));
+const PayoutMethods = lazy(() => import("./pages/instructor/PayoutMethods"));
+const InstructorMessages = lazy(() => import("./pages/instructor/InstructorMessages"));
+const InstructorConversation = lazy(() => import("./pages/instructor/InstructorConversation"));
+const InstructorCredentials = lazy(() => import("./pages/instructor/InstructorCredentials"));
+const InstructorRoster = lazy(() => import("./pages/instructor/InstructorRoster"));
+const InstructorReviews = lazy(() => import("./pages/instructor/InstructorReviews"));
+const InstructorSubscription = lazy(() => import("./pages/instructor/InstructorSubscription"));
 
-import { AdminLayout } from "./components/AdminLayout";
-import AdminLogin from "./pages/admin/AdminLogin";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import { AdminInstructors } from "./pages/admin/AdminUsers";
-
-import { AdminUsersReal } from "./pages/admin/AdminUsersReal";
-import { AdminCoursesReal } from "./pages/admin/AdminCoursesReal";
-import AdminWaivers from "./pages/admin/AdminWaivers";
-import AdminReliability from "./pages/admin/AdminReliability";
-import { AdminPlatformSettings } from "./pages/admin/AdminPlatformSettings";
-import { AdminFeatureFlags } from "./pages/admin/AdminFeatureFlags";
-import { AdminAuditLog } from "./pages/admin/AdminAuditLog";
-import { AdminReports } from "./pages/admin/AdminReports";
-import { AdminSupportTickets } from "./pages/admin/AdminSupportTickets";
-import { AdminConversations } from "./pages/admin/AdminConversations";
-import { AdminConversationDetail } from "./pages/admin/AdminConversationDetail";
-import AdminModeration from "./pages/admin/AdminModeration";
-import AdminRefunds from "./pages/admin/AdminRefunds";
-import AdminFinancials from "./pages/admin/AdminFinancials";
-import AdminFeaturedCourses from "./pages/admin/AdminFeaturedCourses";
-import AdminBugTriage from "./pages/admin/AdminBugTriage";
-import AdminCourseEditor from "./pages/admin/AdminCourseEditor";
-import AdminFeeOverrides from "./pages/admin/AdminFeeOverrides";
-import OwnerConsole from "./pages/admin/OwnerConsole";
-import AdminInfluencerLinks from "./pages/admin/AdminInfluencerLinks";
-import WeeklyBrief from "./pages/admin/WeeklyBrief";
-import AdminTestAccounts from "./pages/admin/AdminTestAccounts";
-import AdminWarriorQuotes from "./pages/admin/AdminWarriorQuotes";
-import AdminSecurity from "./pages/admin/AdminSecurity";
-import AdminHelcimWebhooks from "./pages/admin/AdminHelcimWebhooks";
-import AdminRefundTest from "./pages/admin/AdminRefundTest";
-import AdminUptime from "./pages/admin/AdminUptime";
-import AdminBackgroundVideos from "./pages/admin/AdminBackgroundVideos";
-import AdminDepositReview from "./pages/admin/AdminDepositReview";
-import AdminFeedback from "./pages/admin/AdminFeedback";
-import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
-
+// Admin routes — large bundle, almost never visited by public users
+const AdminLayout = lazy(() =>
+  import("./components/AdminLayout").then((m) => ({ default: m.AdminLayout }))
+);
+const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminInstructors = lazy(() =>
+  import("./pages/admin/AdminUsers").then((m) => ({ default: m.AdminInstructors }))
+);
+const AdminUsersReal = lazy(() =>
+  import("./pages/admin/AdminUsersReal").then((m) => ({ default: m.AdminUsersReal }))
+);
+const AdminCoursesReal = lazy(() =>
+  import("./pages/admin/AdminCoursesReal").then((m) => ({ default: m.AdminCoursesReal }))
+);
+const AdminWaivers = lazy(() => import("./pages/admin/AdminWaivers"));
+const AdminReliability = lazy(() => import("./pages/admin/AdminReliability"));
+const AdminPlatformSettings = lazy(() =>
+  import("./pages/admin/AdminPlatformSettings").then((m) => ({ default: m.AdminPlatformSettings }))
+);
+const AdminFeatureFlags = lazy(() =>
+  import("./pages/admin/AdminFeatureFlags").then((m) => ({ default: m.AdminFeatureFlags }))
+);
+const AdminAuditLog = lazy(() =>
+  import("./pages/admin/AdminAuditLog").then((m) => ({ default: m.AdminAuditLog }))
+);
+const AdminReports = lazy(() =>
+  import("./pages/admin/AdminReports").then((m) => ({ default: m.AdminReports }))
+);
+const AdminSupportTickets = lazy(() =>
+  import("./pages/admin/AdminSupportTickets").then((m) => ({ default: m.AdminSupportTickets }))
+);
+const AdminConversations = lazy(() =>
+  import("./pages/admin/AdminConversations").then((m) => ({ default: m.AdminConversations }))
+);
+const AdminConversationDetail = lazy(() =>
+  import("./pages/admin/AdminConversationDetail").then((m) => ({ default: m.AdminConversationDetail }))
+);
+const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
+const AdminRefunds = lazy(() => import("./pages/admin/AdminRefunds"));
+const AdminFinancials = lazy(() => import("./pages/admin/AdminFinancials"));
+const AdminFeaturedCourses = lazy(() => import("./pages/admin/AdminFeaturedCourses"));
+const AdminBugTriage = lazy(() => import("./pages/admin/AdminBugTriage"));
+const AdminCourseEditor = lazy(() => import("./pages/admin/AdminCourseEditor"));
+const AdminFeeOverrides = lazy(() => import("./pages/admin/AdminFeeOverrides"));
+const OwnerConsole = lazy(() => import("./pages/admin/OwnerConsole"));
+const AdminInfluencerLinks = lazy(() => import("./pages/admin/AdminInfluencerLinks"));
+const WeeklyBrief = lazy(() => import("./pages/admin/WeeklyBrief"));
+const AdminTestAccounts = lazy(() => import("./pages/admin/AdminTestAccounts"));
+const AdminWarriorQuotes = lazy(() => import("./pages/admin/AdminWarriorQuotes"));
+const AdminSecurity = lazy(() => import("./pages/admin/AdminSecurity"));
+const AdminHelcimWebhooks = lazy(() => import("./pages/admin/AdminHelcimWebhooks"));
+const AdminRefundTest = lazy(() => import("./pages/admin/AdminRefundTest"));
+const AdminUptime = lazy(() => import("./pages/admin/AdminUptime"));
+const AdminBackgroundVideos = lazy(() => import("./pages/admin/AdminBackgroundVideos"));
+const AdminDepositReview = lazy(() => import("./pages/admin/AdminDepositReview"));
+const AdminFeedback = lazy(() => import("./pages/admin/AdminFeedback"));
+const AdminSubscriptionPlans = lazy(() => import("./pages/admin/AdminSubscriptionPlans"));
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
 import { InstallAppBanner } from "./components/InstallAppBanner";
@@ -112,6 +137,12 @@ import { InstructorOnboardingGate } from "./components/InstructorOnboardingGate"
 import { MissionCompleteWatcher } from "./components/operator/MissionCompleteWatcher";
 
 const queryClient = new QueryClient();
+
+const RouteFallback = () => (
+  <div className="min-h-screen grid place-items-center bg-background">
+    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+  </div>
+);
 
 const Student = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute requireRole="student">{children}</ProtectedRoute>
@@ -138,6 +169,7 @@ const App = () => (
       >
         <AuthProvider>
           <NavHistoryProvider>
+          <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Splash />} />
             <Route path="/welcome" element={<Welcome />} />
@@ -194,12 +226,12 @@ const App = () => (
             <Route path="/instructor/courses/:id" element={<Instructor><CourseManagement /></Instructor>} />
             <Route path="/instructor/profile" element={<Instructor><InstructorProfile /></Instructor>} />
             <Route path="/instructor/settings" element={<Instructor><InstructorSettings /></Instructor>} />
-            
+
             <Route path="/instructor/messages" element={<Instructor><InstructorMessages /></Instructor>} />
             <Route path="/instructor/messages/:id" element={<Instructor><InstructorConversation /></Instructor>} />
             <Route path="/instructor/credentials" element={<Instructor><InstructorCredentials /></Instructor>} />
             <Route path="/instructor/roster" element={<Instructor><InstructorRoster /></Instructor>} />
-            
+
             <Route path="/instructor/reviews" element={<Instructor><InstructorReviews /></Instructor>} />
             <Route path="/instructor/payment-methods" element={<Instructor><PaymentMethods /></Instructor>} />
             <Route path="/instructor/payouts" element={<Instructor><PayoutMethods /></Instructor>} />
@@ -219,14 +251,14 @@ const App = () => (
               <Route path="courses" element={<AdminCoursesReal />} />
               <Route path="waivers" element={<AdminWaivers />} />
               <Route path="reliability" element={<AdminReliability />} />
-              
+
               <Route path="reports" element={<AdminReports />} />
               <Route path="feedback" element={<AdminFeedback />} />
               <Route path="support" element={<AdminSupportTickets />} />
               <Route path="conversations" element={<AdminConversations />} />
               <Route path="conversations/:id" element={<AdminConversationDetail />} />
               <Route path="moderation" element={<AdminModeration />} />
-              
+
               <Route path="refunds" element={<AdminRefunds />} />
               <Route path="financials" element={<AdminFinancials />} />
               <Route path="featured" element={<AdminFeaturedCourses />} />
@@ -258,6 +290,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
           <AIAssistantMount />
           <InstallAppBanner />
           <MissionCompleteWatcher />
@@ -269,4 +302,3 @@ const App = () => (
 );
 
 export default App;
-

@@ -7,6 +7,7 @@ import { Loader2, ShieldCheck, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { InstructorOnboardingProgress } from "@/components/InstructorOnboardingProgress";
 import splashBg from "@/assets/splash-bg.mp4.asset.json";
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 
 const POLICY_VERSION = "v1.0";
 

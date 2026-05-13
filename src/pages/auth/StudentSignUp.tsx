@@ -19,6 +19,7 @@ import { homeForRole, useAuth } from '@/contexts/AuthContext';
 import { requestFounderBio } from '@/components/FounderBioModal';
 import { requestCrashCourseTour } from '@/components/CrashCourseTour';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 import { rememberPendingStudentSignupPhoto, uploadAndSaveProfilePhoto } from '@/lib/profilePhotos';
 import { compressImageFile } from '@/lib/imageCompression';
 
