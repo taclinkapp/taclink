@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Course } from "@/lib/mockData";
 import { getAvatarSrc } from "@/lib/avatar";
+import { fetchPublicProfileCard, fetchPublicProfileMap } from "@/lib/profilePhotos";
 
 export type DbCourse = {
   id: string;
@@ -105,11 +106,7 @@ export const fetchPublishedCourses = async (): Promise<Course[]> => {
   const list = (rows ?? []) as DbCourse[];
   if (list.length === 0) return [];
   const ids = Array.from(new Set(list.map((r) => r.instructor_id)));
-  const { data: profs } = await supabase
-    .from("profiles")
-    .select("id, display_name, photo_url")
-    .in("id", ids);
-  const map = new Map((profs ?? []).map((p) => [p.id, p]));
+  const map = await fetchPublicProfileMap(ids);
   return list.map((r) => dbToViewCourse(r, map.get(r.instructor_id)));
 };
 
@@ -121,11 +118,7 @@ export const fetchCourseById = async (id: string): Promise<Course | null> => {
     .maybeSingle();
   if (error) throw error;
   if (!row) return null;
-  const { data: prof } = await supabase
-    .from("profiles")
-    .select("id, display_name, photo_url")
-    .eq("id", (row as DbCourse).instructor_id)
-    .maybeSingle();
+  const prof = await fetchPublicProfileCard((row as DbCourse).instructor_id);
   return dbToViewCourse(row as DbCourse, prof);
 };
 
@@ -139,11 +132,7 @@ export const fetchInstructorCourses = async (
     .order("created_at", { ascending: false });
   if (error) throw error;
   const list = (rows ?? []) as DbCourse[];
-  const { data: prof } = await supabase
-    .from("profiles")
-    .select("id, display_name, photo_url")
-    .eq("id", instructorId)
-    .maybeSingle();
+  const prof = await fetchPublicProfileCard(instructorId);
   return list.map((r) => dbToViewCourse(r, prof));
 };
 
