@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 export type InstallPlatform = "ios-safari" | "ios-other" | "android-chrome" | "android-other" | "desktop" | "unknown";
 
 const DISMISS_KEY = "install-prompt-dismissed-at";
+const DISMISS_UNTIL_KEY = "install-prompt-snooze-until";
 const DISMISS_DAYS = 7;
 
 interface BeforeInstallPromptEvent extends Event {
