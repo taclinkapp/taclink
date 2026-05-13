@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
-import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, Star, DollarSign, PlayCircle } from 'lucide-react';
+import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, Star, DollarSign, PlayCircle, Download } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { CrashCourseTour } from '@/components/CrashCourseTour';
 import { DeleteAccountDialog } from '@/components/account/DeleteAccountDialog';
 import { AccountDeletionBanner } from '@/components/account/AccountDeletionBanner';
+import { InstallAppDialog } from '@/components/InstallAppDialog';
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
