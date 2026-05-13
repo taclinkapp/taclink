@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { DisciplineBrowser } from '@/components/DisciplineBrowser';
-import { WarriorQuoteBackdrop } from '@/components/WarriorQuoteBackdrop';
+import { InlineQuoteOfDay } from '@/components/InlineQuoteOfDay';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
 import { useAuth } from '@/contexts/AuthContext';
@@ -298,10 +298,10 @@ const Discover = () => {
 
   return (
     <MobileShell>
-      <WarriorQuoteBackdrop audience="student" />
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
         <PageHeader
           brand
+          center={<InlineQuoteOfDay audience="student" />}
           right={
             <NotificationsBell className="h-9 w-9 rounded-full bg-card border border-border text-muted-foreground hover:text-primary" />
           }
