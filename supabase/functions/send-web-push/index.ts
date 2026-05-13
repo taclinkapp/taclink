@@ -11,7 +11,10 @@ const corsHeaders = {
 const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const rawVapidSubject = Deno.env.get("VAPID_SUBJECT") || "mailto:support@taclink.app";
-const VAPID_SUBJECT = rawVapidSubject.replace(/^mailto:\s*/i, "mailto:").replace(/[",<>\s]+$/g, "");
+const subjectEmail = rawVapidSubject.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+const VAPID_SUBJECT = subjectEmail
+  ? `mailto:${subjectEmail}`
+  : rawVapidSubject.trim().replace(/[",<>\s]+/g, "") || "mailto:support@taclink.app";
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 
