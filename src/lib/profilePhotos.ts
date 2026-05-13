@@ -28,7 +28,11 @@ const uniqueIds = (ids: Array<string | null | undefined>) =>
 
 export const rememberPendingStudentSignupPhoto = (file: File | null): Promise<void> => {
   pendingStudentSignupPhoto = file;
-  if (!isBrowser() || !file) return Promise.resolve();
+  if (!isBrowser()) return Promise.resolve();
+  if (!file) {
+    try { sessionStorage.removeItem(PENDING_STUDENT_PHOTO_KEY); } catch {}
+    return Promise.resolve();
+  }
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = () => {
