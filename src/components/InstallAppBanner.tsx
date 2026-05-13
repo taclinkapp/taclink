@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Download, X } from "lucide-react";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
@@ -6,17 +6,33 @@ import { InstallAppDialog } from "./InstallAppDialog";
 
 const HIDDEN_PREFIXES = ["/admin", "/auth", "/welcome", "/unsubscribe", "/i/"];
 const HIDDEN_EXACT = new Set(["/", "/onboarding"]);
+const ARMED_KEY = "taclink_install_banner_armed";
 
 export const InstallAppBanner = () => {
   const { showBanner, dismiss } = useInstallPrompt();
   const [open, setOpen] = useState(false);
+  const [armed, setArmed] = useState<boolean>(() => {
+    try { return sessionStorage.getItem(ARMED_KEY) === "1"; } catch { return false; }
+  });
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    const onArm = () => setArmed(true);
+    window.addEventListener("taclink:tour-completed", onArm);
+    return () => window.removeEventListener("taclink:tour-completed", onArm);
+  }, []);
+
+  const handleDismiss = () => {
+    try { sessionStorage.removeItem(ARMED_KEY); } catch { /* ignore */ }
+    setArmed(false);
+    dismiss();
+  };
 
   const hidden =
     HIDDEN_EXACT.has(pathname) ||
     HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
 
-  if (!showBanner || hidden) return <InstallAppDialog open={open} onOpenChange={setOpen} />;
+  if (!armed || !showBanner || hidden) return <InstallAppDialog open={open} onOpenChange={setOpen} />;
 
   return (
     <>
@@ -49,7 +65,7 @@ export const InstallAppBanner = () => {
             </span>
           </button>
           <button
-            onClick={dismiss}
+            onClick={handleDismiss}
             className="relative text-muted-foreground hover:text-foreground p-1 -mr-1 flex-shrink-0"
             aria-label="Dismiss install reminder"
           >
