@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTour';
 import { FounderBioModal } from '@/components/FounderBioModal';
 import { getAvatarSrc } from '@/lib/avatar';
+import { fetchPublicProfileMap } from '@/lib/profilePhotos';
 
 type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
 
@@ -39,11 +40,12 @@ const InstructorDashboard = () => {
       start.setDate(1); start.setHours(0, 0, 0, 0);
       const { data, error } = await supabase
         .from('bookings')
-        .select('id, course_id, status, attended_at, booked_at, student_id, profiles:student_id(display_name, photo_url)')
+        .select('id, course_id, status, attended_at, booked_at, student_id')
         .in('course_id', courseIds)
         .gte('booked_at', start.toISOString());
       if (error) throw error;
-      return data ?? [];
+      const profileMap = await fetchPublicProfileMap((data ?? []).map((b: any) => b.student_id));
+      return (data ?? []).map((b: any) => ({ ...b, profile: profileMap.get(b.student_id) ?? null }));
     },
   });
 
@@ -56,12 +58,13 @@ const InstructorDashboard = () => {
       start.setDate(1); start.setHours(0, 0, 0, 0);
       const { data, error } = await supabase
         .from('reviews')
-        .select('id, rating, comment, created_at, student_id, course_id, profiles:student_id(display_name, photo_url)')
+        .select('id, rating, comment, created_at, student_id, course_id')
         .in('course_id', courseIds)
         .gte('created_at', start.toISOString())
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const profileMap = await fetchPublicProfileMap((data ?? []).map((r: any) => r.student_id));
+      return (data ?? []).map((r: any) => ({ ...r, profile: profileMap.get(r.student_id) ?? null }));
     },
   });
 
@@ -79,8 +82,8 @@ const InstructorDashboard = () => {
 
     const studentRows = monthBookings.map((b: any) => ({
       id: b.id,
-      name: b.profiles?.display_name ?? 'Student',
-      photo: b.profiles?.photo_url ?? '',
+      name: b.profile?.display_name ?? 'Student',
+      photo: b.profile?.photo_url ?? '',
       bookedAt: b.booked_at,
       paymentStatus: b.status === 'cancelled' ? 'refunded' : 'paid',
       checkedIn: !!b.attended_at,
@@ -91,8 +94,8 @@ const InstructorDashboard = () => {
 
     const reviewRows = monthReviews.map((r: any) => ({
       id: r.id,
-      studentName: r.profiles?.display_name ?? 'Student',
-      studentPhoto: r.profiles?.photo_url ?? '',
+      studentName: r.profile?.display_name ?? 'Student',
+      studentPhoto: r.profile?.photo_url ?? '',
       rating: r.rating,
       comment: r.comment,
       date: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
