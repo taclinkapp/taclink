@@ -22,7 +22,7 @@ const VerifyEmail = () => {
   const emailParam = params.get('email') ?? '';
   const roleParam = params.get('role');
   const requestedRole = roleParam === 'instructor' || roleParam === 'student' ? roleParam : null;
-  const { user, primaryRole, loading } = useAuth();
+  const { user, primaryRole, loading, refreshProfile } = useAuth();
   const [email, setEmail] = useState(emailParam);
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
@@ -94,6 +94,7 @@ const VerifyEmail = () => {
     if (pendingPhoto && data.user?.id) {
       try {
         await uploadAndSaveProfilePhoto(data.user.id, pendingPhoto);
+        await refreshProfile();
       } catch (photoError: any) {
         toast.error('Photo upload failed', { description: photoError?.message });
       }
