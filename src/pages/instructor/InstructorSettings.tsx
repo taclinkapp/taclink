@@ -21,6 +21,7 @@ const InstructorSettings = () => {
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
