@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, User, Save, Camera, Trash2, CheckCircle2, Circle, AlertTriangle, RotateCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { compressImageFile } from '@/lib/imageCompression';
 
 const PROFILE_BUCKET = 'profile-photos';
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
