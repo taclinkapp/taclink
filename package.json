@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "audit:routes": "node scripts/audit-routes.mjs"
+    "audit:routes": "node scripts/audit-routes.mjs",
+    "test:e2e": "bash scripts/run-e2e.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
