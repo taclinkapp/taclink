@@ -44,6 +44,7 @@ export const WarriorQuoteBackdrop = ({ audience }: Props) => {
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center px-8 select-none"
+        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="max-w-md text-center" style={{ opacity: settings.opacity }}>
           <p className="text-[10px] uppercase tracking-[0.3em] text-foreground mb-2">
