@@ -259,6 +259,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           <AIAssistantMount />
+          <InstallAppBanner />
           <MissionCompleteWatcher />
           </NavHistoryProvider>
         </AuthProvider>
