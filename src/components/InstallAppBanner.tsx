@@ -48,13 +48,21 @@ export const InstallAppBanner = () => {
               </span>
             </span>
           </button>
-          <button
-            onClick={dismiss}
-            className="relative text-muted-foreground hover:text-foreground p-1 -mr-1 flex-shrink-0"
-            aria-label="Dismiss install reminder"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="relative flex flex-col items-end gap-1 flex-shrink-0">
+            <button
+              onClick={() => snooze(7)}
+              className="text-muted-foreground hover:text-foreground p-1 -mr-1"
+              aria-label="Hide install reminder for 7 days"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => snooze(3)}
+              className="text-[10px] font-medium text-muted-foreground hover:text-foreground underline-offset-2 hover:underline whitespace-nowrap"
+            >
+              Remind me later
+            </button>
+          </div>
         </div>
       </div>
       <InstallAppDialog open={open} onOpenChange={setOpen} />
