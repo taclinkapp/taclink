@@ -82,7 +82,7 @@ export const ConversationView = ({ variant }: Props) => {
           const conv = await ensureConversation({
             studentId: user.id,
             studentName: user.name,
-            studentPhoto: undefined,
+            studentPhoto: user.photo,
             instructorId: id,
             instructorName: instructor?.display_name ?? undefined,
             instructorPhoto: instructor?.photo_url ?? undefined,
@@ -92,10 +92,14 @@ export const ConversationView = ({ variant }: Props) => {
           setConversation(conv);
         } else {
           // instructor opening a thread with a student id directly (no UI for this yet)
+          const student = await fetchPublicProfileCard(id);
           const conv = await ensureConversation({
             studentId: id,
+            studentName: student?.display_name ?? undefined,
+            studentPhoto: student?.photo_url ?? undefined,
             instructorId: user.id,
             instructorName: user.name,
+            instructorPhoto: user.photo,
             courseId: courseId,
           });
           setConversation(conv);
@@ -155,7 +159,7 @@ export const ConversationView = ({ variant }: Props) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversation?.id]);
+  }, [conversation?.id, conversation?.instructor_id, conversation?.student_id, variant]);
 
   // Cancellation lock: if every booking between this student/instructor (or
   // for this conversation's course) is cancelled, freeze new messages. The
