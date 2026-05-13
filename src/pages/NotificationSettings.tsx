@@ -25,6 +25,17 @@ const inIframe = (() => {
   catch { return true; }
 })();
 
+const isIOSBrowser = (() => {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+})();
+
+const isStandaloneWebApp = (() => {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia?.("(display-mode: standalone)").matches ||
+    ("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
+})();
+
 const NotificationSettings = () => {
   const nav = useNavigate();
   const supported = isPushSupported();
@@ -263,11 +274,21 @@ const NotificationSettings = () => {
           <div className="tactical-card p-4 flex gap-3">
             <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
             <div className="text-sm">
-              <p className="font-bold">Web Push not supported</p>
-              <p className="text-muted-foreground text-xs mt-1">
-                Your browser doesn't support push notifications. On iOS, install this app to your
-                home screen first.
+              <p className="font-bold">
+                {isIOSBrowser && !isStandaloneWebApp ? "Install TacLink to enable Web Push" : "Web Push not supported"}
               </p>
+              <p className="text-muted-foreground text-xs mt-1">
+                {isIOSBrowser && !isStandaloneWebApp
+                  ? "iPhone only allows website push notifications after you add TacLink to your Home Screen and open it from there."
+                  : "This browser doesn't support website push notifications on this device."}
+              </p>
+              {isIOSBrowser && !isStandaloneWebApp && (
+                <ol className="mt-3 space-y-1 text-xs text-muted-foreground list-decimal pl-4">
+                  <li>Tap the browser share button.</li>
+                  <li>Choose Add to Home Screen.</li>
+                  <li>Open TacLink from the new Home Screen icon, then return here.</li>
+                </ol>
+              )}
             </div>
           </div>
         )}
@@ -415,7 +436,9 @@ const NotificationSettings = () => {
             </Button>
             {!enabled && (
               <p className="text-[11px] text-muted-foreground text-center">
-                Enable Web Push above to send a test.
+                {isIOSBrowser && !isStandaloneWebApp
+                  ? "Install TacLink to your Home Screen first, then enable Web Push from the installed app."
+                  : "Enable Web Push above to send a test."}
               </p>
             )}
             {enabled && !deliveryReady && (
