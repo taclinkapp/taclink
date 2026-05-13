@@ -7,7 +7,7 @@ import { type ConversationRow } from "@/lib/messaging";
 import { useIdentity } from "@/hooks/useIdentity";
 import { MessageSquare, ChevronRight } from "lucide-react";
 import { getAvatarSrc } from "@/lib/avatar";
-import { fetchPublicProfileMap } from "@/lib/profilePhotos";
+import { fetchPublicProfileMap, type PublicProfileCard } from "@/lib/profilePhotos";
 
 const formatWhen = (iso: string) => {
   const d = new Date(iso);
@@ -38,7 +38,7 @@ export const Inbox = ({ variant, basePath, TabBar }: Props) => {
   const user = useIdentity();
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profileMap, setProfileMap] = useState<Map<string, { display_name: string | null; photo_url: string | null }>>(new Map());
+  const [profileMap, setProfileMap] = useState<Map<string, PublicProfileCard>>(new Map());
 
   useEffect(() => {
     if (!user) {
