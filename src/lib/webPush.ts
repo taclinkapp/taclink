@@ -123,15 +123,13 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
 };
 
 export const sendTestPush = async (): Promise<{ ok: boolean; error?: string }> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Not signed in" };
-  const { error } = await supabase.from("notifications").insert({
-    recipient_id: user.id,
-    type: "test",
-    title: "Test notification",
-    body: "If you see this, Web Push is working 🎉",
-    link: "/notifications",
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { ok: false, error: "Not signed in" };
+
+  const { data, error } = await supabase.functions.invoke("send-web-push", {
+    body: { test: true },
   });
   if (error) return { ok: false, error: error.message };
+  if (data?.error) return { ok: false, error: data.error };
   return { ok: true };
 };
