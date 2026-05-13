@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { Gift, Shield, Loader2, AlertTriangle, Crosshair } from 'lucide-react';
+import { Gift, Shield, Loader2, AlertTriangle, GraduationCap } from 'lucide-react';
 
 const InviteLanding = () => {
   const { code: rawCode } = useParams<{ code: string }>();
@@ -42,7 +42,7 @@ const InviteLanding = () => {
     };
   }, [code]);
 
-  const goFindMission = () => nav('/welcome');
+  const goFindMission = () => nav(`/auth/student-signup${code ? `?ref=${encodeURIComponent(code)}` : ''}`);
   const goInstructor = () => nav(`/auth/instructor-signup?ref=${encodeURIComponent(code)}`);
 
   return (
@@ -87,7 +87,7 @@ const InviteLanding = () => {
               onClick={goFindMission}
               className="mt-6 h-14 w-full bg-primary text-primary-foreground font-bold uppercase tracking-wider"
             >
-              <Crosshair className="h-5 w-5" /> Find Your Next Mission
+              <GraduationCap className="h-5 w-5" /> Sign Up as a Student
             </Button>
 
             <button
