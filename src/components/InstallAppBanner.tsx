@@ -8,7 +8,7 @@ const HIDDEN_PREFIXES = ["/admin", "/auth", "/welcome", "/unsubscribe", "/i/"];
 const HIDDEN_EXACT = new Set(["/", "/onboarding"]);
 
 export const InstallAppBanner = () => {
-  const { showBanner, dismiss } = useInstallPrompt();
+  const { showBanner, snooze } = useInstallPrompt();
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
 
