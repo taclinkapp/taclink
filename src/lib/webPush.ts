@@ -88,10 +88,11 @@ export const subscribeToPushDetailed = async (): Promise<PushSubscribeResult> =>
     if (sub) {
       const existingKey = sub.options?.applicationServerKey;
       const expected = urlBase64ToUint8Array(await getVapidPublicKey());
-      const existingBytes = existingKey
-        ? existingKey instanceof ArrayBuffer
-          ? new Uint8Array(existingKey)
-          : new Uint8Array(existingKey.buffer, existingKey.byteOffset, existingKey.byteLength)
+      const keySource = existingKey as BufferSource | null | undefined;
+      const existingBytes = keySource
+        ? keySource instanceof ArrayBuffer
+          ? new Uint8Array(keySource)
+          : new Uint8Array(keySource.buffer, keySource.byteOffset, keySource.byteLength)
         : null;
       const matches =
         !!existingBytes &&
