@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Download, X } from "lucide-react";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
@@ -7,16 +7,41 @@ import { InstallAppDialog } from "./InstallAppDialog";
 const HIDDEN_PREFIXES = ["/admin", "/auth", "/welcome", "/unsubscribe", "/i/"];
 const HIDDEN_EXACT = new Set(["/", "/onboarding"]);
 
+const hasPendingTour = () => {
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith('taclink_tour_pending')) return true;
+    }
+  } catch { /* ignore */ }
+  return false;
+};
+
 export const InstallAppBanner = () => {
   const { showBanner, snooze } = useInstallPrompt();
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const [tourBlocking, setTourBlocking] = useState<boolean>(() => hasPendingTour());
+
+  useEffect(() => {
+    const onOpen = () => setTourBlocking(true);
+    const onClosed = () => setTourBlocking(false);
+    const recheck = () => { if (hasPendingTour()) setTourBlocking(true); };
+    window.addEventListener('taclink:tour-open', onOpen);
+    window.addEventListener('taclink:tour-closed', onClosed);
+    const interval = window.setInterval(recheck, 1500);
+    return () => {
+      window.removeEventListener('taclink:tour-open', onOpen);
+      window.removeEventListener('taclink:tour-closed', onClosed);
+      window.clearInterval(interval);
+    };
+  }, []);
 
   const hidden =
     HIDDEN_EXACT.has(pathname) ||
     HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
 
-  if (!showBanner || hidden) return <InstallAppDialog open={open} onOpenChange={setOpen} />;
+  if (!showBanner || hidden || tourBlocking) return <InstallAppDialog open={open} onOpenChange={setOpen} />;
 
   return (
     <>
