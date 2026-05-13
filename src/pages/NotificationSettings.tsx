@@ -298,6 +298,14 @@ const NotificationSettings = () => {
                     <li>Open TacLink from the new Home Screen icon, then return here.</li>
                   </ol>
                   <div className="mt-3 flex flex-wrap gap-2">
+                    <Button size="sm" variant="default" asChild>
+                      <a
+                        href={`x-safari-https://${typeof window !== 'undefined' ? window.location.host : 'taclink.app'}/settings/notifications`}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                        Open in Safari
+                      </a>
+                    </Button>
                     <Button size="sm" variant="outline" asChild>
                       <a href="/settings/notifications" target="_blank" rel="noreferrer">
                         <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
