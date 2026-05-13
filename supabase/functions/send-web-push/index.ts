@@ -13,7 +13,7 @@ const cleanVapidKey = (value: string | undefined, fallback = "") =>
 
 const VAPID_PUBLIC = cleanVapidKey(
   Deno.env.get("VAPID_PUBLIC_KEY"),
-  "BCdiwuBfarxq04NesayCjuSTgLiuH_J8TH4kO-yOtKVnQjIsiW45Xn5HjCOuWRCRbM5BVgS-dXxhz96Nkr3ro_U",
+  "BHsD8tWB_Bpjo3etmVmwbrx2v8vdAmKgUFiKlJyaD8CAWPq_fjrlcCTiIeJ-Dklj8F8dog6Ys2CxaWozxhw3pgg",
 );
 const VAPID_PRIVATE = cleanVapidKey(Deno.env.get("VAPID_PRIVATE_KEY"));
 const rawVapidSubject = Deno.env.get("VAPID_SUBJECT") || "mailto:support@taclink.app";
