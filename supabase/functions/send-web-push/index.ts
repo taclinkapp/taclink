@@ -8,9 +8,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY")!;
-const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY")!;
-const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") || "mailto:support@taclink.app";
+const cleanVapidKey = (value: string | undefined, fallback = "") =>
+  value?.match(/[A-Za-z0-9_-]{40,}/)?.[0] ?? fallback;
+
+const VAPID_PUBLIC = cleanVapidKey(
+  Deno.env.get("VAPID_PUBLIC_KEY"),
+  "BCdiwuBfarxq04NesayCjuSTgLiuH_J8TH4kO-yOtKVnQjIsiW45Xn5HjCOuWRCRbM5BVgS-dXxhz96Nkr3ro_U",
+);
+const VAPID_PRIVATE = cleanVapidKey(Deno.env.get("VAPID_PRIVATE_KEY"));
+const rawVapidSubject = Deno.env.get("VAPID_SUBJECT") || "mailto:support@taclink.app";
+const subjectEmail = rawVapidSubject.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+const VAPID_SUBJECT = subjectEmail
+  ? `mailto:${subjectEmail}`
+  : rawVapidSubject.trim().replace(/[",<>\s]+/g, "") || "mailto:support@taclink.app";
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 
@@ -18,18 +28,37 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { recipient_id, title, body, link, type, notification_id } = await req.json();
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const payloadBody = await req.json();
+    let { recipient_id, title, body, link, type, notification_id, test } = payloadBody;
+
+    if (test === true) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const token = authHeader.replace(/^Bearer\s+/i, "");
+      const { data, error } = token ? await admin.auth.getUser(token) : { data: null, error: new Error("Missing auth token") };
+      if (error || !data?.user) {
+        return new Response(JSON.stringify({ error: "Sign in again to send a test notification" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      recipient_id = data.user.id;
+      title = "Test notification";
+      body = "If you see this, Web Push is working 🎉";
+      link = "/notifications";
+      type = "test";
+    }
+
     if (!recipient_id || !title) {
       return new Response(JSON.stringify({ error: "recipient_id and title required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
 
     const { data: subs, error } = await admin
       .from("push_subscriptions")
