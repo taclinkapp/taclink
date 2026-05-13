@@ -63,7 +63,7 @@ export const WarriorQuoteBackdrop = ({ audience }: Props) => {
 
   if (style === 'banner') {
     return (
-      <div className="px-4 pt-3">
+      <div className="px-4 pt-3" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}>
         <div className="neu-sm px-4 py-3 flex items-start gap-3">
           <div className="text-primary text-lg leading-none mt-0.5">❝</div>
           <div className="flex-1 min-w-0">
