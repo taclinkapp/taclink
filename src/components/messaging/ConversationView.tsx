@@ -19,6 +19,7 @@ import { logBypassAttempt } from "@/lib/bypassLogging";
 import { ContactInfoWarning } from "@/components/ContactInfoWarning";
 import { toast } from "sonner";
 import { fetchPublicProfileCard } from "@/lib/profilePhotos";
+import { getAvatarSrc } from "@/lib/avatar";
 
 type Props = {
   variant: "student" | "instructor";
@@ -44,6 +45,7 @@ export const ConversationView = ({ variant }: Props) => {
   const [sending, setSending] = useState(false);
   const [gateBlocked, setGateBlocked] = useState(false);
   const [cancelledLock, setCancelledLock] = useState<null | 'student' | 'instructor' | 'generic'>(null);
+  const [otherProfile, setOtherProfile] = useState<{ display_name: string | null; photo_url: string | null } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Resolve / create conversation
@@ -80,7 +82,7 @@ export const ConversationView = ({ variant }: Props) => {
           const conv = await ensureConversation({
             studentId: user.id,
             studentName: user.name,
-            studentPhoto: undefined,
+            studentPhoto: user.photo,
             instructorId: id,
             instructorName: instructor?.display_name ?? undefined,
             instructorPhoto: instructor?.photo_url ?? undefined,
@@ -90,10 +92,14 @@ export const ConversationView = ({ variant }: Props) => {
           setConversation(conv);
         } else {
           // instructor opening a thread with a student id directly (no UI for this yet)
+          const student = await fetchPublicProfileCard(id);
           const conv = await ensureConversation({
             studentId: id,
+            studentName: student?.display_name ?? undefined,
+            studentPhoto: student?.photo_url ?? undefined,
             instructorId: user.id,
             instructorName: user.name,
+            instructorPhoto: user.photo,
             courseId: courseId,
           });
           setConversation(conv);
@@ -114,6 +120,8 @@ export const ConversationView = ({ variant }: Props) => {
   // Load messages + subscribe to realtime
   useEffect(() => {
     if (!conversation) return;
+    const otherId = variant === "student" ? conversation.instructor_id : conversation.student_id;
+    fetchPublicProfileCard(otherId).then(setOtherProfile).catch(console.error);
 
     const load = async () => {
       const { data, error } = await supabase
@@ -151,7 +159,7 @@ export const ConversationView = ({ variant }: Props) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversation?.id]);
+  }, [conversation?.id, conversation?.instructor_id, conversation?.student_id, variant]);
 
   // Cancellation lock: if every booking between this student/instructor (or
   // for this conversation's course) is cancelled, freeze new messages. The
@@ -254,9 +262,9 @@ export const ConversationView = ({ variant }: Props) => {
   };
 
   const otherName =
-    variant === "student" ? conversation?.instructor_name : conversation?.student_name;
+    otherProfile?.display_name ?? (variant === "student" ? conversation?.instructor_name : conversation?.student_name);
   const otherPhoto =
-    variant === "student" ? conversation?.instructor_photo : conversation?.student_photo;
+    otherProfile?.photo_url ?? (variant === "student" ? conversation?.instructor_photo : conversation?.student_photo);
 
   if (gateBlocked) {
     return (
@@ -308,7 +316,7 @@ export const ConversationView = ({ variant }: Props) => {
           {!loading && messages.length === 0 && conversation && (
             <div className="text-center py-12">
               <img
-                src={otherPhoto ?? `https://i.pravatar.cc/100?u=${conversation.id}`}
+                src={getAvatarSrc(otherPhoto, otherName)}
                 alt=""
                 className="h-16 w-16 rounded-full mx-auto mb-3 border-2 border-primary"
               />

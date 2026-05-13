@@ -90,7 +90,7 @@ const VerifyEmail = () => {
     }
 
     const role = await resolveVerifiedRole(requestedRole, data.user?.id);
-    const pendingPhoto = role === 'student' ? takePendingStudentSignupPhoto() : null;
+    const pendingPhoto = role === 'student' ? await takePendingStudentSignupPhoto() : null;
     if (pendingPhoto && data.user?.id) {
       try {
         await uploadAndSaveProfilePhoto(data.user.id, pendingPhoto);

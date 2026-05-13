@@ -7,6 +7,7 @@ import { type ConversationRow } from "@/lib/messaging";
 import { useIdentity } from "@/hooks/useIdentity";
 import { MessageSquare, ChevronRight } from "lucide-react";
 import { getAvatarSrc } from "@/lib/avatar";
+import { fetchPublicProfileMap, type PublicProfileCard } from "@/lib/profilePhotos";
 
 const formatWhen = (iso: string) => {
   const d = new Date(iso);
@@ -37,6 +38,7 @@ export const Inbox = ({ variant, basePath, TabBar }: Props) => {
   const user = useIdentity();
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileMap, setProfileMap] = useState<Map<string, PublicProfileCard>>(new Map());
 
   useEffect(() => {
     if (!user) {
@@ -52,7 +54,10 @@ export const Inbox = ({ variant, basePath, TabBar }: Props) => {
         .eq(column, user.id)
         .order("last_message_at", { ascending: false });
       if (error) console.error(error);
-      setConversations((data as ConversationRow[]) ?? []);
+      const rows = ((data as ConversationRow[]) ?? []);
+      setConversations(rows);
+      const ids = rows.map((c) => variant === "student" ? c.instructor_id : c.student_id);
+      fetchPublicProfileMap(ids).then(setProfileMap).catch(console.error);
       setLoading(false);
     };
     load();
@@ -95,8 +100,10 @@ export const Inbox = ({ variant, basePath, TabBar }: Props) => {
         )}
         <div className="space-y-2 mt-2">
           {conversations.map((c) => {
-            const otherName = variant === "student" ? c.instructor_name : c.student_name;
-            const otherPhoto = variant === "student" ? c.instructor_photo : c.student_photo;
+            const otherId = variant === "student" ? c.instructor_id : c.student_id;
+            const liveProfile = profileMap.get(otherId);
+            const otherName = liveProfile?.display_name ?? (variant === "student" ? c.instructor_name : c.student_name);
+            const otherPhoto = liveProfile?.photo_url ?? (variant === "student" ? c.instructor_photo : c.student_photo);
             return (
               <Link
                 key={c.id}

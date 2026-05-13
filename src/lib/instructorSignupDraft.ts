@@ -36,6 +36,16 @@ export type InstructorSignupDraft = {
   authAccountCreated?: boolean;
 };
 
+const dataUrlToFile = async (dataUrl: string, name: string): Promise<File | undefined> => {
+  try {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], name, { type: blob.type || 'image/jpeg' });
+  } catch {
+    return undefined;
+  }
+};
+
 // Files are kept separately because they aren't serializable.
 type FileSlots = {
   photo?: File;
@@ -66,6 +76,29 @@ const writePersisted = (draft: InstructorSignupDraft) => {
   } catch {}
 };
 
+export const persistInstructorPhotoForVerification = (photo: File | undefined): Promise<void> => {
+  if (!isBrowser() || !photo) return Promise.resolve();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try { sessionStorage.setItem(`${STORAGE_KEY}:photo`, String(reader.result)); } catch {}
+      resolve();
+    };
+    reader.onerror = () => resolve();
+    reader.readAsDataURL(photo);
+  });
+};
+
+export const restoreInstructorPhotoAfterVerification = async (): Promise<File | undefined> => {
+  if (fileSlots.photo) return fileSlots.photo;
+  if (!isBrowser()) return undefined;
+  const dataUrl = sessionStorage.getItem(`${STORAGE_KEY}:photo`);
+  if (!dataUrl) return undefined;
+  const file = await dataUrlToFile(dataUrl, 'avatar.jpg');
+  if (file) fileSlots.photo = file;
+  return file;
+};
+
 export const setInstructorDraft = (next: InstructorSignupDraft) => {
   fileSlots = { photo: next.photo, credentialFile: next.credentialFile };
   writePersisted(next);
@@ -94,6 +127,7 @@ export const clearInstructorDraft = () => {
   fileSlots = {};
   if (isBrowser()) {
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    try { sessionStorage.removeItem(`${STORAGE_KEY}:photo`); } catch {}
   }
 };
 
