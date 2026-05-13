@@ -8,8 +8,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY")!;
-const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY")!;
+const cleanVapidKey = (value: string | undefined, fallback = "") =>
+  value?.match(/[A-Za-z0-9_-]{40,}/)?.[0] ?? fallback;
+
+const VAPID_PUBLIC = cleanVapidKey(
+  Deno.env.get("VAPID_PUBLIC_KEY"),
+  "BCdiwuBfarxq04NesayCjuSTgLiuH_J8TH4kO-yOtKVnQjIsiW45Xn5HjCOuWRCRbM5BVgS-dXxhz96Nkr3ro_U",
+);
+const VAPID_PRIVATE = cleanVapidKey(Deno.env.get("VAPID_PRIVATE_KEY"));
 const rawVapidSubject = Deno.env.get("VAPID_SUBJECT") || "mailto:support@taclink.app";
 const subjectEmail = rawVapidSubject.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
 const VAPID_SUBJECT = subjectEmail
