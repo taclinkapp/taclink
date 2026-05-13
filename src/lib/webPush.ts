@@ -1,9 +1,28 @@
 // Client helpers to register the push service worker and subscribe the user.
 import { supabase } from "@/integrations/supabase/client";
 
-// Public VAPID key (safe to ship to the client).
-export const VAPID_PUBLIC_KEY =
+// Fallback public VAPID key (safe to ship to the client). The active key is
+// fetched from the backend so client subscriptions always match server sends.
+const FALLBACK_VAPID_PUBLIC_KEY =
   "BHsD8tWB_Bpjo3etmVmwbrx2v8vdAmKgUFiKlJyaD8CAWPq_fjrlcCTiIeJ-Dklj8F8dog6Ys2CxaWozxhw3pgg";
+
+let cachedVapidPublicKey: string | null = null;
+
+const getVapidPublicKey = async (): Promise<string> => {
+  if (cachedVapidPublicKey) return cachedVapidPublicKey;
+  try {
+    const { data, error } = await supabase.functions.invoke("send-web-push", {
+      body: { action: "vapid-public-key" },
+    });
+    if (!error && typeof data?.publicKey === "string" && data.publicKey.length > 40) {
+      cachedVapidPublicKey = data.publicKey;
+      return cachedVapidPublicKey;
+    }
+  } catch (e) {
+    console.warn("[push] failed to fetch active VAPID public key", e);
+  }
+  return FALLBACK_VAPID_PUBLIC_KEY;
+};
 
 export const isPushSupported = (): boolean =>
   typeof window !== "undefined" &&
@@ -68,11 +87,17 @@ export const subscribeToPushDetailed = async (): Promise<PushSubscribeResult> =>
     // If existing subscription was created with a different VAPID key, drop it and re-subscribe.
     if (sub) {
       const existingKey = sub.options?.applicationServerKey;
-      const expected = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      const expected = urlBase64ToUint8Array(await getVapidPublicKey());
+      const keySource = existingKey as BufferSource | null | undefined;
+      const existingBytes = keySource
+        ? keySource instanceof ArrayBuffer
+          ? new Uint8Array(keySource)
+          : new Uint8Array(keySource.buffer, keySource.byteOffset, keySource.byteLength)
+        : null;
       const matches =
-        existingKey instanceof ArrayBuffer &&
-        new Uint8Array(existingKey).length === expected.length &&
-        new Uint8Array(existingKey).every((b, i) => b === expected[i]);
+        !!existingBytes &&
+        existingBytes.length === expected.length &&
+        existingBytes.every((b, i) => b === expected[i]);
       if (!matches) {
         try {
           const oldEndpoint = sub.endpoint;
@@ -87,7 +112,7 @@ export const subscribeToPushDetailed = async (): Promise<PushSubscribeResult> =>
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+        applicationServerKey: urlBase64ToUint8Array(await getVapidPublicKey()) as BufferSource,
       });
     }
 
