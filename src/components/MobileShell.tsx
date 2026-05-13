@@ -23,7 +23,6 @@ export const PageHeader = ({
   title,
   brand,
   right,
-  center,
   back,
   onBack,
   backTo,
@@ -31,8 +30,6 @@ export const PageHeader = ({
   title?: string;
   brand?: boolean;
   right?: ReactNode;
-  /** Optional middle slot rendered between the brand/title and the right slot. */
-  center?: ReactNode;
   back?: boolean;
   onBack?: () => void;
   /** Explicit destination for the back button. Strongly preferred over relying on history. */
@@ -56,8 +53,8 @@ export const PageHeader = ({
     className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border"
     style={{ paddingTop: 'env(safe-area-inset-top)' }}
   >
-    <div className="flex items-center justify-between px-4 h-14 gap-2">
-      <div className="flex items-center gap-3 min-w-0 shrink-0">
+    <div className="flex items-center justify-between px-4 h-14">
+      <div className="flex items-center gap-3 min-w-0">
         {back && (
           <button
             onClick={handleBack}
@@ -73,8 +70,7 @@ export const PageHeader = ({
           title && <h1 className="text-base font-bold tracking-tight truncate">{title}</h1>
         )}
       </div>
-      {center && <div className="flex-1 min-w-0">{center}</div>}
-      <div className="shrink-0">{right}</div>
+      <div>{right}</div>
     </div>
   </header>
   );
