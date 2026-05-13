@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, BellOff, Send, Loader2, AlertCircle, ShieldOff, Copy, ExternalLink, RefreshCw } from "lucide-react";
+import { Bell, BellOff, Send, Loader2, AlertCircle, ShieldOff, Copy, ExternalLink, RefreshCw, Smartphone, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,8 @@ import {
   unsubscribeFromPush,
   sendTestPush,
 } from "@/lib/webPush";
+import { InstallAppDialog } from "@/components/InstallAppDialog";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
 const inIframe = (() => {
   try { return typeof window !== "undefined" && window.self !== window.top; }
