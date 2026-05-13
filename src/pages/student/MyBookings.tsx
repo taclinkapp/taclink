@@ -12,6 +12,7 @@ import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { fetchPublicProfileMap } from '@/lib/profilePhotos';
 
 type BookingItem = {
   id: string;
@@ -65,15 +66,12 @@ const MyBookings = () => {
       const instructorIds = Array.from(new Set(rows.map((r) => r.course?.instructor_id).filter(Boolean)));
       const courseIds = Array.from(new Set(rows.map((r) => r.course?.id).filter(Boolean)));
 
-      const [{ data: profiles }, { data: reviews }] = await Promise.all([
-        instructorIds.length
-          ? supabase.from('profiles').select('id, display_name, photo_url').in('id', instructorIds)
-          : Promise.resolve({ data: [] as any[] }),
+      const [profileMap, { data: reviews }] = await Promise.all([
+        fetchPublicProfileMap(instructorIds),
         courseIds.length
           ? supabase.from('reviews').select('course_id').eq('student_id', user.id).in('course_id', courseIds)
           : Promise.resolve({ data: [] as any[] }),
       ]);
-      const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
       const reviewedSet = new Set((reviews ?? []).map((r: any) => r.course_id));
 
       const items: BookingItem[] = rows.map((r) => {

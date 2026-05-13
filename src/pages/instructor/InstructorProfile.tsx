@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useInstructorCourses } from '@/hooks/useCourses';
 import { supabase } from '@/integrations/supabase/client';
 import { getAvatarSrc } from '@/lib/avatar';
+import { fetchPublicProfileMap } from '@/lib/profilePhotos';
 
 const InstructorProfile = () => {
   const nav = useNavigate();
@@ -50,15 +51,16 @@ const InstructorProfile = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('reviews')
-        .select('id, rating, comment, created_at, student_id, profiles:student_id(display_name, photo_url)')
+        .select('id, rating, comment, created_at, student_id')
         .eq('instructor_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw error;
+      const profileMap = await fetchPublicProfileMap((data ?? []).map((r: any) => r.student_id));
       return (data ?? []).map((r: any) => ({
         id: r.id,
-        studentName: r.profiles?.display_name ?? 'Student',
-        studentPhoto: r.profiles?.photo_url ?? '',
+        studentName: profileMap.get(r.student_id)?.display_name ?? 'Student',
+        studentPhoto: profileMap.get(r.student_id)?.photo_url ?? '',
         rating: r.rating,
         comment: r.comment ?? '',
         date: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),

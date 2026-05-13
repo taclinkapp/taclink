@@ -11,7 +11,6 @@ import { Logo } from '@/components/Logo';
 import { Camera, Loader2, Gift } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES } from '@/lib/mockData';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
@@ -107,20 +106,6 @@ const InstructorSignUp = () => {
   const onAdjusted = (file: File) => {
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
-  };
-
-  const uploadPhotoIfAny = async (userId: string) => {
-    if (!photoFile) return;
-    try {
-      const ext = photoFile.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const path = `${userId}/avatar-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, photoFile, { contentType: photoFile.type, upsert: false });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
-      await supabase.from('profiles').update({ photo_url: pub.publicUrl }).eq('id', userId);
-    } catch (e: any) {
-      toast.error('Photo upload failed', { description: e?.message });
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

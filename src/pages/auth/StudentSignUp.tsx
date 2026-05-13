@@ -19,6 +19,7 @@ import { homeForRole, useAuth } from '@/contexts/AuthContext';
 import { requestFounderBio } from '@/components/FounderBioModal';
 import { requestCrashCourseTour } from '@/components/CrashCourseTour';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { rememberPendingStudentSignupPhoto, uploadAndSaveProfilePhoto } from '@/lib/profilePhotos';
 
 
 const StudentSignUp = () => {
@@ -61,12 +62,7 @@ const StudentSignUp = () => {
   const uploadPhotoIfAny = async (userId: string) => {
     if (!photoFile) return;
     try {
-      const ext = photoFile.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const path = `${userId}/avatar-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, photoFile, { contentType: photoFile.type, upsert: false });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
-      await supabase.from('profiles').update({ photo_url: pub.publicUrl }).eq('id', userId);
+      await uploadAndSaveProfilePhoto(userId, photoFile);
     } catch (e: any) {
       toast.error('Photo upload failed', { description: e?.message });
     }
@@ -115,6 +111,7 @@ const StudentSignUp = () => {
     // If email confirmation is required, signUp returns no session. We MUST NOT
     // navigate the user into /student — keep them on the in-app code screen.
     if (!signUpData.session) {
+      rememberPendingStudentSignupPhoto(photoFile);
       setLoading(false);
       logSignupRedirect({ role: 'student', intendedPath: '/auth/verify-email', status: 'redirected', email });
       requestFounderBio(); // pop the bio after they confirm + sign in

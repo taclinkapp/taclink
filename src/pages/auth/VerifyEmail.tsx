@@ -9,6 +9,7 @@ import { homeForRole, useAuth, type AppRole } from '@/contexts/AuthContext';
 import { requestFounderBio } from '@/components/FounderBioModal';
 import { requestCrashCourseTour } from '@/components/CrashCourseTour';
 import { toast } from 'sonner';
+import { takePendingStudentSignupPhoto, uploadAndSaveProfilePhoto } from '@/lib/profilePhotos';
 
 const COOLDOWN_SECONDS = 30;
 const CODE_MIN_LENGTH = 6;
@@ -21,7 +22,7 @@ const VerifyEmail = () => {
   const emailParam = params.get('email') ?? '';
   const roleParam = params.get('role');
   const requestedRole = roleParam === 'instructor' || roleParam === 'student' ? roleParam : null;
-  const { user, primaryRole, loading } = useAuth();
+  const { user, primaryRole, loading, refreshProfile } = useAuth();
   const [email, setEmail] = useState(emailParam);
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
@@ -89,6 +90,15 @@ const VerifyEmail = () => {
     }
 
     const role = await resolveVerifiedRole(requestedRole, data.user?.id);
+    const pendingPhoto = role === 'student' ? takePendingStudentSignupPhoto() : null;
+    if (pendingPhoto && data.user?.id) {
+      try {
+        await uploadAndSaveProfilePhoto(data.user.id, pendingPhoto);
+        await refreshProfile();
+      } catch (photoError: any) {
+        toast.error('Photo upload failed', { description: photoError?.message });
+      }
+    }
     requestFounderBio();
     if (role === 'instructor' || role === 'student') requestCrashCourseTour(role);
     toast.success('Email confirmed');

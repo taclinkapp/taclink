@@ -17,6 +17,7 @@ import {
 import { requestFounderBio } from '@/components/FounderBioModal';
 import { requestCrashCourseTour } from '@/components/CrashCourseTour';
 import { logSignupRedirect } from '@/lib/signupLogging';
+import { uploadAndSaveProfilePhoto } from '@/lib/profilePhotos';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const POLICY_VERSION = 'v1.0';
@@ -119,16 +120,7 @@ const InstructorPolicyStep = () => {
     // toast and let the in-app onboarding gate guide the user to fix them.
     try {
       if (draft.photo) {
-        const photo = draft.photo;
-        const ext = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-        const path = `${userId}/avatar-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from('profile-photos')
-          .upload(path, photo, { contentType: photo.type, upsert: false });
-        if (!upErr) {
-          const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
-          await supabase.from('profiles').update({ photo_url: pub.publicUrl }).eq('id', userId);
-        }
+        await uploadAndSaveProfilePhoto(userId, draft.photo);
       }
     } catch (err) {
       console.error('Photo upload failed', err);

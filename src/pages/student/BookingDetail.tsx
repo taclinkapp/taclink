@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import { paymentEnvironment } from '@/lib/paymentEnv';
 import { getAvatarSrc } from '@/lib/avatar';
+import { fetchPublicProfileCard } from '@/lib/profilePhotos';
 
 type DepositStatus = 'not_required' | 'pending_payment' | 'held_in_escrow' | 'released' | 'refunded' | 'pending_send' | 'awaiting_confirmation' | 'confirmed' | 'expired';
 
@@ -114,12 +115,8 @@ const BookingDetail = () => {
         .maybeSingle();
       setC((course as CourseRow) ?? null);
       if (course?.instructor_id) {
-        const { data: inst } = await supabase
-          .from('profiles')
-          .select('id, display_name, photo_url')
-          .eq('id', course.instructor_id)
-          .maybeSingle();
-        setInstructor(inst as any);
+        const inst = await fetchPublicProfileCard(course.instructor_id);
+        setInstructor(inst);
       }
       if (row.status === 'reserved' && (row.deposit_status === 'held_in_escrow' || row.deposit_status === 'confirmed')) {
         fetchSignedToken(row.id);

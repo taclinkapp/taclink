@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { getAvatarSrc } from '@/lib/avatar';
+import { fetchPublicProfileMap } from '@/lib/profilePhotos';
 
 type Review = {
   id: string;
@@ -63,16 +64,13 @@ const InstructorReviews = () => {
       const list = rs ?? [];
       const courseIds = Array.from(new Set(list.map((r) => r.course_id)));
       const studentIds = Array.from(new Set(list.map((r) => r.student_id)));
-      const [{ data: courses }, { data: profs }] = await Promise.all([
+      const [{ data: courses }, pMap] = await Promise.all([
         courseIds.length
           ? supabase.from('courses').select('id, title').in('id', courseIds)
           : Promise.resolve({ data: [] as any[] }),
-        studentIds.length
-          ? supabase.from('profiles').select('id, display_name, photo_url').in('id', studentIds)
-          : Promise.resolve({ data: [] as any[] }),
+        fetchPublicProfileMap(studentIds),
       ]);
       const cMap = new Map((courses ?? []).map((c: any) => [c.id, c.title]));
-      const pMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
       const enriched: Review[] = list.map((r: any) => ({
         ...r,
         courseTitle: cMap.get(r.course_id) ?? 'Course',
