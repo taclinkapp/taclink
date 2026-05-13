@@ -264,6 +264,8 @@ const NotificationSettings = () => {
     }
   };
 
+  const handleEnablePush = () => handleToggle(true);
+
   const handleTest = async () => {
     setTesting(true);
     const res = await sendTestPush();
@@ -351,7 +353,7 @@ const NotificationSettings = () => {
           </h3>
           <div className="tactical-card divide-y divide-border">
             <div className="px-4 py-3.5 flex items-center justify-between">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 min-w-0 pr-3">
                 {enabled ? (
                   <Bell className="h-4 w-4 text-primary mt-0.5" />
                 ) : (
@@ -370,6 +372,11 @@ const NotificationSettings = () => {
               </div>
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              ) : !enabled && permission !== "denied" ? (
+                <Button size="sm" onClick={handleEnablePush} disabled={!supported || busy}>
+                  {busy ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Bell className="h-3.5 w-3.5 mr-1.5" />}
+                  Enable
+                </Button>
               ) : (
                 <Switch
                   checked={enabled}
