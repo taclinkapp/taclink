@@ -23,6 +23,7 @@ export const PageHeader = ({
   title,
   brand,
   right,
+  center,
   back,
   onBack,
   backTo,
@@ -30,6 +31,8 @@ export const PageHeader = ({
   title?: string;
   brand?: boolean;
   right?: ReactNode;
+  /** Optional middle slot rendered between the brand/title and the right slot. */
+  center?: ReactNode;
   back?: boolean;
   onBack?: () => void;
   /** Explicit destination for the back button. Strongly preferred over relying on history. */
