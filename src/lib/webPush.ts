@@ -65,6 +65,25 @@ export const subscribeToPushDetailed = async (): Promise<PushSubscribeResult> =>
     if (!reg) return { ok: false, reason: "registration" };
 
     let sub = await reg.pushManager.getSubscription();
+    // If existing subscription was created with a different VAPID key, drop it and re-subscribe.
+    if (sub) {
+      const existingKey = sub.options?.applicationServerKey;
+      const expected = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      const matches =
+        existingKey instanceof ArrayBuffer &&
+        new Uint8Array(existingKey).length === expected.length &&
+        new Uint8Array(existingKey).every((b, i) => b === expected[i]);
+      if (!matches) {
+        try {
+          const oldEndpoint = sub.endpoint;
+          await sub.unsubscribe();
+          await supabase.from("push_subscriptions").delete().eq("endpoint", oldEndpoint);
+        } catch (e) {
+          console.warn("[push] failed to drop stale subscription", e);
+        }
+        sub = null;
+      }
+    }
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
