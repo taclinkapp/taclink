@@ -33,7 +33,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const payloadBody = await req.json();
+    let payloadBody: any = {};
+    try { payloadBody = await req.json(); } catch { payloadBody = {}; }
+
+    if (payloadBody?.action === "vapid-public-key") {
+      return new Response(JSON.stringify({ ok: true, publicKey: VAPID_PUBLIC }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     let { recipient_id, title, body, link, type, notification_id, test } = payloadBody;
 
     if (test === true) {
