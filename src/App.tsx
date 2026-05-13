@@ -107,6 +107,7 @@ import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
 
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
+import { InstallAppBanner } from "./components/InstallAppBanner";
 import { InstructorOnboardingGate } from "./components/InstructorOnboardingGate";
 import { MissionCompleteWatcher } from "./components/operator/MissionCompleteWatcher";
 
