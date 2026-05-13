@@ -11,11 +11,7 @@ const Welcome = () => {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-background overflow-hidden">
-      <video
-        src={splashBg.url}
-        autoPlay loop muted playsInline aria-hidden
-        className="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
-      />
+      <DeferredBackgroundVideo src={splashBg.url} className="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none" />
       <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
 
       <div className="relative z-10 flex-1 flex flex-col px-6 pt-16 pb-10 max-w-md w-full mx-auto">

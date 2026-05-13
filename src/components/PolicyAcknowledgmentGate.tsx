@@ -88,11 +88,7 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
   if (status === "needs_ack") {
     return (
       <div className="relative min-h-screen bg-background flex items-center justify-center px-6 py-10 overflow-hidden">
-        <video
-          src={splashBg.url}
-          autoPlay loop muted playsInline aria-hidden
-          className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none"
-        />
+        <DeferredBackgroundVideo src={splashBg.url} className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none" />
         <div aria-hidden className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background pointer-events-none" />
         <div className="relative z-10 max-w-md w-full bg-card border border-border rounded-2xl p-6 space-y-5">
           {isInstructor && <InstructorOnboardingProgress current="policy" />}
