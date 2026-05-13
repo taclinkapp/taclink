@@ -145,10 +145,19 @@ export const sendTestPush = async (): Promise<{ ok: boolean; error?: string }> =
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return { ok: false, error: "Not signed in" };
 
+  const setup = await subscribeToPushDetailed();
+  if (!setup.ok) {
+    return {
+      ok: false,
+      error: setup.error || "Push delivery is not ready. Turn Web Push off, then on again.",
+    };
+  }
+
   const { data, error } = await supabase.functions.invoke("send-web-push", {
     body: { test: true },
   });
   if (error) return { ok: false, error: error.message };
   if (data?.error) return { ok: false, error: data.error };
+  if (!data?.sent) return { ok: false, error: "No notification was delivered. Turn Web Push off, then on again." };
   return { ok: true };
 };
