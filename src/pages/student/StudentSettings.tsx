@@ -38,6 +38,10 @@ const StudentSettings = () => {
           <Row label="Edit Profile" onClick={() => nav('/profile/edit')} />
           <Row label="Change Password" onClick={() => nav('/auth/change-password')} />
           <Row label="Notifications" onClick={() => nav('/settings/notifications')} />
+          <button onClick={() => setInstallOpen(true)} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
+            <span className="text-sm font-medium flex items-center gap-2"><Download className="h-4 w-4 text-primary" />Install App</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
           <Row label="Payment Methods" onClick={() => nav('/student/payment-methods')} />
         </Section>
 
