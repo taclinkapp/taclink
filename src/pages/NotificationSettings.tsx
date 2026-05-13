@@ -36,6 +36,12 @@ const isStandaloneWebApp = (() => {
     ("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
 })();
 
+const isIOSSafariBrowser = (() => {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+})();
+
 const NotificationSettings = () => {
   const nav = useNavigate();
   const supported = isPushSupported();
@@ -180,7 +186,7 @@ const NotificationSettings = () => {
 
   const copySiteUrl = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.origin);
+      await navigator.clipboard.writeText(`${window.location.origin}/settings/notifications`);
       toast.success("Site URL copied");
     } catch {
       toast.error("Could not copy URL");
@@ -283,11 +289,27 @@ const NotificationSettings = () => {
                   : "This browser doesn't support website push notifications on this device."}
               </p>
               {isIOSBrowser && !isStandaloneWebApp && (
-                <ol className="mt-3 space-y-1 text-xs text-muted-foreground list-decimal pl-4">
-                  <li>Tap the browser share button.</li>
-                  <li>Choose Add to Home Screen.</li>
-                  <li>Open TacLink from the new Home Screen icon, then return here.</li>
-                </ol>
+                <>
+                  <ol className="mt-3 space-y-1 text-xs text-muted-foreground list-decimal pl-4">
+                    {!isIOSSafariBrowser && <li>Open this page in the Safari app first.</li>}
+                    <li>Tap Safari's share button.</li>
+                    <li>Scroll down and choose Add to Home Screen.</li>
+                    <li>If it is missing, tap Edit Actions and enable Add to Home Screen, or paste this link directly into Safari.</li>
+                    <li>Open TacLink from the new Home Screen icon, then return here.</li>
+                  </ol>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" asChild>
+                      <a href="/settings/notifications" target="_blank" rel="noreferrer">
+                        <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                        Open full site
+                      </a>
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={copySiteUrl}>
+                      <Copy className="h-3.5 w-3.5 mr-1.5" />
+                      Copy link
+                    </Button>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -437,7 +459,7 @@ const NotificationSettings = () => {
             {!enabled && (
               <p className="text-[11px] text-muted-foreground text-center">
                 {isIOSBrowser && !isStandaloneWebApp
-                  ? "Install TacLink to your Home Screen first, then enable Web Push from the installed app."
+                  ? "Open this page in Safari, add TacLink to your Home Screen, then enable Web Push from the installed app."
                   : "Enable Web Push above to send a test."}
               </p>
             )}
