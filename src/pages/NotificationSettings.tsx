@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MobileShell, PageHeader } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, BellOff, Send, Loader2, AlertCircle, ShieldOff, Copy, ExternalLink, RefreshCw } from "lucide-react";
+import { Bell, BellOff, Send, Loader2, AlertCircle, ShieldOff, Copy, ExternalLink, RefreshCw, Smartphone, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,8 @@ import {
   unsubscribeFromPush,
   sendTestPush,
 } from "@/lib/webPush";
+import { InstallAppDialog } from "@/components/InstallAppDialog";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
 const inIframe = (() => {
   try { return typeof window !== "undefined" && window.self !== window.top; }
@@ -55,6 +57,8 @@ const NotificationSettings = () => {
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
+  const { installed: appInstalled, canShow: canInstall } = useInstallPrompt();
   const [checking, setChecking] = useState(false);
 
   // Reconcile UI state with the live browser permission. If the user has
@@ -485,7 +489,38 @@ const NotificationSettings = () => {
             )}
           </div>
         </div>
+
+        {(canInstall || appInstalled) && (
+          <div>
+            <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2 px-1">
+              Install app
+            </h3>
+            <div className="tactical-card px-4 py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <Smartphone className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {appInstalled ? "TacLink is installed" : "Add TacLink to your home screen"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {appInstalled
+                      ? "You're using the installed app — push notifications can be delivered."
+                      : "Opens like an app and unlocks push notifications on iPhone."}
+                  </p>
+                </div>
+              </div>
+              {!appInstalled && (
+                <Button size="sm" variant="outline" onClick={() => setInstallOpen(true)}>
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Show steps
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      <InstallAppDialog open={installOpen} onOpenChange={setInstallOpen} />
 
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
         <DialogContent className="max-w-md">
