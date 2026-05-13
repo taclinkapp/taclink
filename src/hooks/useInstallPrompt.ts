@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 export type InstallPlatform = "ios-safari" | "ios-other" | "android-chrome" | "android-other" | "desktop" | "unknown";
 
 const DISMISS_KEY = "install-prompt-dismissed-at";
+const DISMISS_UNTIL_KEY = "install-prompt-snooze-until";
 const DISMISS_DAYS = 7;
 
 interface BeforeInstallPromptEvent extends Event {
@@ -41,6 +42,8 @@ export const useInstallPrompt = () => {
   const [bip, setBip] = useState<BeforeInstallPromptEvent | null>(null);
   const [recentlyDismissed, setRecentlyDismissed] = useState<boolean>(() => {
     if (typeof localStorage === "undefined") return false;
+    const until = Number(localStorage.getItem(DISMISS_UNTIL_KEY));
+    if (Number.isFinite(until) && until > Date.now()) return true;
     const raw = localStorage.getItem(DISMISS_KEY);
     if (!raw) return false;
     const ts = Number(raw);
@@ -75,8 +78,17 @@ export const useInstallPrompt = () => {
     setRecentlyDismissed(true);
   }, []);
 
+  const snooze = useCallback((days = 3) => {
+    const until = Date.now() + days * 24 * 60 * 60 * 1000;
+    try { localStorage.setItem(DISMISS_UNTIL_KEY, String(until)); } catch { /* ignore */ }
+    setRecentlyDismissed(true);
+  }, []);
+
   const reset = useCallback(() => {
-    try { localStorage.removeItem(DISMISS_KEY); } catch { /* ignore */ }
+    try {
+      localStorage.removeItem(DISMISS_KEY);
+      localStorage.removeItem(DISMISS_UNTIL_KEY);
+    } catch { /* ignore */ }
     setRecentlyDismissed(false);
   }, []);
 
@@ -92,6 +104,7 @@ export const useInstallPrompt = () => {
     hasNativePrompt: !!bip,
     triggerNativePrompt,
     dismiss,
+    snooze,
     reset,
   };
 };
