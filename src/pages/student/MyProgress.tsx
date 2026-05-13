@@ -9,6 +9,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMyProgress } from "@/hooks/useMyProgress";
 import { Award, Calendar, MapPin, Target, TrendingUp, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { safeAreaTopStyle } from "@/components/SafeAreaTop";
+
+/** Tweak this if a specific iPhone model needs more/less breathing room. */
+const MY_PROGRESS_HEADER_TOP_OFFSET = 4;
 
 const StatCard = ({
   icon: Icon,
@@ -40,7 +44,7 @@ const MyProgress = () => {
     <MobileShell>
       <header
         className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border"
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        style={safeAreaTopStyle(MY_PROGRESS_HEADER_TOP_OFFSET)}
       >
         <div className="px-4 h-14 grid grid-cols-[auto_1fr_auto] items-center gap-3">
           <Logo showTagline className="h-7 w-auto" />
