@@ -69,14 +69,6 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
     setStatus("ok");
   };
 
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen grid place-items-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   useEffect(() => {
     if (status !== "needs_ack") return;
     window.dispatchEvent(new CustomEvent("taclink:policy-gate-open"));
@@ -84,6 +76,14 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
       window.dispatchEvent(new CustomEvent("taclink:policy-gate-closed"));
     };
   }, [status]);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (status === "needs_ack") {
     return (
