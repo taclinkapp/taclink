@@ -12,6 +12,7 @@ import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
 import { AttendanceClaimButton } from '@/components/instructor/AttendanceClaimButton';
 import { TaclinkScoreBadge } from '@/components/operator/TaclinkScoreBadge';
 import { getAvatarSrc } from '@/lib/avatar';
+import { fetchPublicProfileMap } from '@/lib/profilePhotos';
 
 type BookingStatus = 'reserved' | 'attended' | 'cancelled' | 'no_show';
 
@@ -223,14 +224,8 @@ const InstructorRoster = () => {
         .in('course_id', courseIds)
         .order('booked_at', { ascending: false });
       const studentIds = Array.from(new Set((bookings ?? []).map((b) => b.student_id)));
-      const { data: profiles } = studentIds.length
-        ? await supabase
-            .from('profiles')
-            .select('id, display_name, photo_url')
-            .in('id', studentIds)
-        : { data: [] as any[] };
+      const profileMap = await fetchPublicProfileMap(studentIds);
       const courseMap = new Map((courses ?? []).map((c) => [c.id, c]));
-      const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
       const result: RosterRow[] = (bookings ?? []).map((b: any) => {
         const c = courseMap.get(b.course_id);
         const p = profileMap.get(b.student_id);
