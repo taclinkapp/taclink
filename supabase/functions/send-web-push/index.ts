@@ -18,7 +18,31 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { recipient_id, title, body, link, type, notification_id } = await req.json();
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const payloadBody = await req.json();
+    let { recipient_id, title, body, link, type, notification_id, test } = payloadBody;
+
+    if (test === true) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const token = authHeader.replace(/^Bearer\s+/i, "");
+      const { data, error } = token ? await admin.auth.getUser(token) : { data: null, error: new Error("Missing auth token") };
+      if (error || !data?.user) {
+        return new Response(JSON.stringify({ error: "Sign in again to send a test notification" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      recipient_id = data.user.id;
+      title = "Test notification";
+      body = "If you see this, Web Push is working 🎉";
+      link = "/notifications";
+      type = "test";
+    }
+
     if (!recipient_id || !title) {
       return new Response(JSON.stringify({ error: "recipient_id and title required" }), {
         status: 400,
@@ -26,10 +50,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    if (test === true) {
+      await admin.from("notifications").insert({
+        recipient_id,
+        type,
+        title,
+        body,
+        link,
+      });
+    }
 
     const { data: subs, error } = await admin
       .from("push_subscriptions")
