@@ -113,7 +113,7 @@ const StudentSignUp = () => {
     // If email confirmation is required, signUp returns no session. We MUST NOT
     // navigate the user into /student — keep them on the in-app code screen.
     if (!signUpData.session) {
-      rememberPendingStudentSignupPhoto(photoFile);
+      await rememberPendingStudentSignupPhoto(photoFile);
       setLoading(false);
       logSignupRedirect({ role: 'student', intendedPath: '/auth/verify-email', status: 'redirected', email });
       requestFounderBio(); // pop the bio after they confirm + sign in
