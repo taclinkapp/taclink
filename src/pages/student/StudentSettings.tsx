@@ -86,6 +86,7 @@ const StudentSettings = () => {
         </div>
       </div>
       <DeleteAccountDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
+      <InstallAppDialog open={installOpen} onOpenChange={setInstallOpen} />
       <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <CrashCourseTour role="student" open={tourOpen} onClose={() => setTourOpen(false)} />
