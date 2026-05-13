@@ -5,6 +5,7 @@ import { CountdownClock } from '@/components/CountdownClock';
 import { GraduationCap, Loader2, Shield } from 'lucide-react';
 import { homeForRole, useAuth } from '@/contexts/AuthContext';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 
 const Splash = () => {
   const nav = useNavigate();
@@ -24,14 +25,9 @@ const Splash = () => {
 
   return (
     <div className="relative min-h-screen bg-background flex flex-col overflow-hidden">
-      {/* Ambient background video */}
-      <video
+      {/* Ambient background video — deferred so it doesn't block initial load */}
+      <DeferredBackgroundVideo
         src={splashBg.url}
-        autoPlay
-        loop
-        muted
-        playsInline
-        aria-hidden
         className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
       />
       {/* Readability overlay */}
