@@ -24,6 +24,7 @@ import { setInstructorDraft, getInstructorDraft, updateInstructorDraft, hasInstr
 import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import { homeForRole, useAuth } from '@/contexts/AuthContext';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { compressImageFile } from '@/lib/imageCompression';
 
 const InstructorSignUp = () => {
   const nav = useNavigate();
@@ -91,15 +92,16 @@ const InstructorSignUp = () => {
     return () => clearTimeout(timer);
   }, [first, last, email, password, state, bio, referralCode, influencerSlug, photoFile]);
 
-  const onPickPhoto = (f: File | null | undefined) => {
+  const onPickPhoto = async (f: File | null | undefined) => {
     if (!f) return;
-    if (!['image/jpeg','image/png','image/webp'].includes(f.type)) {
+    if (!/^image\/(jpeg|png|webp|heic|heif)$/i.test(f.type)) {
       toast.error('Photo must be JPG, PNG, or WEBP'); return;
     }
-    if (f.size > 5 * 1024 * 1024) {
-      toast.error('Photo must be 5MB or smaller'); return;
+    if (f.size > 25 * 1024 * 1024) {
+      toast.error('Photo must be 25MB or smaller'); return;
     }
-    setRawPhoto(f);
+    const compressed = await compressImageFile(f);
+    setRawPhoto(compressed);
     setAdjusterOpen(true);
   };
 

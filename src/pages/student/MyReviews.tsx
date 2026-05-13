@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { compressImageFile } from '@/lib/imageCompression';
 
 const MyReviews = () => {
   const nav = useNavigate();
@@ -138,13 +139,14 @@ const ReviewDialog = ({ booking, onClose }: { booking: ReviewableBooking; onClos
   const [liked, setLiked] = useState('');
   const [improve, setImprove] = useState('');
 
-  const handleFile = async (file: File) => {
+  const handleFile = async (rawFile: File) => {
     if (!user) return;
-    if (!file.type.startsWith('image/')) { toast.error('Please choose an image file'); return; }
-    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
+    if (!rawFile.type.startsWith('image/')) { toast.error('Please choose an image file'); return; }
+    if (rawFile.size > 25 * 1024 * 1024) { toast.error('Image must be under 25MB'); return; }
+    const file = await compressImageFile(rawFile, { maxBytes: 5 * 1024 * 1024 });
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const ext = (file.type === 'image/jpeg' ? 'jpg' : file.name.split('.').pop()?.toLowerCase()) || 'jpg';
       const path = `${user.id}/${booking.course.id}-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from('review-photos')
