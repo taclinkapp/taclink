@@ -11,7 +11,10 @@ const tabs = [
 ];
 
 export const InstructorTabBar = () => (
-  <nav className="fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-border">
+  <nav
+    className="fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-border"
+    style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+  >
     <div className="max-w-md mx-auto grid grid-cols-5">
       {tabs.map((t) => (
         <NavLink

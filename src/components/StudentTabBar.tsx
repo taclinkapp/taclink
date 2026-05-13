@@ -16,7 +16,10 @@ export const StudentTabBar = () => {
   // Hide on certain routes
   if (pathname.includes('/booking-success') || pathname.includes('/checkout')) return null;
   return (
-    <nav className="fixed bottom-4 inset-x-0 z-40 px-4 pointer-events-none">
+    <nav
+      className="fixed inset-x-0 z-40 px-4 pointer-events-none"
+      style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+    >
       <div className="max-w-md mx-auto neu rounded-full pointer-events-auto">
         <div className="grid grid-cols-6 px-2 py-2">
           {tabs.map((t) => (
