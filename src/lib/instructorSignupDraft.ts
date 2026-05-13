@@ -76,13 +76,17 @@ const writePersisted = (draft: InstructorSignupDraft) => {
   } catch {}
 };
 
-export const persistInstructorPhotoForVerification = (photo: File | undefined) => {
-  if (!isBrowser() || !photo) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try { sessionStorage.setItem(`${STORAGE_KEY}:photo`, String(reader.result)); } catch {}
-  };
-  reader.readAsDataURL(photo);
+export const persistInstructorPhotoForVerification = (photo: File | undefined): Promise<void> => {
+  if (!isBrowser() || !photo) return Promise.resolve();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try { sessionStorage.setItem(`${STORAGE_KEY}:photo`, String(reader.result)); } catch {}
+      resolve();
+    };
+    reader.onerror = () => resolve();
+    reader.readAsDataURL(photo);
+  });
 };
 
 export const restoreInstructorPhotoAfterVerification = async (): Promise<File | undefined> => {
