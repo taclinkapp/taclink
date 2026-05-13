@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { Gift, Shield, Loader2, AlertTriangle, Crosshair } from 'lucide-react';
+import { Gift, Shield, Loader2, AlertTriangle, GraduationCap } from 'lucide-react';
 
 const InviteLanding = () => {
   const { code: rawCode } = useParams<{ code: string }>();
