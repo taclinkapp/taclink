@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { InstructorOnboardingProgress } from '@/components/InstructorOnboardingProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 
 const options = [
   { id: 'nra', label: 'NRA Certified Instructor' },

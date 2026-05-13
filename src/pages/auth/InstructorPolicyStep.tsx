@@ -21,6 +21,7 @@ import { requestCrashCourseTour } from '@/components/CrashCourseTour';
 import { logSignupRedirect } from '@/lib/signupLogging';
 import { uploadAndSaveProfilePhoto } from '@/lib/profilePhotos';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 
 const POLICY_VERSION = 'v1.0';
 const POST_VERIFY_UPLOAD_KEY = 'taclink_instructor_finalize_after_verify';

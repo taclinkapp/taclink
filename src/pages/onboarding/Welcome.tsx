@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { homeForRole, useAuth } from "@/contexts/AuthContext";
 import splashBg from "@/assets/splash-bg.mp4.asset.json";
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 
 const Welcome = () => {
   const nav = useNavigate();

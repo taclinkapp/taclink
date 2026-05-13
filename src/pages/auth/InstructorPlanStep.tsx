@@ -9,6 +9,7 @@ import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import { CountdownClock } from '@/components/CountdownClock';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 
 /**
  * Guest plan-picker step in the deferred instructor signup. The user can

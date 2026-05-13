@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { getInstructorDraft, updateInstructorDraft } from '@/lib/instructorSignupDraft';
 import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 
 const options = [
   { id: 'nra', label: 'NRA Certified Instructor' },

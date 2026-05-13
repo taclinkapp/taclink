@@ -24,6 +24,7 @@ import { setInstructorDraft, getInstructorDraft, updateInstructorDraft, hasInstr
 import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import { homeForRole, useAuth } from '@/contexts/AuthContext';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
+import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
 import { compressImageFile } from '@/lib/imageCompression';
 
 const InstructorSignUp = () => {
