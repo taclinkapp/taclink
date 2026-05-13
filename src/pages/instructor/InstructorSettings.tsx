@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
-import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, Star, DollarSign, PlayCircle } from 'lucide-react';
+import { ChevronRight, LogOut, Trash2, Bug, LifeBuoy, MessageSquare, Sparkles, Star, DollarSign, PlayCircle, Download } from 'lucide-react';
 import { ReportIssueDialog } from '@/components/ReportIssueDialog';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { CrashCourseTour } from '@/components/CrashCourseTour';
 import { DeleteAccountDialog } from '@/components/account/DeleteAccountDialog';
 import { AccountDeletionBanner } from '@/components/account/AccountDeletionBanner';
+import { InstallAppDialog } from '@/components/InstallAppDialog';
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,6 +21,7 @@ const InstructorSettings = () => {
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -36,6 +38,10 @@ const InstructorSettings = () => {
           <Row label="Edit Profile" onClick={() => nav('/profile/edit')} />
           <Row label="Change Password" onClick={() => nav('/auth/change-password')} />
           <Row label="Notifications" onClick={() => nav('/settings/notifications')} />
+          <button onClick={() => setInstallOpen(true)} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
+            <span className="text-sm font-medium flex items-center gap-2"><Download className="h-4 w-4 text-primary" />Install App</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
           <button onClick={() => nav('/instructor/payouts')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-muted/50">
             <span className="text-sm font-medium flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" />Deposit Payouts</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -85,6 +91,7 @@ const InstructorSettings = () => {
         </div>
       </div>
       <DeleteAccountDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
+      <InstallAppDialog open={installOpen} onOpenChange={setInstallOpen} />
       <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <CrashCourseTour role="instructor" open={tourOpen} onClose={() => setTourOpen(false)} />
