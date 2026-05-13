@@ -11,7 +11,6 @@ import { Logo } from '@/components/Logo';
 import { Camera, Loader2, Gift } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { US_STATES } from '@/lib/mockData';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { detectContactInfo } from '@/lib/contactRedaction';
 import { logBypassAttempt } from '@/lib/bypassLogging';
@@ -24,7 +23,6 @@ import { PhotoAdjusterDialog } from '@/components/instructor/PhotoAdjusterDialog
 import { setInstructorDraft, getInstructorDraft, updateInstructorDraft, hasInstructorDraft } from '@/lib/instructorSignupDraft';
 import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import { homeForRole, useAuth } from '@/contexts/AuthContext';
-import { uploadAndSaveProfilePhoto } from '@/lib/profilePhotos';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 
 const InstructorSignUp = () => {
@@ -108,15 +106,6 @@ const InstructorSignUp = () => {
   const onAdjusted = (file: File) => {
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
-  };
-
-  const uploadPhotoIfAny = async (userId: string) => {
-    if (!photoFile) return;
-    try {
-      await uploadAndSaveProfilePhoto(userId, photoFile);
-    } catch (e: any) {
-      toast.error('Photo upload failed', { description: e?.message });
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
