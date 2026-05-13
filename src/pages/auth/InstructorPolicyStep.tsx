@@ -12,6 +12,8 @@ import { InstructorDraftProgress } from '@/components/InstructorDraftProgress';
 import {
   clearInstructorDraft,
   getInstructorDraft,
+  persistInstructorPhotoForVerification,
+  restoreInstructorPhotoAfterVerification,
   updateInstructorDraft,
 } from '@/lib/instructorSignupDraft';
 import { requestFounderBio } from '@/components/FounderBioModal';
@@ -101,6 +103,7 @@ const InstructorPolicyStep = () => {
 
       userId = signUpData.user?.id;
       if (!signUpData.session) {
+        await persistInstructorPhotoForVerification(draft.photo);
         updateInstructorDraft({ policyAcknowledged: true, authAccountCreated: true });
         try { sessionStorage.setItem(POST_VERIFY_UPLOAD_KEY, '1'); } catch {}
         setSubmitting(false);
@@ -119,8 +122,9 @@ const InstructorPolicyStep = () => {
     // 2) Replay the rest of the draft. Failures here are non-fatal — we
     // toast and let the in-app onboarding gate guide the user to fix them.
     try {
-      if (draft.photo) {
-        await uploadAndSaveProfilePhoto(userId, draft.photo);
+      const profilePhoto = draft.photo ?? await restoreInstructorPhotoAfterVerification();
+      if (profilePhoto) {
+        await uploadAndSaveProfilePhoto(userId, profilePhoto);
       }
     } catch (err) {
       console.error('Photo upload failed', err);
