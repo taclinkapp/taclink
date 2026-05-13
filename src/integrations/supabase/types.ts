@@ -3590,6 +3590,14 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["payment_provider"]
       }
+      get_public_profile_cards: {
+        Args: { _ids: string[] }
+        Returns: {
+          display_name: string
+          id: string
+          photo_url: string
+        }[]
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
