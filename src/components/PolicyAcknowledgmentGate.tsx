@@ -77,6 +77,14 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
     );
   }
 
+  useEffect(() => {
+    if (status !== "needs_ack") return;
+    window.dispatchEvent(new CustomEvent("taclink:policy-gate-open"));
+    return () => {
+      window.dispatchEvent(new CustomEvent("taclink:policy-gate-closed"));
+    };
+  }, [status]);
+
   if (status === "needs_ack") {
     return (
       <div className="relative min-h-screen bg-background flex items-center justify-center px-6 py-10 overflow-hidden">
