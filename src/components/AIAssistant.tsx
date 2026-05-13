@@ -31,6 +31,87 @@ export function AIAssistant({ role }: { role: Role }) {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // --- Draggable floating button ----------------------------------------
+  const BTN = 56; // h-14 / w-14
+  const MARGIN = 12;
+  const TAB_BAR = 80; // matches StudentTabBar / InstructorTabBar footprint
+  const STORAGE_KEY = "ai-assistant-fab-pos-v1";
+
+  const safeBottomPx = () => {
+    if (typeof window === "undefined") return 0;
+    const probe = document.createElement("div");
+    probe.style.cssText =
+      "position:fixed;left:-9999px;bottom:env(safe-area-inset-bottom);height:0;width:0;";
+    document.body.appendChild(probe);
+    const v = parseFloat(getComputedStyle(probe).bottom || "0");
+    probe.remove();
+    return Number.isFinite(v) ? v : 0;
+  };
+
+  const defaultPos = () => {
+    if (typeof window === "undefined") return { x: 0, y: 0 };
+    const x = window.innerWidth - BTN - MARGIN;
+    const y = window.innerHeight - BTN - TAB_BAR - safeBottomPx() - MARGIN;
+    return { x: Math.max(MARGIN, x), y: Math.max(MARGIN, y) };
+  };
+
+  const [pos, setPos] = useState<{ x: number; y: number }>(() => {
+    if (typeof window === "undefined") return { x: 0, y: 0 };
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (typeof p?.x === "number" && typeof p?.y === "number") return p;
+      }
+    } catch {}
+    return defaultPos();
+  });
+  const draggingRef = useRef(false);
+  const movedRef = useRef(false);
+  const startRef = useRef<{ px: number; py: number; bx: number; by: number } | null>(null);
+
+  useEffect(() => {
+    const clamp = () => {
+      setPos((p) => ({
+        x: Math.min(Math.max(MARGIN, p.x), window.innerWidth - BTN - MARGIN),
+        y: Math.min(Math.max(MARGIN, p.y), window.innerHeight - BTN - MARGIN),
+      }));
+    };
+    window.addEventListener("resize", clamp);
+    window.addEventListener("orientationchange", clamp);
+    return () => {
+      window.removeEventListener("resize", clamp);
+      window.removeEventListener("orientationchange", clamp);
+    };
+  }, []);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    (e.currentTarget as HTMLButtonElement).setPointerCapture(e.pointerId);
+    draggingRef.current = true;
+    movedRef.current = false;
+    startRef.current = { px: e.clientX, py: e.clientY, bx: pos.x, by: pos.y };
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!draggingRef.current || !startRef.current) return;
+    const dx = e.clientX - startRef.current.px;
+    const dy = e.clientY - startRef.current.py;
+    if (!movedRef.current && Math.hypot(dx, dy) > 6) movedRef.current = true;
+    if (!movedRef.current) return;
+    const nx = Math.min(Math.max(MARGIN, startRef.current.bx + dx), window.innerWidth - BTN - MARGIN);
+    const ny = Math.min(Math.max(MARGIN, startRef.current.by + dy), window.innerHeight - BTN - MARGIN);
+    setPos({ x: nx, y: ny });
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    try { (e.currentTarget as HTMLButtonElement).releasePointerCapture(e.pointerId); } catch {}
+    if (movedRef.current) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pos)); } catch {}
+    } else {
+      setOpen(true);
+    }
+  };
+
   useEffect(() => {
     if (open) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, open, loading]);
