@@ -69,6 +69,14 @@ export const PolicyAcknowledgmentGate = ({ children }: { children: React.ReactNo
     setStatus("ok");
   };
 
+  useEffect(() => {
+    if (status !== "needs_ack") return;
+    window.dispatchEvent(new CustomEvent("taclink:policy-gate-open"));
+    return () => {
+      window.dispatchEvent(new CustomEvent("taclink:policy-gate-closed"));
+    };
+  }, [status]);
+
   if (status === "loading") {
     return (
       <div className="min-h-screen grid place-items-center bg-background">

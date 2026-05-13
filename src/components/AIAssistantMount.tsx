@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { AIAssistant } from "./AIAssistant";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +10,18 @@ import { useAuth } from "@/contexts/AuthContext";
 export function AIAssistantMount() {
   const { pathname, search } = useLocation();
   const { roles } = useAuth();
+  const [policyGateOpen, setPolicyGateOpen] = useState(false);
+
+  useEffect(() => {
+    const open = () => setPolicyGateOpen(true);
+    const close = () => setPolicyGateOpen(false);
+    window.addEventListener("taclink:policy-gate-open", open);
+    window.addEventListener("taclink:policy-gate-closed", close);
+    return () => {
+      window.removeEventListener("taclink:policy-gate-open", open);
+      window.removeEventListener("taclink:policy-gate-closed", close);
+    };
+  }, []);
 
   // Hide on auth, splash, admin, checkout/booking-success, and any onboarding flow
   const isOnboarding =
@@ -17,6 +30,7 @@ export function AIAssistantMount() {
     new URLSearchParams(search).get("onboarding") === "1";
 
   if (
+    policyGateOpen ||
     pathname === "/" ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/admin") ||
