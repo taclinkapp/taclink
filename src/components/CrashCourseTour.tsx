@@ -32,6 +32,12 @@ export function CrashCourseTour({ role, open, onClose }: { role: Role; open: boo
 
   useEffect(() => { if (open) setI(0); }, [open]);
 
+  useEffect(() => {
+    try {
+      window.dispatchEvent(new CustomEvent(open ? 'taclink:tour-open' : 'taclink:tour-closed'));
+    } catch { /* ignore */ }
+  }, [open]);
+
   const slide = slides[i];
   const Icon = slide.icon;
   const isLast = i === slides.length - 1;
