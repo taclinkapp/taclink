@@ -57,6 +57,8 @@ const NotificationSettings = () => {
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
+  const { installed: appInstalled, canShow: canInstall } = useInstallPrompt();
   const [checking, setChecking] = useState(false);
 
   // Reconcile UI state with the live browser permission. If the user has
