@@ -1148,6 +1148,10 @@ export type Database = {
           id: string
           launch_date_used: string | null
           notes: string | null
+          override_enabled: boolean
+          override_plan_id: string | null
+          override_updated_at: string | null
+          override_updated_by: string | null
           qualified_at: string
           revoked_at: string | null
           revoked_reason: string | null
@@ -1164,6 +1168,10 @@ export type Database = {
           id?: string
           launch_date_used?: string | null
           notes?: string | null
+          override_enabled?: boolean
+          override_plan_id?: string | null
+          override_updated_at?: string | null
+          override_updated_by?: string | null
           qualified_at?: string
           revoked_at?: string | null
           revoked_reason?: string | null
@@ -1180,13 +1188,25 @@ export type Database = {
           id?: string
           launch_date_used?: string | null
           notes?: string | null
+          override_enabled?: boolean
+          override_plan_id?: string | null
+          override_updated_at?: string | null
+          override_updated_by?: string | null
           qualified_at?: string
           revoked_at?: string | null
           revoked_reason?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "founding_instructors_override_plan_id_fkey"
+            columns: ["override_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       helcim_checkout_sessions: {
         Row: {
@@ -3644,6 +3664,21 @@ export type Database = {
       }
       admin_revoke_founder: {
         Args: { _reason: string; _user_id: string }
+        Returns: Json
+      }
+      admin_set_founder_access: {
+        Args: {
+          _enabled: boolean
+          _ends_at: string
+          _note?: string
+          _plan_id: string
+          _starts_at: string
+          _user_id: string
+        }
+        Returns: Json
+      }
+      admin_toggle_founder_access: {
+        Args: { _enabled: boolean; _user_id: string }
         Returns: Json
       }
       audit_booking_action: {
