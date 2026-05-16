@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { usePrelaunch } from '@/hooks/usePrelaunch';
+import { useLaunchState } from '@/hooks/useLaunchState';
 
 /**
  * Pre-launch countdown clock. The launch date is read live from
