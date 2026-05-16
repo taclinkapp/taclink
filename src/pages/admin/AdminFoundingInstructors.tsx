@@ -6,10 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { Crown, Loader2, Search, ShieldOff, UserPlus, X } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Crown, Loader2, Search, ShieldOff, Sliders, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +29,12 @@ type FounderRow = {
   revoked_at: string | null;
   revoked_reason: string | null;
   notes: string | null;
+  override_plan_id: string | null;
+  override_enabled: boolean;
+  override_updated_at: string | null;
 };
+
+type Plan = { id: string; slug: string; name: string };
 
 type EnrichedRow = FounderRow & { display_name: string | null; photo_url: string | null };
 
@@ -54,6 +63,22 @@ export default function AdminFoundingInstructors() {
   const [search, setSearch] = useState("");
   const [grantOpen, setGrantOpen] = useState(false);
   const [revokeTarget, setRevokeTarget] = useState<EnrichedRow | null>(null);
+  const [editTarget, setEditTarget] = useState<EnrichedRow | null>(null);
+
+  const plans = useQuery({
+    queryKey: ["instructor_plans"],
+    queryFn: async (): Promise<Plan[]> => {
+      const { data, error } = await supabase
+        .from("subscription_plans")
+        .select("id, slug, name")
+        .eq("active", true)
+        .in("audience", ["instructor", "all"])
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Plan[];
+    },
+    staleTime: 60_000,
+  });
 
   const stats = useQuery({
     queryKey: ["founder_stats"],
@@ -166,13 +191,16 @@ export default function AdminFoundingInstructors() {
                   <th className="text-left px-3 py-2">Rank</th>
                   <th className="text-left px-3 py-2">Instructor</th>
                   <th className="text-left px-3 py-2">Status</th>
-                  <th className="text-left px-3 py-2">Qualified</th>
-                  <th className="text-left px-3 py-2">Pro window</th>
+                  <th className="text-left px-3 py-2">Plan</th>
+                  <th className="text-left px-3 py-2">Access window</th>
+                  <th className="text-left px-3 py-2">Access</th>
                   <th className="text-right px-3 py-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r) => (
+                {filtered.map((r) => {
+                  const planName = plans.data?.find((p) => p.id === r.override_plan_id)?.name ?? "—";
+                  return (
                   <tr key={r.id} className="border-t border-border/60">
                     <td className="px-3 py-2 font-mono text-xs">#{r.founder_rank}</td>
                     <td className="px-3 py-2">
@@ -188,7 +216,7 @@ export default function AdminFoundingInstructors() {
                         {statusLabel[r.founder_status]}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">{fmtDate(r.qualified_at)}</td>
+                    <td className="px-3 py-2 text-xs">{planName}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">
                       {r.free_pro_starts_at
                         ? <>{fmtDate(r.free_pro_starts_at)} → {fmtDate(r.free_pro_ends_at)}</>
@@ -199,20 +227,49 @@ export default function AdminFoundingInstructors() {
                         </div>
                       )}
                     </td>
+                    <td className="px-3 py-2">
+                      <Switch
+                        checked={r.override_enabled}
+                        disabled={r.founder_status === "revoked"}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            const { error } = await supabase.rpc(
+                              "admin_toggle_founder_access" as any,
+                              { _user_id: r.user_id, _enabled: checked } as any,
+                            );
+                            if (error) throw error;
+                            toast.success(checked ? "Access enabled" : "Access disabled");
+                            refreshAll();
+                          } catch (e: any) {
+                            toast.error(e?.message ?? "Toggle failed");
+                          }
+                        }}
+                      />
+                    </td>
                     <td className="px-3 py-2 text-right">
-                      {r.founder_status !== "revoked" && (
+                      <div className="flex justify-end gap-1">
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-destructive hover:bg-destructive/10"
-                          onClick={() => setRevokeTarget(r)}
+                          onClick={() => setEditTarget(r)}
                         >
-                          <ShieldOff className="h-3.5 w-3.5 mr-1" /> Revoke
+                          <Sliders className="h-3.5 w-3.5 mr-1" /> Edit access
                         </Button>
-                      )}
+                        {r.founder_status !== "revoked" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={() => setRevokeTarget(r)}
+                          >
+                            <ShieldOff className="h-3.5 w-3.5 mr-1" /> Revoke
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -221,6 +278,12 @@ export default function AdminFoundingInstructors() {
 
       <GrantDialog open={grantOpen} onOpenChange={setGrantOpen} onGranted={refreshAll} />
       <RevokeDialog target={revokeTarget} onClose={() => setRevokeTarget(null)} onRevoked={refreshAll} />
+      <EditAccessDialog
+        target={editTarget}
+        plans={plans.data ?? []}
+        onClose={() => setEditTarget(null)}
+        onSaved={refreshAll}
+      />
     </div>
   );
 }
@@ -358,6 +421,160 @@ function RevokeDialog({
           <Button variant="ghost" onClick={onClose} disabled={busy}><X className="h-4 w-4 mr-1" />Cancel</Button>
           <Button variant="destructive" onClick={submit} disabled={busy}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Revoke"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function toInputDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+function EditAccessDialog({
+  target, plans, onClose, onSaved,
+}: {
+  target: EnrichedRow | null;
+  plans: Plan[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [planId, setPlanId] = useState<string>("");
+  const [startsAt, setStartsAt] = useState<string>("");
+  const [endsAt, setEndsAt] = useState<string>("");
+  const [enabled, setEnabled] = useState(true);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useMemo(() => {
+    if (!target) return;
+    setPlanId(target.override_plan_id ?? plans[0]?.id ?? "");
+    setStartsAt(toInputDate(target.free_pro_starts_at) || toInputDate(new Date().toISOString()));
+    setEndsAt(toInputDate(target.free_pro_ends_at));
+    setEnabled(target.override_enabled);
+    setNote("");
+  }, [target?.id, plans]);
+
+  const applyPreset = (months: number | "lifetime") => {
+    const base = startsAt ? new Date(startsAt) : new Date();
+    if (months === "lifetime") {
+      setEndsAt("");
+      return;
+    }
+    const end = new Date(base);
+    end.setMonth(end.getMonth() + months);
+    setEndsAt(end.toISOString().slice(0, 10));
+  };
+
+  const submit = async () => {
+    if (!target) return;
+    if (!planId) { toast.error("Pick a plan"); return; }
+    if (!startsAt) { toast.error("Pick a start date"); return; }
+    if (endsAt && new Date(endsAt) <= new Date(startsAt)) {
+      toast.error("End date must be after start date"); return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc("admin_set_founder_access" as any, {
+        _user_id: target.user_id,
+        _plan_id: planId,
+        _starts_at: new Date(startsAt).toISOString(),
+        _ends_at: endsAt ? new Date(endsAt).toISOString() : null,
+        _enabled: enabled,
+        _note: note.trim() || null,
+      } as any);
+      if (error) throw error;
+
+      // Validate by re-reading the row + checking entitlement
+      const { data: row } = await supabase
+        .from("founding_instructors")
+        .select("override_enabled, override_plan_id, free_pro_starts_at, free_pro_ends_at, founder_status")
+        .eq("user_id", target.user_id)
+        .maybeSingle();
+      const planSlug = plans.find((p) => p.id === planId)?.slug;
+      const isPro = planSlug === "instructor_pro_monthly";
+      const r = row as any;
+      const windowOk = r && r.override_enabled === enabled
+        && r.override_plan_id === planId
+        && (!endsAt || (r.free_pro_ends_at && new Date(r.free_pro_ends_at).toISOString().slice(0,10) === endsAt));
+      if (!windowOk) {
+        toast.warning("Saved but verification mismatch — refresh to confirm");
+      } else if (enabled && isPro) {
+        toast.success("Access updated · Pro entitlement is live");
+      } else {
+        toast.success(enabled ? "Access updated" : "Access disabled");
+      }
+      onClose();
+      onSaved();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not update access");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={!!target} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Edit founder access</DialogTitle>
+          <DialogDescription>
+            {target?.display_name ?? "Instructor"} · rank #{target?.founder_rank}. Choose any plan, set a window, and
+            toggle access on or off.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Plan</label>
+            <Select value={planId} onValueChange={setPlanId}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Select plan" /></SelectTrigger>
+              <SelectContent>
+                {plans.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name} <span className="text-muted-foreground text-xs ml-1">({p.slug})</span></SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Starts</label>
+              <Input type="date" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ends</label>
+              <Input type="date" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className="mt-1" placeholder="Lifetime" />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {[1, 3, 6, 12].map((m) => (
+              <Button key={m} type="button" size="sm" variant="outline" onClick={() => applyPreset(m)}>
+                {m} mo
+              </Button>
+            ))}
+            <Button type="button" size="sm" variant="outline" onClick={() => applyPreset("lifetime")}>
+              Lifetime
+            </Button>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-border p-3">
+            <div>
+              <div className="text-sm font-semibold">Access enabled</div>
+              <div className="text-xs text-muted-foreground">Off cuts entitlement instantly without losing the rank.</div>
+            </div>
+            <Switch checked={enabled} onCheckedChange={setEnabled} />
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Note (optional)</label>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="mt-1" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button onClick={submit} disabled={busy} className="bg-primary text-primary-foreground">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save access"}
           </Button>
         </DialogFooter>
       </DialogContent>
