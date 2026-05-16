@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Course } from '@/lib/mockData';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { FounderBadgePublic } from '@/components/FounderBadgePublic';
 import { Calendar, Star, Heart } from 'lucide-react';
 import { SmartCoverImage } from '@/components/SmartCoverImage';
 
@@ -51,6 +52,7 @@ export const CourseCard = ({ course }: { course: Course }) => {
             <span>Instructor:</span>
             <span className="text-foreground font-semibold">{course.instructorName}</span>
             {course.instructorVerified && <VerifiedBadge />}
+            <FounderBadgePublic userId={course.instructorId} variant="icon" />
           </div>
 
           <div className="mt-1.5 grid grid-cols-[1fr_auto_auto] items-center gap-3 text-sm">
