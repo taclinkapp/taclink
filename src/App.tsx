@@ -130,6 +130,7 @@ const AdminBackgroundVideos = lazy(() => import("./pages/admin/AdminBackgroundVi
 const AdminDepositReview = lazy(() => import("./pages/admin/AdminDepositReview"));
 const AdminFeedback = lazy(() => import("./pages/admin/AdminFeedback"));
 const AdminSubscriptionPlans = lazy(() => import("./pages/admin/AdminSubscriptionPlans"));
+const AdminFoundingInstructors = lazy(() => import("./pages/admin/AdminFoundingInstructors"));
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
 import { InstallAppBanner } from "./components/InstallAppBanner";
