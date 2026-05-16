@@ -427,3 +427,157 @@ function RevokeDialog({
     </Dialog>
   );
 }
+
+function toInputDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+function EditAccessDialog({
+  target, plans, onClose, onSaved,
+}: {
+  target: EnrichedRow | null;
+  plans: Plan[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [planId, setPlanId] = useState<string>("");
+  const [startsAt, setStartsAt] = useState<string>("");
+  const [endsAt, setEndsAt] = useState<string>("");
+  const [enabled, setEnabled] = useState(true);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useMemo(() => {
+    if (!target) return;
+    setPlanId(target.override_plan_id ?? plans[0]?.id ?? "");
+    setStartsAt(toInputDate(target.free_pro_starts_at) || toInputDate(new Date().toISOString()));
+    setEndsAt(toInputDate(target.free_pro_ends_at));
+    setEnabled(target.override_enabled);
+    setNote("");
+  }, [target?.id, plans]);
+
+  const applyPreset = (months: number | "lifetime") => {
+    const base = startsAt ? new Date(startsAt) : new Date();
+    if (months === "lifetime") {
+      setEndsAt("");
+      return;
+    }
+    const end = new Date(base);
+    end.setMonth(end.getMonth() + months);
+    setEndsAt(end.toISOString().slice(0, 10));
+  };
+
+  const submit = async () => {
+    if (!target) return;
+    if (!planId) { toast.error("Pick a plan"); return; }
+    if (!startsAt) { toast.error("Pick a start date"); return; }
+    if (endsAt && new Date(endsAt) <= new Date(startsAt)) {
+      toast.error("End date must be after start date"); return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc("admin_set_founder_access" as any, {
+        _user_id: target.user_id,
+        _plan_id: planId,
+        _starts_at: new Date(startsAt).toISOString(),
+        _ends_at: endsAt ? new Date(endsAt).toISOString() : null,
+        _enabled: enabled,
+        _note: note.trim() || null,
+      } as any);
+      if (error) throw error;
+
+      // Validate by re-reading the row + checking entitlement
+      const { data: row } = await supabase
+        .from("founding_instructors")
+        .select("override_enabled, override_plan_id, free_pro_starts_at, free_pro_ends_at, founder_status")
+        .eq("user_id", target.user_id)
+        .maybeSingle();
+      const planSlug = plans.find((p) => p.id === planId)?.slug;
+      const isPro = planSlug === "instructor_pro_monthly";
+      const r = row as any;
+      const windowOk = r && r.override_enabled === enabled
+        && r.override_plan_id === planId
+        && (!endsAt || (r.free_pro_ends_at && new Date(r.free_pro_ends_at).toISOString().slice(0,10) === endsAt));
+      if (!windowOk) {
+        toast.warning("Saved but verification mismatch — refresh to confirm");
+      } else if (enabled && isPro) {
+        toast.success("Access updated · Pro entitlement is live");
+      } else {
+        toast.success(enabled ? "Access updated" : "Access disabled");
+      }
+      onClose();
+      onSaved();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not update access");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={!!target} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Edit founder access</DialogTitle>
+          <DialogDescription>
+            {target?.display_name ?? "Instructor"} · rank #{target?.founder_rank}. Choose any plan, set a window, and
+            toggle access on or off.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Plan</label>
+            <Select value={planId} onValueChange={setPlanId}>
+              <SelectTrigger className="mt-1"><SelectValue placeholder="Select plan" /></SelectTrigger>
+              <SelectContent>
+                {plans.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name} <span className="text-muted-foreground text-xs ml-1">({p.slug})</span></SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Starts</label>
+              <Input type="date" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ends</label>
+              <Input type="date" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className="mt-1" placeholder="Lifetime" />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {[1, 3, 6, 12].map((m) => (
+              <Button key={m} type="button" size="sm" variant="outline" onClick={() => applyPreset(m)}>
+                {m} mo
+              </Button>
+            ))}
+            <Button type="button" size="sm" variant="outline" onClick={() => applyPreset("lifetime")}>
+              Lifetime
+            </Button>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-border p-3">
+            <div>
+              <div className="text-sm font-semibold">Access enabled</div>
+              <div className="text-xs text-muted-foreground">Off cuts entitlement instantly without losing the rank.</div>
+            </div>
+            <Switch checked={enabled} onCheckedChange={setEnabled} />
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Note (optional)</label>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="mt-1" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button onClick={submit} disabled={busy} className="bg-primary text-primary-foreground">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save access"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
