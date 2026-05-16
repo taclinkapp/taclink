@@ -59,24 +59,31 @@ export function useSubscription() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
+  const founder = useFounderStatus();
+
   const now = Date.now();
   const periodEnd = subscription?.current_period_end ? new Date(subscription.current_period_end).getTime() : null;
   const status = subscription?.status;
 
-  const isActive = !!subscription && (
+  const paidActive = !!subscription && (
     ((status === "active" || status === "trialing" || status === "past_due") && (!periodEnd || periodEnd > now))
     || (status === "canceled" && !!periodEnd && periodEnd > now)
   );
 
+  // Paid Pro takes precedence; founder free Pro layers in cleanly when no paid sub is active.
+  const isActive = paidActive || founder.hasFreeProNow;
+  const isFounderPro = !paidActive && founder.hasFreeProNow;
+
   const isPastDue = status === "past_due" && (!periodEnd || periodEnd > now);
   const isCanceledGrace = status === "canceled" && !!periodEnd && periodEnd > now;
-  const isLapsed = !!subscription && !isActive;
-  const hasNeverSubscribed = !subscription;
+  const isLapsed = !!subscription && !paidActive && !founder.hasFreeProNow;
+  const hasNeverSubscribed = !subscription && !founder.hasFreeProNow;
 
   return {
     subscription,
-    loading,
+    loading: loading || founder.loading,
     isActive,
+    isFounderPro,
     isPastDue,
     isCanceledGrace,
     isLapsed,
