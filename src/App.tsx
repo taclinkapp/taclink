@@ -170,6 +170,7 @@ const App = () => (
       >
         <AuthProvider>
           <NavHistoryProvider>
+          <MaintenanceBanner />
           <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Splash />} />
