@@ -3750,6 +3750,22 @@ export type Database = {
       get_effective_launch_state: { Args: never; Returns: Json }
       get_founder_program_stats: { Args: never; Returns: Json }
       get_my_founder_status: { Args: never; Returns: Json }
+      get_public_founder_badge: {
+        Args: { _user_id: string }
+        Returns: {
+          founder_rank: number
+          founder_status: Database["public"]["Enums"]["founder_status"]
+          user_id: string
+        }[]
+      }
+      get_public_founder_badges: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          founder_rank: number
+          founder_status: Database["public"]["Enums"]["founder_status"]
+          user_id: string
+        }[]
+      }
       get_public_profile_cards: {
         Args: { _ids: string[] }
         Returns: {
