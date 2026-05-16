@@ -18,6 +18,7 @@ import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTou
 import { FounderBioModal } from '@/components/FounderBioModal';
 import { getAvatarSrc } from '@/lib/avatar';
 import { fetchPublicProfileMap } from '@/lib/profilePhotos';
+import { FoundingInstructorBadge } from '@/components/FoundingInstructorBadge';
 
 type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
 
