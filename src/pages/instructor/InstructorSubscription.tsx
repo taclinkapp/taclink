@@ -20,6 +20,8 @@ import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
 import { InstructorOnboardingProgress } from '@/components/InstructorOnboardingProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
+import { FoundingInstructorCard } from '@/components/FoundingInstructorCard';
+import { useFounderStatus } from '@/hooks/useFounderStatus';
 
 const PRICE_ID = 'instructor_pro_monthly';
 
