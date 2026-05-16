@@ -96,6 +96,8 @@ const InstructorSubscription = () => {
           Pro unlocks AI tools and instructor analytics.
         </p>
 
+        <FoundingInstructorCard />
+
         {isPrelaunch && (
           <div className="tactical-card border-primary/40 bg-primary/10 p-3 flex items-start gap-2">
             <Lock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
