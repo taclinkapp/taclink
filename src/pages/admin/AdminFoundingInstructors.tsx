@@ -278,6 +278,12 @@ export default function AdminFoundingInstructors() {
 
       <GrantDialog open={grantOpen} onOpenChange={setGrantOpen} onGranted={refreshAll} />
       <RevokeDialog target={revokeTarget} onClose={() => setRevokeTarget(null)} onRevoked={refreshAll} />
+      <EditAccessDialog
+        target={editTarget}
+        plans={plans.data ?? []}
+        onClose={() => setEditTarget(null)}
+        onSaved={refreshAll}
+      />
     </div>
   );
 }
