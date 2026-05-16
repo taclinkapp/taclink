@@ -17,6 +17,7 @@ import { cancelDeadline } from '@/lib/cancellation';
 import { HelcimEscrowCheckout } from '@/components/student/HelcimEscrowCheckout';
 import { PaymentTestModeBanner } from '@/components/PaymentTestModeBanner';
 import { PaymentStatusBanner } from '@/components/student/PaymentStatusBanner';
+import { useLaunchState } from '@/hooks/useLaunchState';
 
 type Course = {
   id: string;
@@ -142,9 +143,19 @@ const Checkout = () => {
     return data;
   };
 
+  const launch = useLaunchState();
+
   const handleConfirm = async () => {
     if (!user) { toast.error('Please sign in to book'); return; }
     if (!course) return;
+    if (!launch.flags.bookingsEnabled) {
+      toast.error(
+        launch.isPaused
+          ? (launch.maintenanceMessage || 'Bookings are temporarily paused for maintenance.')
+          : 'Bookings unlock on launch day — sit tight!'
+      );
+      return;
+    }
     if (waiver && !waiverReady) {
       toast.error('Sign the waiver above before continuing to payment.');
       return;

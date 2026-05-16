@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { usePrelaunch } from '@/hooks/usePrelaunch';
+import { useLaunchState } from '@/hooks/useLaunchState';
 
 /**
  * Pre-launch countdown clock. The launch date is read live from
@@ -33,8 +33,8 @@ const Cell = ({ value, label }: { value: number; label: string }) => (
 );
 
 export const CountdownClock = () => {
-  const { data } = usePrelaunch();
-  const targetIso = data?.launchDateIso ?? FALLBACK_ISO;
+  const launch = useLaunchState();
+  const targetIso = launch.launchAtIso ?? FALLBACK_ISO;
   const [parts, setParts] = useState<Parts>(() => diff(new Date(targetIso)));
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export const CountdownClock = () => {
     return () => clearInterval(id);
   }, [targetIso]);
 
-  const launched = parts.days + parts.hours + parts.minutes + parts.seconds === 0;
+  const launched = launch.isLive || parts.days + parts.hours + parts.minutes + parts.seconds === 0;
 
   return (
     <div className="w-full max-w-sm mx-auto">

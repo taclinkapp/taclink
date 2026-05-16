@@ -135,6 +135,7 @@ import { AIAssistantMount } from "./components/AIAssistantMount";
 import { InstallAppBanner } from "./components/InstallAppBanner";
 import { InstructorOnboardingGate } from "./components/InstructorOnboardingGate";
 import { MissionCompleteWatcher } from "./components/operator/MissionCompleteWatcher";
+import { MaintenanceBanner } from "./components/MaintenanceBanner";
 
 const queryClient = new QueryClient();
 
@@ -169,6 +170,7 @@ const App = () => (
       >
         <AuthProvider>
           <NavHistoryProvider>
+          <MaintenanceBanner />
           <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Splash />} />

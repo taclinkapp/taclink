@@ -1867,6 +1867,63 @@ export type Database = {
         }
         Relationships: []
       }
+      launch_config: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          bookings_enabled: boolean
+          countdown_enabled: boolean
+          course_creation_enabled: boolean
+          created_at: string
+          id: boolean
+          last_updated_at: string
+          last_updated_by: string | null
+          launch_at: string | null
+          launch_mode: Database["public"]["Enums"]["app_launch_mode"]
+          maintenance_message: string | null
+          manual_override: boolean
+          pro_unlock_enabled: boolean
+          publish_enabled: boolean
+          waitlist_enabled: boolean
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          bookings_enabled?: boolean
+          countdown_enabled?: boolean
+          course_creation_enabled?: boolean
+          created_at?: string
+          id?: boolean
+          last_updated_at?: string
+          last_updated_by?: string | null
+          launch_at?: string | null
+          launch_mode?: Database["public"]["Enums"]["app_launch_mode"]
+          maintenance_message?: string | null
+          manual_override?: boolean
+          pro_unlock_enabled?: boolean
+          publish_enabled?: boolean
+          waitlist_enabled?: boolean
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          bookings_enabled?: boolean
+          countdown_enabled?: boolean
+          course_creation_enabled?: boolean
+          created_at?: string
+          id?: boolean
+          last_updated_at?: string
+          last_updated_by?: string | null
+          launch_at?: string | null
+          launch_mode?: Database["public"]["Enums"]["app_launch_mode"]
+          maintenance_message?: string | null
+          manual_override?: boolean
+          pro_unlock_enabled?: boolean
+          publish_enabled?: boolean
+          waitlist_enabled?: boolean
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           body: string
@@ -3525,6 +3582,7 @@ export type Database = {
       }
     }
     Functions: {
+      activate_launch_if_due: { Args: never; Returns: Json }
       audit_booking_action: {
         Args: {
           _action: string
@@ -3590,6 +3648,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["payment_provider"]
       }
+      get_effective_launch_state: { Args: never; Returns: Json }
       get_public_profile_cards: {
         Args: { _ids: string[] }
         Returns: {
@@ -3746,6 +3805,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_launch_mode: "prelaunch" | "live" | "paused"
       app_role: "student" | "instructor" | "admin"
       booking_status: "reserved" | "attended" | "cancelled" | "no_show"
       payment_provider: "stripe" | "authorize_net" | "helcim"
@@ -3890,6 +3950,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_launch_mode: ["prelaunch", "live", "paused"],
       app_role: ["student", "instructor", "admin"],
       booking_status: ["reserved", "attended", "cancelled", "no_show"],
       payment_provider: ["stripe", "authorize_net", "helcim"],
