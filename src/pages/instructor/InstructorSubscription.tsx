@@ -20,6 +20,8 @@ import { LegalAcceptanceCard } from '@/components/legal/LegalAcceptanceCard';
 import { InstructorOnboardingProgress } from '@/components/InstructorOnboardingProgress';
 import splashBg from '@/assets/splash-bg.mp4.asset.json';
 import { DeferredBackgroundVideo } from '@/components/DeferredBackgroundVideo';
+import { FoundingInstructorCard } from '@/components/FoundingInstructorCard';
+import { useFounderStatus } from '@/hooks/useFounderStatus';
 
 const PRICE_ID = 'instructor_pro_monthly';
 
@@ -93,6 +95,8 @@ const InstructorSubscription = () => {
         <p className="text-xs text-muted-foreground">
           Pro unlocks AI tools and instructor analytics.
         </p>
+
+        <FoundingInstructorCard />
 
         {isPrelaunch && (
           <div className="tactical-card border-primary/40 bg-primary/10 p-3 flex items-start gap-2">

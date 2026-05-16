@@ -18,6 +18,7 @@ import { CrashCourseTour, useCrashCourseTour } from '@/components/CrashCourseTou
 import { FounderBioModal } from '@/components/FounderBioModal';
 import { getAvatarSrc } from '@/lib/avatar';
 import { fetchPublicProfileMap } from '@/lib/profilePhotos';
+import { FoundingInstructorBadge } from '@/components/FoundingInstructorBadge';
 
 type StatKey = 'active' | 'students' | 'reviews' | 'revenue';
 
@@ -134,6 +135,7 @@ const InstructorDashboard = () => {
           <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground">Welcome back,</p>
             <h1 className="text-xl font-black truncate">{displayName}</h1>
+            <FoundingInstructorBadge className="mt-1" />
           </div>
           <Link
             to="/instructor/courses/new"
