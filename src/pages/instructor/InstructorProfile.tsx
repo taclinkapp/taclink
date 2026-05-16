@@ -6,6 +6,7 @@ import { InstructorTabBar } from '@/components/InstructorTabBar';
 import { Settings, Star, MapPin, Award, Gift, ChevronRight } from 'lucide-react';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { FoundingInstructorBadge } from '@/components/FoundingInstructorBadge';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInstructorCourses } from '@/hooks/useCourses';
@@ -84,9 +85,10 @@ const InstructorProfile = () => {
       </div>
       <div className="px-4 -mt-12 relative">
         <WatermarkedAvatar src={avatarSrc} size={96} className="border-4 border-background" alt={displayName} />
-        <div className="flex items-center gap-1.5 mt-3">
+        <div className="flex items-center gap-1.5 mt-3 flex-wrap">
           <h2 className="text-xl font-black">{displayName}</h2>
           {credentials.some((c: any) => c.verified) && <VerifiedBadge className="h-5 w-5" />}
+          <FoundingInstructorBadge showRank />
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
           {avg && (
