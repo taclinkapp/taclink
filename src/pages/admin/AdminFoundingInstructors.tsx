@@ -29,7 +29,12 @@ type FounderRow = {
   revoked_at: string | null;
   revoked_reason: string | null;
   notes: string | null;
+  override_plan_id: string | null;
+  override_enabled: boolean;
+  override_updated_at: string | null;
 };
+
+type Plan = { id: string; slug: string; name: string };
 
 type EnrichedRow = FounderRow & { display_name: string | null; photo_url: string | null };
 
