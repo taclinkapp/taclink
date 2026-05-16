@@ -191,13 +191,16 @@ export default function AdminFoundingInstructors() {
                   <th className="text-left px-3 py-2">Rank</th>
                   <th className="text-left px-3 py-2">Instructor</th>
                   <th className="text-left px-3 py-2">Status</th>
-                  <th className="text-left px-3 py-2">Qualified</th>
-                  <th className="text-left px-3 py-2">Pro window</th>
+                  <th className="text-left px-3 py-2">Plan</th>
+                  <th className="text-left px-3 py-2">Access window</th>
+                  <th className="text-left px-3 py-2">Access</th>
                   <th className="text-right px-3 py-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r) => (
+                {filtered.map((r) => {
+                  const planName = plans.data?.find((p) => p.id === r.override_plan_id)?.name ?? "—";
+                  return (
                   <tr key={r.id} className="border-t border-border/60">
                     <td className="px-3 py-2 font-mono text-xs">#{r.founder_rank}</td>
                     <td className="px-3 py-2">
@@ -213,7 +216,7 @@ export default function AdminFoundingInstructors() {
                         {statusLabel[r.founder_status]}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">{fmtDate(r.qualified_at)}</td>
+                    <td className="px-3 py-2 text-xs">{planName}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">
                       {r.free_pro_starts_at
                         ? <>{fmtDate(r.free_pro_starts_at)} → {fmtDate(r.free_pro_ends_at)}</>
@@ -224,20 +227,49 @@ export default function AdminFoundingInstructors() {
                         </div>
                       )}
                     </td>
+                    <td className="px-3 py-2">
+                      <Switch
+                        checked={r.override_enabled}
+                        disabled={r.founder_status === "revoked"}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            const { error } = await supabase.rpc(
+                              "admin_toggle_founder_access" as any,
+                              { _user_id: r.user_id, _enabled: checked } as any,
+                            );
+                            if (error) throw error;
+                            toast.success(checked ? "Access enabled" : "Access disabled");
+                            refreshAll();
+                          } catch (e: any) {
+                            toast.error(e?.message ?? "Toggle failed");
+                          }
+                        }}
+                      />
+                    </td>
                     <td className="px-3 py-2 text-right">
-                      {r.founder_status !== "revoked" && (
+                      <div className="flex justify-end gap-1">
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-destructive hover:bg-destructive/10"
-                          onClick={() => setRevokeTarget(r)}
+                          onClick={() => setEditTarget(r)}
                         >
-                          <ShieldOff className="h-3.5 w-3.5 mr-1" /> Revoke
+                          <Sliders className="h-3.5 w-3.5 mr-1" /> Edit access
                         </Button>
-                      )}
+                        {r.founder_status !== "revoked" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={() => setRevokeTarget(r)}
+                          >
+                            <ShieldOff className="h-3.5 w-3.5 mr-1" /> Revoke
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
