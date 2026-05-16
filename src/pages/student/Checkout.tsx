@@ -17,6 +17,7 @@ import { cancelDeadline } from '@/lib/cancellation';
 import { HelcimEscrowCheckout } from '@/components/student/HelcimEscrowCheckout';
 import { PaymentTestModeBanner } from '@/components/PaymentTestModeBanner';
 import { PaymentStatusBanner } from '@/components/student/PaymentStatusBanner';
+import { useLaunchState } from '@/hooks/useLaunchState';
 
 type Course = {
   id: string;
