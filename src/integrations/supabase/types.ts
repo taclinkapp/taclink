@@ -1137,6 +1137,57 @@ export type Database = {
         }
         Relationships: []
       }
+      founding_instructors: {
+        Row: {
+          created_at: string
+          founder_rank: number
+          founder_status: Database["public"]["Enums"]["founder_status"]
+          free_pro_ends_at: string | null
+          free_pro_starts_at: string | null
+          granted_by: string | null
+          id: string
+          launch_date_used: string | null
+          notes: string | null
+          qualified_at: string
+          revoked_at: string | null
+          revoked_reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          founder_rank: number
+          founder_status?: Database["public"]["Enums"]["founder_status"]
+          free_pro_ends_at?: string | null
+          free_pro_starts_at?: string | null
+          granted_by?: string | null
+          id?: string
+          launch_date_used?: string | null
+          notes?: string | null
+          qualified_at?: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          founder_rank?: number
+          founder_status?: Database["public"]["Enums"]["founder_status"]
+          free_pro_ends_at?: string | null
+          free_pro_starts_at?: string | null
+          granted_by?: string | null
+          id?: string
+          launch_date_used?: string | null
+          notes?: string | null
+          qualified_at?: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       helcim_checkout_sessions: {
         Row: {
           amount_cents: number
@@ -3583,6 +3634,18 @@ export type Database = {
     }
     Functions: {
       activate_launch_if_due: { Args: never; Returns: Json }
+      activate_pending_founders: {
+        Args: { _launch_at: string }
+        Returns: number
+      }
+      admin_grant_founder: {
+        Args: { _note?: string; _user_id: string }
+        Returns: Json
+      }
+      admin_revoke_founder: {
+        Args: { _reason: string; _user_id: string }
+        Returns: Json
+      }
       audit_booking_action: {
         Args: {
           _action: string
@@ -3642,6 +3705,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_founders_due: { Args: never; Returns: number }
       expire_stale_credentials: { Args: never; Returns: number }
       generate_referral_code: { Args: never; Returns: string }
       get_active_payment_provider: {
@@ -3649,6 +3713,8 @@ export type Database = {
         Returns: Database["public"]["Enums"]["payment_provider"]
       }
       get_effective_launch_state: { Args: never; Returns: Json }
+      get_founder_program_stats: { Args: never; Returns: Json }
+      get_my_founder_status: { Args: never; Returns: Json }
       get_public_profile_cards: {
         Args: { _ids: string[] }
         Returns: {
@@ -3659,6 +3725,10 @@ export type Database = {
       }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
+        Returns: boolean
+      }
+      has_pro_access: {
+        Args: { _env?: string; _user_id: string }
         Returns: boolean
       }
       has_role: {
@@ -3776,6 +3846,7 @@ export type Database = {
         Returns: number
       }
       normalize_influencer_slug: { Args: { _raw: string }; Returns: string }
+      qualify_founding_instructor: { Args: { _user_id: string }; Returns: Json }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -3808,6 +3879,7 @@ export type Database = {
       app_launch_mode: "prelaunch" | "live" | "paused"
       app_role: "student" | "instructor" | "admin"
       booking_status: "reserved" | "attended" | "cancelled" | "no_show"
+      founder_status: "pending_prelaunch" | "active" | "expired" | "revoked"
       payment_provider: "stripe" | "authorize_net" | "helcim"
       skill_pillar:
         | "firearms"
@@ -3953,6 +4025,7 @@ export const Constants = {
       app_launch_mode: ["prelaunch", "live", "paused"],
       app_role: ["student", "instructor", "admin"],
       booking_status: ["reserved", "attended", "cancelled", "no_show"],
+      founder_status: ["pending_prelaunch", "active", "expired", "revoked"],
       payment_provider: ["stripe", "authorize_net", "helcim"],
       skill_pillar: [
         "firearms",
