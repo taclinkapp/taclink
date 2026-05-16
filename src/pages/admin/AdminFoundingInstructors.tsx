@@ -63,6 +63,22 @@ export default function AdminFoundingInstructors() {
   const [search, setSearch] = useState("");
   const [grantOpen, setGrantOpen] = useState(false);
   const [revokeTarget, setRevokeTarget] = useState<EnrichedRow | null>(null);
+  const [editTarget, setEditTarget] = useState<EnrichedRow | null>(null);
+
+  const plans = useQuery({
+    queryKey: ["instructor_plans"],
+    queryFn: async (): Promise<Plan[]> => {
+      const { data, error } = await supabase
+        .from("subscription_plans")
+        .select("id, slug, name")
+        .eq("active", true)
+        .in("audience", ["instructor", "all"])
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Plan[];
+    },
+    staleTime: 60_000,
+  });
 
   const stats = useQuery({
     queryKey: ["founder_stats"],
