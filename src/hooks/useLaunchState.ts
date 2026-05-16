@@ -96,7 +96,7 @@ export const useLaunchState = () => {
   // Realtime: any change to launch_config refetches all subscribers.
   useEffect(() => {
     const channel = supabase
-      .channel("launch_config_changes")
+      .channel(`launch_config_changes_${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "launch_config" },

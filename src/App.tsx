@@ -136,6 +136,7 @@ import { InstallAppBanner } from "./components/InstallAppBanner";
 import { InstructorOnboardingGate } from "./components/InstructorOnboardingGate";
 import { MissionCompleteWatcher } from "./components/operator/MissionCompleteWatcher";
 import { MaintenanceBanner } from "./components/MaintenanceBanner";
+import { LaunchLiveNotifier } from "./components/LaunchLiveNotifier";
 
 const queryClient = new QueryClient();
 
@@ -171,6 +172,7 @@ const App = () => (
         <AuthProvider>
           <NavHistoryProvider>
           <MaintenanceBanner />
+          <LaunchLiveNotifier />
           <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Splash />} />
