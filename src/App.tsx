@@ -280,6 +280,7 @@ const App = () => (
               <Route path="uptime" element={<AdminUptime />} />
               <Route path="background-videos" element={<AdminBackgroundVideos />} />
               <Route path="subscription-plans" element={<AdminSubscriptionPlans />} />
+              <Route path="founding-instructors" element={<AdminFoundingInstructors />} />
               <Route path="deposit-review" element={<AdminDepositReview />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
