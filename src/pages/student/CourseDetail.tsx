@@ -5,6 +5,7 @@ import { useCourse } from '@/hooks/useCourses';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { CategoryPill } from '@/components/CategoryPill';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { FounderBadgePublic } from '@/components/FounderBadgePublic';
 import { Button } from '@/components/ui/button';
 import { CourseMap } from '@/components/CourseMap';
 import { Calendar, Clock, MapPin, Users, Star, Crosshair, AlertCircle, Lock } from 'lucide-react';
@@ -93,9 +94,10 @@ const CourseDetail = () => {
           <div className="tactical-card p-4 flex items-center gap-3">
             <WatermarkedAvatar src={course.instructorPhoto} size={56} className="border-2 border-primary" alt={course.instructorName} />
             <div className="flex-1">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold">{course.instructorName}</span>
                 {course.instructorVerified && <VerifiedBadge />}
+                <FounderBadgePublic userId={course.instructorId} variant="pill" showRank />
               </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Star className="h-3 w-3 fill-primary text-primary" />
