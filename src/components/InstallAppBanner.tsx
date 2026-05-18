@@ -9,7 +9,7 @@ const HIDDEN_EXACT = new Set(["/", "/onboarding"]);
 const ARMED_KEY = "taclink_install_banner_armed";
 
 export const InstallAppBanner = () => {
-  const { showBanner, dismiss } = useInstallPrompt();
+  const { showBanner, dismiss, reset } = useInstallPrompt();
   const [open, setOpen] = useState(false);
   const [armed, setArmed] = useState<boolean>(() => {
     try { return sessionStorage.getItem(ARMED_KEY) === "1"; } catch { return false; }
@@ -17,10 +17,17 @@ export const InstallAppBanner = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const onArm = () => setArmed(true);
+    const onArm = () => {
+      // Tour just finished (either via "Get started" or the X) — banner
+      // must appear for both students and instructors, even if a previous
+      // session dismissed it. Stays visible until the user clicks the
+      // banner's X (handleDismiss).
+      reset();
+      setArmed(true);
+    };
     window.addEventListener("taclink:tour-completed", onArm);
     return () => window.removeEventListener("taclink:tour-completed", onArm);
-  }, []);
+  }, [reset]);
 
   const handleDismiss = () => {
     try { sessionStorage.removeItem(ARMED_KEY); } catch { /* ignore */ }
