@@ -19,24 +19,34 @@ const ResetPassword = () => {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Verify we landed here via a recovery link (supabase exchanges the token
-  // and emits a PASSWORD_RECOVERY event). Without it, deny the action.
+  // Verify we landed here via a recovery link. We require an explicit
+  // PASSWORD_RECOVERY event from supabase — an existing signed-in session is
+  // NOT sufficient, otherwise a logged-in user could bypass /auth/change-password
+  // (which requires the current password) by visiting this route directly.
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+      if (event === 'PASSWORD_RECOVERY') {
         setReady(true);
       }
-    });
-    // Existing session also counts (e.g. user already exchanged the token).
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
     });
     // If the URL itself signals an error (expired link, etc.) surface it.
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     const errDesc = hash.get('error_description');
     if (errDesc) setError(errDesc);
-    return () => sub.subscription.unsubscribe();
+    // If neither a PASSWORD_RECOVERY event nor a recovery hash arrives within
+    // a short window, show an explanatory error rather than an endless spinner.
+    const timeout = window.setTimeout(() => {
+      setReady((r) => {
+        if (!r) setError('This page must be opened from a password reset email link.');
+        return r;
+      });
+    }, 4000);
+    return () => {
+      sub.subscription.unsubscribe();
+      window.clearTimeout(timeout);
+    };
   }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
