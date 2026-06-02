@@ -136,22 +136,39 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Day binding — verify against the actual course's scheduled day.
+    // Real "valid today" window: the QR can only be used in a window around
+    // the course's actual scheduled time. Previously this compared
+    // payload.d to dayKey(course.starts_at) — which always matched because
+    // sign-checkin-qr derived `d` from the same source, making the check
+    // a no-op. Now we anchor to `now` vs. `course.starts_at`.
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
     const { data: course } = await admin
       .from("courses")
-      .select("id, starts_at")
+      .select("id, starts_at, ends_at")
       .eq("id", payload.c)
       .maybeSingle();
-    const expectedDay = dayKey(course?.starts_at ?? null);
-    if (payload.d !== expectedDay) {
-      return new Response(JSON.stringify({ ok: false, reason: "QR is not valid today" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+
+    if (course?.starts_at) {
+      const startMs = new Date(course.starts_at).getTime();
+      const endMs = course.ends_at ? new Date(course.ends_at).getTime() : startMs + 8 * 60 * 60 * 1000;
+      const EARLY_MS = 12 * 60 * 60 * 1000; // allow check-in up to 12h before
+      const LATE_MS = 12 * 60 * 60 * 1000;  // allow check-in up to 12h after end
+      const now = Date.now();
+      if (now < startMs - EARLY_MS) {
+        return new Response(JSON.stringify({ ok: false, reason: "QR not valid yet — course hasn't started" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      if (now > endMs + LATE_MS) {
+        return new Response(JSON.stringify({ ok: false, reason: "QR no longer valid — course has ended" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
     }
 
     return new Response(
