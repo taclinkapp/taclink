@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
   const { data: rows, error } = await supabase
     .from("bookings")
     .select(
-      "id, instructor_deposit_cents, stripe_payment_intent_id, release_attempted_at, courses!inner(instructor_id, ends_at)",
+      "id, instructor_deposit_cents, stripe_payment_intent_id, release_attempted_at, stripe_transfer_id, courses!inner(instructor_id, ends_at)",
     )
     .eq("deposit_status", "held_in_escrow")
     .eq("escrow_status", "held")
@@ -86,13 +86,24 @@ Deno.serve(async (req) => {
   for (const row of rows ?? []) {
     const instructorId = (row as any).courses.instructor_id as string;
 
-    // Pre-claim: stamp release_attempted_at and re-check we still own it.
+    // Pre-claim: atomically stamp release_attempted_at ONLY if no other
+    // worker has stamped it more recently than retryCutoff. Without this
+    // gate, two concurrent runs both pass the initial SELECT and both
+    // proceed to call Stripe (idempotency-key dedupes the actual transfer
+    // but we still waste the call and risk a double DB write).
+    const priorAttempt = (row as any).release_attempted_at as string | null;
     const { data: claim, error: claimErr } = await supabase
       .from("bookings")
       .update({ release_attempted_at: new Date().toISOString(), release_error: null })
       .eq("id", row.id)
       .eq("escrow_status", "held")
       .eq("deposit_status", "held_in_escrow")
+      .is("stripe_transfer_id", null)
+      .or(
+        priorAttempt
+          ? `release_attempted_at.eq.${priorAttempt}`
+          : `release_attempted_at.is.null`,
+      )
       .select("id");
     if (claimErr || !claim?.length) {
       skipped++;
@@ -157,6 +168,8 @@ Deno.serve(async (req) => {
         { idempotencyKey: `release_${row.id}` },
       );
 
+      // Guard against a concurrent refund flipping the row while Stripe
+      // was processing — only mark released if the row is still held.
       await supabase
         .from("bookings")
         .update({
@@ -167,7 +180,9 @@ Deno.serve(async (req) => {
           instructor_payout_cents: netAmount,
           release_error: null,
         })
-        .eq("id", row.id);
+        .eq("id", row.id)
+        .eq("escrow_status", "held")
+        .eq("deposit_status", "held_in_escrow");
       released++;
     } catch (e) {
       const msg = (e as Error).message ?? "transfer_failed";
