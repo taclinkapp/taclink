@@ -496,6 +496,20 @@ const AdminInfluencerLinks = () => {
     setPayNotes('');
   };
 
+  const handleRegeneratePin = async (linkId: string) => {
+    const { data, error } = await supabase.rpc('regenerate_affiliate_access_pin', {
+      _link_id: linkId,
+    });
+    if (error) return toast.error(error.message);
+    toast.success(`New PIN: ${data}`);
+    setLinks((prev) =>
+      prev.map((l) => (l.id === linkId ? { ...l, access_pin: data } : l)),
+    );
+    if (editing?.id === linkId) {
+      setEditing((prev) => (prev ? { ...prev, access_pin: data } : null));
+    }
+  };
+
   const submitPayout = async () => {
     if (!payingLink) return;
     const ids = Array.from(paySelectedIds);
