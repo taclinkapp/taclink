@@ -8,6 +8,7 @@ import { useIdentity } from "@/hooks/useIdentity";
 import { MessageSquare, ChevronRight } from "lucide-react";
 import { getAvatarSrc } from "@/lib/avatar";
 import { fetchPublicProfileMap, type PublicProfileCard } from "@/lib/profilePhotos";
+import { toast } from "sonner";
 
 const formatWhen = (iso: string) => {
   const d = new Date(iso);
