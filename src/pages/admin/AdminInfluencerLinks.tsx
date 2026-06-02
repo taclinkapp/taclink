@@ -486,6 +486,37 @@ const AdminInfluencerLinks = () => {
     refresh();
   };
 
+  const openPayDialog = (link: InfluencerLink) => {
+    setPayingLink(link);
+    const eligible = commissions.filter((c) => c.link_id === link.id && c.status === 'accrued');
+    setPaySelectedIds(new Set(eligible.map((c) => c.id)));
+    setPayMethod((link.payout_method as any) ?? 'cashapp');
+    setPayReference('');
+    setPayNotes('');
+  };
+
+  const submitPayout = async () => {
+    if (!payingLink) return;
+    const ids = Array.from(paySelectedIds);
+    if (ids.length === 0) return toast.error('Select at least one commission');
+    setPaySubmitting(true);
+    const { data, error } = await supabase.rpc('mark_influencer_commissions_paid', {
+      _link_id: payingLink.id,
+      _commission_ids: ids,
+      _method: payMethod,
+      _reference: payReference.trim() || null,
+      _notes: payNotes.trim() || null,
+      _paid_at: new Date().toISOString(),
+    });
+    setPaySubmitting(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Payout recorded (${ids.length} commission${ids.length === 1 ? '' : 's'})`);
+    setPayingLink(null);
+    setPaySelectedIds(new Set());
+    refresh();
+  };
+
+
   const linkNameById = useMemo(() => {
     const m: Record<string, string> = {};
     links.forEach((l) => { m[l.id] = l.influencer_name; });
