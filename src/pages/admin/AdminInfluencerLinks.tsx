@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, Download, Plus, QrCode, Loader2, Pencil, History, Receipt, CheckCircle2, XCircle } from 'lucide-react';
+import { Copy, Download, Plus, QrCode, Loader2, Pencil, History, Receipt, CheckCircle2, XCircle, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { buildInfluencerUrl } from '@/lib/influencer';
@@ -34,6 +34,21 @@ type InfluencerLink = {
   vip_duration_days: number | null;
   active: boolean;
   notes: string | null;
+  created_at: string;
+  owner_user_id: string | null;
+  payout_method: 'cashapp' | 'venmo' | 'paypal' | 'zelle' | 'other' | null;
+  payout_handle: string | null;
+  payout_notes: string | null;
+};
+
+type Payout = {
+  id: string;
+  link_id: string;
+  amount_cents: number;
+  method: string;
+  reference: string | null;
+  notes: string | null;
+  paid_at: string;
   created_at: string;
 };
 
@@ -121,6 +136,15 @@ const AdminInfluencerLinks = () => {
 
   const [pctAudit, setPctAudit] = useState<PctAuditRow[]>([]);
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
+
+  // Batch-pay dialog state
+  const [payingLink, setPayingLink] = useState<InfluencerLink | null>(null);
+  const [paySelectedIds, setPaySelectedIds] = useState<Set<string>>(new Set());
+  const [payMethod, setPayMethod] = useState<'cashapp' | 'venmo' | 'paypal' | 'zelle' | 'other'>('cashapp');
+  const [payReference, setPayReference] = useState('');
+  const [payNotes, setPayNotes] = useState('');
+  const [paySubmitting, setPaySubmitting] = useState(false);
 
   // Live payout preview — sample booking amount admins can tweak
   const [previewBookingDollars, setPreviewBookingDollars] = useState<number>(150);
@@ -147,6 +171,7 @@ const AdminInfluencerLinks = () => {
       { data: settingsRows },
       { data: auditRows },
       { data: commissionRows },
+      { data: payoutRows },
     ] = await Promise.all([
       supabase.from('influencer_links').select('*').order('created_at', { ascending: false }),
       supabase.from('influencer_link_signups').select('link_id'),
@@ -167,6 +192,11 @@ const AdminInfluencerLinks = () => {
         .from('influencer_commissions')
         .select('*')
         .order('created_at', { ascending: false })
+        .limit(200),
+      supabase
+        .from('influencer_payouts')
+        .select('*')
+        .order('paid_at', { ascending: false })
         .limit(100),
     ]);
     setLinks((linkRows as InfluencerLink[]) ?? []);
@@ -184,6 +214,7 @@ const AdminInfluencerLinks = () => {
     });
     setPctAudit((auditRows as PctAuditRow[]) ?? []);
     setCommissions((commissionRows as CommissionRow[]) ?? []);
+    setPayouts((payoutRows as Payout[]) ?? []);
     setLoading(false);
   };
 
@@ -376,6 +407,10 @@ const AdminInfluencerLinks = () => {
         if (Number.isNaN(d) || d < 1 || d > 3650) return toast.error('VIP duration must be 1–3650 days, or blank for unlimited');
       }
     }
+    const ownerRaw = (editing.owner_user_id ?? '').toString().trim();
+    if (ownerRaw && !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(ownerRaw)) {
+      return toast.error('Owner user ID must be a valid UUID, or leave blank');
+    }
     const { error } = await supabase
       .from('influencer_links')
       .update({
@@ -392,6 +427,10 @@ const AdminInfluencerLinks = () => {
         vip_starts_at: editing.is_vip ? (editing.vip_starts_at ?? new Date().toISOString()) : null,
         active: editing.active,
         notes: editing.notes,
+        owner_user_id: ownerRaw || null,
+        payout_method: editing.payout_method,
+        payout_handle: editing.payout_handle?.trim() || null,
+        payout_notes: editing.payout_notes?.trim() || null,
       })
       .eq('id', editing.id);
     if (error) {
@@ -446,6 +485,37 @@ const AdminInfluencerLinks = () => {
     toast.success(`Commission marked ${status}`);
     refresh();
   };
+
+  const openPayDialog = (link: InfluencerLink) => {
+    setPayingLink(link);
+    const eligible = commissions.filter((c) => c.link_id === link.id && c.status === 'accrued');
+    setPaySelectedIds(new Set(eligible.map((c) => c.id)));
+    setPayMethod((link.payout_method as any) ?? 'cashapp');
+    setPayReference('');
+    setPayNotes('');
+  };
+
+  const submitPayout = async () => {
+    if (!payingLink) return;
+    const ids = Array.from(paySelectedIds);
+    if (ids.length === 0) return toast.error('Select at least one commission');
+    setPaySubmitting(true);
+    const { data, error } = await supabase.rpc('mark_influencer_commissions_paid', {
+      _link_id: payingLink.id,
+      _commission_ids: ids,
+      _method: payMethod,
+      _reference: payReference.trim() || null,
+      _notes: payNotes.trim() || null,
+      _paid_at: new Date().toISOString(),
+    });
+    setPaySubmitting(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Payout recorded (${ids.length} commission${ids.length === 1 ? '' : 's'})`);
+    setPayingLink(null);
+    setPaySelectedIds(new Set());
+    refresh();
+  };
+
 
   const linkNameById = useMemo(() => {
     const m: Record<string, string> = {};
@@ -738,6 +808,14 @@ const AdminInfluencerLinks = () => {
                           </Button>
                           <Button
                             size="sm"
+                            variant="outline"
+                            className="h-8"
+                            onClick={() => openPayDialog(l)}
+                          >
+                            <DollarSign className="h-3.5 w-3.5 mr-1" /> Pay
+                          </Button>
+                          <Button
+                            size="sm"
                             variant="ghost"
                             className="h-8 text-destructive"
                             onClick={() => handleToggleActive(l)}
@@ -855,6 +933,51 @@ const AdminInfluencerLinks = () => {
             )}
           </div>
         </div>
+
+        {/* Payout history */}
+        <div className="tactical-card">
+          <div className="flex items-center gap-2 px-5 pt-5 pb-3">
+            <DollarSign className="h-4 w-4 text-primary" />
+            <h2 className="font-bold">Payout history</h2>
+          </div>
+          <div className="overflow-x-auto">
+            {payouts.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                No payouts recorded yet. Use the <span className="font-bold">Pay</span> button on a link to record one.
+              </div>
+            ) : (
+              <table className="w-full min-w-[640px] text-sm">
+                <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-bold">Influencer</th>
+                    <th className="text-left px-4 py-3 font-bold">Method</th>
+                    <th className="text-left px-4 py-3 font-bold">Reference</th>
+                    <th className="text-left px-4 py-3 font-bold">Amount</th>
+                    <th className="text-left px-4 py-3 font-bold">Paid</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {payouts.map((p) => (
+                    <tr key={p.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">{linkNameById[p.link_id] ?? '—'}</div>
+                        <div className="text-[11px] text-muted-foreground">/i/{linkSlugById[p.link_id] ?? '—'}</div>
+                      </td>
+                      <td className="px-4 py-3 capitalize">{p.method}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{p.reference ?? '—'}</td>
+                      <td className="px-4 py-3 font-bold">${(p.amount_cents / 100).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {format(new Date(p.paid_at), 'MMM d, yyyy')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+
 
         {/* Commission % audit log */}
         <div className="tactical-card">
@@ -1250,6 +1373,61 @@ const AdminInfluencerLinks = () => {
                 />
               </div>
 
+              {/* Affiliate account + payout handle */}
+              <div className="rounded-md border border-border p-3 space-y-3">
+                <div className="text-xs uppercase tracking-wider font-bold text-foreground">Payouts</div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Owner user ID (UUID)</Label>
+                  <Input
+                    value={editing.owner_user_id ?? ''}
+                    onChange={(e) => setEditing({ ...editing, owner_user_id: e.target.value })}
+                    placeholder="Paste user UUID to grant /affiliate dashboard access"
+                    className="bg-background border-border h-10 mt-1.5 font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    When set, this user can sign in and view their dashboard at <code>/affiliate</code>.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Payout method</Label>
+                    <Select
+                      value={editing.payout_method ?? 'none'}
+                      onValueChange={(v) => setEditing({ ...editing, payout_method: v === 'none' ? null : (v as any) })}
+                    >
+                      <SelectTrigger className="bg-background border-border h-10 mt-1.5"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Not set</SelectItem>
+                        <SelectItem value="cashapp">Cash App</SelectItem>
+                        <SelectItem value="venmo">Venmo</SelectItem>
+                        <SelectItem value="paypal">PayPal</SelectItem>
+                        <SelectItem value="zelle">Zelle</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Handle</Label>
+                    <Input
+                      value={editing.payout_handle ?? ''}
+                      onChange={(e) => setEditing({ ...editing, payout_handle: e.target.value })}
+                      placeholder="$cashtag / @venmo / email"
+                      className="bg-background border-border h-10 mt-1.5"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Payout notes</Label>
+                  <Textarea
+                    value={editing.payout_notes ?? ''}
+                    onChange={(e) => setEditing({ ...editing, payout_notes: e.target.value })}
+                    className="bg-background border-border min-h-16 mt-1.5"
+                  />
+                </div>
+              </div>
+
+
+
               {/* VIP override (edit) */}
               <div className="rounded-md border border-primary/40 p-3 space-y-3 bg-primary/5">
                 <div className="flex items-center justify-between">
@@ -1317,6 +1495,130 @@ const AdminInfluencerLinks = () => {
               }
               className="bg-primary text-primary-foreground font-bold"
             >Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch-pay dialog */}
+      <Dialog open={!!payingLink} onOpenChange={(o) => !o && setPayingLink(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Record payout — {payingLink?.influencer_name}</DialogTitle>
+          </DialogHeader>
+          {payingLink && (() => {
+            const eligible = commissions.filter((c) => c.link_id === payingLink.id && c.status === 'accrued');
+            const selectedTotal = eligible
+              .filter((c) => paySelectedIds.has(c.id))
+              .reduce((s, c) => s + c.amount_cents, 0);
+            return (
+              <div className="space-y-3">
+                {payingLink.payout_method && (
+                  <div className="rounded bg-muted/40 border border-border px-3 py-2 text-xs">
+                    <span className="text-muted-foreground">On file: </span>
+                    <span className="font-bold capitalize">{payingLink.payout_method}</span>
+                    {payingLink.payout_handle && <> · <code>{payingLink.payout_handle}</code></>}
+                    {payingLink.payout_notes && (
+                      <div className="text-muted-foreground mt-1">{payingLink.payout_notes}</div>
+                    )}
+                  </div>
+                )}
+                {eligible.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No accrued commissions for this link.</p>
+                ) : (
+                  <div className="max-h-56 overflow-y-auto border border-border rounded">
+                    <table className="w-full text-xs">
+                      <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider sticky top-0">
+                        <tr>
+                          <th className="text-left px-2 py-2 w-8">
+                            <input
+                              type="checkbox"
+                              checked={paySelectedIds.size === eligible.length}
+                              onChange={(e) => {
+                                setPaySelectedIds(
+                                  e.target.checked ? new Set(eligible.map((c) => c.id)) : new Set(),
+                                );
+                              }}
+                            />
+                          </th>
+                          <th className="text-left px-2 py-2">Booking</th>
+                          <th className="text-left px-2 py-2">Date</th>
+                          <th className="text-right px-2 py-2">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {eligible.map((c) => (
+                          <tr key={c.id}>
+                            <td className="px-2 py-2">
+                              <input
+                                type="checkbox"
+                                checked={paySelectedIds.has(c.id)}
+                                onChange={(e) => {
+                                  setPaySelectedIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(c.id); else next.delete(c.id);
+                                    return next;
+                                  });
+                                }}
+                              />
+                            </td>
+                            <td className="px-2 py-2 font-mono">{c.booking_id.slice(0, 8)}…</td>
+                            <td className="px-2 py-2 text-muted-foreground">{format(new Date(c.created_at), 'MMM d')}</td>
+                            <td className="px-2 py-2 text-right font-bold">${(c.amount_cents / 100).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Method</Label>
+                    <Select value={payMethod} onValueChange={(v) => setPayMethod(v as any)}>
+                      <SelectTrigger className="bg-background border-border h-10 mt-1.5"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cashapp">Cash App</SelectItem>
+                        <SelectItem value="venmo">Venmo</SelectItem>
+                        <SelectItem value="paypal">PayPal</SelectItem>
+                        <SelectItem value="zelle">Zelle</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Reference (optional)</Label>
+                    <Input
+                      value={payReference}
+                      onChange={(e) => setPayReference(e.target.value)}
+                      placeholder="txn id, check #, etc."
+                      className="bg-background border-border h-10 mt-1.5"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Notes (optional)</Label>
+                  <Textarea
+                    value={payNotes}
+                    onChange={(e) => setPayNotes(e.target.value)}
+                    className="bg-background border-border min-h-16 mt-1.5"
+                  />
+                </div>
+                <div className="rounded bg-primary/10 border border-primary/30 px-3 py-2 text-sm">
+                  Total payout: <span className="font-bold">${(selectedTotal / 100).toFixed(2)}</span>{' '}
+                  <span className="text-muted-foreground">({paySelectedIds.size} commission{paySelectedIds.size === 1 ? '' : 's'})</span>
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayingLink(null)}>Cancel</Button>
+            <Button
+              onClick={submitPayout}
+              disabled={paySubmitting || paySelectedIds.size === 0}
+              className="bg-primary text-primary-foreground font-bold"
+            >
+              {paySubmitting && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+              Record payout
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
