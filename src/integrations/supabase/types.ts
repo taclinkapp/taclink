@@ -1366,6 +1366,7 @@ export type Database = {
           created_at: string
           id: string
           link_id: string
+          payout_id: string | null
           pct_at_time: number
           signup_id: string
           status: string
@@ -1380,6 +1381,7 @@ export type Database = {
           created_at?: string
           id?: string
           link_id: string
+          payout_id?: string | null
           pct_at_time: number
           signup_id: string
           status?: string
@@ -1394,6 +1396,7 @@ export type Database = {
           created_at?: string
           id?: string
           link_id?: string
+          payout_id?: string | null
           pct_at_time?: number
           signup_id?: string
           status?: string
@@ -1413,6 +1416,13 @@ export type Database = {
             columns: ["link_id"]
             isOneToOne: false
             referencedRelation: "influencer_links_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_commissions_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_payouts"
             referencedColumns: ["id"]
           },
           {
@@ -1528,6 +1538,10 @@ export type Database = {
           influencer_name: string
           is_vip: boolean
           notes: string | null
+          owner_user_id: string | null
+          payout_handle: string | null
+          payout_method: string | null
+          payout_notes: string | null
           recurring_pct: number | null
           recurring_window_days: number | null
           slug: string
@@ -1549,6 +1563,10 @@ export type Database = {
           influencer_name: string
           is_vip?: boolean
           notes?: string | null
+          owner_user_id?: string | null
+          payout_handle?: string | null
+          payout_method?: string | null
+          payout_notes?: string | null
           recurring_pct?: number | null
           recurring_window_days?: number | null
           slug: string
@@ -1570,6 +1588,10 @@ export type Database = {
           influencer_name?: string
           is_vip?: boolean
           notes?: string | null
+          owner_user_id?: string | null
+          payout_handle?: string | null
+          payout_method?: string | null
+          payout_notes?: string | null
           recurring_pct?: number | null
           recurring_window_days?: number | null
           slug?: string
@@ -1579,6 +1601,60 @@ export type Database = {
           vip_starts_at?: string | null
         }
         Relationships: []
+      }
+      influencer_payouts: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          created_by: string | null
+          id: string
+          link_id: string
+          method: string
+          notes: string | null
+          paid_at: string
+          reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_id: string
+          method: string
+          notes?: string | null
+          paid_at?: string
+          reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_id?: string
+          method?: string
+          notes?: string | null
+          paid_at?: string
+          reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_payouts_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_payouts_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_links_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       instructor_charges: {
         Row: {
@@ -3898,6 +3974,17 @@ export type Database = {
           display_name: string
           user_role: string
         }[]
+      }
+      mark_influencer_commissions_paid: {
+        Args: {
+          _commission_ids: string[]
+          _link_id: string
+          _method: string
+          _notes?: string
+          _paid_at?: string
+          _reference?: string
+        }
+        Returns: string
       }
       maybe_complete_instructor_onboarding: {
         Args: { _user_id: string }
