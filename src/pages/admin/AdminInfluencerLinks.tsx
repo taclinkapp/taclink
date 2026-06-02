@@ -136,6 +136,15 @@ const AdminInfluencerLinks = () => {
 
   const [pctAudit, setPctAudit] = useState<PctAuditRow[]>([]);
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
+
+  // Batch-pay dialog state
+  const [payingLink, setPayingLink] = useState<InfluencerLink | null>(null);
+  const [paySelectedIds, setPaySelectedIds] = useState<Set<string>>(new Set());
+  const [payMethod, setPayMethod] = useState<'cashapp' | 'venmo' | 'paypal' | 'zelle' | 'other'>('cashapp');
+  const [payReference, setPayReference] = useState('');
+  const [payNotes, setPayNotes] = useState('');
+  const [paySubmitting, setPaySubmitting] = useState(false);
 
   // Live payout preview — sample booking amount admins can tweak
   const [previewBookingDollars, setPreviewBookingDollars] = useState<number>(150);
