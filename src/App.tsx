@@ -296,6 +296,7 @@ const App = () => (
             <Route path="/support" element={<Authed><HelpCenter /></Authed>} />
             <Route path="/support/contact" element={<Authed><ContactSupport /></Authed>} />
             <Route path="/affiliate" element={<Authed><AffiliateDashboard /></Authed>} />
+            <Route path="/affiliate/portal" element={<AffiliatePortal />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
