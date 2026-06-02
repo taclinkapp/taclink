@@ -28,9 +28,22 @@ type InfluencerLink = {
   first_booking_pct: number | null;
   recurring_pct: number | null;
   recurring_window_days: number | null;
+  is_vip: boolean;
+  vip_pct: number | null;
+  vip_starts_at: string | null;
+  vip_duration_days: number | null;
   active: boolean;
   notes: string | null;
   created_at: string;
+};
+
+// Compute remaining VIP days. null = infinite (until disabled). 0 = expired.
+const vipRemainingDays = (l: Pick<InfluencerLink, 'vip_starts_at' | 'vip_duration_days' | 'created_at'>): number | null => {
+  if (l.vip_duration_days === null) return null;
+  const start = new Date(l.vip_starts_at ?? l.created_at).getTime();
+  const end = start + l.vip_duration_days * 86400_000;
+  const remainingMs = end - Date.now();
+  return Math.max(0, Math.ceil(remainingMs / 86400_000));
 };
 
 type SignupCount = { link_id: string; count: number };
@@ -121,6 +134,9 @@ const AdminInfluencerLinks = () => {
   const [newRecurringPct, setNewRecurringPct] = useState<string>('');
   const [newWindowDays, setNewWindowDays] = useState<string>('');
   const [newNotes, setNewNotes] = useState('');
+  const [newIsVip, setNewIsVip] = useState(false);
+  const [newVipPct, setNewVipPct] = useState<string>('');
+  const [newVipDurationDays, setNewVipDurationDays] = useState<string>(''); // blank = infinite
   const [slugCheck, setSlugCheck] = useState<SlugCheck>('idle');
 
   const refresh = async () => {
@@ -236,6 +252,9 @@ const AdminInfluencerLinks = () => {
     setNewRecurringPct('');
     setNewWindowDays('');
     setNewNotes('');
+    setNewIsVip(false);
+    setNewVipPct('');
+    setNewVipDurationDays('');
     setSlugCheck('idle');
     setSlugError(null);
   };
@@ -267,6 +286,16 @@ const AdminInfluencerLinks = () => {
     if (!recurringParsed.ok) return toast.error('Recurring % must be between 0 and 100');
     const windowParsed = parseOptionalDays(newWindowDays);
     if (!windowParsed.ok) return toast.error('Recurring window must be between 1 and 3650 days');
+    let vipPctValue: number | null = null;
+    let vipDurationValue: number | null = null;
+    if (newIsVip) {
+      const vipPctParsed = parseOptionalPct(newVipPct);
+      if (!vipPctParsed.ok || vipPctParsed.value === null) return toast.error('VIP % must be between 0 and 100');
+      vipPctValue = vipPctParsed.value;
+      const vipDurParsed = parseOptionalDays(newVipDurationDays);
+      if (!vipDurParsed.ok) return toast.error('VIP duration must be 1–3650 days, or leave blank for unlimited');
+      vipDurationValue = vipDurParsed.value;
+    }
     // Final pre-flight check (race-safe — DB unique index + trigger are the real guard).
     const { data: check, error: checkErr } = await supabase
       .rpc('check_influencer_slug_available', { _slug: slug });
@@ -294,6 +323,10 @@ const AdminInfluencerLinks = () => {
       first_booking_pct: firstParsed.value,
       recurring_pct: recurringParsed.value,
       recurring_window_days: windowParsed.value,
+      is_vip: newIsVip,
+      vip_pct: vipPctValue,
+      vip_duration_days: vipDurationValue,
+      vip_starts_at: newIsVip ? new Date().toISOString() : null,
       notes: newNotes.trim() || null,
     });
     if (error) {
@@ -334,6 +367,15 @@ const AdminInfluencerLinks = () => {
       const w = editing.recurring_window_days;
       if (Number.isNaN(w) || w < 1 || w > 3650) return toast.error('Recurring window must be 1–3650 days');
     }
+    if (editing.is_vip) {
+      if (editing.vip_pct === null || Number.isNaN(editing.vip_pct) || editing.vip_pct < 0 || editing.vip_pct > 100) {
+        return toast.error('VIP % must be between 0 and 100');
+      }
+      if (editing.vip_duration_days !== null) {
+        const d = editing.vip_duration_days;
+        if (Number.isNaN(d) || d < 1 || d > 3650) return toast.error('VIP duration must be 1–3650 days, or blank for unlimited');
+      }
+    }
     const { error } = await supabase
       .from('influencer_links')
       .update({
@@ -344,6 +386,10 @@ const AdminInfluencerLinks = () => {
         first_booking_pct: editing.first_booking_pct,
         recurring_pct: editing.recurring_pct,
         recurring_window_days: editing.recurring_window_days,
+        is_vip: editing.is_vip,
+        vip_pct: editing.is_vip ? editing.vip_pct : null,
+        vip_duration_days: editing.is_vip ? editing.vip_duration_days : null,
+        vip_starts_at: editing.is_vip ? (editing.vip_starts_at ?? new Date().toISOString()) : null,
         active: editing.active,
         notes: editing.notes,
       })
@@ -601,10 +647,19 @@ const AdminInfluencerLinks = () => {
                   const firstIsDefault = l.first_booking_pct === null && l.commission_pct === null;
                   const recurringIsDefault = l.recurring_pct === null;
                   const windowIsDefault = l.recurring_window_days === null;
+                  const vipRemaining = vipRemainingDays(l);
+                  const vipExpired = l.is_vip && vipRemaining === 0;
                   return (
                     <tr key={l.id} className="hover:bg-muted/30 align-top">
                       <td className="px-4 py-3">
-                        <div className="font-semibold">{l.influencer_name}</div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold">{l.influencer_name}</span>
+                          {l.is_vip && (
+                            <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${vipExpired ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary'}`}>
+                              {vipExpired ? 'VIP expired' : 'VIP'}
+                            </span>
+                          )}
+                        </div>
                         {l.influencer_handle && (
                           <div className="text-xs text-muted-foreground">{l.influencer_handle}</div>
                         )}
@@ -618,20 +673,31 @@ const AdminInfluencerLinks = () => {
                       </td>
                       <td className="px-4 py-3 capitalize">{l.audience}</td>
                       <td className="px-4 py-3 text-xs leading-relaxed">
-                        <div>
-                          <span className="font-bold text-foreground">{firstPct}%</span> first
-                          {firstIsDefault && <span className="text-[10px] text-muted-foreground"> (default)</span>}
-                        </div>
-                        <div>
-                          {recurringPct > 0 ? (
-                            <>
-                              <span className="font-bold text-foreground">{recurringPct}%</span> recurring · {windowDays}d
-                              {(recurringIsDefault || windowIsDefault) && <span className="text-[10px] text-muted-foreground"> (default)</span>}
-                            </>
-                          ) : (
-                            <span className="text-muted-foreground">no recurring</span>
-                          )}
-                        </div>
+                        {l.is_vip && !vipExpired ? (
+                          <div>
+                            <span className="font-bold text-primary">{l.vip_pct}%</span> VIP / booking
+                            <div className="text-[10px] text-muted-foreground">
+                              {vipRemaining === null ? '∞ unlimited (until disabled)' : `${vipRemaining}d remaining`}
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div>
+                              <span className="font-bold text-foreground">{firstPct}%</span> first
+                              {firstIsDefault && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                            </div>
+                            <div>
+                              {recurringPct > 0 ? (
+                                <>
+                                  <span className="font-bold text-foreground">{recurringPct}%</span> recurring · {windowDays}d
+                                  {(recurringIsDefault || windowIsDefault) && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                                </>
+                              ) : (
+                                <span className="text-muted-foreground">no recurring</span>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </td>
                       <td className="px-4 py-3 font-bold">{signupCounts[l.id] ?? 0}</td>
                       <td className="px-4 py-3">
@@ -987,6 +1053,31 @@ const AdminInfluencerLinks = () => {
                 </div>
               );
             })()}
+
+            {/* VIP override */}
+            <div className="rounded-md border border-primary/40 p-3 space-y-3 bg-primary/5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs uppercase tracking-wider font-bold text-primary">VIP affiliate</div>
+                  <div className="text-[11px] text-muted-foreground">Flat % per booking. Overrides first/recurring. Optional day-cap.</div>
+                </div>
+                <Switch checked={newIsVip} onCheckedChange={setNewIsVip} />
+              </div>
+              {newIsVip && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">VIP % per booking</Label>
+                    <Input type="number" min={0} max={100} step={0.1} value={newVipPct} onChange={(e) => setNewVipPct(e.target.value)} placeholder="e.g. 20" className="bg-background border-border h-11 mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Duration (days)</Label>
+                    <Input type="number" min={1} max={3650} step={1} value={newVipDurationDays} onChange={(e) => setNewVipDurationDays(e.target.value)} placeholder="blank = ∞" className="bg-background border-border h-11 mt-1.5" />
+                    <p className="text-[10px] text-muted-foreground mt-1">Leave blank for unlimited (until you disable the link).</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
               <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="bg-background border-border min-h-20 mt-1.5" />
@@ -1158,6 +1249,56 @@ const AdminInfluencerLinks = () => {
                   className="bg-background border-border min-h-20 mt-1.5"
                 />
               </div>
+
+              {/* VIP override (edit) */}
+              <div className="rounded-md border border-primary/40 p-3 space-y-3 bg-primary/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs uppercase tracking-wider font-bold text-primary">VIP affiliate</div>
+                    <div className="text-[11px] text-muted-foreground">Flat % per booking. Overrides first/recurring.</div>
+                  </div>
+                  <Switch checked={editing.is_vip} onCheckedChange={(v) => setEditing({ ...editing, is_vip: v, vip_pct: v ? (editing.vip_pct ?? null) : null })} />
+                </div>
+                {editing.is_vip && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">VIP % per booking</Label>
+                        <Input
+                          type="number" min={0} max={100} step={0.1}
+                          value={editing.vip_pct ?? ''}
+                          onChange={(e) => setEditing({ ...editing, vip_pct: e.target.value === '' ? null : Number(e.target.value) })}
+                          placeholder="e.g. 20"
+                          className="bg-background border-border h-11 mt-1.5"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Duration (days)</Label>
+                        <Input
+                          type="number" min={1} max={3650} step={1}
+                          value={editing.vip_duration_days ?? ''}
+                          onChange={(e) => setEditing({ ...editing, vip_duration_days: e.target.value === '' ? null : Number(e.target.value) })}
+                          placeholder="blank = ∞"
+                          className="bg-background border-border h-11 mt-1.5"
+                        />
+                      </div>
+                    </div>
+                    {(() => {
+                      const rem = vipRemainingDays(editing);
+                      return (
+                        <p className="text-[11px] text-muted-foreground">
+                          {rem === null
+                            ? 'Unlimited — active until you toggle Active off.'
+                            : rem === 0
+                              ? 'Expired — no new commissions will accrue. Update duration to extend.'
+                              : `${rem} day${rem === 1 ? '' : 's'} remaining (started ${format(new Date(editing.vip_starts_at ?? editing.created_at), 'MMM d, yyyy')}).`}
+                        </p>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Active</span>
                 <Switch checked={editing.active} onCheckedChange={(v) => setEditing({ ...editing, active: v })} />

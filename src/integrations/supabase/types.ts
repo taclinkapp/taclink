@@ -1526,11 +1526,15 @@ export type Database = {
           influencer_email: string | null
           influencer_handle: string | null
           influencer_name: string
+          is_vip: boolean
           notes: string | null
           recurring_pct: number | null
           recurring_window_days: number | null
           slug: string
           updated_at: string
+          vip_duration_days: number | null
+          vip_pct: number | null
+          vip_starts_at: string | null
         }
         Insert: {
           active?: boolean
@@ -1543,11 +1547,15 @@ export type Database = {
           influencer_email?: string | null
           influencer_handle?: string | null
           influencer_name: string
+          is_vip?: boolean
           notes?: string | null
           recurring_pct?: number | null
           recurring_window_days?: number | null
           slug: string
           updated_at?: string
+          vip_duration_days?: number | null
+          vip_pct?: number | null
+          vip_starts_at?: string | null
         }
         Update: {
           active?: boolean
@@ -1560,11 +1568,15 @@ export type Database = {
           influencer_email?: string | null
           influencer_handle?: string | null
           influencer_name?: string
+          is_vip?: boolean
           notes?: string | null
           recurring_pct?: number | null
           recurring_window_days?: number | null
           slug?: string
           updated_at?: string
+          vip_duration_days?: number | null
+          vip_pct?: number | null
+          vip_starts_at?: string | null
         }
         Relationships: []
       }
@@ -3787,6 +3799,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      influencer_link_vip_active: {
+        Args: { _link: Database["public"]["Tables"]["influencer_links"]["Row"] }
         Returns: boolean
       }
       instructor_cancel_course: {
