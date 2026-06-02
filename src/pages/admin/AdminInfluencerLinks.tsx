@@ -134,6 +134,9 @@ const AdminInfluencerLinks = () => {
   const [newRecurringPct, setNewRecurringPct] = useState<string>('');
   const [newWindowDays, setNewWindowDays] = useState<string>('');
   const [newNotes, setNewNotes] = useState('');
+  const [newIsVip, setNewIsVip] = useState(false);
+  const [newVipPct, setNewVipPct] = useState<string>('');
+  const [newVipDurationDays, setNewVipDurationDays] = useState<string>(''); // blank = infinite
   const [slugCheck, setSlugCheck] = useState<SlugCheck>('idle');
 
   const refresh = async () => {
