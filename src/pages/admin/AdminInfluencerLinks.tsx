@@ -252,6 +252,9 @@ const AdminInfluencerLinks = () => {
     setNewRecurringPct('');
     setNewWindowDays('');
     setNewNotes('');
+    setNewIsVip(false);
+    setNewVipPct('');
+    setNewVipDurationDays('');
     setSlugCheck('idle');
     setSlugError(null);
   };
