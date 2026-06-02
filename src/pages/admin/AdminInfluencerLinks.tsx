@@ -934,6 +934,51 @@ const AdminInfluencerLinks = () => {
           </div>
         </div>
 
+        {/* Payout history */}
+        <div className="tactical-card">
+          <div className="flex items-center gap-2 px-5 pt-5 pb-3">
+            <DollarSign className="h-4 w-4 text-primary" />
+            <h2 className="font-bold">Payout history</h2>
+          </div>
+          <div className="overflow-x-auto">
+            {payouts.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                No payouts recorded yet. Use the <span className="font-bold">Pay</span> button on a link to record one.
+              </div>
+            ) : (
+              <table className="w-full min-w-[640px] text-sm">
+                <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-bold">Influencer</th>
+                    <th className="text-left px-4 py-3 font-bold">Method</th>
+                    <th className="text-left px-4 py-3 font-bold">Reference</th>
+                    <th className="text-left px-4 py-3 font-bold">Amount</th>
+                    <th className="text-left px-4 py-3 font-bold">Paid</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {payouts.map((p) => (
+                    <tr key={p.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">{linkNameById[p.link_id] ?? '—'}</div>
+                        <div className="text-[11px] text-muted-foreground">/i/{linkSlugById[p.link_id] ?? '—'}</div>
+                      </td>
+                      <td className="px-4 py-3 capitalize">{p.method}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{p.reference ?? '—'}</td>
+                      <td className="px-4 py-3 font-bold">${(p.amount_cents / 100).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {format(new Date(p.paid_at), 'MMM d, yyyy')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+
+
         {/* Commission % audit log */}
         <div className="tactical-card">
           <div className="flex items-center gap-2 px-5 pt-5 pb-3">
