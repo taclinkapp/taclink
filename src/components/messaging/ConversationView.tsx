@@ -130,7 +130,11 @@ export const ConversationView = ({ variant }: Props) => {
         .eq("conversation_id", conversation.id)
         .neq("moderation_status", "flagged")
         .order("created_at", { ascending: true });
-      if (error) console.error(error);
+      if (error) {
+        console.error(error);
+        toast.error("Couldn't load this conversation. Please retry.");
+        return;
+      }
       setMessages((data as MessageRow[]) ?? []);
     };
     load();
@@ -253,9 +257,10 @@ export const ConversationView = ({ variant }: Props) => {
     setDraft("");
     try {
       await sendMessage(conversation.id, user.id, variant, body);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       setDraft(body);
+      toast.error(e?.message ?? "Message failed to send. Please try again.");
     } finally {
       setSending(false);
     }

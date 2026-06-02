@@ -53,7 +53,12 @@ export const Inbox = ({ variant, basePath, TabBar }: Props) => {
         .select("*")
         .eq(column, user.id)
         .order("last_message_at", { ascending: false });
-      if (error) console.error(error);
+      if (error) {
+        console.error(error);
+        toast.error("Couldn't load your messages. Pull to refresh.");
+        setLoading(false);
+        return;
+      }
       const rows = ((data as ConversationRow[]) ?? []);
       setConversations(rows);
       const ids = rows.map((c) => variant === "student" ? c.instructor_id : c.student_id);
