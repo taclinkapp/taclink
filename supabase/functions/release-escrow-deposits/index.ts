@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
   const { data: rows, error } = await supabase
     .from("bookings")
     .select(
-      "id, instructor_deposit_cents, stripe_payment_intent_id, release_attempted_at, courses!inner(instructor_id, ends_at)",
+      "id, instructor_deposit_cents, stripe_payment_intent_id, release_attempted_at, stripe_transfer_id, courses!inner(instructor_id, ends_at)",
     )
     .eq("deposit_status", "held_in_escrow")
     .eq("escrow_status", "held")
