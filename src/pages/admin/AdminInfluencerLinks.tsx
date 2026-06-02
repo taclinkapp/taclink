@@ -171,6 +171,7 @@ const AdminInfluencerLinks = () => {
       { data: settingsRows },
       { data: auditRows },
       { data: commissionRows },
+      { data: payoutRows },
     ] = await Promise.all([
       supabase.from('influencer_links').select('*').order('created_at', { ascending: false }),
       supabase.from('influencer_link_signups').select('link_id'),
@@ -191,6 +192,11 @@ const AdminInfluencerLinks = () => {
         .from('influencer_commissions')
         .select('*')
         .order('created_at', { ascending: false })
+        .limit(200),
+      supabase
+        .from('influencer_payouts')
+        .select('*')
+        .order('paid_at', { ascending: false })
         .limit(100),
     ]);
     setLinks((linkRows as InfluencerLink[]) ?? []);
@@ -208,6 +214,7 @@ const AdminInfluencerLinks = () => {
     });
     setPctAudit((auditRows as PctAuditRow[]) ?? []);
     setCommissions((commissionRows as CommissionRow[]) ?? []);
+    setPayouts((payoutRows as Payout[]) ?? []);
     setLoading(false);
   };
 
