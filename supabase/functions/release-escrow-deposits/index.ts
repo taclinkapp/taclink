@@ -168,6 +168,8 @@ Deno.serve(async (req) => {
         { idempotencyKey: `release_${row.id}` },
       );
 
+      // Guard against a concurrent refund flipping the row while Stripe
+      // was processing — only mark released if the row is still held.
       await supabase
         .from("bookings")
         .update({
@@ -178,7 +180,9 @@ Deno.serve(async (req) => {
           instructor_payout_cents: netAmount,
           release_error: null,
         })
-        .eq("id", row.id);
+        .eq("id", row.id)
+        .eq("escrow_status", "held")
+        .eq("deposit_status", "held_in_escrow");
       released++;
     } catch (e) {
       const msg = (e as Error).message ?? "transfer_failed";
