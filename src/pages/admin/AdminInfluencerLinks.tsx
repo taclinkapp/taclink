@@ -36,6 +36,7 @@ type InfluencerLink = {
   notes: string | null;
   created_at: string;
   owner_user_id: string | null;
+  access_pin: string | null;
   payout_method: 'cashapp' | 'venmo' | 'paypal' | 'zelle' | 'other' | null;
   payout_handle: string | null;
   payout_notes: string | null;
