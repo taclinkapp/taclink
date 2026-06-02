@@ -407,6 +407,10 @@ const AdminInfluencerLinks = () => {
         if (Number.isNaN(d) || d < 1 || d > 3650) return toast.error('VIP duration must be 1–3650 days, or blank for unlimited');
       }
     }
+    const ownerRaw = (editing.owner_user_id ?? '').toString().trim();
+    if (ownerRaw && !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(ownerRaw)) {
+      return toast.error('Owner user ID must be a valid UUID, or leave blank');
+    }
     const { error } = await supabase
       .from('influencer_links')
       .update({
@@ -423,6 +427,10 @@ const AdminInfluencerLinks = () => {
         vip_starts_at: editing.is_vip ? (editing.vip_starts_at ?? new Date().toISOString()) : null,
         active: editing.active,
         notes: editing.notes,
+        owner_user_id: ownerRaw || null,
+        payout_method: editing.payout_method,
+        payout_handle: editing.payout_handle?.trim() || null,
+        payout_notes: editing.payout_notes?.trim() || null,
       })
       .eq('id', editing.id);
     if (error) {
