@@ -739,6 +739,16 @@ const AdminInfluencerLinks = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold">{l.influencer_name}</span>
+                          {!l.owner_user_id && (
+                            <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                              Guest
+                            </span>
+                          )}
+                          {l.owner_user_id && (
+                            <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                              Registered
+                            </span>
+                          )}
                           {l.is_vip && (
                             <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${vipExpired ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary'}`}>
                               {vipExpired ? 'VIP expired' : 'VIP'}
