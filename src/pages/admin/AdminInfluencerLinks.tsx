@@ -1053,6 +1053,31 @@ const AdminInfluencerLinks = () => {
                 </div>
               );
             })()}
+
+            {/* VIP override */}
+            <div className="rounded-md border border-primary/40 p-3 space-y-3 bg-primary/5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs uppercase tracking-wider font-bold text-primary">VIP affiliate</div>
+                  <div className="text-[11px] text-muted-foreground">Flat % per booking. Overrides first/recurring. Optional day-cap.</div>
+                </div>
+                <Switch checked={newIsVip} onCheckedChange={setNewIsVip} />
+              </div>
+              {newIsVip && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">VIP % per booking</Label>
+                    <Input type="number" min={0} max={100} step={0.1} value={newVipPct} onChange={(e) => setNewVipPct(e.target.value)} placeholder="e.g. 20" className="bg-background border-border h-11 mt-1.5" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Duration (days)</Label>
+                    <Input type="number" min={1} max={3650} step={1} value={newVipDurationDays} onChange={(e) => setNewVipDurationDays(e.target.value)} placeholder="blank = ∞" className="bg-background border-border h-11 mt-1.5" />
+                    <p className="text-[10px] text-muted-foreground mt-1">Leave blank for unlimited (until you disable the link).</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
               <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="bg-background border-border min-h-20 mt-1.5" />
