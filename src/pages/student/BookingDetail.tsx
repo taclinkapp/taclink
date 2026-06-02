@@ -163,15 +163,12 @@ const BookingDetail = () => {
   const [reportingNoShow, setReportingNoShow] = useState(false);
   const [processingRefund, setProcessingRefund] = useState(false);
 
-  const triggerRefund = async (refundId: string | undefined) => {
-    if (!refundId) return;
-    try {
-      await supabase.functions.invoke(`process-refund?env=${paymentEnvironment}`, {
-        body: { refund_id: refundId },
-      });
-    } catch (e) {
-      console.error('process-refund invoke failed', e);
-    }
+  const triggerRefund = async (_refundId: string | undefined) => {
+    // No-op: refunds are now processed exclusively by the cron sweep / admin
+    // tooling. The previous student-triggered invocation of process-refund was
+    // closed off (it let a student bypass any hold period). Cron picks the
+    // refund up within a couple of minutes.
+    return;
   };
 
   // Poll the booking row for up to ~15s after a cancel until the backend
