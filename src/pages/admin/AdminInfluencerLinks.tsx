@@ -1410,8 +1410,45 @@ const AdminInfluencerLinks = () => {
                     className="bg-background border-border h-10 mt-1.5 font-mono text-xs"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    When set, this user can sign in and view their dashboard at <code>/affiliate</code>.
+                    When set, this user can sign in and view their dashboard at <code>/affiliate</code>. Leave blank for guest affiliates.
                   </p>
+                </div>
+                <div className="rounded bg-muted/40 border border-border p-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Access PIN</Label>
+                      <div className="font-mono text-sm font-bold tracking-widest mt-0.5">
+                        {editing.access_pin ?? '—'}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Guest affiliates use this at <code>/affiliate/portal</code>
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => {
+                          if (editing.access_pin) {
+                            navigator.clipboard.writeText(editing.access_pin);
+                            toast.success('PIN copied');
+                          }
+                        }}
+                        disabled={!editing.access_pin}
+                      >
+                        <Copy className="h-3 w-3 mr-1" /> Copy
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => handleRegeneratePin(editing.id)}
+                      >
+                        Regenerate
+                      </Button>
+                    </div>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
