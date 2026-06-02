@@ -1249,6 +1249,56 @@ const AdminInfluencerLinks = () => {
                   className="bg-background border-border min-h-20 mt-1.5"
                 />
               </div>
+
+              {/* VIP override (edit) */}
+              <div className="rounded-md border border-primary/40 p-3 space-y-3 bg-primary/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs uppercase tracking-wider font-bold text-primary">VIP affiliate</div>
+                    <div className="text-[11px] text-muted-foreground">Flat % per booking. Overrides first/recurring.</div>
+                  </div>
+                  <Switch checked={editing.is_vip} onCheckedChange={(v) => setEditing({ ...editing, is_vip: v, vip_pct: v ? (editing.vip_pct ?? null) : null })} />
+                </div>
+                {editing.is_vip && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">VIP % per booking</Label>
+                        <Input
+                          type="number" min={0} max={100} step={0.1}
+                          value={editing.vip_pct ?? ''}
+                          onChange={(e) => setEditing({ ...editing, vip_pct: e.target.value === '' ? null : Number(e.target.value) })}
+                          placeholder="e.g. 20"
+                          className="bg-background border-border h-11 mt-1.5"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Duration (days)</Label>
+                        <Input
+                          type="number" min={1} max={3650} step={1}
+                          value={editing.vip_duration_days ?? ''}
+                          onChange={(e) => setEditing({ ...editing, vip_duration_days: e.target.value === '' ? null : Number(e.target.value) })}
+                          placeholder="blank = ∞"
+                          className="bg-background border-border h-11 mt-1.5"
+                        />
+                      </div>
+                    </div>
+                    {(() => {
+                      const rem = vipRemainingDays(editing);
+                      return (
+                        <p className="text-[11px] text-muted-foreground">
+                          {rem === null
+                            ? 'Unlimited — active until you toggle Active off.'
+                            : rem === 0
+                              ? 'Expired — no new commissions will accrue. Update duration to extend.'
+                              : `${rem} day${rem === 1 ? '' : 's'} remaining (started ${format(new Date(editing.vip_starts_at ?? editing.created_at), 'MMM d, yyyy')}).`}
+                        </p>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Active</span>
                 <Switch checked={editing.active} onCheckedChange={(v) => setEditing({ ...editing, active: v })} />
