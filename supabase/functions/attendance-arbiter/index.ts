@@ -18,6 +18,47 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // AuthZ: only the platform's cron job or an admin user may invoke this.
+    // Without this gate, anyone who guesses a claim UUID could force a verdict.
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const provided = req.headers.get("x-cron-secret");
+    const cronOk = !!cronSecret && !!provided && provided === cronSecret;
+
+    let adminOk = false;
+    if (!cronOk) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      if (authHeader.startsWith("Bearer ")) {
+        try {
+          const userClient = createClient(
+            Deno.env.get("SUPABASE_URL")!,
+            Deno.env.get("SUPABASE_ANON_KEY")!,
+            { global: { headers: { Authorization: authHeader } } },
+          );
+          const { data: u } = await userClient.auth.getUser();
+          const uid = u?.user?.id;
+          if (uid) {
+            const adminClient = createClient(
+              Deno.env.get("SUPABASE_URL")!,
+              Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+            );
+            const { data: roleRow } = await adminClient
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", uid)
+              .eq("role", "admin")
+              .maybeSingle();
+            adminOk = !!roleRow;
+          }
+        } catch (_) { /* fall through */ }
+      }
+    }
+    if (!cronOk && !adminOk) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { claim_id } = await req.json().catch(() => ({}));
     if (!claim_id || typeof claim_id !== "string") {
       return new Response(JSON.stringify({ error: "claim_id required" }), {
