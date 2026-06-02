@@ -367,6 +367,15 @@ const AdminInfluencerLinks = () => {
       const w = editing.recurring_window_days;
       if (Number.isNaN(w) || w < 1 || w > 3650) return toast.error('Recurring window must be 1–3650 days');
     }
+    if (editing.is_vip) {
+      if (editing.vip_pct === null || Number.isNaN(editing.vip_pct) || editing.vip_pct < 0 || editing.vip_pct > 100) {
+        return toast.error('VIP % must be between 0 and 100');
+      }
+      if (editing.vip_duration_days !== null) {
+        const d = editing.vip_duration_days;
+        if (Number.isNaN(d) || d < 1 || d > 3650) return toast.error('VIP duration must be 1–3650 days, or blank for unlimited');
+      }
+    }
     const { error } = await supabase
       .from('influencer_links')
       .update({
@@ -377,6 +386,10 @@ const AdminInfluencerLinks = () => {
         first_booking_pct: editing.first_booking_pct,
         recurring_pct: editing.recurring_pct,
         recurring_window_days: editing.recurring_window_days,
+        is_vip: editing.is_vip,
+        vip_pct: editing.is_vip ? editing.vip_pct : null,
+        vip_duration_days: editing.is_vip ? editing.vip_duration_days : null,
+        vip_starts_at: editing.is_vip ? (editing.vip_starts_at ?? new Date().toISOString()) : null,
         active: editing.active,
         notes: editing.notes,
       })
