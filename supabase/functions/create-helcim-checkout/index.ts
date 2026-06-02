@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
     const { data: booking, error: bErr } = await supabase
       .from("bookings")
       .select(
-        "id, student_id, course_id, online_total_cents, platform_fee_cents, instructor_deposit_cents, deposit_status, courses!inner(title, instructor_id)",
+        "id, student_id, course_id, course_price_cents, online_total_cents, platform_fee_cents, instructor_deposit_cents, deposit_status, courses!inner(title, instructor_id, price_cents)",
       )
       .eq("id", bookingId)
       .maybeSingle();
@@ -151,6 +151,21 @@ Deno.serve(async (req) => {
       booking.deposit_status === "released"
     ) {
       return json({ error: "Deposit already collected" }, 400);
+    }
+
+    // Freshness guard: if the instructor edited the course price between
+    // the student opening the checkout page and clicking Pay, the booking's
+    // snapshot is stale. Reject so the client can reload and recompute fees,
+    // protecting the student from being silently over- or under-charged.
+    const currentCoursePrice = (booking as any).courses?.price_cents;
+    if (
+      typeof currentCoursePrice === "number" &&
+      currentCoursePrice !== booking.course_price_cents
+    ) {
+      return json({
+        error: "PRICE_CHANGED",
+        message: "The course price has changed since you opened this page. Please refresh to see the latest pricing.",
+      }, 409);
     }
 
     const courseTitle = (booking as any).courses?.title ?? "TacLink Course";
