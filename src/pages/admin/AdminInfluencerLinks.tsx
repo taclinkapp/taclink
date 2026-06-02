@@ -647,10 +647,19 @@ const AdminInfluencerLinks = () => {
                   const firstIsDefault = l.first_booking_pct === null && l.commission_pct === null;
                   const recurringIsDefault = l.recurring_pct === null;
                   const windowIsDefault = l.recurring_window_days === null;
+                  const vipRemaining = vipRemainingDays(l);
+                  const vipExpired = l.is_vip && vipRemaining === 0;
                   return (
                     <tr key={l.id} className="hover:bg-muted/30 align-top">
                       <td className="px-4 py-3">
-                        <div className="font-semibold">{l.influencer_name}</div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold">{l.influencer_name}</span>
+                          {l.is_vip && (
+                            <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${vipExpired ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary'}`}>
+                              {vipExpired ? 'VIP expired' : 'VIP'}
+                            </span>
+                          )}
+                        </div>
                         {l.influencer_handle && (
                           <div className="text-xs text-muted-foreground">{l.influencer_handle}</div>
                         )}
@@ -664,20 +673,31 @@ const AdminInfluencerLinks = () => {
                       </td>
                       <td className="px-4 py-3 capitalize">{l.audience}</td>
                       <td className="px-4 py-3 text-xs leading-relaxed">
-                        <div>
-                          <span className="font-bold text-foreground">{firstPct}%</span> first
-                          {firstIsDefault && <span className="text-[10px] text-muted-foreground"> (default)</span>}
-                        </div>
-                        <div>
-                          {recurringPct > 0 ? (
-                            <>
-                              <span className="font-bold text-foreground">{recurringPct}%</span> recurring · {windowDays}d
-                              {(recurringIsDefault || windowIsDefault) && <span className="text-[10px] text-muted-foreground"> (default)</span>}
-                            </>
-                          ) : (
-                            <span className="text-muted-foreground">no recurring</span>
-                          )}
-                        </div>
+                        {l.is_vip && !vipExpired ? (
+                          <div>
+                            <span className="font-bold text-primary">{l.vip_pct}%</span> VIP / booking
+                            <div className="text-[10px] text-muted-foreground">
+                              {vipRemaining === null ? '∞ unlimited (until disabled)' : `${vipRemaining}d remaining`}
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div>
+                              <span className="font-bold text-foreground">{firstPct}%</span> first
+                              {firstIsDefault && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                            </div>
+                            <div>
+                              {recurringPct > 0 ? (
+                                <>
+                                  <span className="font-bold text-foreground">{recurringPct}%</span> recurring · {windowDays}d
+                                  {(recurringIsDefault || windowIsDefault) && <span className="text-[10px] text-muted-foreground"> (default)</span>}
+                                </>
+                              ) : (
+                                <span className="text-muted-foreground">no recurring</span>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </td>
                       <td className="px-4 py-3 font-bold">{signupCounts[l.id] ?? 0}</td>
                       <td className="px-4 py-3">
