@@ -286,6 +286,16 @@ const AdminInfluencerLinks = () => {
     if (!recurringParsed.ok) return toast.error('Recurring % must be between 0 and 100');
     const windowParsed = parseOptionalDays(newWindowDays);
     if (!windowParsed.ok) return toast.error('Recurring window must be between 1 and 3650 days');
+    let vipPctValue: number | null = null;
+    let vipDurationValue: number | null = null;
+    if (newIsVip) {
+      const vipPctParsed = parseOptionalPct(newVipPct);
+      if (!vipPctParsed.ok || vipPctParsed.value === null) return toast.error('VIP % must be between 0 and 100');
+      vipPctValue = vipPctParsed.value;
+      const vipDurParsed = parseOptionalDays(newVipDurationDays);
+      if (!vipDurParsed.ok) return toast.error('VIP duration must be 1–3650 days, or leave blank for unlimited');
+      vipDurationValue = vipDurParsed.value;
+    }
     // Final pre-flight check (race-safe — DB unique index + trigger are the real guard).
     const { data: check, error: checkErr } = await supabase
       .rpc('check_influencer_slug_available', { _slug: slug });
@@ -313,6 +323,10 @@ const AdminInfluencerLinks = () => {
       first_booking_pct: firstParsed.value,
       recurring_pct: recurringParsed.value,
       recurring_window_days: windowParsed.value,
+      is_vip: newIsVip,
+      vip_pct: vipPctValue,
+      vip_duration_days: vipDurationValue,
+      vip_starts_at: newIsVip ? new Date().toISOString() : null,
       notes: newNotes.trim() || null,
     });
     if (error) {
