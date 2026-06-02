@@ -28,9 +28,22 @@ type InfluencerLink = {
   first_booking_pct: number | null;
   recurring_pct: number | null;
   recurring_window_days: number | null;
+  is_vip: boolean;
+  vip_pct: number | null;
+  vip_starts_at: string | null;
+  vip_duration_days: number | null;
   active: boolean;
   notes: string | null;
   created_at: string;
+};
+
+// Compute remaining VIP days. null = infinite (until disabled). 0 = expired.
+const vipRemainingDays = (l: Pick<InfluencerLink, 'vip_starts_at' | 'vip_duration_days' | 'created_at'>): number | null => {
+  if (l.vip_duration_days === null) return null;
+  const start = new Date(l.vip_starts_at ?? l.created_at).getTime();
+  const end = start + l.vip_duration_days * 86400_000;
+  const remainingMs = end - Date.now();
+  return Math.max(0, Math.ceil(remainingMs / 86400_000));
 };
 
 type SignupCount = { link_id: string; count: number };
