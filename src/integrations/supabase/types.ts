@@ -1526,6 +1526,7 @@ export type Database = {
       }
       influencer_links: {
         Row: {
+          access_pin: string | null
           active: boolean
           audience: string
           commission_pct: number | null
@@ -1551,6 +1552,7 @@ export type Database = {
           vip_starts_at: string | null
         }
         Insert: {
+          access_pin?: string | null
           active?: boolean
           audience?: string
           commission_pct?: number | null
@@ -1576,6 +1578,7 @@ export type Database = {
           vip_starts_at?: string | null
         }
         Update: {
+          access_pin?: string | null
           active?: boolean
           audience?: string
           commission_pct?: number | null
@@ -3830,6 +3833,7 @@ export type Database = {
       }
       expire_founders_due: { Args: never; Returns: number }
       expire_stale_credentials: { Args: never; Returns: number }
+      generate_access_pin: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       get_active_payment_provider: {
         Args: never
@@ -3837,6 +3841,10 @@ export type Database = {
       }
       get_effective_launch_state: { Args: never; Returns: Json }
       get_founder_program_stats: { Args: never; Returns: Json }
+      get_guest_affiliate_stats: {
+        Args: { _pin: string; _slug: string }
+        Returns: Json
+      }
       get_my_founder_status: { Args: never; Returns: Json }
       get_public_founder_badge: {
         Args: { _user_id: string }
@@ -4020,6 +4028,10 @@ export type Database = {
         Returns: string
       }
       referral_code_exists: { Args: { _code: string }; Returns: boolean }
+      regenerate_affiliate_access_pin: {
+        Args: { _link_id: string }
+        Returns: string
+      }
       student_cancel_booking: {
         Args: { _booking_id: string; _reason?: string }
         Returns: Json
@@ -4027,6 +4039,16 @@ export type Database = {
       student_no_show_refund: {
         Args: { _booking_id: string; _reason?: string }
         Returns: Json
+      }
+      update_guest_affiliate_payout: {
+        Args: {
+          _handle: string
+          _method: string
+          _notes?: string
+          _pin: string
+          _slug: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
