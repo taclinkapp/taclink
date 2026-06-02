@@ -501,6 +501,114 @@ export const CRASH_COURSES: CrashCourse[] = [
       },
     ],
   },
+  {
+    id: 'cockpit',
+    route: '/admin/cockpit',
+    title: 'Owner Cockpit',
+    subtitle: 'Mission-control view of the levers reserved for the owner.',
+    steps: [
+      {
+        heading: 'What lives here',
+        body: 'Same surface as Owner Console — prelaunch toggles, AI features, payment failover. The "cockpit" alias exists for muscle memory if you came from an older nav.',
+        tip: 'Treat every switch as production-impacting — read the description before flipping.',
+      },
+      {
+        heading: 'When to open it',
+        body: 'During launches, incidents, or pricing experiments. For day-to-day moderation use the dedicated tabs instead.',
+      },
+    ],
+  },
+  {
+    id: 'brief',
+    route: '/admin/brief',
+    title: 'Weekly Brief',
+    subtitle: 'A one-page summary of the platform week — read this every Monday.',
+    steps: [
+      {
+        heading: 'What you get',
+        body: 'Week-over-week deltas on signups, bookings, revenue, refunds, and support load — auto-compiled so you do not have to assemble it.',
+        bullets: [
+          { label: 'Highlights', text: 'Biggest wins and biggest losses, with links to the source tab.' },
+          { label: 'Risks', text: 'Stuck deposits, rising refund rate, slow P95, or instructor churn signals.' },
+          { label: 'Next actions', text: 'Suggested follow-ups based on what trended.' },
+        ],
+      },
+      {
+        heading: 'Use it as a standup',
+        body: 'Skim every Monday before opening any other tab. It tells you where to spend your week.',
+      },
+    ],
+  },
+  {
+    id: 'feedback',
+    route: '/admin/feedback',
+    title: 'User Feedback',
+    subtitle: 'Free-text feedback submitted in-app by students and instructors.',
+    steps: [
+      {
+        heading: 'Why this is separate from Reports',
+        body: 'Reports are bugs and concrete issues. Feedback is opinions, feature requests, and qualitative input — useful for product direction, not for triage.',
+      },
+      {
+        heading: 'Tag and route',
+        body: 'Tag each entry (UX, pricing, feature request, praise) and archive once captured. High-signal items get promoted into the roadmap.',
+        tip: 'Reply to anyone who left their email — even one sentence — they remember it.',
+      },
+    ],
+  },
+  {
+    id: 'background-videos',
+    route: '/admin/background-videos',
+    title: 'Background Videos',
+    subtitle: 'Manage the splash and hero background video library.',
+    steps: [
+      {
+        heading: 'Upload and activate',
+        body: 'Upload a new MP4, mark it active, and the splash + hero surfaces start rotating it in. Inactive videos stay archived but can be re-enabled.',
+        bullets: [
+          { label: 'Spec', text: 'H.264 MP4, < 8 MB, 1080p or smaller, no audio.' },
+          { label: 'Tone', text: 'Training / discipline / outdoor. Avoid anything overtly violent.' },
+        ],
+      },
+      {
+        heading: 'Test on mobile',
+        body: 'Some clips look great on desktop but render too dark on phones. Always preview on a phone before activating.',
+      },
+    ],
+  },
+  {
+    id: 'subscription-plans',
+    route: '/admin/subscription-plans',
+    title: 'Subscription Plans',
+    subtitle: 'Manage the instructor subscription tiers and pricing.',
+    steps: [
+      {
+        heading: 'What you can edit',
+        body: 'Plan name, monthly price, included features, and visibility. Existing subscribers stay on the price they signed up at — edits affect new subscribers only.',
+      },
+      {
+        heading: 'Be deliberate',
+        body: 'Pricing changes are visible to all instructors immediately. Coordinate with marketing/comms before publishing a new tier.',
+        tip: 'Use Feature Flags to A/B test a price point before making it the default.',
+      },
+    ],
+  },
+  {
+    id: 'founding-instructors',
+    route: '/admin/founding-instructors',
+    title: 'Founding Instructors',
+    subtitle: 'Curate the Founding Instructor program — limited badge + perks.',
+    steps: [
+      {
+        heading: 'Who qualifies',
+        body: 'Approved instructors invited before the public launch, or hand-picked partners. The badge is finite — once the slot count is hit, no more can be added without raising the cap.',
+      },
+      {
+        heading: 'Adding & revoking',
+        body: 'Add by user id with a short reason. Revoke only for cause (policy violation, departure) — the badge is visible to students and revocation is auditable.',
+      },
+    ],
+  },
 ];
 
 export function resolveCrashCourse(pathname: string): CrashCourse | null {
