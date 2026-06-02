@@ -1499,6 +1499,130 @@ const AdminInfluencerLinks = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Batch-pay dialog */}
+      <Dialog open={!!payingLink} onOpenChange={(o) => !o && setPayingLink(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Record payout — {payingLink?.influencer_name}</DialogTitle>
+          </DialogHeader>
+          {payingLink && (() => {
+            const eligible = commissions.filter((c) => c.link_id === payingLink.id && c.status === 'accrued');
+            const selectedTotal = eligible
+              .filter((c) => paySelectedIds.has(c.id))
+              .reduce((s, c) => s + c.amount_cents, 0);
+            return (
+              <div className="space-y-3">
+                {payingLink.payout_method && (
+                  <div className="rounded bg-muted/40 border border-border px-3 py-2 text-xs">
+                    <span className="text-muted-foreground">On file: </span>
+                    <span className="font-bold capitalize">{payingLink.payout_method}</span>
+                    {payingLink.payout_handle && <> · <code>{payingLink.payout_handle}</code></>}
+                    {payingLink.payout_notes && (
+                      <div className="text-muted-foreground mt-1">{payingLink.payout_notes}</div>
+                    )}
+                  </div>
+                )}
+                {eligible.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No accrued commissions for this link.</p>
+                ) : (
+                  <div className="max-h-56 overflow-y-auto border border-border rounded">
+                    <table className="w-full text-xs">
+                      <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider sticky top-0">
+                        <tr>
+                          <th className="text-left px-2 py-2 w-8">
+                            <input
+                              type="checkbox"
+                              checked={paySelectedIds.size === eligible.length}
+                              onChange={(e) => {
+                                setPaySelectedIds(
+                                  e.target.checked ? new Set(eligible.map((c) => c.id)) : new Set(),
+                                );
+                              }}
+                            />
+                          </th>
+                          <th className="text-left px-2 py-2">Booking</th>
+                          <th className="text-left px-2 py-2">Date</th>
+                          <th className="text-right px-2 py-2">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {eligible.map((c) => (
+                          <tr key={c.id}>
+                            <td className="px-2 py-2">
+                              <input
+                                type="checkbox"
+                                checked={paySelectedIds.has(c.id)}
+                                onChange={(e) => {
+                                  setPaySelectedIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(c.id); else next.delete(c.id);
+                                    return next;
+                                  });
+                                }}
+                              />
+                            </td>
+                            <td className="px-2 py-2 font-mono">{c.booking_id.slice(0, 8)}…</td>
+                            <td className="px-2 py-2 text-muted-foreground">{format(new Date(c.created_at), 'MMM d')}</td>
+                            <td className="px-2 py-2 text-right font-bold">${(c.amount_cents / 100).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Method</Label>
+                    <Select value={payMethod} onValueChange={(v) => setPayMethod(v as any)}>
+                      <SelectTrigger className="bg-background border-border h-10 mt-1.5"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cashapp">Cash App</SelectItem>
+                        <SelectItem value="venmo">Venmo</SelectItem>
+                        <SelectItem value="paypal">PayPal</SelectItem>
+                        <SelectItem value="zelle">Zelle</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Reference (optional)</Label>
+                    <Input
+                      value={payReference}
+                      onChange={(e) => setPayReference(e.target.value)}
+                      placeholder="txn id, check #, etc."
+                      className="bg-background border-border h-10 mt-1.5"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Notes (optional)</Label>
+                  <Textarea
+                    value={payNotes}
+                    onChange={(e) => setPayNotes(e.target.value)}
+                    className="bg-background border-border min-h-16 mt-1.5"
+                  />
+                </div>
+                <div className="rounded bg-primary/10 border border-primary/30 px-3 py-2 text-sm">
+                  Total payout: <span className="font-bold">${(selectedTotal / 100).toFixed(2)}</span>{' '}
+                  <span className="text-muted-foreground">({paySelectedIds.size} commission{paySelectedIds.size === 1 ? '' : 's'})</span>
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayingLink(null)}>Cancel</Button>
+            <Button
+              onClick={submitPayout}
+              disabled={paySubmitting || paySelectedIds.size === 0}
+              className="bg-primary text-primary-foreground font-bold"
+            >
+              {paySubmitting && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+              Record payout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* QR dialog */}
       <Dialog open={!!qrFor} onOpenChange={(o) => !o && setQrFor(null)}>
         <DialogContent className="max-w-sm">
