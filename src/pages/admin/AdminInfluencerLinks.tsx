@@ -36,6 +36,7 @@ type InfluencerLink = {
   notes: string | null;
   created_at: string;
   owner_user_id: string | null;
+  access_pin: string | null;
   payout_method: 'cashapp' | 'venmo' | 'paypal' | 'zelle' | 'other' | null;
   payout_handle: string | null;
   payout_notes: string | null;
@@ -495,6 +496,20 @@ const AdminInfluencerLinks = () => {
     setPayNotes('');
   };
 
+  const handleRegeneratePin = async (linkId: string) => {
+    const { data, error } = await supabase.rpc('regenerate_affiliate_access_pin', {
+      _link_id: linkId,
+    });
+    if (error) return toast.error(error.message);
+    toast.success(`New PIN: ${data}`);
+    setLinks((prev) =>
+      prev.map((l) => (l.id === linkId ? { ...l, access_pin: data } : l)),
+    );
+    if (editing?.id === linkId) {
+      setEditing((prev) => (prev ? { ...prev, access_pin: data } : null));
+    }
+  };
+
   const submitPayout = async () => {
     if (!payingLink) return;
     const ids = Array.from(paySelectedIds);
@@ -724,6 +739,16 @@ const AdminInfluencerLinks = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold">{l.influencer_name}</span>
+                          {!l.owner_user_id && (
+                            <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                              Guest
+                            </span>
+                          )}
+                          {l.owner_user_id && (
+                            <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                              Registered
+                            </span>
+                          )}
                           {l.is_vip && (
                             <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${vipExpired ? 'bg-muted text-muted-foreground' : 'bg-primary/20 text-primary'}`}>
                               {vipExpired ? 'VIP expired' : 'VIP'}
@@ -1385,8 +1410,45 @@ const AdminInfluencerLinks = () => {
                     className="bg-background border-border h-10 mt-1.5 font-mono text-xs"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    When set, this user can sign in and view their dashboard at <code>/affiliate</code>.
+                    When set, this user can sign in and view their dashboard at <code>/affiliate</code>. Leave blank for guest affiliates.
                   </p>
+                </div>
+                <div className="rounded bg-muted/40 border border-border p-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Access PIN</Label>
+                      <div className="font-mono text-sm font-bold tracking-widest mt-0.5">
+                        {editing.access_pin ?? '—'}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Guest affiliates use this at <code>/affiliate/portal</code>
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => {
+                          if (editing.access_pin) {
+                            navigator.clipboard.writeText(editing.access_pin);
+                            toast.success('PIN copied');
+                          }
+                        }}
+                        disabled={!editing.access_pin}
+                      >
+                        <Copy className="h-3 w-3 mr-1" /> Copy
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => handleRegeneratePin(editing.id)}
+                      >
+                        Regenerate
+                      </Button>
+                    </div>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
