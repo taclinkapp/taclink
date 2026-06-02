@@ -42,7 +42,9 @@ const renderPopupHtml = (
   if (state === "verifying") {
     media = `<div style="width:100%;height:96px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;letter-spacing:.1em;">VERIFYING…</div>`;
     statusLine = `<div style="font-size:9px;color:#999;margin-top:4px;text-transform:uppercase;letter-spacing:.08em;">Verifying photo…</div>`;
-  } else if (state === "ok" && c.heroImage) {
+  } else if (state === "ok" && c.heroImage && /^https?:\/\//i.test(c.heroImage)) {
+    // URL must be a normal http(s) URL — refuse javascript:, data:, anything else
+    // that could escape the attribute or run script when the popup mounts.
     media = `<img src="${escapeHtml(c.heroImage)}" alt="" style="width:100%;height:96px;object-fit:cover;display:block;" />`;
     statusLine = `<div style="font-size:9px;color:#15803d;margin-top:4px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;">✓ Verified photo</div>`;
   } else {

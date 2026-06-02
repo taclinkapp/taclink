@@ -517,6 +517,13 @@ const NewCourse = () => {
     if (step === 4) {
       if (!skillLevel) return 'Skill level is required — go back to Basics and pick a level';
       if (!isPrelaunch && !skipPublishGuards && !feeAck) return 'Please acknowledge the listing fee refund policy before publishing';
+      // Block publish for instructors whose credentials aren't approved.
+      // Drafts are still fine — only the live-publish path is gated.
+      if (!isPrelaunch && !skipPublishGuards && credStatus && credStatus !== 'approved') {
+        if (credStatus === 'rejected') return 'Your credential was rejected — please re-upload before publishing.';
+        if (credStatus === 'expired') return 'Your credential has expired — please re-upload before publishing.';
+        return 'Your credential is still pending review. Once it\'s approved you can publish.';
+      }
     }
     return null;
   };
@@ -589,31 +596,35 @@ const NewCourse = () => {
       const inPersonWaiver = !subActive || waiverMode === 'in_person';
       let created: any;
       if (isEdit && editId) {
+        // Don't null-out an existing lat/lng if a geocode lookup transiently
+        // fails on edit — that would silently break check-in proximity and
+        // remove the course from the map.
+        const updatePayload: any = {
+          title: title.trim(),
+          description: description.trim() || null,
+          category,
+          skill_level: skillLevel as SkillLevel,
+          primary_pillar: (primaryPillar || null) as any,
+          secondary_pillar: (secondaryPillar || null) as any,
+          price_cents: Math.round(Number(price) * 100),
+          duration_minutes: durationMin,
+          capacity: Number(capacity),
+          address: address || null,
+          city,
+          state,
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt.toISOString(),
+          ...(coverUrl ? { cover_image_url: coverUrl } : {}),
+          gallery_urls: finalGallery,
+          in_person_waiver: inPersonWaiver,
+          status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
+        };
+        if (geo) { updatePayload.lat = geo.lat; updatePayload.lng = geo.lng; }
         const { data, error } = await supabase
           .from('courses')
-          .update({
-            title: title.trim(),
-            description: description.trim() || null,
-            category,
-            skill_level: skillLevel as SkillLevel,
-            primary_pillar: (primaryPillar || null) as any,
-            secondary_pillar: (secondaryPillar || null) as any,
-            price_cents: Math.round(Number(price) * 100),
-            duration_minutes: durationMin,
-            capacity: Number(capacity),
-            address: address || null,
-            city,
-            state,
-            lat: geo?.lat ?? null,
-            lng: geo?.lng ?? null,
-            starts_at: startsAt.toISOString(),
-            ends_at: endsAt.toISOString(),
-            ...(coverUrl ? { cover_image_url: coverUrl } : {}),
-            gallery_urls: finalGallery,
-            in_person_waiver: inPersonWaiver,
-            status: (isPrelaunch && !skipPublishGuards) ? 'draft' : 'published',
-          })
+          .update(updatePayload)
           .eq('id', editId)
+          .eq('instructor_id', user.id) // defense-in-depth alongside RLS
           .select()
           .single();
         if (error) throw error;
@@ -698,8 +709,11 @@ const NewCourse = () => {
       const listingFeeCents = computeListingFeeCents(priceCents);
 
       // Skip the listing-fee charge if one was already recorded for this course
-      // (e.g. editing/republishing a previously-published course). Drafts have
-      // no charge yet, so this only fires the first time.
+      // (e.g. editing/republishing a previously-published course). The DB now
+      // enforces a unique partial index on (course_id) WHERE
+      // charge_type='listing_fee', so two concurrent publish taps can't both
+      // insert and double-charge — the loser surfaces 23505 which we treat
+      // as benign.
       const { data: existingCharge } = await supabase
         .from('instructor_charges')
         .select('id')
@@ -714,7 +728,7 @@ const NewCourse = () => {
       }
 
       if (!existingCharge) {
-        await supabase.from('instructor_charges').insert({
+        const { error: chargeErr } = await supabase.from('instructor_charges').insert({
           instructor_id: user.id,
           course_id: created.id,
           charge_type: 'listing_fee',
@@ -727,6 +741,10 @@ const NewCourse = () => {
             ? 'Listing fee waived — punch-card free credit redeemed'
             : '10% listing fee at publish — refunded on timely cancel (≥48h before start), forfeited on late cancel',
         });
+        // 23505 = the other concurrent publish beat us to it. Safe to ignore.
+        if (chargeErr && (chargeErr as any).code !== '23505') {
+          console.error('listing fee insert failed', chargeErr);
+        }
       }
 
       qc.invalidateQueries({ queryKey: ['courses'] });
