@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     );
     const { data: booking, error: bErr } = await admin
       .from("bookings")
-      .select("id, student_id, course_id")
+      .select("id, student_id, course_id, status, deposit_status")
       .eq("id", bookingId)
       .maybeSingle();
     if (bErr || !booking) {
@@ -92,6 +92,23 @@ Deno.serve(async (req) => {
     if (booking.student_id !== userId) {
       return new Response(JSON.stringify({ error: "Not your booking" }), {
         status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Don't mint check-in QRs for bookings that aren't live.
+    if (booking.status !== "reserved" && booking.status !== "attended") {
+      return new Response(JSON.stringify({ error: "Booking is not active" }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (
+      booking.deposit_status !== "held_in_escrow" &&
+      booking.deposit_status !== "confirmed" &&
+      booking.deposit_status !== "released"
+    ) {
+      return new Response(JSON.stringify({ error: "Deposit not settled — check-in QR unavailable" }), {
+        status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
