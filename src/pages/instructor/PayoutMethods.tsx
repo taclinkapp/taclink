@@ -146,17 +146,46 @@ const PayoutMethods = () => {
   };
 
   const removeMethod = async (id: string) => {
+    if (!user) return;
+    const target = methods.find((m) => m.id === id);
     const { error } = await supabase.from('instructor_payout_methods').delete().eq('id', id);
     if (error) { toast.error(error.message); return; }
+
+    const remaining = methods.filter((m) => m.id !== id);
+    // If we removed the preferred row and others remain, promote the first.
+    if (target?.is_preferred && remaining.length > 0) {
+      await supabase
+        .from('instructor_payout_methods')
+        .update({ is_preferred: true })
+        .eq('id', remaining[0].id);
+    }
+    // If no methods remain, downgrade the payout account so publishing
+    // re-locks until the instructor adds a destination again.
+    if (remaining.length === 0) {
+      await supabase
+        .from('instructor_payout_accounts')
+        .update({ status: 'not_started', payouts_enabled: false, charges_enabled: false })
+        .eq('instructor_id', user.id)
+        .eq('provider', 'helcim');
+    }
     toast.success('Removed');
     await reload();
   };
 
   const setPreferred = async (id: string) => {
     if (!user) return;
-    await supabase.from('instructor_payout_methods').update({ is_preferred: false }).eq('instructor_id', user.id);
-    const { error } = await supabase.from('instructor_payout_methods').update({ is_preferred: true }).eq('id', id);
-    if (error) { toast.error(error.message); return; }
+    // Promote the new preferred row first so we never end up with zero
+    // preferred rows if the second update fails.
+    const { error: upErr } = await supabase
+      .from('instructor_payout_methods')
+      .update({ is_preferred: true })
+      .eq('id', id);
+    if (upErr) { toast.error(upErr.message); return; }
+    await supabase
+      .from('instructor_payout_methods')
+      .update({ is_preferred: false })
+      .eq('instructor_id', user.id)
+      .neq('id', id);
     await reload();
   };
 
