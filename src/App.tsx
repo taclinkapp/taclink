@@ -40,6 +40,7 @@ const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const ChangePassword = lazy(() => import("./pages/auth/ChangePassword"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const InfluencerLanding = lazy(() => import("./pages/auth/InfluencerLanding"));
+const AffiliateDashboard = lazy(() => import("./pages/affiliate/AffiliateDashboard"));
 
 const Discover = lazy(() => import("./pages/student/Discover"));
 const CourseDetail = lazy(() => import("./pages/student/CourseDetail"));
