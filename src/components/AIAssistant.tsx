@@ -222,7 +222,7 @@ export function AIAssistant({ role }: { role: Role }) {
       {/* Panel */}
       {open && (
         <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center">
-          <div className="w-full max-w-md h-[85vh] sm:h-[80vh] sm:rounded-2xl bg-surface border border-border flex flex-col overflow-hidden">
+          <div className="w-full max-w-md h-[85dvh] sm:h-[80dvh] sm:rounded-2xl bg-surface border border-border flex flex-col overflow-hidden">
             <div className={cn("px-4 py-3 flex items-center gap-2 border-b border-border bg-gradient-to-r", accent)}>
               <Sparkles className="h-5 w-5 text-primary-foreground" />
               <div className="flex-1">
@@ -420,7 +420,7 @@ const MessageBubble = React.memo(function MessageBubble({ msg, onEdit }: { msg: 
             <Textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              className="min-h-[320px] w-[80vw] max-w-[520px] bg-background border-border text-sm font-mono leading-relaxed"
+              className="min-h-[320px] w-full max-w-[520px] bg-background border-border text-sm font-mono leading-relaxed"
               autoFocus
             />
             <div className="mt-2 flex items-center gap-2">

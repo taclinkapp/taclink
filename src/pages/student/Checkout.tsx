@@ -207,7 +207,7 @@ const Checkout = () => {
         throw bErr;
       }
 
-      await supabase.from('booking_fees').insert({
+      const { error: feeErr } = await supabase.from('booking_fees').insert({
         booking_id: booking.id,
         course_id: course.id,
         student_id: user.id,
@@ -218,6 +218,11 @@ const Checkout = () => {
         due_in_person_cents: fees.dueInPersonCents,
         online_total_cents: fees.onlineTotalCents,
       });
+      if (feeErr) {
+        // Roll back the booking — without a fee snapshot the ledger will be wrong.
+        await supabase.from('bookings').delete().eq('id', booking.id);
+        throw feeErr;
+      }
 
       if (waiver) {
         const { error: sErr } = await supabase.from('waiver_signatures').insert({
@@ -244,45 +249,10 @@ const Checkout = () => {
         }
       }
 
-      // Best-effort confirmation email after payment lands.
-      if (user.email) {
-        const { data: instructor } = await supabase
-          .from('profiles')
-          .select('display_name')
-          .eq('id', course.instructor_id)
-          .maybeSingle();
-        const startDate = course.starts_at
-          ? new Date(course.starts_at).toLocaleString(undefined, {
-              weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-              hour: 'numeric', minute: '2-digit',
-            })
-          : undefined;
-        const location = [course.city, course.state].filter(Boolean).join(', ') || undefined;
-        const cutoffHours = (booking as any)?.cancellation_cutoff_hours ?? null;
-        const bookedAt = (booking as any)?.booked_at ?? null;
-        const deadline = cancelDeadline(course.starts_at ?? null, bookedAt, cutoffHours);
-        const deadlineStr = deadline
-          ? deadline.toLocaleString(undefined, {
-              weekday: 'short', month: 'short', day: 'numeric',
-              hour: 'numeric', minute: '2-digit',
-            })
-          : undefined;
-        sendAppEmail({
-          templateName: 'booking-confirmation',
-          recipientEmail: user.email,
-          idempotencyKey: `booking-confirm-${booking.id}`,
-          templateData: {
-            studentName: profile?.display_name || undefined,
-            courseTitle: course.title,
-            instructorName: (instructor as any)?.display_name || undefined,
-            date: startDate,
-            location,
-            bookingUrl: `${window.location.origin}/student/booking/${booking.id}`,
-            cancelGraceHours: typeof cutoffHours === 'number' ? cutoffHours : undefined,
-            cancelDeadline: deadlineStr,
-          },
-        });
-      }
+      // NOTE: the booking-confirmation email is sent by CheckoutReturn ONLY
+      // after the deposit lands in escrow. Sending it here would email the
+      // student even if they abandoned the Helcim modal.
+
 
       // Hand off to Embedded Checkout.
       setBookingId(booking.id);

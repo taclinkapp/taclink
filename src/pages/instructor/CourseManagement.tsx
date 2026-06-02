@@ -232,7 +232,7 @@ const CourseManagement = () => {
                     className="h-8 text-[11px]"
                     onClick={async () => {
                       if (!confirm('Delete this draft? This cannot be undone.')) return;
-                      const { error } = await supabase.from('courses').delete().eq('id', c.id);
+                      const { error } = await supabase.from('courses').delete().eq('id', c.id).eq('instructor_id', profile?.id ?? '');
                       if (error) {
                         toast.error('Could not delete draft', { description: error.message });
                         return;

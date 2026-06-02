@@ -130,26 +130,15 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Parse body early so we can do owner-scoped auth for a single refund_id.
+  // Parse body so single-refund calls work for admin/cron.
   let body: { refund_id?: string } = {};
   try { body = await req.json(); } catch { /* sweep mode */ }
 
-  let ownerOk = false;
-  if (!cronOk && !adminOk && authedUserId && body.refund_id) {
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-    const { data: refRow } = await adminClient
-      .from("refunds")
-      .select("booking_id, bookings:booking_id ( student_id )")
-      .eq("id", body.refund_id)
-      .maybeSingle();
-    const studentId = (refRow as any)?.bookings?.student_id ?? null;
-    ownerOk = !!studentId && studentId === authedUserId;
-  }
-
-  if (!cronOk && !adminOk && !ownerOk) {
+  // SECURITY: refunds may ONLY be triggered by cron or an admin. The previous
+  // "owner can self-trigger their own refund" branch let a student claim a
+  // refund whenever a refunds row existed for them, bypassing hold periods
+  // and admin review.
+  if (!cronOk && !adminOk) {
     return json({ error: "Forbidden" }, 403);
   }
 

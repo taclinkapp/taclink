@@ -4,10 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { MobileShell } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Calendar, MapPin, Clock, FileText, ShieldCheck, Loader2 } from 'lucide-react';
+import { CheckCircle2, Calendar, MapPin, Clock, FileText, ShieldCheck, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { NotificationPermissionPrompt } from '@/components/onboarding/NotificationPermissionPrompt';
+import { QRCodeSVG } from 'qrcode.react';
 
 type Course = {
   id: string;
@@ -26,8 +27,40 @@ type Signature = {
   signed_at: string;
 };
 
+type BookingLite = {
+  id: string;
+  booked_at: string | null;
+  cancellation_cutoff_hours: number | null;
+  deposit_status: string | null;
+  status: string;
+};
+
 const fmtTime = (iso: string | null) =>
   iso ? new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+
+const buildIcs = (course: Course, ref: string) => {
+  if (!course.starts_at) return null;
+  const start = new Date(course.starts_at);
+  const end = course.ends_at ? new Date(course.ends_at) : new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const toIcs = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const location = [course.address, course.city, course.state].filter(Boolean).join(', ');
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//TacLink//Booking//EN',
+    'BEGIN:VEVENT',
+    `UID:${ref}@taclink.app`,
+    `DTSTAMP:${toIcs(new Date())}`,
+    `DTSTART:${toIcs(start)}`,
+    `DTEND:${toIcs(end)}`,
+    `SUMMARY:${course.title.replace(/[\n,]/g, ' ')}`,
+    location ? `LOCATION:${location.replace(/[\n,]/g, ' ')}` : '',
+    `DESCRIPTION:Booking ${ref} — TacLink`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].filter(Boolean);
+  return lines.join('\r\n');
+};
 
 const BookingSuccess = () => {
   const { id } = useParams();
@@ -35,17 +68,89 @@ const BookingSuccess = () => {
   const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [course, setCourse] = useState<Course | null>(null);
-  const [bookingId, setBookingId] = useState<string | null>(null);
-  const [bookedAt, setBookedAt] = useState<string | null>(null);
-  const [cutoffHours, setCutoffHours] = useState<number | null>(null);
+  const [booking, setBooking] = useState<BookingLite | null>(null);
   const [signature, setSignature] = useState<Signature | null>(null);
   const [notifPromptOpen, setNotifPromptOpen] = useState(false);
+  const [signedToken, setSignedToken] = useState<string | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [tokenLoading, setTokenLoading] = useState(false);
   const onboarding = useOnboarding();
 
-  // First-booking side effects: check off the step and queue the notif prompt.
+  const fetchSignedToken = async (bookingId: string) => {
+    setTokenLoading(true);
+    setTokenError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('sign-checkin-qr', { body: { bookingId } });
+      if (error) throw error;
+      if (!data?.token) throw new Error('No token returned');
+      setSignedToken(data.token);
+    } catch (e: any) {
+      setTokenError(e?.message ?? 'Could not load secure QR');
+      setSignedToken(null);
+    } finally {
+      setTokenLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!user || onboarding.loading) return;
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setNotFound(false);
+      const { data: c } = await supabase
+        .from('courses')
+        .select('id, title, address, city, state, starts_at, ends_at')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (!user || !c) {
+        if (!cancelled) {
+          setCourse((c as Course) ?? null);
+          setNotFound(!c);
+          setLoading(false);
+        }
+        return;
+      }
+      const { data: b } = await supabase
+        .from('bookings')
+        .select('id, booked_at, cancellation_cutoff_hours, deposit_status, status')
+        .eq('student_id', user.id)
+        .eq('course_id', c.id)
+        .order('booked_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!b) {
+        setCourse(c as Course);
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+      setCourse(c as Course);
+      setBooking(b as BookingLite);
+
+      const { data: s } = await supabase
+        .from('waiver_signatures')
+        .select('id, signed_full_name, waiver_version, signed_at')
+        .eq('booking_id', b.id)
+        .maybeSingle();
+      setSignature((s as Signature) ?? null);
+
+      // Only mint a signed QR when the deposit is actually settled.
+      if (b.deposit_status === 'held_in_escrow' || b.deposit_status === 'confirmed' || b.deposit_status === 'released') {
+        fetchSignedToken(b.id);
+      }
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [id, user]);
+
+  // First-booking onboarding only fires once we know the booking actually exists.
+  useEffect(() => {
+    if (!user || !booking || onboarding.loading) return;
     if (!onboarding.checklist.first_booking) {
       onboarding.checkOff('first_booking');
     }
@@ -53,54 +158,7 @@ const BookingSuccess = () => {
       setNotifPromptOpen(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, onboarding.loading]);
-
-  useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const { data: c } = await supabase
-        .from('courses')
-        .select('id, title, address, city, state, starts_at, ends_at')
-        .eq('id', id)
-        .maybeSingle();
-
-      let bId: string | null = null;
-      let bAt: string | null = null;
-      let cutoff: number | null = null;
-      let sig: Signature | null = null;
-      if (user && c) {
-        const { data: b } = await supabase
-          .from('bookings')
-          .select('id, booked_at, cancellation_cutoff_hours')
-          .eq('student_id', user.id)
-          .eq('course_id', c.id)
-          .order('booked_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        bId = b?.id ?? null;
-        bAt = (b as any)?.booked_at ?? null;
-        cutoff = (b as any)?.cancellation_cutoff_hours ?? null;
-        if (bId) {
-          const { data: s } = await supabase
-            .from('waiver_signatures')
-            .select('id, signed_full_name, waiver_version, signed_at')
-            .eq('booking_id', bId)
-            .maybeSingle();
-          sig = (s as Signature) ?? null;
-        }
-      }
-      if (cancelled) return;
-      setCourse((c as Course) ?? null);
-      setBookingId(bId);
-      setBookedAt(bAt);
-      setCutoffHours(cutoff);
-      setSignature(sig);
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [id, user]);
+  }, [user, booking?.id, onboarding.loading]);
 
   if (loading) {
     return (
@@ -113,7 +171,39 @@ const BookingSuccess = () => {
     );
   }
 
-  const ref = bookingId ? `TL-${bookingId.slice(0, 8).toUpperCase()}` : '—';
+  if (notFound || !booking || !course) {
+    return (
+      <MobileShell withTabBar={false}>
+        <div className="px-6 py-16 text-center space-y-4">
+          <AlertTriangle className="h-10 w-10 text-destructive mx-auto" />
+          <h2 className="text-lg font-bold">No booking to show</h2>
+          <p className="text-sm text-muted-foreground">
+            We couldn't find a booking for you on this course.
+          </p>
+          <Button onClick={() => nav('/student/bookings')} className="w-full h-11 bg-primary text-primary-foreground font-bold">
+            View My Bookings
+          </Button>
+        </div>
+      </MobileShell>
+    );
+  }
+
+  const ref = `TL-${booking.id.slice(0, 8).toUpperCase()}`;
+  const qrSettled = booking.deposit_status === 'held_in_escrow' || booking.deposit_status === 'confirmed' || booking.deposit_status === 'released';
+
+  const downloadIcs = () => {
+    const ics = buildIcs(course, ref);
+    if (!ics) return;
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${ref}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   return (
     <MobileShell withTabBar={false}>
@@ -127,39 +217,34 @@ const BookingSuccess = () => {
         <div className="tactical-card p-5 text-left mb-6">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Booking Reference</div>
           <div className="font-mono text-primary font-bold mb-4">{ref}</div>
-          {course && (
-            <>
-              <h2 className="font-bold mb-3">{course.title}</h2>
-              <div className="space-y-2 text-xs text-muted-foreground">
-                {course.starts_at && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-3.5 w-3.5 text-primary" />
-                    {new Date(course.starts_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                  </div>
-                )}
-                {course.starts_at && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-3.5 w-3.5 text-primary" />
-                    {fmtTime(course.starts_at)}{course.ends_at ? ` – ${fmtTime(course.ends_at)}` : ''}
-                  </div>
-                )}
-                {(course.address || course.city || course.state) && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-primary" />
-                    {[course.address, course.city, course.state].filter(Boolean).join(', ')}
-                  </div>
-                )}
+          <h2 className="font-bold mb-3">{course.title}</h2>
+          <div className="space-y-2 text-xs text-muted-foreground">
+            {course.starts_at && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-3.5 w-3.5 text-primary" />
+                {new Date(course.starts_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </div>
-            </>
-          )}
+            )}
+            {course.starts_at && (
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-primary" />
+                {fmtTime(course.starts_at)}{course.ends_at ? ` – ${fmtTime(course.ends_at)}` : ''}
+              </div>
+            )}
+            {(course.address || course.city || course.state) && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-primary" />
+                {[course.address, course.city, course.state].filter(Boolean).join(', ')}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Cancellation grace deadline */}
         <div className="text-left mb-6">
           <CancelGraceBadge
-            startsAt={course?.starts_at ?? null}
-            bookedAt={bookedAt}
-            cutoffHours={cutoffHours}
+            startsAt={course.starts_at}
+            bookedAt={booking.booked_at}
+            cutoffHours={booking.cancellation_cutoff_hours}
             variant="card"
           />
         </div>
@@ -192,21 +277,53 @@ const BookingSuccess = () => {
           </div>
         )}
 
-        {/* Check-in QR */}
+        {/* Real signed check-in QR */}
         <div className="tactical-card p-5 mb-6">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">Check-In QR Code</div>
-          <div className="mx-auto h-44 w-44 bg-white p-3 rounded-sm">
-            <div className="h-full w-full" style={{
-              backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)',
-              backgroundSize: '12px 12px',
-              backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0',
-            }} />
+          <div className="flex items-center justify-center gap-1.5 mb-3">
+            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Signed Check-In QR</div>
           </div>
-          <div className="text-[10px] text-muted-foreground mt-3">Show this on the day of training</div>
+          <div className="mx-auto bg-white p-3 rounded-sm w-fit">
+            {!qrSettled ? (
+              <div className="h-[176px] w-[176px] flex items-center justify-center text-xs text-muted-foreground p-4 text-center">
+                Your QR unlocks once payment is confirmed.
+              </div>
+            ) : tokenLoading && !signedToken ? (
+              <div className="h-[176px] w-[176px] flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : signedToken ? (
+              <QRCodeSVG value={signedToken} size={176} level="M" includeMargin={false} />
+            ) : (
+              <div className="h-[176px] w-[176px] flex flex-col items-center justify-center text-xs text-destructive p-4 text-center">
+                <AlertTriangle className="h-5 w-5 mb-2" />
+                {tokenError ?? 'Could not load secure QR'}
+              </div>
+            )}
+          </div>
+          {qrSettled && (
+            <button
+              type="button"
+              onClick={() => fetchSignedToken(booking.id)}
+              disabled={tokenLoading}
+              className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-primary hover:underline disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${tokenLoading ? 'animate-spin' : ''}`} />
+              {tokenLoading ? 'Refreshing' : 'Refresh QR'}
+            </button>
+          )}
+          <div className="text-[10px] text-muted-foreground mt-2">Show this on the day of training</div>
         </div>
 
         <div className="space-y-2">
-          <Button variant="outline" className="w-full h-11 bg-card border-border font-semibold">Add to Calendar</Button>
+          <Button
+            variant="outline"
+            onClick={downloadIcs}
+            disabled={!course.starts_at}
+            className="w-full h-11 bg-card border-border font-semibold"
+          >
+            Add to Calendar
+          </Button>
           <Button onClick={() => nav('/student/bookings')} className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">View My Bookings</Button>
         </div>
       </div>

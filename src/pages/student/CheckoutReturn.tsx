@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +12,8 @@ import {
   AlertTriangle,
   ArrowRight,
 } from 'lucide-react';
+import { sendAppEmail } from '@/lib/appEmail';
+import { cancelDeadline } from '@/lib/cancellation';
 
 type DepositStatus =
   | 'not_required'
@@ -28,6 +31,9 @@ type BookingRow = {
   deposit_status: DepositStatus;
   online_total_cents: number;
   course_id: string;
+  student_id: string;
+  booked_at: string | null;
+  cancellation_cutoff_hours: number | null;
 };
 
 const POLL_MS = 2000;
@@ -36,28 +42,33 @@ const MAX_WAIT_MS = 60_000;
 /**
  * Post-checkout return page.
  *
- * The payment processor redirects here right after the buyer submits payment. The webhook
- * (`payments-webhook`) flips the booking to `held_in_escrow` asynchronously,
- * so we poll the booking row until the status updates (or we time out).
+ * The payment processor redirects here right after the buyer submits payment.
+ * The webhook flips the booking to `held_in_escrow` asynchronously, so we poll
+ * the booking row until the status updates (or we time out). We also send the
+ * "booking confirmed" email here — once — so abandoned checkouts never email.
  */
 const CheckoutReturn = () => {
   const { id } = useParams();
   const nav = useNavigate();
+  const { user, profile } = useAuth();
   const [booking, setBooking] = useState<BookingRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const startedAt = useRef<number>(Date.now());
+  const emailSent = useRef(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
     let cancelled = false;
     let timer: number | undefined;
 
     const poll = async () => {
+      // Ownership filter: only the booking's owner can read it through this page.
       const { data, error: err } = await supabase
         .from('bookings')
-        .select('id, deposit_status, online_total_cents, course_id')
+        .select('id, deposit_status, online_total_cents, course_id, student_id, booked_at, cancellation_cutoff_hours')
         .eq('id', id)
+        .eq('student_id', user.id)
         .maybeSingle();
       if (cancelled) return;
       if (err) {
@@ -71,7 +82,56 @@ const CheckoutReturn = () => {
       setBooking(data as BookingRow);
       const status = (data as BookingRow).deposit_status;
       if (status === 'held_in_escrow' || status === 'released') {
-        return; // success — stop polling
+        // Fire confirmation email exactly once, after payment is real.
+        if (!emailSent.current && user.email) {
+          emailSent.current = true;
+          (async () => {
+            const { data: course } = await supabase
+              .from('courses')
+              .select('title, starts_at, city, state, instructor_id')
+              .eq('id', (data as BookingRow).course_id)
+              .maybeSingle();
+            const { data: instructor } = course?.instructor_id
+              ? await supabase
+                  .from('profiles')
+                  .select('display_name')
+                  .eq('id', course.instructor_id)
+                  .maybeSingle()
+              : { data: null as any };
+            const startsAt = (course as any)?.starts_at ?? null;
+            const startDate = startsAt
+              ? new Date(startsAt).toLocaleString(undefined, {
+                  weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+                  hour: 'numeric', minute: '2-digit',
+                })
+              : undefined;
+            const location = [(course as any)?.city, (course as any)?.state].filter(Boolean).join(', ') || undefined;
+            const cutoffHours = (data as BookingRow).cancellation_cutoff_hours;
+            const deadline = cancelDeadline(startsAt, (data as BookingRow).booked_at, cutoffHours);
+            const deadlineStr = deadline
+              ? deadline.toLocaleString(undefined, {
+                  weekday: 'short', month: 'short', day: 'numeric',
+                  hour: 'numeric', minute: '2-digit',
+                })
+              : undefined;
+            sendAppEmail({
+              templateName: 'booking-confirmation',
+              recipientEmail: user.email!,
+              idempotencyKey: `booking-confirm-${(data as BookingRow).id}`,
+              templateData: {
+                studentName: profile?.display_name || undefined,
+                courseTitle: (course as any)?.title,
+                instructorName: (instructor as any)?.display_name || undefined,
+                date: startDate,
+                location,
+                bookingUrl: `${window.location.origin}/student/booking/${(data as BookingRow).id}`,
+                cancelGraceHours: typeof cutoffHours === 'number' ? cutoffHours : undefined,
+                cancelDeadline: deadlineStr,
+              },
+            });
+          })();
+        }
+        return; // stop polling
       }
       if (Date.now() - startedAt.current > MAX_WAIT_MS) {
         setTimedOut(true);
@@ -85,11 +145,10 @@ const CheckoutReturn = () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [id]);
+  }, [id, user, profile?.display_name]);
 
   const status = booking?.deposit_status;
   const isHeld = status === 'held_in_escrow' || status === 'released';
-  const isPending = status === 'pending_payment' || status === 'pending_send';
 
   return (
     <MobileShell withTabBar={false}>

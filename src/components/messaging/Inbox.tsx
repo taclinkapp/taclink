@@ -8,6 +8,7 @@ import { useIdentity } from "@/hooks/useIdentity";
 import { MessageSquare, ChevronRight } from "lucide-react";
 import { getAvatarSrc } from "@/lib/avatar";
 import { fetchPublicProfileMap, type PublicProfileCard } from "@/lib/profilePhotos";
+import { toast } from "sonner";
 
 const formatWhen = (iso: string) => {
   const d = new Date(iso);
@@ -53,7 +54,12 @@ export const Inbox = ({ variant, basePath, TabBar }: Props) => {
         .select("*")
         .eq(column, user.id)
         .order("last_message_at", { ascending: false });
-      if (error) console.error(error);
+      if (error) {
+        console.error(error);
+        toast.error("Couldn't load your messages. Pull to refresh.");
+        setLoading(false);
+        return;
+      }
       const rows = ((data as ConversationRow[]) ?? []);
       setConversations(rows);
       const ids = rows.map((c) => variant === "student" ? c.instructor_id : c.student_id);

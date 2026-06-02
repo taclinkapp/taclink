@@ -102,7 +102,7 @@ const CourseDetail = () => {
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Star className="h-3 w-3 fill-primary text-primary" />
                 <span className="font-semibold text-foreground">{course.instructorRating}</span>
-                <span>· 124 reviews</span>
+                <span>· {reviews.length} review{reviews.length === 1 ? '' : 's'}</span>
               </div>
             </div>
             <div className="text-[10px] text-muted-foreground text-right max-w-[110px] leading-tight">

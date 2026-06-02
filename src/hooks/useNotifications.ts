@@ -78,17 +78,36 @@ export const useNotifications = () => {
   }, [user?.id]);
 
   const markRead = useCallback(async (id: string) => {
+    if (!user) return;
     const now = new Date().toISOString();
     setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read_at: now } : n)));
-    await supabase.from("notifications").update({ read_at: now }).eq("id", id);
-  }, []);
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: now })
+      .eq("id", id)
+      .eq("recipient_id", user.id);
+    if (error) {
+      console.error("markRead failed", error);
+      // Roll back optimistic update so the UI doesn't lie.
+      setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read_at: null } : n)));
+    }
+  }, [user?.id]);
 
   const setReadState = useCallback(async (ids: string[], read: boolean) => {
-    if (ids.length === 0) return;
+    if (!user || ids.length === 0) return;
     const value = read ? new Date().toISOString() : null;
+    const prevValues = new Map(items.filter((n) => ids.includes(n.id)).map((n) => [n.id, n.read_at]));
     setItems((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, read_at: value } : n)));
-    await supabase.from("notifications").update({ read_at: value }).in("id", ids);
-  }, []);
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: value })
+      .in("id", ids)
+      .eq("recipient_id", user.id);
+    if (error) {
+      console.error("setReadState failed", error);
+      setItems((prev) => prev.map((n) => (prevValues.has(n.id) ? { ...n, read_at: prevValues.get(n.id) ?? null } : n)));
+    }
+  }, [user?.id, items]);
 
   return { items, loading, unreadCount, markAllRead, markRead, setReadState, reload: load };
 };
