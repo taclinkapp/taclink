@@ -201,26 +201,25 @@ async function handleTransactionSuccess(payload: any, _env: HelcimEnv) {
       ? new Date(new Date(endsAt).getTime() + 24 * 3600 * 1000).toISOString()
       : null;
 
-    // Upsert-ish: insert only if no 'owed' entry exists for this booking.
-    const { data: existing } = await sb
-      .from("instructor_ledger")
-      .select("id")
-      .eq("booking_id", booking.id)
-      .eq("entry_type", "owed")
-      .maybeSingle();
-    if (!existing) {
-      await sb.from("instructor_ledger").insert({
-        instructor_id: course.instructor_id,
-        booking_id: booking.id,
-        provider: "helcim",
-        entry_type: "owed",
-        amount_cents: owedCents,
-        currency: (data.currency ?? "usd").toLowerCase(),
-        available_at: availableAt,
-        notes: `Helcim transaction ${txnId}`,
-      });
+    // Insert the 'owed' ledger entry. The DB now enforces a unique partial
+    // index on (booking_id) WHERE entry_type='owed', so concurrent webhook +
+    // confirm-helcim-payment calls cannot double-credit; the loser gets a
+    // 23505 which we swallow as a benign no-op.
+    const { error: insErr } = await sb.from("instructor_ledger").insert({
+      instructor_id: course.instructor_id,
+      booking_id: booking.id,
+      provider: "helcim",
+      entry_type: "owed",
+      amount_cents: owedCents,
+      currency: (data.currency ?? "usd").toLowerCase(),
+      available_at: availableAt,
+      notes: `Helcim transaction ${txnId}`,
+    });
+    if (insErr && insErr.code !== "23505") {
+      throw insErr;
     }
   }
+
 
   await markEventStatus(String(payload?.eventId ?? ""), "succeeded", {
     helcim_transaction_id: String(txnId),

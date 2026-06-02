@@ -121,25 +121,22 @@ Deno.serve(async (req) => {
 
     const owedCents = booking.instructor_payout_cents > 0 ? booking.instructor_payout_cents : booking.course_price_cents;
     if (course?.instructor_id && owedCents > 0) {
-      const { data: existing } = await supabase
-        .from("instructor_ledger")
-        .select("id")
-        .eq("booking_id", booking.id)
-        .eq("entry_type", "owed")
-        .maybeSingle();
-      if (!existing) {
-        const endsAt = course.ends_at ?? course.starts_at;
-        const availableAt = endsAt ? new Date(new Date(endsAt).getTime() + 24 * 3600 * 1000).toISOString() : null;
-        await supabase.from("instructor_ledger").insert({
-          instructor_id: course.instructor_id,
-          booking_id: booking.id,
-          provider: "helcim",
-          entry_type: "owed",
-          amount_cents: owedCents,
-          currency: currency.toLowerCase(),
-          available_at: availableAt,
-          notes: `Helcim transaction ${transactionId}`,
-        });
+      const endsAt = course.ends_at ?? course.starts_at;
+      const availableAt = endsAt ? new Date(new Date(endsAt).getTime() + 24 * 3600 * 1000).toISOString() : null;
+      // Race-safe: relies on the unique partial index on (booking_id) WHERE
+      // entry_type='owed'. If the webhook beat us to it, swallow 23505.
+      const { error: insErr } = await supabase.from("instructor_ledger").insert({
+        instructor_id: course.instructor_id,
+        booking_id: booking.id,
+        provider: "helcim",
+        entry_type: "owed",
+        amount_cents: owedCents,
+        currency: currency.toLowerCase(),
+        available_at: availableAt,
+        notes: `Helcim transaction ${transactionId}`,
+      });
+      if (insErr && (insErr as any).code !== "23505") {
+        console.error("ledger insert error", insErr);
       }
     }
 
