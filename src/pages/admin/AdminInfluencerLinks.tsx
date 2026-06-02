@@ -35,6 +35,21 @@ type InfluencerLink = {
   active: boolean;
   notes: string | null;
   created_at: string;
+  owner_user_id: string | null;
+  payout_method: 'cashapp' | 'venmo' | 'paypal' | 'zelle' | 'other' | null;
+  payout_handle: string | null;
+  payout_notes: string | null;
+};
+
+type Payout = {
+  id: string;
+  link_id: string;
+  amount_cents: number;
+  method: string;
+  reference: string | null;
+  notes: string | null;
+  paid_at: string;
+  created_at: string;
 };
 
 // Compute remaining VIP days. null = infinite (until disabled). 0 = expired.
