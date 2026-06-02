@@ -1328,6 +1328,61 @@ const AdminInfluencerLinks = () => {
                 />
               </div>
 
+              {/* Affiliate account + payout handle */}
+              <div className="rounded-md border border-border p-3 space-y-3">
+                <div className="text-xs uppercase tracking-wider font-bold text-foreground">Payouts</div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Owner user ID (UUID)</Label>
+                  <Input
+                    value={editing.owner_user_id ?? ''}
+                    onChange={(e) => setEditing({ ...editing, owner_user_id: e.target.value })}
+                    placeholder="Paste user UUID to grant /affiliate dashboard access"
+                    className="bg-background border-border h-10 mt-1.5 font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    When set, this user can sign in and view their dashboard at <code>/affiliate</code>.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Payout method</Label>
+                    <Select
+                      value={editing.payout_method ?? 'none'}
+                      onValueChange={(v) => setEditing({ ...editing, payout_method: v === 'none' ? null : (v as any) })}
+                    >
+                      <SelectTrigger className="bg-background border-border h-10 mt-1.5"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Not set</SelectItem>
+                        <SelectItem value="cashapp">Cash App</SelectItem>
+                        <SelectItem value="venmo">Venmo</SelectItem>
+                        <SelectItem value="paypal">PayPal</SelectItem>
+                        <SelectItem value="zelle">Zelle</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Handle</Label>
+                    <Input
+                      value={editing.payout_handle ?? ''}
+                      onChange={(e) => setEditing({ ...editing, payout_handle: e.target.value })}
+                      placeholder="$cashtag / @venmo / email"
+                      className="bg-background border-border h-10 mt-1.5"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Payout notes</Label>
+                  <Textarea
+                    value={editing.payout_notes ?? ''}
+                    onChange={(e) => setEditing({ ...editing, payout_notes: e.target.value })}
+                    className="bg-background border-border min-h-16 mt-1.5"
+                  />
+                </div>
+              </div>
+
+
+
               {/* VIP override (edit) */}
               <div className="rounded-md border border-primary/40 p-3 space-y-3 bg-primary/5">
                 <div className="flex items-center justify-between">
