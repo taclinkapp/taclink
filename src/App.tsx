@@ -41,6 +41,7 @@ const ChangePassword = lazy(() => import("./pages/auth/ChangePassword"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const InfluencerLanding = lazy(() => import("./pages/auth/InfluencerLanding"));
 const AffiliateDashboard = lazy(() => import("./pages/affiliate/AffiliateDashboard"));
+const AffiliatePortal = lazy(() => import("./pages/affiliate/AffiliatePortal"));
 
 const Discover = lazy(() => import("./pages/student/Discover"));
 const CourseDetail = lazy(() => import("./pages/student/CourseDetail"));
