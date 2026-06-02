@@ -808,6 +808,14 @@ const AdminInfluencerLinks = () => {
                           </Button>
                           <Button
                             size="sm"
+                            variant="outline"
+                            className="h-8"
+                            onClick={() => openPayDialog(l)}
+                          >
+                            <DollarSign className="h-3.5 w-3.5 mr-1" /> Pay
+                          </Button>
+                          <Button
+                            size="sm"
                             variant="ghost"
                             className="h-8 text-destructive"
                             onClick={() => handleToggleActive(l)}
