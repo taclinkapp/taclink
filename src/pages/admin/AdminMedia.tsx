@@ -208,7 +208,7 @@ export default function AdminMedia() {
           </div>
           <div>
             <p className="font-medium">Drag &amp; drop images or GIFs</p>
-            <p className="text-sm text-muted-foreground">PNG, JPG, GIF, WebP — up to 10MB each</p>
+            <p className="text-sm text-muted-foreground">PNG, JPG, GIF, WebP — up to 20MB each</p>
           </div>
           <label>
             <input
