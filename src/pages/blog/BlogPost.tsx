@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
