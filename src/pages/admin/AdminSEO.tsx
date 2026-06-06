@@ -12,7 +12,7 @@ import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Hea
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-import { ArrowUp, ArrowDown, Link2, Unlink, X as XIcon } from "lucide-react";
+import { ArrowUp, ArrowDown, Link2, Unlink, X as XIcon, GripVertical, AlignLeft, AlignCenter, AlignRight, Maximize2 } from "lucide-react";
 
 type Topic = {
   id: string;
