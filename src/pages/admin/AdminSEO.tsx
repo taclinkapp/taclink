@@ -97,6 +97,7 @@ export default function AdminSEO() {
     const end = ta.selectionEnd ?? ta.value.length;
     const value = ta.value;
     const selected = value.slice(start, end) || placeholder;
+    const next = value.slice(0, start) + before + selected + after + value.slice(end);
     setBodyAtCursor(next, start + before.length + selected.length);
   };
 
@@ -321,8 +322,9 @@ export default function AdminSEO() {
       title: editingArticle.title,
       slug: editingArticle.slug,
       excerpt: editingArticle.excerpt,
-      meta_description: editingArticle.meta_description,
-      body_markdown: editingArticle.body_markdown,
+        meta_description: editingArticle.meta_description,
+        body_markdown: editingArticle.body_markdown,
+        cover_image_url: editingArticle.cover_image_url ?? firstMarkdownImage(editingArticle.body_markdown),
     }).eq("id", editingArticle.id);
     setSavingArticle(false);
     if (error) { toast.error(error.message); return; }
