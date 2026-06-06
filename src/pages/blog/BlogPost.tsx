@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
@@ -118,7 +119,7 @@ export default function BlogPost() {
           </header>
 
           <article className="prose prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-primary prose-h2:mt-12 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl prose-p:leading-relaxed prose-img:mx-auto prose-img:max-h-96 prose-img:w-auto prose-img:rounded-md">
-            <ReactMarkdown>{article.body_markdown}</ReactMarkdown>
+            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{article.body_markdown}</ReactMarkdown>
           </article>
 
           <div className="mt-16 border-t border-border pt-8">

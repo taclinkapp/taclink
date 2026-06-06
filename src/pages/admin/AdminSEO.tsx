@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus, FileText, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import { ArrowUp, ArrowDown, Link2, Unlink, X as XIcon } from "lucide-react";
 
 type Topic = {
   id: string;
@@ -551,7 +553,10 @@ export default function AdminSEO() {
             </div>
 
             {editorMode === "preview" ? (
-              <ArticleReaderPreview article={editingArticle} />
+              <ArticleReaderPreview
+                article={editingArticle}
+                onChange={(body) => setEditingArticle({ ...editingArticle, body_markdown: body })}
+              />
             ) : (
               <div className="space-y-3">
                 <div>
@@ -631,10 +636,160 @@ export default function AdminSEO() {
   );
 }
 
-function ArticleReaderPreview({ article }: { article: Article }) {
+type MediaSegment = { kind: "media"; raw: string; images: string[] };
+type TextSegment = { kind: "text"; raw: string };
+type Segment = MediaSegment | TextSegment;
+
+const IMG_MD = /!\[[^\]]*\]\([^)\s]+(?:\s+"[^"]*")?\)/g;
+const MEDIA_BLOCK = /(<div\s+class="img-row"[^>]*>[\s\S]*?<\/div>|!\[[^\]]*\]\([^)\s]+(?:\s+"[^"]*")?\))/g;
+
+function parseSegments(md: string): Segment[] {
+  const out: Segment[] = [];
+  let last = 0;
+  for (const m of md.matchAll(MEDIA_BLOCK)) {
+    const idx = m.index!;
+    if (idx > last) out.push({ kind: "text", raw: md.slice(last, idx) });
+    const raw = m[0];
+    const images = raw.match(IMG_MD) ?? [raw];
+    out.push({ kind: "media", raw, images });
+    last = idx + raw.length;
+  }
+  if (last < md.length) out.push({ kind: "text", raw: md.slice(last) });
+  return out;
+}
+
+function joinSegments(segs: Segment[]): string {
+  return segs.map((s) => s.raw).join("");
+}
+
+function buildMediaBlock(images: string[]): string {
+  if (images.length === 1) return images[0];
+  return `<div class="img-row">\n\n${images.join("\n\n")}\n\n</div>`;
+}
+
+function ArticleReaderPreview({ article, onChange }: { article: Article; onChange?: (body: string) => void }) {
   const bodyHasCover = !!article.cover_image_url && (article.body_markdown ?? "").includes(article.cover_image_url);
+  const segments = parseSegments(article.body_markdown ?? "");
+  const mediaIndices = segments
+    .map((s, i) => (s.kind === "media" ? i : -1))
+    .filter((i) => i >= 0);
+
+  const updateAt = (segIndex: number, mutate: (seg: MediaSegment) => Segment | Segment[] | null) => {
+    if (!onChange) return;
+    const next: Segment[] = [];
+    for (let i = 0; i < segments.length; i++) {
+      const s = segments[i];
+      if (i === segIndex && s.kind === "media") {
+        const r = mutate(s);
+        if (r === null) continue;
+        if (Array.isArray(r)) next.push(...r);
+        else next.push(r);
+      } else {
+        next.push(s);
+      }
+    }
+    onChange(joinSegments(next));
+  };
+
+  const moveMedia = (segIndex: number, dir: -1 | 1) => {
+    if (!onChange) return;
+    const order = mediaIndices.indexOf(segIndex);
+    const swapWith = mediaIndices[order + dir];
+    if (swapWith === undefined) return;
+    const next = [...segments];
+    const a = next[segIndex] as MediaSegment;
+    const b = next[swapWith] as MediaSegment;
+    next[segIndex] = b;
+    next[swapWith] = a;
+    onChange(joinSegments(next));
+  };
+
+  const pairWithNext = (segIndex: number) => {
+    if (!onChange) return;
+    const order = mediaIndices.indexOf(segIndex);
+    const nextMediaIdx = mediaIndices[order + 1];
+    if (nextMediaIdx === undefined) return;
+    const a = segments[segIndex] as MediaSegment;
+    const b = segments[nextMediaIdx] as MediaSegment;
+    const mergedImages = [...a.images, ...b.images];
+    const merged: MediaSegment = { kind: "media", images: mergedImages, raw: buildMediaBlock(mergedImages) };
+    const next: Segment[] = [];
+    for (let i = 0; i < segments.length; i++) {
+      if (i === segIndex) next.push(merged);
+      else if (i > segIndex && i <= nextMediaIdx) continue; // drop text between + the next media
+      else next.push(segments[i]);
+    }
+    // ensure blank line separation
+    onChange(joinSegments(next));
+  };
+
+  const unpair = (segIndex: number) => {
+    updateAt(segIndex, (s) => {
+      if (s.images.length < 2) return s;
+      const expanded: Segment[] = [];
+      s.images.forEach((img, i) => {
+        expanded.push({ kind: "media", images: [img], raw: img });
+        if (i < s.images.length - 1) expanded.push({ kind: "text", raw: "\n\n" });
+      });
+      return expanded;
+    });
+  };
+
+  const removeMedia = (segIndex: number) => updateAt(segIndex, () => null);
+
   return (
     <div className="bg-background text-foreground">
+      {onChange && mediaIndices.length > 0 && (
+        <div className="border-b border-border bg-muted/30 px-4 py-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Arrange media · {mediaIndices.length} image{mediaIndices.length === 1 ? "" : "s"} · pair to show side-by-side
+          </p>
+          <ul className="space-y-2">
+            {mediaIndices.map((segIndex, order) => {
+              const seg = segments[segIndex] as MediaSegment;
+              const isRow = seg.images.length > 1;
+              const firstUrl = seg.images[0]?.match(/\(([^)\s]+)/)?.[1] ?? "";
+              return (
+                <li key={segIndex} className="flex items-center gap-2 rounded-md border border-border bg-card p-2">
+                  <span className="w-6 text-center text-xs text-muted-foreground">{order + 1}</span>
+                  {firstUrl && (
+                    <img src={firstUrl} alt="" className="h-10 w-14 rounded-sm border border-border object-cover" />
+                  )}
+                  <span className="flex-1 truncate text-xs">
+                    {isRow ? `Row of ${seg.images.length} images` : firstUrl.split("/").pop()}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" title="Move up"
+                      disabled={order === 0} onClick={() => moveMedia(segIndex, -1)}>
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" title="Move down"
+                      disabled={order === mediaIndices.length - 1} onClick={() => moveMedia(segIndex, 1)}>
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </Button>
+                    {isRow ? (
+                      <Button type="button" size="sm" variant="ghost" className="h-7 gap-1 px-2" title="Split row back to stacked images"
+                        onClick={() => unpair(segIndex)}>
+                        <Unlink className="h-3.5 w-3.5" />Split
+                      </Button>
+                    ) : (
+                      <Button type="button" size="sm" variant="secondary" className="h-7 gap-1 px-2" title="Pair with the next image (side-by-side)"
+                        disabled={order === mediaIndices.length - 1} onClick={() => pairWithNext(segIndex)}>
+                        <Link2 className="h-3.5 w-3.5" />Pair
+                      </Button>
+                    )}
+                    <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" title="Remove"
+                      onClick={() => removeMedia(segIndex)}>
+                      <XIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-2 text-[10px] text-muted-foreground">Tip: pair two images to display them side-by-side; this layout is saved with the article.</p>
+        </div>
+      )}
       <div className="mx-auto max-w-2xl px-6 py-10">
         <p className="text-sm text-muted-foreground">← The TacLink Journal</p>
         <header className="mt-6 mb-10 border-b border-border pb-8">
@@ -652,7 +807,7 @@ function ArticleReaderPreview({ article }: { article: Article }) {
           )}
         </header>
         <article className="prose prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-primary prose-h2:mt-12 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl prose-p:leading-relaxed prose-img:mx-auto prose-img:max-h-80 prose-img:w-auto prose-img:rounded-md">
-          <ReactMarkdown>{article.body_markdown || "_Nothing to preview yet._"}</ReactMarkdown>
+          <ReactMarkdown rehypePlugins={[rehypeRaw]}>{article.body_markdown || "_Nothing to preview yet._"}</ReactMarkdown>
         </article>
       </div>
     </div>
