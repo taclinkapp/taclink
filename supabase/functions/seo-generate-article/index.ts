@@ -22,6 +22,8 @@ Every article must:
 - End with a short FAQ section (3-5 questions) using H3 (###) per question.
 - Target the supplied keyword without stuffing. Use it in the title, first 100 words, one H2, and naturally throughout.
 
+IMAGES: If an "Available media" list is provided, embed 2-4 of the MOST relevant images using standard markdown: ![alt text](url). Place them at natural break points (after the intro, between H2 sections, never inside the FAQ). Use the image's provided alt_text verbatim. Only embed images that genuinely fit the surrounding paragraph — do not force-fit. If no images are provided or none fit, embed none. In the returned JSON, list the URLs you used in "used_image_urls".
+
 Return ONLY a JSON object (no markdown fences, no commentary) with this exact shape:
 {
   "title": "string, max 65 chars, include keyword",
@@ -29,7 +31,8 @@ Return ONLY a JSON object (no markdown fences, no commentary) with this exact sh
   "excerpt": "string, 140-180 chars, compelling summary",
   "meta_description": "string, 140-158 chars, optimized for SERP click-through",
   "keywords": ["primary keyword", "secondary keyword", "..."],
-  "body_markdown": "the full article in markdown"
+  "body_markdown": "the full article in markdown",
+  "used_image_urls": ["url1", "url2"]
 }`;
 
 function jsonResponse(body: unknown, status = 200) {
@@ -91,11 +94,85 @@ Deno.serve(async (req) => {
 
     if (!title) return jsonResponse({ error: "title or topic_id required" }, 400);
 
+    // --- Media Library: pick relevant high-scoring images for the AI to embed ---
+    const MEDIA_MIN_SCORE = 60;
+    const MEDIA_POOL_SIZE = 8;
+    const keywordTokens = [
+      target_keyword,
+      title,
+      location,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 4);
+
+    const mediaPool: Array<{ url: string; alt: string; desc: string; id: string }> = [];
+    try {
+      const { data: candidates } = await admin
+        .from("media_assets")
+        .select("id, storage_path, public_url, alt_text, ai_description, seo_score, tags, category")
+        .gte("seo_score", MEDIA_MIN_SCORE)
+        .order("seo_score", { ascending: false })
+        .limit(100);
+
+      const scored = (candidates ?? [])
+        .map((a: any) => {
+          const hay = [
+            a.alt_text ?? "",
+            a.ai_description ?? "",
+            a.category ?? "",
+            (a.tags ?? []).join(" "),
+          ]
+            .join(" ")
+            .toLowerCase();
+          const matches = keywordTokens.reduce(
+            (n, tok) => (hay.includes(tok) ? n + 1 : n),
+            0,
+          );
+          return { a, matches };
+        })
+        .filter((x) => x.matches > 0)
+        .sort(
+          (x, y) =>
+            y.matches - x.matches || (y.a.seo_score ?? 0) - (x.a.seo_score ?? 0),
+        )
+        .slice(0, MEDIA_POOL_SIZE);
+
+      for (const { a } of scored) {
+        const url =
+          a.public_url ||
+          admin.storage.from("media-library").getPublicUrl(a.storage_path).data
+            .publicUrl;
+        mediaPool.push({
+          id: a.id,
+          url,
+          alt: a.alt_text ?? "",
+          desc: a.ai_description ?? "",
+        });
+      }
+    } catch (e) {
+      console.error("media pool query failed", e);
+    }
+
+    const mediaBlock = mediaPool.length
+      ? [
+          "",
+          "Available media (embed 2-4 that genuinely fit; use the alt text verbatim):",
+          ...mediaPool.map(
+            (m, i) =>
+              `${i + 1}. url: ${m.url}\n   alt: ${m.alt}\n   about: ${m.desc}`,
+          ),
+        ].join("\n")
+      : "";
+
     const userPrompt = [
       `Topic / working title: ${title}`,
       target_keyword ? `Primary keyword: ${target_keyword}` : null,
       location ? `Geographic focus: ${location}` : null,
       notes ? `Additional notes: ${notes}` : null,
+      mediaBlock || null,
       "",
       "Write the article now. Return ONLY the JSON object as specified.",
     ].filter(Boolean).join("\n");
@@ -183,6 +260,33 @@ Deno.serve(async (req) => {
       await admin.from("seo_topics")
         .update({ status: "done", article_id: inserted.id })
         .eq("id", topic_id);
+    }
+
+    // Increment usage_count for images actually embedded in the body
+    try {
+      const body: string = parsed.body_markdown ?? "";
+      const used = mediaPool.filter((m) => body.includes(m.url));
+      if (used.length) {
+        await Promise.all(
+          used.map((m) =>
+            admin.rpc as any, // no rpc; do raw update via select+update
+          ),
+        );
+        // Simple per-row update (small N)
+        for (const m of used) {
+          const { data: row } = await admin
+            .from("media_assets")
+            .select("usage_count")
+            .eq("id", m.id)
+            .maybeSingle();
+          await admin
+            .from("media_assets")
+            .update({ usage_count: (row?.usage_count ?? 0) + 1 })
+            .eq("id", m.id);
+        }
+      }
+    } catch (e) {
+      console.error("media usage tracking failed", e);
     }
 
     return jsonResponse({ article: inserted });
