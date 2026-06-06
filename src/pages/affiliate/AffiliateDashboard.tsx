@@ -85,10 +85,8 @@ const AffiliateDashboard = () => {
       setLoading(true);
       const [{ data: linkRows }, { data: comRows }, { data: payRows }, { data: signupRows }] =
         await Promise.all([
-          supabase
-            .from('influencer_links')
-            .select('id,slug,influencer_name,is_vip,active,payout_method,payout_handle,payout_notes')
-            .eq('owner_user_id', user.id),
+          (supabase as any).rpc('get_my_affiliate_links'),
+
           supabase
             .from('influencer_commissions')
             .select('id,link_id,booking_id,amount_cents,pct_at_time,status,commission_kind,created_at,payout_id')
