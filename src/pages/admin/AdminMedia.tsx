@@ -116,7 +116,7 @@ export default function AdminMedia() {
         continue;
       }
       if (file.size > MAX_BYTES) {
-        toast.error(`${file.name}: over 10MB`);
+        toast.error(`${file.name}: over 20MB`);
         continue;
       }
       const ext = file.name.split(".").pop() || "bin";
