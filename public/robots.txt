@@ -1,11 +1,21 @@
 User-agent: *
 Allow: /
-
-# Disallow private app surfaces from indexing
 Disallow: /admin
-Disallow: /student
-Disallow: /instructor
-Disallow: /auth
+Disallow: /student/checkout
+Disallow: /student/bookings
+Disallow: /student/messages
+Disallow: /student/profile
+Disallow: /student/settings
+Disallow: /student/payment-methods
+Disallow: /instructor/dashboard
+Disallow: /instructor/courses
+Disallow: /instructor/messages
+Disallow: /instructor/roster
+Disallow: /instructor/settings
+Disallow: /instructor/subscription
+Disallow: /instructor/payouts
 Disallow: /notifications
+Disallow: /auth/reset-password
+Disallow: /auth/change-password
 
 Sitemap: https://taclink.app/sitemap.xml

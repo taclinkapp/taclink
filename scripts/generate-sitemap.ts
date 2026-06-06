@@ -22,10 +22,19 @@ interface Entry {
 
 const staticEntries: Entry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
+  { path: "/instructor", changefreq: "weekly", priority: "0.9" },
+  { path: "/student", changefreq: "weekly", priority: "0.9" },
+  { path: "/student/discover", changefreq: "daily", priority: "0.8" },
   { path: "/blog", changefreq: "daily", priority: "0.9" },
-  { path: "/legal/terms", changefreq: "yearly", priority: "0.3" },
-  { path: "/legal/privacy", changefreq: "yearly", priority: "0.3" },
-  { path: "/legal/cancellations", changefreq: "yearly", priority: "0.3" },
+  { path: "/auth/signin", changefreq: "monthly", priority: "0.5" },
+  { path: "/auth/instructor-signup", changefreq: "monthly", priority: "0.7" },
+  { path: "/auth/student-signup", changefreq: "monthly", priority: "0.7" },
+  { path: "/legal/privacy", changefreq: "monthly", priority: "0.4" },
+  { path: "/legal/terms", changefreq: "monthly", priority: "0.4" },
+  { path: "/legal/cancellations", changefreq: "monthly", priority: "0.3" },
+  { path: "/support", changefreq: "monthly", priority: "0.5" },
+  { path: "/support/contact", changefreq: "monthly", priority: "0.5" },
+  { path: "/affiliate", changefreq: "monthly", priority: "0.5" },
 ];
 
 async function fetchArticles(): Promise<Entry[]> {
