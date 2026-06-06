@@ -133,6 +133,9 @@ const AdminDepositReview = lazy(() => import("./pages/admin/AdminDepositReview")
 const AdminFeedback = lazy(() => import("./pages/admin/AdminFeedback"));
 const AdminSubscriptionPlans = lazy(() => import("./pages/admin/AdminSubscriptionPlans"));
 const AdminFoundingInstructors = lazy(() => import("./pages/admin/AdminFoundingInstructors"));
+const AdminSEO = lazy(() => import("./pages/admin/AdminSEO"));
+const BlogIndex = lazy(() => import("./pages/blog/BlogIndex"));
+const BlogPost = lazy(() => import("./pages/blog/BlogPost"));
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
 import { InstallAppBanner } from "./components/InstallAppBanner";
@@ -283,6 +286,7 @@ const App = () => (
               <Route path="background-videos" element={<AdminBackgroundVideos />} />
               <Route path="subscription-plans" element={<AdminSubscriptionPlans />} />
               <Route path="founding-instructors" element={<AdminFoundingInstructors />} />
+              <Route path="seo" element={<AdminSEO />} />
               <Route path="deposit-review" element={<AdminDepositReview />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
@@ -297,6 +301,10 @@ const App = () => (
             <Route path="/support/contact" element={<Authed><ContactSupport /></Authed>} />
             <Route path="/affiliate" element={<Authed><AffiliateDashboard /></Authed>} />
             <Route path="/affiliate/portal" element={<AffiliatePortal />} />
+
+            {/* Public blog (SEO) */}
+            <Route path="/blog" element={<BlogIndex />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
