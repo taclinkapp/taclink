@@ -22,7 +22,7 @@ type Rail = {
   display_label: string;
   environment: "sandbox" | "live";
   status: "standby" | "active" | "disabled";
-  credentials: Record<string, string>;
+  credential_keys: string[];
   notes: string | null;
   updated_at: string;
 };
@@ -32,7 +32,7 @@ type Draft = {
   display_label: string;
   environment: "sandbox" | "live";
   status: Rail["status"];
-  credentialsText: string; // JSON text edited in textarea
+  credentialKeysText: string; // comma / newline separated secret NAMES (not values)
   notes: string;
 };
 
@@ -41,13 +41,17 @@ const blankDraft: Draft = {
   display_label: "Authorize.Net",
   environment: "sandbox",
   status: "standby",
-  credentialsText: JSON.stringify(
-    { api_login_id: "", transaction_key: "", signature_key: "" },
-    null,
-    2,
-  ),
+  credentialKeysText: "AUTHNET_API_LOGIN_ID, AUTHNET_TRANSACTION_KEY, AUTHNET_SIGNATURE_KEY",
   notes: "",
 };
+
+function parseKeys(text: string): string[] {
+  return Array.from(
+    new Set(
+      text.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean),
+    ),
+  );
+}
 
 export function BackupRailsCard() {
   const [rails, setRails] = useState<Rail[]>([]);
