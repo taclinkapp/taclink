@@ -16,15 +16,12 @@ export function useActivePaymentProvider() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("payment_provider_settings")
-        .select("active_provider")
-        .eq("id", true)
-        .maybeSingle();
+      const { data } = await (supabase as any).rpc('get_active_payment_provider');
       if (cancelled) return;
-      const next = (data?.active_provider as ActiveProvider | undefined) ?? "stripe";
+      const next = (data as ActiveProvider | undefined) ?? "stripe";
       setProvider(next === "helcim" ? "helcim" : "stripe");
       setLoading(false);
+
     })();
     return () => { cancelled = true; };
   }, []);

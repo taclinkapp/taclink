@@ -3999,15 +3999,32 @@ export type Database = {
       expire_stale_credentials: { Args: never; Returns: number }
       generate_access_pin: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
-      get_active_payment_provider: {
-        Args: never
-        Returns: Database["public"]["Enums"]["payment_provider"]
-      }
+      get_active_payment_provider: { Args: never; Returns: string }
       get_effective_launch_state: { Args: never; Returns: Json }
       get_founder_program_stats: { Args: never; Returns: Json }
       get_guest_affiliate_stats: {
         Args: { _pin: string; _slug: string }
         Returns: Json
+      }
+      get_my_affiliate_links: {
+        Args: never
+        Returns: {
+          active: boolean
+          audience: string
+          created_at: string
+          id: string
+          influencer_handle: string
+          influencer_name: string
+          is_vip: boolean
+          owner_user_id: string
+          payout_handle: string
+          payout_method: string
+          payout_notes: string
+          slug: string
+          updated_at: string
+          vip_duration_days: number
+          vip_starts_at: string
+        }[]
       }
       get_my_founder_status: { Args: never; Returns: Json }
       get_public_founder_badge: {
@@ -4024,6 +4041,20 @@ export type Database = {
           founder_rank: number
           founder_status: Database["public"]["Enums"]["founder_status"]
           user_id: string
+        }[]
+      }
+      get_public_instructor_profile: {
+        Args: { _id: string }
+        Returns: {
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          photo_url: string
+          service_categories: string[]
+          service_city: string
+          service_state: string
+          state: string
         }[]
       }
       get_public_profile_cards: {
@@ -4108,6 +4139,20 @@ export type Database = {
           claim_id: string
           instructor_id: string
           student_id: string
+        }[]
+      }
+      list_public_instructor_profiles: {
+        Args: { _ids: string[] }
+        Returns: {
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          photo_url: string
+          service_categories: string[]
+          service_city: string
+          service_state: string
+          state: string
         }[]
       }
       list_releasable_deposits: {
