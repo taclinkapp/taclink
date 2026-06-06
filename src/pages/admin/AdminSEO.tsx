@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading1, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Topic = {
@@ -31,9 +31,20 @@ type Article = {
   body_markdown: string;
   target_keyword: string | null;
   keywords: string[];
+  cover_image_url: string | null;
   status: string;
   published_at: string | null;
   created_at: string;
+};
+
+const ACCEPTED_ARTICLE_MEDIA = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"];
+
+const articleMediaUrl = (path: string) =>
+  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-blog-media?path=${encodeURIComponent(path)}`;
+
+const firstMarkdownImage = (markdown: string) => {
+  const match = markdown.match(/!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/);
+  return match?.[1] ?? null;
 };
 
 export default function AdminSEO() {
