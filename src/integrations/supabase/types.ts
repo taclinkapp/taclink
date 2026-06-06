@@ -2866,6 +2866,110 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_articles: {
+        Row: {
+          body_markdown: string
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          excerpt: string | null
+          id: string
+          keywords: string[]
+          meta_description: string | null
+          model: string | null
+          published_at: string | null
+          slug: string
+          status: string
+          target_keyword: string | null
+          title: string
+          topic_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          body_markdown?: string
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          keywords?: string[]
+          meta_description?: string | null
+          model?: string | null
+          published_at?: string | null
+          slug: string
+          status?: string
+          target_keyword?: string | null
+          title: string
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body_markdown?: string
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          keywords?: string[]
+          meta_description?: string | null
+          model?: string | null
+          published_at?: string | null
+          slug?: string
+          status?: string
+          target_keyword?: string | null
+          title?: string
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_articles_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "seo_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_topics: {
+        Row: {
+          article_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          status: string
+          target_keyword: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          article_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          status?: string
+          target_keyword?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          status?: string
+          target_keyword?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       smoke_test_findings: {
         Row: {
           auto_fixed: boolean
