@@ -14,14 +14,35 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // Cron-only entry point
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  const provided = req.headers.get("x-cron-secret");
+  if (!cronSecret || provided !== cronSecret) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const admin = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+  // Fetch the internal token used to authenticate to ai-propose.
+  const { data: tokRow } = await admin
+    .from("_ai_internal_tokens")
+    .select("token")
+    .eq("name", "ai_propose")
+    .maybeSingle();
+  const internalToken = tokRow?.token ?? "";
 
   const propose = async (payload: Record<string, unknown>) => {
     try {
       await fetch(`${SUPABASE_URL}/functions/v1/ai-propose`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-ai-internal-token": internalToken,
+        },
         body: JSON.stringify(payload),
       });
     } catch (e) {

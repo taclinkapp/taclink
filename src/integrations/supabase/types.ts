@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      _ai_internal_tokens: {
+        Row: {
+          created_at: string
+          name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          token?: string
+        }
+        Relationships: []
+      }
       account_deletion_requests: {
         Row: {
           cancelled_at: string | null
@@ -1036,6 +1054,7 @@ export type Database = {
           submitter_email: string | null
           submitter_name: string | null
           submitter_role: string | null
+          submitter_user_id: string | null
           updated_at: string
           user_agent: string | null
         }
@@ -1051,6 +1070,7 @@ export type Database = {
           submitter_email?: string | null
           submitter_name?: string | null
           submitter_role?: string | null
+          submitter_user_id?: string | null
           updated_at?: string
           user_agent?: string | null
         }
@@ -1066,6 +1086,7 @@ export type Database = {
           submitter_email?: string | null
           submitter_name?: string | null
           submitter_role?: string | null
+          submitter_user_id?: string | null
           updated_at?: string
           user_agent?: string | null
         }
@@ -1981,6 +2002,7 @@ export type Database = {
           reporter_email: string | null
           reporter_name: string | null
           reporter_role: string | null
+          reporter_user_id: string | null
           root_cause: string | null
           severity: string
           status: string
@@ -2000,6 +2022,7 @@ export type Database = {
           reporter_email?: string | null
           reporter_name?: string | null
           reporter_role?: string | null
+          reporter_user_id?: string | null
           root_cause?: string | null
           severity?: string
           status?: string
@@ -2019,6 +2042,7 @@ export type Database = {
           reporter_email?: string | null
           reporter_name?: string | null
           reporter_role?: string | null
+          reporter_user_id?: string | null
           root_cause?: string | null
           severity?: string
           status?: string
@@ -3908,6 +3932,7 @@ export type Database = {
       }
     }
     Functions: {
+      _ai_propose_headers: { Args: never; Returns: Json }
       activate_launch_if_due: { Args: never; Returns: Json }
       activate_pending_founders: {
         Args: { _launch_at: string }

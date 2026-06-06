@@ -108,6 +108,49 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // === AuthN: must be admin JWT OR internal DB-trigger token ===
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const adminClient = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    const internalHeader = req.headers.get("x-ai-internal-token") ?? "";
+    let authorized = false;
+
+    if (internalHeader) {
+      const { data: tokRow } = await adminClient
+        .from("_ai_internal_tokens")
+        .select("token")
+        .eq("name", "ai_propose")
+        .maybeSingle();
+      if (tokRow?.token && tokRow.token === internalHeader) authorized = true;
+    }
+
+    if (!authorized) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      if (authHeader.startsWith("Bearer ")) {
+        const userClient = createClient(
+          SUPABASE_URL,
+          Deno.env.get("SUPABASE_ANON_KEY")!,
+          { global: { headers: { Authorization: authHeader } } },
+        );
+        const { data: u } = await userClient.auth.getUser();
+        const uid = u?.user?.id;
+        if (uid) {
+          const { data: roleRow } = await adminClient
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", uid)
+            .eq("role", "admin")
+            .maybeSingle();
+          if (roleRow) authorized = true;
+        }
+      }
+    }
+
+    if (!authorized) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+
     const body = (await req.json()) as ProposeBody;
     if (!body?.kind || !body?.context) {
       return json({ error: "kind and context are required" }, 400);
