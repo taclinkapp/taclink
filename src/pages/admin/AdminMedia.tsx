@@ -31,7 +31,7 @@ type Asset = {
 };
 
 const ACCEPTED = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"];
-const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_BYTES = 20 * 1024 * 1024;
 
 function scoreBadge(score: number) {
   if (score >= 70) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
@@ -116,7 +116,7 @@ export default function AdminMedia() {
         continue;
       }
       if (file.size > MAX_BYTES) {
-        toast.error(`${file.name}: over 10MB`);
+        toast.error(`${file.name}: over 20MB`);
         continue;
       }
       const ext = file.name.split(".").pop() || "bin";
@@ -208,7 +208,7 @@ export default function AdminMedia() {
           </div>
           <div>
             <p className="font-medium">Drag &amp; drop images or GIFs</p>
-            <p className="text-sm text-muted-foreground">PNG, JPG, GIF, WebP — up to 10MB each</p>
+            <p className="text-sm text-muted-foreground">PNG, JPG, GIF, WebP — up to 20MB each</p>
           </div>
           <label>
             <input
