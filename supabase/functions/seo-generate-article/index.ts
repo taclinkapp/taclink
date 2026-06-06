@@ -94,11 +94,85 @@ Deno.serve(async (req) => {
 
     if (!title) return jsonResponse({ error: "title or topic_id required" }, 400);
 
+    // --- Media Library: pick relevant high-scoring images for the AI to embed ---
+    const MEDIA_MIN_SCORE = 60;
+    const MEDIA_POOL_SIZE = 8;
+    const keywordTokens = [
+      target_keyword,
+      title,
+      location,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 4);
+
+    const mediaPool: Array<{ url: string; alt: string; desc: string; id: string }> = [];
+    try {
+      const { data: candidates } = await admin
+        .from("media_assets")
+        .select("id, storage_path, public_url, alt_text, ai_description, seo_score, tags, category")
+        .gte("seo_score", MEDIA_MIN_SCORE)
+        .order("seo_score", { ascending: false })
+        .limit(100);
+
+      const scored = (candidates ?? [])
+        .map((a: any) => {
+          const hay = [
+            a.alt_text ?? "",
+            a.ai_description ?? "",
+            a.category ?? "",
+            (a.tags ?? []).join(" "),
+          ]
+            .join(" ")
+            .toLowerCase();
+          const matches = keywordTokens.reduce(
+            (n, tok) => (hay.includes(tok) ? n + 1 : n),
+            0,
+          );
+          return { a, matches };
+        })
+        .filter((x) => x.matches > 0)
+        .sort(
+          (x, y) =>
+            y.matches - x.matches || (y.a.seo_score ?? 0) - (x.a.seo_score ?? 0),
+        )
+        .slice(0, MEDIA_POOL_SIZE);
+
+      for (const { a } of scored) {
+        const url =
+          a.public_url ||
+          admin.storage.from("media-library").getPublicUrl(a.storage_path).data
+            .publicUrl;
+        mediaPool.push({
+          id: a.id,
+          url,
+          alt: a.alt_text ?? "",
+          desc: a.ai_description ?? "",
+        });
+      }
+    } catch (e) {
+      console.error("media pool query failed", e);
+    }
+
+    const mediaBlock = mediaPool.length
+      ? [
+          "",
+          "Available media (embed 2-4 that genuinely fit; use the alt text verbatim):",
+          ...mediaPool.map(
+            (m, i) =>
+              `${i + 1}. url: ${m.url}\n   alt: ${m.alt}\n   about: ${m.desc}`,
+          ),
+        ].join("\n")
+      : "";
+
     const userPrompt = [
       `Topic / working title: ${title}`,
       target_keyword ? `Primary keyword: ${target_keyword}` : null,
       location ? `Geographic focus: ${location}` : null,
       notes ? `Additional notes: ${notes}` : null,
+      mediaBlock || null,
       "",
       "Write the article now. Return ONLY the JSON object as specified.",
     ].filter(Boolean).join("\n");
