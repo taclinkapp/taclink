@@ -233,7 +233,56 @@ export default function AdminSEO() {
 
         <TabsContent value="topics" className="space-y-6">
           <Card className="p-5">
+            <h2 className="mb-2 font-semibold">AI topic assistant</h2>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Drop in a rough topic. AI returns angles + titles + primary keywords + question variants
+              tuned to how ChatGPT, Perplexity & Google AI Overviews cite content.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                value={suggestSeed}
+                onChange={(e) => setSuggestSeed(e.target.value)}
+                placeholder="e.g. red dot pistol training for beginners"
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fetchSuggestions(); } }}
+              />
+              <Button onClick={fetchSuggestions} disabled={suggesting} className="shrink-0">
+                {suggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                Suggest angles
+              </Button>
+            </div>
+            {suggestions.length > 0 && (
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {suggestions.map((s, i) => (
+                  <Card key={i} className="flex flex-col gap-2 p-3">
+                    <p className="text-sm font-semibold leading-snug">{s.title}</p>
+                    <p className="font-mono text-[11px] text-primary">{s.primary_keyword}</p>
+                    {s.angle && <p className="text-xs text-muted-foreground italic">{s.angle}</p>}
+                    {s.secondary_keywords?.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {s.secondary_keywords.slice(0, 6).map((k) => (
+                          <Badge key={k} variant="outline" className="text-[10px] font-normal">{k}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    {s.questions?.length > 0 && (
+                      <ul className="ml-4 list-disc space-y-0.5 text-[11px] text-muted-foreground">
+                        {s.questions.slice(0, 4).map((q) => <li key={q}>{q}</li>)}
+                      </ul>
+                    )}
+                    <Button size="sm" variant="secondary" className="mt-auto"
+                      onClick={() => applySuggestion(s)}>
+                      <Check className="mr-1 h-3 w-3" /> Use this
+                    </Button>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-5">
             <h2 className="mb-4 font-semibold">New topic</h2>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <Label>Working title *</Label>
