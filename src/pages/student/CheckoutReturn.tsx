@@ -91,13 +91,11 @@ const CheckoutReturn = () => {
               .select('title, starts_at, city, state, instructor_id')
               .eq('id', (data as BookingRow).course_id)
               .maybeSingle();
-            const { data: instructor } = course?.instructor_id
-              ? await supabase
-                  .from('profiles')
-                  .select('display_name')
-                  .eq('id', course.instructor_id)
-                  .maybeSingle()
+            const { data: instructorRows } = course?.instructor_id
+              ? await (supabase as any).rpc('get_public_instructor_profile', { _id: course.instructor_id })
               : { data: null as any };
+            const instructor = Array.isArray(instructorRows) ? instructorRows[0] ?? null : instructorRows;
+
             const startsAt = (course as any)?.starts_at ?? null;
             const startDate = startsAt
               ? new Date(startsAt).toLocaleString(undefined, {
