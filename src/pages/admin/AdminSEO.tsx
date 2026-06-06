@@ -502,7 +502,10 @@ export default function AdminSEO() {
                       {a.excerpt && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{a.excerpt}</p>}
                     </div>
                     <div className="flex shrink-0 flex-col gap-2 md:flex-row">
-                      <Button size="sm" variant="outline" onClick={() => setEditingArticle(a)}>
+                      <Button size="sm" variant="ghost" onClick={() => setPreviewArticle(a)} title="Preview as reader">
+                        <Monitor className="mr-1 h-4 w-4" />Preview
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => { setEditingArticle(a); setEditorMode("edit"); }}>
                         Edit
                       </Button>
                       <Button size="sm" variant={a.status === "published" ? "secondary" : "default"}
