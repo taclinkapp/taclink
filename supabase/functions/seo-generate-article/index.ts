@@ -22,7 +22,15 @@ Every article must:
 - End with a short FAQ section (3-5 questions) using H3 (###) per question.
 - Target the supplied keyword without stuffing. Use it in the title, first 100 words, one H2, and naturally throughout.
 
-IMAGES: If an "Available media" list is provided, embed 2-4 of the MOST relevant images using standard markdown: ![alt text](url). Place them at natural break points (after the intro, between H2 sections, never inside the FAQ). Use the image's provided alt_text verbatim. Only embed images that genuinely fit the surrounding paragraph — do not force-fit. If no images are provided or none fit, embed none. In the returned JSON, list the URLs you used in "used_image_urls".
+IMAGES & GIFs: If an "Available media" list is provided, embed 2-4 of the MOST relevant items (photos or animated GIFs) at natural break points (after the intro, between H2 sections, never inside the FAQ). Use the item's provided alt_text verbatim. Only embed media that genuinely fits the surrounding paragraph — do not force-fit. If nothing fits, embed none.
+
+For EACH embedded item, output it as a TWO-LINE block in this exact format (separated by a blank line above and below):
+
+*Visual N — {short context label}: {one short sentence describing what the reader sees}*
+
+![alt text verbatim](url)
+
+Where N is a sequential number starting at 1 (Visual 1, Visual 2, ...). The italic caption line goes ABOVE the image. Keep the caption under 140 chars. Do not wrap the image in a blockquote or list. In the returned JSON, list the URLs you used in "used_image_urls".
 
 Return ONLY a JSON object (no markdown fences, no commentary) with this exact shape:
 {
