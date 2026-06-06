@@ -148,10 +148,10 @@ export function BackupRailsCard() {
         <KeyRound className="h-4 w-4 text-primary" /> Backup Payment Rails — Stand-By Vault
       </div>
       <p className="text-xs text-muted-foreground">
-        Register alternate processors (Authorize.Net, NMI, etc.) with their API
-        keys and tokens here. They stay <strong>dormant</strong> until you mark
-        one as <strong>active</strong>. Credentials are stored encrypted at the
-        database layer and only readable by admins.
+        Register alternate processors (Authorize.Net, NMI, etc.) by listing the
+        <strong> secret names</strong> their edge functions will read from Lovable
+        Cloud Secrets. Actual API keys are <strong>never</strong> stored in this
+        table — only the names. Rails stay dormant until marked <strong>active</strong>.
       </p>
 
       <div className="space-y-2">
@@ -190,7 +190,7 @@ export function BackupRailsCard() {
                     </Badge>
                   </div>
                   <div className="text-[11px] text-muted-foreground mt-1">
-                    Keys: {Object.keys(r.credentials ?? {}).join(", ") || "none"}
+                    Secret names: {(r.credential_keys ?? []).join(", ") || "none"}
                   </div>
                   {r.notes && (
                     <div className="text-[11px] text-muted-foreground mt-1 line-clamp-2">
@@ -302,15 +302,18 @@ export function BackupRailsCard() {
         </div>
         <div>
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Credentials (JSON: keys / tokens)
+            Secret names (comma or newline separated)
           </Label>
           <Textarea
-            rows={6}
-            value={draft.credentialsText}
-            onChange={(e) => setDraft({ ...draft, credentialsText: e.target.value })}
+            rows={4}
+            value={draft.credentialKeysText}
+            onChange={(e) => setDraft({ ...draft, credentialKeysText: e.target.value })}
             className="mt-1.5 bg-background border-border font-mono text-xs"
-            placeholder='{ "api_login_id": "...", "transaction_key": "..." }'
+            placeholder="AUTHNET_API_LOGIN_ID, AUTHNET_TRANSACTION_KEY"
           />
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Add the matching values in Lovable Cloud → Secrets. UPPER_SNAKE_CASE only.
+          </p>
         </div>
         <div>
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
