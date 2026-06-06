@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft, TrendingUp, Star, Sparkles, Edit3, Percent, Menu, X, Megaphone, FlaskConical, Sword, KeyRound, Webhook, Activity, FileSignature, Film, Lightbulb, Package, Crown } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, BookOpen, Mail, MessageSquare, ScrollText, Settings, LogOut, Bug, LifeBuoy, ShieldAlert, DollarSign, Wallet, ToggleLeft, TrendingUp, Star, Sparkles, Edit3, Percent, Menu, X, Megaphone, FlaskConical, Sword, KeyRound, Webhook, Activity, FileSignature, Film, Lightbulb, Package, Crown, Image as ImageIcon } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,6 +61,7 @@ const items: Item[] = [
   { to: '/admin/subscription-plans', icon: Package, label: 'Subscription Plans' },
   { to: '/admin/founding-instructors', icon: Crown, label: 'Founding Instructors' },
   { to: '/admin/seo', icon: Lightbulb, label: 'SEO Content Engine' },
+  { to: '/admin/media', icon: ImageIcon, label: 'Media Library' },
   { to: '/auth/change-password', icon: KeyRound, label: 'Change Password' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
