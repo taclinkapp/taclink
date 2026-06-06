@@ -51,6 +51,55 @@ export default function AdminSEO() {
   const [newNotes, setNewNotes] = useState("");
   const [creatingTopic, setCreatingTopic] = useState(false);
 
+  // AI suggestions
+  type Suggestion = {
+    title: string;
+    primary_keyword: string;
+    secondary_keywords: string[];
+    questions: string[];
+    angle: string;
+  };
+  const [suggestSeed, setSuggestSeed] = useState("");
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+
+  const fetchSuggestions = async () => {
+    const seed = suggestSeed.trim() || newTitle.trim();
+    if (!seed) { toast.error("Type a topic first"); return; }
+    setSuggesting(true);
+    setSuggestions([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("seo-suggest-topic", {
+        body: {
+          topic: seed,
+          location: newLocation.trim() || undefined,
+          notes: newNotes.trim() || undefined,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const s = ((data as any)?.suggestions ?? []) as Suggestion[];
+      if (!s.length) { toast.error("No suggestions returned"); return; }
+      setSuggestions(s);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Suggestion failed");
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const applySuggestion = (s: Suggestion) => {
+    setNewTitle(s.title);
+    setNewKeyword(s.primary_keyword);
+    const extra = [
+      s.angle ? `Angle: ${s.angle}` : "",
+      s.secondary_keywords?.length ? `Secondary keywords: ${s.secondary_keywords.join(", ")}` : "",
+      s.questions?.length ? `Cover these questions:\n- ${s.questions.join("\n- ")}` : "",
+    ].filter(Boolean).join("\n\n");
+    setNewNotes((prev) => (prev?.trim() ? prev + "\n\n" + extra : extra));
+    toast.success("Applied — review before queuing");
+  };
+
   const loadAll = async () => {
     setLoading(true);
     const [t, a] = await Promise.all([
