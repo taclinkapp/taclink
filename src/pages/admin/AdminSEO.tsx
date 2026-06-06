@@ -624,9 +624,29 @@ export default function AdminSEO() {
             onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-card/95 px-4 py-2 backdrop-blur">
               <span className="text-xs uppercase tracking-wider text-muted-foreground">Reader preview · /blog/{previewArticle.slug}</span>
-              <Button size="sm" variant="ghost" onClick={() => setPreviewArticle(null)}>Close</Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="default" disabled={savingArticle}
+                  onClick={async () => {
+                    setSavingArticle(true);
+                    const { error } = await supabase.from("seo_articles").update({
+                      body_markdown: previewArticle.body_markdown,
+                      cover_image_url: previewArticle.cover_image_url,
+                    }).eq("id", previewArticle.id);
+                    setSavingArticle(false);
+                    if (error) { toast.error(error.message); return; }
+                    toast.success("Layout saved");
+                    setArticles((prev) => prev.map((a) => a.id === previewArticle.id ? { ...a, body_markdown: previewArticle.body_markdown, cover_image_url: previewArticle.cover_image_url } : a));
+                  }}>
+                  {savingArticle && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                  Save layout
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setPreviewArticle(null)}>Close</Button>
+              </div>
             </div>
-            <ArticleReaderPreview article={previewArticle} />
+            <ArticleReaderPreview
+              article={previewArticle}
+              onChange={(body) => setPreviewArticle({ ...previewArticle, body_markdown: body })}
+            />
           </Card>
         </div>
       )}
