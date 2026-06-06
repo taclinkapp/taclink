@@ -8,8 +8,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus, FileText, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 
 type Topic = {
   id: string;
@@ -54,6 +55,8 @@ export default function AdminSEO() {
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [savingArticle, setSavingArticle] = useState(false);
+  const [editorMode, setEditorMode] = useState<"edit" | "preview">("edit");
+  const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
 
   // New topic form
   const [newTitle, setNewTitle] = useState("");
@@ -499,7 +502,10 @@ export default function AdminSEO() {
                       {a.excerpt && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{a.excerpt}</p>}
                     </div>
                     <div className="flex shrink-0 flex-col gap-2 md:flex-row">
-                      <Button size="sm" variant="outline" onClick={() => setEditingArticle(a)}>
+                      <Button size="sm" variant="ghost" onClick={() => setPreviewArticle(a)} title="Preview as reader">
+                        <Monitor className="mr-1 h-4 w-4" />Preview
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => { setEditingArticle(a); setEditorMode("edit"); }}>
                         Edit
                       </Button>
                       <Button size="sm" variant={a.status === "published" ? "secondary" : "default"}
@@ -530,64 +536,124 @@ export default function AdminSEO() {
           onClick={() => setEditingArticle(null)}>
           <Card className="max-h-[90vh] w-full max-w-3xl overflow-y-auto p-6"
             onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-4 text-lg font-semibold">Edit article</h3>
-            <div className="space-y-3">
-              <div>
-                <Label>Title</Label>
-                <Input value={editingArticle.title}
-                  onChange={(e) => setEditingArticle({ ...editingArticle, title: e.target.value })} />
-              </div>
-              <div>
-                <Label>Slug</Label>
-                <Input value={editingArticle.slug}
-                  onChange={(e) => setEditingArticle({ ...editingArticle, slug: e.target.value })} />
-              </div>
-              <div>
-                <Label>Excerpt</Label>
-                <Textarea value={editingArticle.excerpt ?? ""} rows={2}
-                  onChange={(e) => setEditingArticle({ ...editingArticle, excerpt: e.target.value })} />
-              </div>
-              <div>
-                <Label>Meta description (SEO)</Label>
-                <Textarea value={editingArticle.meta_description ?? ""} rows={2}
-                  onChange={(e) => setEditingArticle({ ...editingArticle, meta_description: e.target.value })} />
-              </div>
-              <div>
-                <Label>Body (markdown)</Label>
-                <div className="mt-1 flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 border-input bg-muted/40 p-1">
-                  <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2" title="Add section header" onClick={() => insertHeading(2)}><Heading2 className="h-4 w-4" />Header</Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-8 gap-1 px-2" title="Add subheader" onClick={() => insertHeading(3)}><Heading3 className="h-4 w-4" />Subhead</Button>
-                  <span className="mx-1 h-5 w-px bg-border" />
-                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Bold" onClick={() => wrapOrInsertAtCursor("**", "**", "bold text")}><Bold className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Italic" onClick={() => wrapOrInsertAtCursor("_", "_", "italic")}><Italic className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Bulleted list" onClick={() => prefixSelectedLines("- ", "list item")}><List className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Quote" onClick={() => prefixSelectedLines("> ", "quote")}><Quote className="h-4 w-4" /></Button>
-                  <span className="mx-1 h-5 w-px bg-border" />
-                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Link" onClick={insertLinkPrompt}><LinkIcon className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2" title="Insert image or GIF by URL" onClick={insertImagePrompt}><ImageIcon className="h-4 w-4" />GIF URL</Button>
-                  <Button type="button" size="sm" variant="default" className="h-8 gap-1 px-2" title="Upload image or GIF" disabled={uploadingMedia} onClick={() => uploadInputRef.current?.click()}>
-                    {uploadingMedia ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                    Upload GIF
-                  </Button>
-                  <input ref={uploadInputRef} type="file" accept={ACCEPTED_ARTICLE_MEDIA.join(",")} hidden
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaAndInsert(f); }} />
-                  <span className="ml-auto pr-1 text-[10px] text-muted-foreground">Headers use H2/H3 for SEO · GIFs insert at cursor</span>
-                </div>
-                <Textarea ref={bodyRef} value={editingArticle.body_markdown} rows={20}
-                  className="rounded-t-none font-mono text-xs"
-                  onChange={(e) => setEditingArticle({ ...editingArticle, body_markdown: e.target.value })} />
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h3 className="text-lg font-semibold">{editorMode === "edit" ? "Edit article" : "Reader preview"}</h3>
+              <div className="inline-flex rounded-md border border-input bg-muted/40 p-0.5">
+                <Button type="button" size="sm" variant={editorMode === "edit" ? "secondary" : "ghost"} className="h-7 gap-1 px-2"
+                  onClick={() => setEditorMode("edit")}>
+                  <FileText className="h-3.5 w-3.5" />Edit
+                </Button>
+                <Button type="button" size="sm" variant={editorMode === "preview" ? "secondary" : "ghost"} className="h-7 gap-1 px-2"
+                  onClick={() => setEditorMode("preview")}>
+                  <Eye className="h-3.5 w-3.5" />Preview
+                </Button>
               </div>
             </div>
+
+            {editorMode === "preview" ? (
+              <ArticleReaderPreview article={editingArticle} />
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <Label>Title</Label>
+                  <Input value={editingArticle.title}
+                    onChange={(e) => setEditingArticle({ ...editingArticle, title: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Slug</Label>
+                  <Input value={editingArticle.slug}
+                    onChange={(e) => setEditingArticle({ ...editingArticle, slug: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Excerpt</Label>
+                  <Textarea value={editingArticle.excerpt ?? ""} rows={2}
+                    onChange={(e) => setEditingArticle({ ...editingArticle, excerpt: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Meta description (SEO)</Label>
+                  <Textarea value={editingArticle.meta_description ?? ""} rows={2}
+                    onChange={(e) => setEditingArticle({ ...editingArticle, meta_description: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Body (markdown)</Label>
+                  <div className="mt-1 flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 border-input bg-muted/40 p-1">
+                    <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2" title="Add section header" onClick={() => insertHeading(2)}><Heading2 className="h-4 w-4" />Header</Button>
+                    <Button type="button" size="sm" variant="ghost" className="h-8 gap-1 px-2" title="Add subheader" onClick={() => insertHeading(3)}><Heading3 className="h-4 w-4" />Subhead</Button>
+                    <span className="mx-1 h-5 w-px bg-border" />
+                    <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Bold" onClick={() => wrapOrInsertAtCursor("**", "**", "bold text")}><Bold className="h-4 w-4" /></Button>
+                    <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Italic" onClick={() => wrapOrInsertAtCursor("_", "_", "italic")}><Italic className="h-4 w-4" /></Button>
+                    <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Bulleted list" onClick={() => prefixSelectedLines("- ", "list item")}><List className="h-4 w-4" /></Button>
+                    <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Quote" onClick={() => prefixSelectedLines("> ", "quote")}><Quote className="h-4 w-4" /></Button>
+                    <span className="mx-1 h-5 w-px bg-border" />
+                    <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Link" onClick={insertLinkPrompt}><LinkIcon className="h-4 w-4" /></Button>
+                    <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2" title="Insert image or GIF by URL" onClick={insertImagePrompt}><ImageIcon className="h-4 w-4" />GIF URL</Button>
+                    <Button type="button" size="sm" variant="default" className="h-8 gap-1 px-2" title="Upload image or GIF" disabled={uploadingMedia} onClick={() => uploadInputRef.current?.click()}>
+                      {uploadingMedia ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                      Upload GIF
+                    </Button>
+                    <input ref={uploadInputRef} type="file" accept={ACCEPTED_ARTICLE_MEDIA.join(",")} hidden
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaAndInsert(f); }} />
+                    <span className="ml-auto pr-1 text-[10px] text-muted-foreground">Headers use H2/H3 for SEO · GIFs insert at cursor</span>
+                  </div>
+                  <Textarea ref={bodyRef} value={editingArticle.body_markdown} rows={20}
+                    className="rounded-t-none font-mono text-xs"
+                    onChange={(e) => setEditingArticle({ ...editingArticle, body_markdown: e.target.value })} />
+                </div>
+              </div>
+            )}
             <div className="mt-4 flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setEditingArticle(null)}>Cancel</Button>
-              <Button onClick={saveArticle} disabled={savingArticle}>
-                {savingArticle && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save
-              </Button>
+              <Button variant="ghost" onClick={() => setEditingArticle(null)}>Close</Button>
+              {editorMode === "edit" && (
+                <Button onClick={saveArticle} disabled={savingArticle}>
+                  {savingArticle && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save
+                </Button>
+              )}
             </div>
           </Card>
         </div>
       )}
+
+      {previewArticle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setPreviewArticle(null)}>
+          <Card className="max-h-[92vh] w-full max-w-3xl overflow-y-auto p-0"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-card/95 px-4 py-2 backdrop-blur">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">Reader preview · /blog/{previewArticle.slug}</span>
+              <Button size="sm" variant="ghost" onClick={() => setPreviewArticle(null)}>Close</Button>
+            </div>
+            <ArticleReaderPreview article={previewArticle} />
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArticleReaderPreview({ article }: { article: Article }) {
+  return (
+    <div className="bg-background text-foreground">
+      <div className="mx-auto max-w-2xl px-6 py-10">
+        <p className="text-sm text-muted-foreground">← The TacLink Journal</p>
+        <header className="mt-6 mb-10 border-b border-border pb-8">
+          <h1 className="font-display text-3xl leading-tight tracking-tight md:text-5xl">
+            {article.title || "Untitled article"}
+          </h1>
+          <p className="mt-4 text-sm uppercase tracking-wider text-muted-foreground">
+            {article.published_at
+              ? new Date(article.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
+              : "Draft — not yet published"}
+          </p>
+          {article.cover_image_url && (
+            <img src={article.cover_image_url} alt={article.title}
+              className="mt-6 w-full rounded-md border border-border object-cover" />
+          )}
+        </header>
+        <article className="prose prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-primary prose-h2:mt-12 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl prose-p:leading-relaxed prose-img:rounded-md">
+          <ReactMarkdown>{article.body_markdown || "_Nothing to preview yet._"}</ReactMarkdown>
+        </article>
+      </div>
     </div>
   );
 }
