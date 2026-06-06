@@ -232,6 +232,12 @@ Deno.serve(async (req) => {
       slug = `${slugBase}-${i}`;
     }
 
+    // Auto-pick cover image: prefer first embedded image, else top match in pool
+    const bodyForCover: string = parsed.body_markdown ?? "";
+    const embeddedCover = mediaPool.find((m) => bodyForCover.includes(m.url));
+    const coverImageUrl =
+      embeddedCover?.url ?? mediaPool[0]?.url ?? null;
+
     const { data: inserted, error: insertErr } = await admin
       .from("seo_articles")
       .insert({
@@ -242,6 +248,7 @@ Deno.serve(async (req) => {
         body_markdown: parsed.body_markdown ?? "",
         keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [],
         target_keyword: target_keyword ?? null,
+        cover_image_url: coverImageUrl,
         status: "draft",
         topic_id: topic_id ?? null,
         model,
