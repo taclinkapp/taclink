@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const path = url.searchParams.get("path") ?? "";
-  if (!path || !path.startsWith("articles/") || path.includes("..")) {
+  if (!path || path.startsWith("/") || path.includes("..")) {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
@@ -27,6 +27,19 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (!asset) return new Response("Not found", { status: 404, headers: corsHeaders });
+
+  if (!path.startsWith("articles/")) {
+    const encodedPath = encodeURIComponent(path);
+    const { data: publishedUse } = await admin
+      .from("seo_articles")
+      .select("id")
+      .eq("status", "published")
+      .or(`cover_image_url.ilike.%${encodedPath}%,body_markdown.ilike.%${encodedPath}%`)
+      .limit(1)
+      .maybeSingle();
+
+    if (!publishedUse) return new Response("Not found", { status: 404, headers: corsHeaders });
+  }
 
   const { data, error } = await admin.storage.from("media-library").createSignedUrl(path, 60 * 60 * 24);
   if (error || !data?.signedUrl) {
