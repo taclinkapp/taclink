@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading1, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Topic = {
@@ -62,6 +62,75 @@ export default function AdminSEO() {
   const [suggestSeed, setSuggestSeed] = useState("");
   const [suggesting, setSuggesting] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+
+  // Body editor refs/helpers
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+
+  const wrapOrInsertAtCursor = (before: string, after = "", placeholder = "") => {
+    const ta = bodyRef.current;
+    if (!ta || !editingArticle) return;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    const value = ta.value;
+    const selected = value.slice(start, end) || placeholder;
+    const next = value.slice(0, start) + before + selected + after + value.slice(end);
+    setEditingArticle({ ...editingArticle, body_markdown: next });
+    requestAnimationFrame(() => {
+      ta.focus();
+      const cursor = start + before.length + selected.length;
+      ta.setSelectionRange(cursor, cursor);
+    });
+  };
+
+  const insertHeading = (level: 1 | 2 | 3) => {
+    const ta = bodyRef.current;
+    if (!ta || !editingArticle) return;
+    const hashes = "#".repeat(level);
+    const start = ta.selectionStart ?? 0;
+    const value = ta.value;
+    // ensure heading sits on its own line
+    const needsNewlineBefore = start > 0 && value[start - 1] !== "\n";
+    wrapOrInsertAtCursor(`${needsNewlineBefore ? "\n" : ""}${hashes} `, "\n", "Heading");
+  };
+
+  const insertImagePrompt = () => {
+    const url = window.prompt("Paste image or GIF URL (Giphy/Tenor/Media Library):");
+    if (!url) return;
+    const alt = window.prompt("Alt text (describe the image — include your keyword if natural):", "") || "";
+    wrapOrInsertAtCursor(`\n![${alt}](${url.trim()})\n`, "");
+  };
+
+  const insertLinkPrompt = () => {
+    const url = window.prompt("Link URL:");
+    if (!url) return;
+    wrapOrInsertAtCursor("[", `](${url.trim()})`, "link text");
+  };
+
+  const uploadMediaAndInsert = async (file: File) => {
+    if (!editingArticle) return;
+    if (file.size > 20 * 1024 * 1024) { toast.error("Max 20MB"); return; }
+    setUploadingMedia(true);
+    try {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `${editingArticle.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("blog-media").upload(path, file, {
+        cacheControl: "31536000", upsert: false, contentType: file.type,
+      });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("blog-media").getPublicUrl(path);
+      const alt = window.prompt("Alt text for this image:", file.name.replace(/\.[^.]+$/, "")) || "";
+      wrapOrInsertAtCursor(`\n![${alt}](${data.publicUrl})\n`, "");
+      toast.success("Uploaded & inserted");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      setUploadingMedia(false);
+      if (uploadInputRef.current) uploadInputRef.current.value = "";
+    }
+  };
+
 
   const fetchSuggestions = async () => {
     const seed = suggestSeed.trim() || newTitle.trim();
@@ -434,8 +503,27 @@ export default function AdminSEO() {
               </div>
               <div>
                 <Label>Body (markdown)</Label>
-                <Textarea value={editingArticle.body_markdown} rows={20}
-                  className="font-mono text-xs"
+                <div className="mt-1 flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 border-input bg-muted/40 p-1">
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Heading 1" onClick={() => insertHeading(1)}><Heading1 className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Heading 2" onClick={() => insertHeading(2)}><Heading2 className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Heading 3" onClick={() => insertHeading(3)}><Heading3 className="h-4 w-4" /></Button>
+                  <span className="mx-1 h-5 w-px bg-border" />
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Bold" onClick={() => wrapOrInsertAtCursor("**", "**", "bold text")}><Bold className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Italic" onClick={() => wrapOrInsertAtCursor("_", "_", "italic")}><Italic className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Bulleted list" onClick={() => wrapOrInsertAtCursor("\n- ", "", "list item")}><List className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Quote" onClick={() => wrapOrInsertAtCursor("\n> ", "", "quote")}><Quote className="h-4 w-4" /></Button>
+                  <span className="mx-1 h-5 w-px bg-border" />
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Link" onClick={insertLinkPrompt}><LinkIcon className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Insert image / GIF by URL (Giphy, Tenor, Media Library)" onClick={insertImagePrompt}><ImageIcon className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Upload image or GIF" disabled={uploadingMedia} onClick={() => uploadInputRef.current?.click()}>
+                    {uploadingMedia ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                  </Button>
+                  <input ref={uploadInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaAndInsert(f); }} />
+                  <span className="ml-auto pr-1 text-[10px] text-muted-foreground">Markdown · paste GIF URLs from Giphy/Tenor</span>
+                </div>
+                <Textarea ref={bodyRef} value={editingArticle.body_markdown} rows={20}
+                  className="rounded-t-none font-mono text-xs"
                   onChange={(e) => setEditingArticle({ ...editingArticle, body_markdown: e.target.value })} />
               </div>
             </div>
