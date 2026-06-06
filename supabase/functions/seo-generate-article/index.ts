@@ -262,6 +262,33 @@ Deno.serve(async (req) => {
         .eq("id", topic_id);
     }
 
+    // Increment usage_count for images actually embedded in the body
+    try {
+      const body: string = parsed.body_markdown ?? "";
+      const used = mediaPool.filter((m) => body.includes(m.url));
+      if (used.length) {
+        await Promise.all(
+          used.map((m) =>
+            admin.rpc as any, // no rpc; do raw update via select+update
+          ),
+        );
+        // Simple per-row update (small N)
+        for (const m of used) {
+          const { data: row } = await admin
+            .from("media_assets")
+            .select("usage_count")
+            .eq("id", m.id)
+            .maybeSingle();
+          await admin
+            .from("media_assets")
+            .update({ usage_count: (row?.usage_count ?? 0) + 1 })
+            .eq("id", m.id);
+        }
+      }
+    } catch (e) {
+      console.error("media usage tracking failed", e);
+    }
+
     return jsonResponse({ article: inserted });
   } catch (e) {
     console.error("seo-generate-article error", e);
