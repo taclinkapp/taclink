@@ -55,6 +55,8 @@ export default function AdminSEO() {
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [savingArticle, setSavingArticle] = useState(false);
+  const [editorMode, setEditorMode] = useState<"edit" | "preview">("edit");
+  const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
 
   // New topic form
   const [newTitle, setNewTitle] = useState("");
