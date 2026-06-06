@@ -12,7 +12,7 @@ import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Hea
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-import { ArrowUp, ArrowDown, Link2, Unlink, X as XIcon } from "lucide-react";
+import { ArrowUp, ArrowDown, Link2, Unlink, X as XIcon, GripVertical, AlignLeft, AlignCenter, AlignRight, Maximize2 } from "lucide-react";
 
 type Topic = {
   id: string;
@@ -654,12 +654,14 @@ export default function AdminSEO() {
   );
 }
 
-type MediaSegment = { kind: "media"; raw: string; images: string[] };
+type Align = "none" | "left" | "right" | "center" | "full";
+type MediaSegment = { kind: "media"; raw: string; images: string[]; align: Align; isRow: boolean };
 type TextSegment = { kind: "text"; raw: string };
 type Segment = MediaSegment | TextSegment;
 
 const IMG_MD = /!\[[^\]]*\]\([^)\s]+(?:\s+"[^"]*")?\)/g;
-const MEDIA_BLOCK = /(<div\s+class="img-row"[^>]*>[\s\S]*?<\/div>|!\[[^\]]*\]\([^)\s]+(?:\s+"[^"]*")?\))/g;
+const MEDIA_BLOCK =
+  /(<div\s+class="(?:img-row|img-align-(?:left|right|center|full))"[^>]*>[\s\S]*?<\/div>|!\[[^\]]*\]\([^)\s]+(?:\s+"[^"]*")?\))/g;
 
 function parseSegments(md: string): Segment[] {
   const out: Segment[] = [];
@@ -669,7 +671,10 @@ function parseSegments(md: string): Segment[] {
     if (idx > last) out.push({ kind: "text", raw: md.slice(last, idx) });
     const raw = m[0];
     const images = raw.match(IMG_MD) ?? [raw];
-    out.push({ kind: "media", raw, images });
+    const alignMatch = raw.match(/class="img-align-(left|right|center|full)"/);
+    const isRow = /class="img-row"/.test(raw);
+    const align: Align = (alignMatch?.[1] as Align) ?? "none";
+    out.push({ kind: "media", raw, images, align, isRow });
     last = idx + raw.length;
   }
   if (last < md.length) out.push({ kind: "text", raw: md.slice(last) });
@@ -680,9 +685,21 @@ function joinSegments(segs: Segment[]): string {
   return segs.map((s) => s.raw).join("");
 }
 
-function buildMediaBlock(images: string[]): string {
-  if (images.length === 1) return images[0];
-  return `<div class="img-row">\n\n${images.join("\n\n")}\n\n</div>`;
+function buildBlock(images: string[], align: Align, isRow: boolean): string {
+  const inner = images.join("\n\n");
+  if (isRow) {
+    const cls = align !== "none" && align !== "full" ? `img-row img-align-${align}` : "img-row";
+    return `<div class="${cls}">\n\n${inner}\n\n</div>`;
+  }
+  if (align === "none") return images[0];
+  return `<div class="img-align-${align}">\n\n${inner}\n\n</div>`;
+}
+
+function rebuild(seg: MediaSegment, patch: Partial<{ images: string[]; align: Align; isRow: boolean }>): MediaSegment {
+  const images = patch.images ?? seg.images;
+  const align = patch.align ?? seg.align;
+  const isRow = patch.isRow ?? (images.length > 1);
+  return { kind: "media", images, align, isRow, raw: buildBlock(images, align, isRow) };
 }
 
 function ArticleReaderPreview({ article, onChange }: { article: Article; onChange?: (body: string) => void }) {
@@ -691,6 +708,9 @@ function ArticleReaderPreview({ article, onChange }: { article: Article; onChang
   const mediaIndices = segments
     .map((s, i) => (s.kind === "media" ? i : -1))
     .filter((i) => i >= 0);
+
+  const [dragOrder, setDragOrder] = useState<number | null>(null);
+  const [dropOrder, setDropOrder] = useState<number | null>(null);
 
   const updateAt = (segIndex: number, mutate: (seg: MediaSegment) => Segment | Segment[] | null) => {
     if (!onChange) return;
@@ -709,16 +729,13 @@ function ArticleReaderPreview({ article, onChange }: { article: Article; onChang
     onChange(joinSegments(next));
   };
 
-  const moveMedia = (segIndex: number, dir: -1 | 1) => {
-    if (!onChange) return;
-    const order = mediaIndices.indexOf(segIndex);
-    const swapWith = mediaIndices[order + dir];
-    if (swapWith === undefined) return;
+  const reorderMedia = (fromOrder: number, toOrder: number) => {
+    if (!onChange || fromOrder === toOrder) return;
+    const mediaSegs = mediaIndices.map((i) => segments[i] as MediaSegment);
+    const [moved] = mediaSegs.splice(fromOrder, 1);
+    mediaSegs.splice(toOrder, 0, moved);
     const next = [...segments];
-    const a = next[segIndex] as MediaSegment;
-    const b = next[swapWith] as MediaSegment;
-    next[segIndex] = b;
-    next[swapWith] = a;
+    mediaIndices.forEach((segIdx, k) => { next[segIdx] = mediaSegs[k]; });
     onChange(joinSegments(next));
   };
 
@@ -729,15 +746,13 @@ function ArticleReaderPreview({ article, onChange }: { article: Article; onChang
     if (nextMediaIdx === undefined) return;
     const a = segments[segIndex] as MediaSegment;
     const b = segments[nextMediaIdx] as MediaSegment;
-    const mergedImages = [...a.images, ...b.images];
-    const merged: MediaSegment = { kind: "media", images: mergedImages, raw: buildMediaBlock(mergedImages) };
+    const merged = rebuild(a, { images: [...a.images, ...b.images], isRow: true, align: a.align });
     const next: Segment[] = [];
     for (let i = 0; i < segments.length; i++) {
       if (i === segIndex) next.push(merged);
-      else if (i > segIndex && i <= nextMediaIdx) continue; // drop text between + the next media
+      else if (i > segIndex && i <= nextMediaIdx) continue;
       else next.push(segments[i]);
     }
-    // ensure blank line separation
     onChange(joinSegments(next));
   };
 
@@ -746,43 +761,97 @@ function ArticleReaderPreview({ article, onChange }: { article: Article; onChang
       if (s.images.length < 2) return s;
       const expanded: Segment[] = [];
       s.images.forEach((img, i) => {
-        expanded.push({ kind: "media", images: [img], raw: img });
+        expanded.push({ kind: "media", images: [img], raw: img, align: "none", isRow: false });
         if (i < s.images.length - 1) expanded.push({ kind: "text", raw: "\n\n" });
       });
       return expanded;
     });
   };
 
+  const setAlign = (segIndex: number, align: Align) =>
+    updateAt(segIndex, (s) => rebuild(s, { align }));
+
   const removeMedia = (segIndex: number) => updateAt(segIndex, () => null);
+
+  const onDragStart = (order: number) => (e: React.DragEvent) => {
+    setDragOrder(order);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(order));
+  };
+  const onDragOver = (order: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDropOrder(order);
+  };
+  const onDrop = (order: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    const from = dragOrder ?? Number(e.dataTransfer.getData("text/plain"));
+    setDragOrder(null);
+    setDropOrder(null);
+    if (Number.isFinite(from)) reorderMedia(from, order);
+  };
 
   return (
     <div className="bg-background text-foreground">
       {onChange && mediaIndices.length > 0 && (
         <div className="border-b border-border bg-muted/30 px-4 py-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Arrange media · {mediaIndices.length} image{mediaIndices.length === 1 ? "" : "s"} · pair to show side-by-side
+            Arrange media · drag to reorder · choose left/right to wrap text · pair for side-by-side
           </p>
           <ul className="space-y-2">
             {mediaIndices.map((segIndex, order) => {
               const seg = segments[segIndex] as MediaSegment;
-              const isRow = seg.images.length > 1;
+              const isRow = seg.isRow;
               const firstUrl = seg.images[0]?.match(/\(([^)\s]+)/)?.[1] ?? "";
+              const isDropTarget = dropOrder === order && dragOrder !== null && dragOrder !== order;
               return (
-                <li key={segIndex} className="flex items-center gap-2 rounded-md border border-border bg-card p-2">
+                <li
+                  key={segIndex}
+                  draggable
+                  onDragStart={onDragStart(order)}
+                  onDragOver={onDragOver(order)}
+                  onDragLeave={() => setDropOrder(null)}
+                  onDrop={onDrop(order)}
+                  onDragEnd={() => { setDragOrder(null); setDropOrder(null); }}
+                  className={`flex items-center gap-2 rounded-md border p-2 transition ${
+                    isDropTarget ? "border-primary bg-primary/10" : "border-border bg-card"
+                  } ${dragOrder === order ? "opacity-50" : ""}`}
+                >
+                  <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground" />
                   <span className="w-6 text-center text-xs text-muted-foreground">{order + 1}</span>
                   {firstUrl && (
                     <img src={firstUrl} alt="" className="h-10 w-14 rounded-sm border border-border object-cover" />
                   )}
                   <span className="flex-1 truncate text-xs">
                     {isRow ? `Row of ${seg.images.length} images` : firstUrl.split("/").pop()}
+                    {seg.align !== "none" && (
+                      <span className="ml-1 rounded bg-muted px-1 py-0.5 text-[10px] uppercase">{seg.align}</span>
+                    )}
                   </span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5">
+                    <Button type="button" size="sm" variant={seg.align === "left" ? "secondary" : "ghost"} className="h-7 w-7 p-0" title="Float left (text wraps right)"
+                      onClick={() => setAlign(segIndex, seg.align === "left" ? "none" : "left")}>
+                      <AlignLeft className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button type="button" size="sm" variant={seg.align === "center" ? "secondary" : "ghost"} className="h-7 w-7 p-0" title="Center"
+                      onClick={() => setAlign(segIndex, seg.align === "center" ? "none" : "center")}>
+                      <AlignCenter className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button type="button" size="sm" variant={seg.align === "right" ? "secondary" : "ghost"} className="h-7 w-7 p-0" title="Float right (text wraps left)"
+                      onClick={() => setAlign(segIndex, seg.align === "right" ? "none" : "right")}>
+                      <AlignRight className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button type="button" size="sm" variant={seg.align === "full" ? "secondary" : "ghost"} className="h-7 w-7 p-0" title="Full width"
+                      onClick={() => setAlign(segIndex, seg.align === "full" ? "none" : "full")}>
+                      <Maximize2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <span className="mx-1 h-5 w-px bg-border" />
                     <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" title="Move up"
-                      disabled={order === 0} onClick={() => moveMedia(segIndex, -1)}>
+                      disabled={order === 0} onClick={() => reorderMedia(order, order - 1)}>
                       <ArrowUp className="h-3.5 w-3.5" />
                     </Button>
                     <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0" title="Move down"
-                      disabled={order === mediaIndices.length - 1} onClick={() => moveMedia(segIndex, 1)}>
+                      disabled={order === mediaIndices.length - 1} onClick={() => reorderMedia(order, order + 1)}>
                       <ArrowDown className="h-3.5 w-3.5" />
                     </Button>
                     {isRow ? (
@@ -791,7 +860,7 @@ function ArticleReaderPreview({ article, onChange }: { article: Article; onChang
                         <Unlink className="h-3.5 w-3.5" />Split
                       </Button>
                     ) : (
-                      <Button type="button" size="sm" variant="secondary" className="h-7 gap-1 px-2" title="Pair with the next image (side-by-side)"
+                      <Button type="button" size="sm" variant="ghost" className="h-7 gap-1 px-2" title="Pair with the next image"
                         disabled={order === mediaIndices.length - 1} onClick={() => pairWithNext(segIndex)}>
                         <Link2 className="h-3.5 w-3.5" />Pair
                       </Button>
@@ -805,7 +874,9 @@ function ArticleReaderPreview({ article, onChange }: { article: Article; onChang
               );
             })}
           </ul>
-          <p className="mt-2 text-[10px] text-muted-foreground">Tip: pair two images to display them side-by-side; this layout is saved with the article.</p>
+          <p className="mt-2 text-[10px] text-muted-foreground">
+            Drag a row by the grip handle to reorder. Left / Right floats the image so the article text wraps around it. Layout is saved with the article and shown on the published page.
+          </p>
         </div>
       )}
       <div className="mx-auto max-w-2xl px-6 py-10">
