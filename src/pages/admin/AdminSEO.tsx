@@ -79,6 +79,17 @@ export default function AdminSEO() {
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [uploadingMedia, setUploadingMedia] = useState(false);
 
+  const setBodyAtCursor = (next: string, cursor: number) => {
+    if (!editingArticle) return;
+    setEditingArticle({ ...editingArticle, body_markdown: next, cover_image_url: editingArticle.cover_image_url ?? firstMarkdownImage(next) });
+    requestAnimationFrame(() => {
+      const ta = bodyRef.current;
+      if (!ta) return;
+      ta.focus();
+      ta.setSelectionRange(cursor, cursor);
+    });
+  };
+
   const wrapOrInsertAtCursor = (before: string, after = "", placeholder = "") => {
     const ta = bodyRef.current;
     if (!ta || !editingArticle) return;
@@ -86,16 +97,10 @@ export default function AdminSEO() {
     const end = ta.selectionEnd ?? ta.value.length;
     const value = ta.value;
     const selected = value.slice(start, end) || placeholder;
-    const next = value.slice(0, start) + before + selected + after + value.slice(end);
-    setEditingArticle({ ...editingArticle, body_markdown: next });
-    requestAnimationFrame(() => {
-      ta.focus();
-      const cursor = start + before.length + selected.length;
-      ta.setSelectionRange(cursor, cursor);
-    });
+    setBodyAtCursor(next, start + before.length + selected.length);
   };
 
-  const insertHeading = (level: 1 | 2 | 3) => {
+  const insertHeading = (level: 2 | 3) => {
     const ta = bodyRef.current;
     if (!ta || !editingArticle) return;
     const hashes = "#".repeat(level);
@@ -106,11 +111,25 @@ export default function AdminSEO() {
     wrapOrInsertAtCursor(`${needsNewlineBefore ? "\n" : ""}${hashes} `, "\n", "Heading");
   };
 
+  const prefixSelectedLines = (prefix: string, placeholder: string) => {
+    const ta = bodyRef.current;
+    if (!ta || !editingArticle) return;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    const value = ta.value;
+    const selected = value.slice(start, end) || placeholder;
+    const needsNewlineBefore = start > 0 && value[start - 1] !== "\n";
+    const block = `${needsNewlineBefore ? "\n" : ""}${selected.split("\n").map((line) => `${prefix}${line}`).join("\n")}`;
+    const next = value.slice(0, start) + block + value.slice(end);
+    setBodyAtCursor(next, start + block.length);
+  };
+
   const insertImagePrompt = () => {
-    const url = window.prompt("Paste image or GIF URL (Giphy/Tenor/Media Library):");
+    const url = window.prompt("Paste image or GIF URL (Giphy, Tenor, or a media URL):");
     if (!url) return;
     const alt = window.prompt("Alt text (describe the image — include your keyword if natural):", "") || "";
-    wrapOrInsertAtCursor(`\n![${alt}](${url.trim()})\n`, "");
+    const label = window.prompt("Optional caption label:", "Visual") || "Visual";
+    wrapOrInsertAtCursor(`\n*${label}: ${alt || "Relevant article visual"}*\n\n![${alt}](${url.trim()})\n`, "");
   };
 
   const insertLinkPrompt = () => {
@@ -121,18 +140,37 @@ export default function AdminSEO() {
 
   const uploadMediaAndInsert = async (file: File) => {
     if (!editingArticle) return;
+    if (!ACCEPTED_ARTICLE_MEDIA.includes(file.type)) { toast.error("Use PNG, JPG, GIF, or WebP"); return; }
     if (file.size > 20 * 1024 * 1024) { toast.error("Max 20MB"); return; }
     setUploadingMedia(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
       const ext = file.name.split(".").pop() || "bin";
-      const path = `${editingArticle.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("blog-media").upload(path, file, {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `articles/${editingArticle.id}/${crypto.randomUUID()}_${safeName}`.slice(0, 240) + (safeName.endsWith(ext) ? "" : `.${ext}`);
+      const { error: upErr } = await supabase.storage.from("media-library").upload(path, file, {
         cacheControl: "31536000", upsert: false, contentType: file.type,
       });
       if (upErr) throw upErr;
-      const { data } = supabase.storage.from("blog-media").getPublicUrl(path);
       const alt = window.prompt("Alt text for this image:", file.name.replace(/\.[^.]+$/, "")) || "";
-      wrapOrInsertAtCursor(`\n![${alt}](${data.publicUrl})\n`, "");
+      const url = articleMediaUrl(path);
+      const { data: row, error: insErr } = await supabase
+        .from("media_assets")
+        .insert({
+          filename: file.name,
+          storage_path: path,
+          public_url: url,
+          mime_type: file.type,
+          file_size: file.size,
+          alt_text: alt || null,
+          uploaded_by: user.id,
+        })
+        .select("id")
+        .single();
+      if (insErr) throw insErr;
+      wrapOrInsertAtCursor(`\n*Visual: ${alt || "Article media"}*\n\n![${alt}](${url})\n`, "");
+      if (row?.id) supabase.functions.invoke("media-analyze", { body: { id: row.id } });
       toast.success("Uploaded & inserted");
     } catch (e: any) {
       toast.error(e?.message ?? "Upload failed");
