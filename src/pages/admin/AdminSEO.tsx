@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Topic = {
