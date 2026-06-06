@@ -636,23 +636,25 @@ export const CRASH_COURSES: CrashCourse[] = [
       },
       {
         heading: 'Step 3 — Upload your images & GIFs to the Media Library',
-        body: 'The article editor is plain markdown — there is no cover picker or toolbar. All visuals live in the Media Library tab (left sidebar → Media). Upload everything you plan to use there first, then copy each asset URL to paste into the body.',
+        body: 'You now have two ways to add visuals: upload from the article editor toolbar, or pre-load assets in the Media Library tab. Use PNG, JPG, GIF, or WebP files up to 20 MB.',
         bullets: [
-          { label: 'Open Media', text: 'Go to /admin/media and drag your files into the upload zone (PNG, JPG, GIF, WebP — up to 20 MB).' },
+          { label: 'Fast path', text: 'In SEO → Articles → Edit, place the cursor in the body and click Upload GIF. The file is uploaded and markdown is inserted automatically.' },
+          { label: 'Library path', text: 'Go to /admin/media and drag files into the upload zone if you want to score and organize assets before writing.' },
           { label: 'Auto-score', text: 'Each upload is auto-analyzed for SEO. Aim for green (70+) — re-upload a better version if it scores red.' },
-          { label: 'Cover image', text: 'Use a 1600×900 JPG or PNG. It will be the first image referenced at the very top of your markdown body.' },
+          { label: 'Cover image', text: 'Use a 1600×900 JPG or PNG. The first image inserted in the body becomes the article cover image for previews.' },
         ],
         tip: 'Real training photos out-click stock photos. Keep GIFs under 3 MB so mobile readers do not bounce.',
       },
       {
-        heading: 'Step 4 — Insert images and GIFs into the markdown body',
-        body: 'Back in the SEO → Articles editor, the Body field is a markdown Textarea. Place an image or GIF by pasting markdown image syntax wherever you want it to appear: `![alt text](https://...url...)`. Copy the URL from any tile in the Media Library.',
+        heading: 'Step 4 — Add headers, links, images, and GIFs from the toolbar',
+        body: 'Back in the SEO → Articles editor, put your cursor inside Body (markdown). Use Header for H2 sections, Subhead for H3 sections, GIF URL for Giphy/Tenor/direct URLs, or Upload GIF for local files. The toolbar inserts the markdown at your cursor.',
         bullets: [
-          { label: 'Cover', text: 'Put the cover image as the FIRST line of the body so it renders above the intro paragraph.' },
+          { label: 'Headers', text: 'Use Header for main sections (`##`) and Subhead for nested sections (`###`). Do not add H1 in the body — the article title is already the H1.' },
+          { label: 'Cover', text: 'Put the cover image near the top of the body so it renders above or right after the intro paragraph.' },
           { label: 'Inline', text: 'Drop one image or GIF per H2 section to break up the text. One per section is plenty.' },
           { label: 'External GIFs', text: 'Giphy / Tenor links work too — paste the direct .gif URL inside the parentheses.' },
         ],
-        tip: 'No drag-and-drop, no toolbar — it really is just markdown. If you forget the syntax: `![what the image shows](url)`.',
+        tip: 'If you prefer typing markdown manually, the syntax is still `![what the image shows](url)`.',
       },
       {
         heading: 'Step 5 — Write strong alt text inside the markdown',
