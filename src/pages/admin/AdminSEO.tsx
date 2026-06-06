@@ -63,6 +63,75 @@ export default function AdminSEO() {
   const [suggesting, setSuggesting] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
+  // Body editor refs/helpers
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+
+  const wrapOrInsertAtCursor = (before: string, after = "", placeholder = "") => {
+    const ta = bodyRef.current;
+    if (!ta || !editingArticle) return;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    const value = ta.value;
+    const selected = value.slice(start, end) || placeholder;
+    const next = value.slice(0, start) + before + selected + after + value.slice(end);
+    setEditingArticle({ ...editingArticle, body_markdown: next });
+    requestAnimationFrame(() => {
+      ta.focus();
+      const cursor = start + before.length + selected.length;
+      ta.setSelectionRange(cursor, cursor);
+    });
+  };
+
+  const insertHeading = (level: 1 | 2 | 3) => {
+    const ta = bodyRef.current;
+    if (!ta || !editingArticle) return;
+    const hashes = "#".repeat(level);
+    const start = ta.selectionStart ?? 0;
+    const value = ta.value;
+    // ensure heading sits on its own line
+    const needsNewlineBefore = start > 0 && value[start - 1] !== "\n";
+    wrapOrInsertAtCursor(`${needsNewlineBefore ? "\n" : ""}${hashes} `, "\n", "Heading");
+  };
+
+  const insertImagePrompt = () => {
+    const url = window.prompt("Paste image or GIF URL (Giphy/Tenor/Media Library):");
+    if (!url) return;
+    const alt = window.prompt("Alt text (describe the image — include your keyword if natural):", "") || "";
+    wrapOrInsertAtCursor(`\n![${alt}](${url.trim()})\n`, "");
+  };
+
+  const insertLinkPrompt = () => {
+    const url = window.prompt("Link URL:");
+    if (!url) return;
+    wrapOrInsertAtCursor("[", `](${url.trim()})`, "link text");
+  };
+
+  const uploadMediaAndInsert = async (file: File) => {
+    if (!editingArticle) return;
+    if (file.size > 20 * 1024 * 1024) { toast.error("Max 20MB"); return; }
+    setUploadingMedia(true);
+    try {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `seo/${editingArticle.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("media").upload(path, file, {
+        cacheControl: "31536000", upsert: false, contentType: file.type,
+      });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("media").getPublicUrl(path);
+      const alt = window.prompt("Alt text for this image:", file.name.replace(/\.[^.]+$/, "")) || "";
+      wrapOrInsertAtCursor(`\n![${alt}](${data.publicUrl})\n`, "");
+      toast.success("Uploaded & inserted");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      setUploadingMedia(false);
+      if (uploadInputRef.current) uploadInputRef.current.value = "";
+    }
+  };
+
+
   const fetchSuggestions = async () => {
     const seed = suggestSeed.trim() || newTitle.trim();
     if (!seed) { toast.error("Type a topic first"); return; }
