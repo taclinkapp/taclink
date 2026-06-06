@@ -608,12 +608,10 @@ export default function AdminSEO() {
             )}
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setEditingArticle(null)}>Close</Button>
-              {editorMode === "edit" && (
-                <Button onClick={saveArticle} disabled={savingArticle}>
-                  {savingArticle && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save
-                </Button>
-              )}
+              <Button onClick={saveArticle} disabled={savingArticle}>
+                {savingArticle && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save
+              </Button>
             </div>
           </Card>
         </div>
