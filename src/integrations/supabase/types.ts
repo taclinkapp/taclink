@@ -2086,6 +2086,66 @@ export type Database = {
         }
         Relationships: []
       }
+      media_assets: {
+        Row: {
+          ai_description: string | null
+          alt_text: string | null
+          analysis_error: string | null
+          analyzed_at: string | null
+          category: string | null
+          created_at: string
+          file_size: number | null
+          filename: string
+          id: string
+          mime_type: string
+          public_url: string
+          seo_score: number
+          storage_path: string
+          tags: string[]
+          updated_at: string
+          uploaded_by: string | null
+          usage_count: number
+        }
+        Insert: {
+          ai_description?: string | null
+          alt_text?: string | null
+          analysis_error?: string | null
+          analyzed_at?: string | null
+          category?: string | null
+          created_at?: string
+          file_size?: number | null
+          filename: string
+          id?: string
+          mime_type: string
+          public_url: string
+          seo_score?: number
+          storage_path: string
+          tags?: string[]
+          updated_at?: string
+          uploaded_by?: string | null
+          usage_count?: number
+        }
+        Update: {
+          ai_description?: string | null
+          alt_text?: string | null
+          analysis_error?: string | null
+          analyzed_at?: string | null
+          category?: string | null
+          created_at?: string
+          file_size?: number | null
+          filename?: string
+          id?: string
+          mime_type?: string
+          public_url?: string
+          seo_score?: number
+          storage_path?: string
+          tags?: string[]
+          updated_at?: string
+          uploaded_by?: string | null
+          usage_count?: number
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           body: string
