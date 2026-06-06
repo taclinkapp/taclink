@@ -609,6 +609,69 @@ export const CRASH_COURSES: CrashCourse[] = [
       },
     ],
   },
+  {
+    id: 'seo',
+    route: '/admin/seo',
+    title: 'SEO & Articles',
+    subtitle: 'Step-by-step guide to writing, illustrating, and publishing an article — GIFs included.',
+    steps: [
+      {
+        heading: 'Step 1 — Pick a topic with the AI assistant',
+        body: 'Open the Topics tab. In the "AI topic assistant" card type a rough idea (e.g. "concealed carry for new shooters in Texas") and hit Suggest angles. The assistant returns 3 cards, each with a title, primary keyword, secondary keywords, "People Also Ask" questions, and a unique angle.',
+        bullets: [
+          { label: 'Seed input', text: 'One short sentence is enough — location and notes are optional.' },
+          { label: 'Apply', text: 'Tap "Use this angle" on the card you like — it auto-fills the article form below.' },
+        ],
+        tip: 'Generate twice if nothing fits — the model returns different angles each call.',
+      },
+      {
+        heading: 'Step 2 — Draft the article',
+        body: 'Fill in title, slug, primary keyword, meta description, and body. The slug auto-suggests from the title; the meta description should be 140-160 chars so search engines show it whole.',
+        bullets: [
+          { label: 'Headings', text: 'One H1 (the title), then H2 for sections, H3 for sub-points. Keep the keyword in the first H2.' },
+          { label: 'Length', text: '900-1500 words ranks best for our category — shorter for news, longer for guides.' },
+          { label: 'Internal links', text: 'Link to at least one course page and one other article — boosts authority and dwell time.' },
+        ],
+        tip: 'Use the "Generate draft" button if you want the AI to write a first pass from the chosen angle — always edit before publishing.',
+      },
+      {
+        heading: 'Step 3 — Add a cover image',
+        body: 'Every article needs a cover. Upload a 1600×900 JPG or PNG via the cover image picker. Add alt text that includes the primary keyword — this is what screen readers and Google Images read.',
+        tip: 'Photos of real training scenes beat stock photos for click-through. Avoid anything that reads as staged.',
+      },
+      {
+        heading: 'Step 4 — Insert images and GIFs into the body',
+        body: 'Inside the body editor, place the cursor where you want the asset and click the image / GIF button in the toolbar. You have three sources:',
+        bullets: [
+          { label: 'Upload', text: 'Drag a .jpg, .png, .webp, or .gif from your desktop (max 5 MB). GIFs stay animated — do not re-encode them.' },
+          { label: 'GIF search', text: 'Type a query in the GIF picker to search the built-in library. Click to insert.' },
+          { label: 'Paste URL', text: 'For GIFs hosted elsewhere (Giphy, Tenor) paste the direct .gif URL — the editor embeds it inline.' },
+        ],
+        tip: 'Keep GIFs under 3 MB and 1 per section. Big or stacked GIFs tank mobile load time and hurt rankings.',
+      },
+      {
+        heading: 'Step 5 — Caption, alt, and accessibility',
+        body: 'After inserting an image or GIF, click it to open the asset panel. Fill in alt text (required) and an optional caption. Alt text describes the image for screen readers AND for Google Images — write a real sentence, not the file name.',
+        bullets: [
+          { label: 'Good alt', text: '"Instructor demonstrating a low-ready stance during a CCW class."' },
+          { label: 'Bad alt', text: '"IMG_2381.gif"' },
+        ],
+      },
+      {
+        heading: 'Step 6 — Preview, then publish',
+        body: 'Hit Preview to see the article exactly as readers will. Check mobile preview too — long GIFs and wide tables are the usual offenders. When it looks right, set status to Published and pick a publish date.',
+        bullets: [
+          { label: 'Schedule', text: 'Pick a future date/time to auto-publish — useful for coordinating with launches.' },
+          { label: 'Unpublish', text: 'You can flip status back to Draft anytime — the URL keeps working with a noindex tag.' },
+        ],
+        tip: 'After publishing, paste the URL into the AI Search tab to verify it gets crawled and indexed within 24-48 hours.',
+      },
+      {
+        heading: 'Step 7 — Re-open this guide anytime',
+        body: 'The "Crash Course" button stays pinned in the bottom-left of this tab. Tap it whenever you want to walk through the article flow again.',
+      },
+    ],
+  },
 ];
 
 export function resolveCrashCourse(pathname: string): CrashCourse | null {
