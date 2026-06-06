@@ -555,23 +555,23 @@ export default function AdminSEO() {
               <div>
                 <Label>Body (markdown)</Label>
                 <div className="mt-1 flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 border-input bg-muted/40 p-1">
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Heading 1" onClick={() => insertHeading(1)}><Heading1 className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Heading 2" onClick={() => insertHeading(2)}><Heading2 className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Heading 3" onClick={() => insertHeading(3)}><Heading3 className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2" title="Add section header" onClick={() => insertHeading(2)}><Heading2 className="h-4 w-4" />Header</Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 gap-1 px-2" title="Add subheader" onClick={() => insertHeading(3)}><Heading3 className="h-4 w-4" />Subhead</Button>
                   <span className="mx-1 h-5 w-px bg-border" />
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Bold" onClick={() => wrapOrInsertAtCursor("**", "**", "bold text")}><Bold className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Italic" onClick={() => wrapOrInsertAtCursor("_", "_", "italic")}><Italic className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Bulleted list" onClick={() => wrapOrInsertAtCursor("\n- ", "", "list item")}><List className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Quote" onClick={() => wrapOrInsertAtCursor("\n> ", "", "quote")}><Quote className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Bold" onClick={() => wrapOrInsertAtCursor("**", "**", "bold text")}><Bold className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Italic" onClick={() => wrapOrInsertAtCursor("_", "_", "italic")}><Italic className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Bulleted list" onClick={() => prefixSelectedLines("- ", "list item")}><List className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Quote" onClick={() => prefixSelectedLines("> ", "quote")}><Quote className="h-4 w-4" /></Button>
                   <span className="mx-1 h-5 w-px bg-border" />
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Link" onClick={insertLinkPrompt}><LinkIcon className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Insert image / GIF by URL (Giphy, Tenor, Media Library)" onClick={insertImagePrompt}><ImageIcon className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Upload image or GIF" disabled={uploadingMedia} onClick={() => uploadInputRef.current?.click()}>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Link" onClick={insertLinkPrompt}><LinkIcon className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2" title="Insert image or GIF by URL" onClick={insertImagePrompt}><ImageIcon className="h-4 w-4" />GIF URL</Button>
+                  <Button type="button" size="sm" variant="default" className="h-8 gap-1 px-2" title="Upload image or GIF" disabled={uploadingMedia} onClick={() => uploadInputRef.current?.click()}>
                     {uploadingMedia ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                    Upload GIF
                   </Button>
-                  <input ref={uploadInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden
+                  <input ref={uploadInputRef} type="file" accept={ACCEPTED_ARTICLE_MEDIA.join(",")} hidden
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaAndInsert(f); }} />
-                  <span className="ml-auto pr-1 text-[10px] text-muted-foreground">Markdown · paste GIF URLs from Giphy/Tenor</span>
+                  <span className="ml-auto pr-1 text-[10px] text-muted-foreground">Headers use H2/H3 for SEO · GIFs insert at cursor</span>
                 </div>
                 <Textarea ref={bodyRef} value={editingArticle.body_markdown} rows={20}
                   className="rounded-t-none font-mono text-xs"
