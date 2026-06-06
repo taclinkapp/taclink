@@ -117,7 +117,7 @@ export default function BlogPost() {
             )}
           </header>
 
-          <article className="prose prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-primary prose-h2:mt-12 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl prose-p:leading-relaxed">
+          <article className="prose prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-primary prose-h2:mt-12 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl prose-p:leading-relaxed prose-img:mx-auto prose-img:max-h-96 prose-img:w-auto prose-img:rounded-md">
             <ReactMarkdown>{article.body_markdown}</ReactMarkdown>
           </article>
 

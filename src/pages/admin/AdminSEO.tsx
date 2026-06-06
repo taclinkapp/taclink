@@ -632,6 +632,7 @@ export default function AdminSEO() {
 }
 
 function ArticleReaderPreview({ article }: { article: Article }) {
+  const bodyHasCover = !!article.cover_image_url && (article.body_markdown ?? "").includes(article.cover_image_url);
   return (
     <div className="bg-background text-foreground">
       <div className="mx-auto max-w-2xl px-6 py-10">
@@ -645,12 +646,12 @@ function ArticleReaderPreview({ article }: { article: Article }) {
               ? new Date(article.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
               : "Draft — not yet published"}
           </p>
-          {article.cover_image_url && (
+          {article.cover_image_url && !bodyHasCover && (
             <img src={article.cover_image_url} alt={article.title}
-              className="mt-6 w-full rounded-md border border-border object-cover" />
+              className="mt-6 max-h-80 w-full rounded-md border border-border object-cover" />
           )}
         </header>
-        <article className="prose prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-primary prose-h2:mt-12 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl prose-p:leading-relaxed prose-img:rounded-md">
+        <article className="prose prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-primary prose-h2:mt-12 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl prose-p:leading-relaxed prose-img:mx-auto prose-img:max-h-80 prose-img:w-auto prose-img:rounded-md">
           <ReactMarkdown>{article.body_markdown || "_Nothing to preview yet._"}</ReactMarkdown>
         </article>
       </div>
