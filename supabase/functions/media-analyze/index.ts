@@ -78,24 +78,20 @@ Deno.serve(async (req) => {
       .single();
     if (assetErr || !asset) return jsonResponse({ error: "Asset not found" }, 404);
 
-    // Download file from private bucket and convert to base64 data URL
-    const { data: fileBlob, error: dlErr } = await admin.storage
+    // Use a short-lived signed URL instead of base64 — base64-encoding large
+    // GIFs in edge-function memory was causing OOM kills.
+    const { data: signed, error: signErr } = await admin.storage
       .from("media-library")
-      .download(asset.storage_path);
-    if (dlErr || !fileBlob) {
-      await admin.from("media_assets").update({ analysis_error: `download failed: ${dlErr?.message}` }).eq("id", id);
-      return jsonResponse({ error: `Download failed: ${dlErr?.message}` }, 500);
+      .createSignedUrl(asset.storage_path, 600);
+    if (signErr || !signed?.signedUrl) {
+      await admin.from("media_assets").update({ analysis_error: `sign failed: ${signErr?.message}` }).eq("id", id);
+      return jsonResponse({ error: `Sign failed: ${signErr?.message}` }, 500);
     }
+    const dataUrl = signed.signedUrl;
 
-    const arrayBuf = await fileBlob.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuf);
-    let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-    const base64 = btoa(binary);
-    // Gemini doesn't accept image/gif via vision; coerce to image/png for the prompt
-    // (still passes the underlying GIF bytes; the model will see frame 0 / static).
-    const mimeForAi = asset.mime_type === "image/gif" ? "image/png" : asset.mime_type;
-    const dataUrl = `data:${mimeForAi};base64,${base64}`;
+    // For large GIFs, skip vision (model can't reliably process animated GIFs anyway)
+    // and score from filename + size only.
+    const isLargeGif = asset.mime_type === "image/gif" && (asset.file_size ?? 0) > 4 * 1024 * 1024;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
