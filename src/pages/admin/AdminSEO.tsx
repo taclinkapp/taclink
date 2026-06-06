@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading1, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Topic = {
