@@ -60,6 +60,7 @@ const items: Item[] = [
   { to: '/admin/background-videos', icon: Film, label: 'Background Videos' },
   { to: '/admin/subscription-plans', icon: Package, label: 'Subscription Plans' },
   { to: '/admin/founding-instructors', icon: Crown, label: 'Founding Instructors' },
+  { to: '/admin/seo', icon: Lightbulb, label: 'SEO Content Engine' },
   { to: '/auth/change-password', icon: KeyRound, label: 'Change Password' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];

@@ -302,6 +302,10 @@ const App = () => (
             <Route path="/affiliate" element={<Authed><AffiliateDashboard /></Authed>} />
             <Route path="/affiliate/portal" element={<AffiliatePortal />} />
 
+            {/* Public blog (SEO) */}
+            <Route path="/blog" element={<BlogIndex />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
