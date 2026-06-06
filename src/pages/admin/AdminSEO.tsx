@@ -283,8 +283,6 @@ export default function AdminSEO() {
             <h2 className="mb-4 font-semibold">New topic</h2>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
                 <Label>Working title *</Label>
                 <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="How to choose a CCW instructor in Texas" />
