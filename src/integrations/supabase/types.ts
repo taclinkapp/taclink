@@ -1345,6 +1345,13 @@ export type Database = {
             foreignKeyName: "influencer_commission_pct_audit_link_id_fkey"
             columns: ["link_id"]
             isOneToOne: false
+            referencedRelation: "affiliate_my_link"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_commission_pct_audit_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
             referencedRelation: "influencer_links"
             referencedColumns: ["id"]
           },
@@ -1404,6 +1411,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "influencer_commissions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_my_link"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "influencer_commissions_link_id_fkey"
             columns: ["link_id"]
@@ -1473,6 +1487,13 @@ export type Database = {
             foreignKeyName: "influencer_link_redirect_log_link_id_fkey"
             columns: ["link_id"]
             isOneToOne: false
+            referencedRelation: "affiliate_my_link"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_link_redirect_log_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
             referencedRelation: "influencer_links"
             referencedColumns: ["id"]
           },
@@ -1508,6 +1529,13 @@ export type Database = {
           user_role?: Database["public"]["Enums"]["app_role"] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "influencer_link_signups_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_my_link"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "influencer_link_signups_link_id_fkey"
             columns: ["link_id"]
@@ -1643,6 +1671,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "influencer_payouts_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_my_link"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "influencer_payouts_link_id_fkey"
             columns: ["link_id"]
@@ -1841,6 +1876,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "instructor_ledger_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "public_instructor_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       instructor_payout_accounts: {
@@ -1893,6 +1935,13 @@ export type Database = {
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_payout_accounts_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "public_instructor_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3840,6 +3889,60 @@ export type Database = {
       }
     }
     Views: {
+      affiliate_my_link: {
+        Row: {
+          active: boolean | null
+          audience: string | null
+          created_at: string | null
+          id: string | null
+          influencer_handle: string | null
+          influencer_name: string | null
+          is_vip: boolean | null
+          owner_user_id: string | null
+          payout_handle: string | null
+          payout_method: string | null
+          payout_notes: string | null
+          slug: string | null
+          updated_at: string | null
+          vip_duration_days: number | null
+          vip_starts_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          audience?: string | null
+          created_at?: string | null
+          id?: string | null
+          influencer_handle?: string | null
+          influencer_name?: string | null
+          is_vip?: boolean | null
+          owner_user_id?: string | null
+          payout_handle?: string | null
+          payout_method?: string | null
+          payout_notes?: string | null
+          slug?: string | null
+          updated_at?: string | null
+          vip_duration_days?: number | null
+          vip_starts_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          audience?: string | null
+          created_at?: string | null
+          id?: string | null
+          influencer_handle?: string | null
+          influencer_name?: string | null
+          is_vip?: boolean | null
+          owner_user_id?: string | null
+          payout_handle?: string | null
+          payout_method?: string | null
+          payout_notes?: string | null
+          slug?: string | null
+          updated_at?: string | null
+          vip_duration_days?: number | null
+          vip_starts_at?: string | null
+        }
+        Relationships: []
+      }
       influencer_links_public: {
         Row: {
           active: boolean | null
@@ -3894,6 +3997,42 @@ export type Database = {
           service_categories?: string[] | null
           service_city?: string | null
           service_state?: string | null
+        }
+        Relationships: []
+      }
+      public_instructor_profiles: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          photo_url: string | null
+          service_categories: string[] | null
+          service_city: string | null
+          service_state: string | null
+          state: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          photo_url?: string | null
+          service_categories?: string[] | null
+          service_city?: string | null
+          service_state?: string | null
+          state?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          photo_url?: string | null
+          service_categories?: string[] | null
+          service_city?: string | null
+          service_state?: string | null
+          state?: string | null
         }
         Relationships: []
       }
@@ -3999,10 +4138,7 @@ export type Database = {
       expire_stale_credentials: { Args: never; Returns: number }
       generate_access_pin: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
-      get_active_payment_provider: {
-        Args: never
-        Returns: Database["public"]["Enums"]["payment_provider"]
-      }
+      get_active_payment_provider: { Args: never; Returns: string }
       get_effective_launch_state: { Args: never; Returns: Json }
       get_founder_program_stats: { Args: never; Returns: Json }
       get_guest_affiliate_stats: {
