@@ -553,7 +553,10 @@ export default function AdminSEO() {
             </div>
 
             {editorMode === "preview" ? (
-              <ArticleReaderPreview article={editingArticle} />
+              <ArticleReaderPreview
+                article={editingArticle}
+                onChange={(body) => setEditingArticle({ ...editingArticle, body_markdown: body })}
+              />
             ) : (
               <div className="space-y-3">
                 <div>
