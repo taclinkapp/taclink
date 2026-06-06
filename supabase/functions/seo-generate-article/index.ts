@@ -43,6 +43,9 @@ Return ONLY a JSON object (no markdown fences, no commentary) with this exact sh
   "used_image_urls": ["url1", "url2"]
 }`;
 
+const publicBlogMediaUrl = (supabaseUrl: string, path: string) =>
+  `${supabaseUrl}/functions/v1/public-blog-media?path=${encodeURIComponent(path)}`;
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -149,10 +152,9 @@ Deno.serve(async (req) => {
         .slice(0, MEDIA_POOL_SIZE);
 
       for (const { a } of scored) {
-        const url =
-          a.public_url ||
-          admin.storage.from("media-library").getPublicUrl(a.storage_path).data
-            .publicUrl;
+        const url = a.public_url?.startsWith("http")
+          ? a.public_url
+          : publicBlogMediaUrl(SUPABASE_URL, a.storage_path);
         mediaPool.push({
           id: a.id,
           url,

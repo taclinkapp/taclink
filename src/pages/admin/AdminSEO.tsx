@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading1, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Topic = {
@@ -31,9 +31,20 @@ type Article = {
   body_markdown: string;
   target_keyword: string | null;
   keywords: string[];
+  cover_image_url: string | null;
   status: string;
   published_at: string | null;
   created_at: string;
+};
+
+const ACCEPTED_ARTICLE_MEDIA = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"];
+
+const articleMediaUrl = (path: string) =>
+  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-blog-media?path=${encodeURIComponent(path)}`;
+
+const firstMarkdownImage = (markdown: string) => {
+  const match = markdown.match(/!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/);
+  return match?.[1] ?? null;
 };
 
 export default function AdminSEO() {
@@ -68,6 +79,17 @@ export default function AdminSEO() {
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [uploadingMedia, setUploadingMedia] = useState(false);
 
+  const setBodyAtCursor = (next: string, cursor: number) => {
+    if (!editingArticle) return;
+    setEditingArticle({ ...editingArticle, body_markdown: next, cover_image_url: editingArticle.cover_image_url ?? firstMarkdownImage(next) });
+    requestAnimationFrame(() => {
+      const ta = bodyRef.current;
+      if (!ta) return;
+      ta.focus();
+      ta.setSelectionRange(cursor, cursor);
+    });
+  };
+
   const wrapOrInsertAtCursor = (before: string, after = "", placeholder = "") => {
     const ta = bodyRef.current;
     if (!ta || !editingArticle) return;
@@ -76,15 +98,10 @@ export default function AdminSEO() {
     const value = ta.value;
     const selected = value.slice(start, end) || placeholder;
     const next = value.slice(0, start) + before + selected + after + value.slice(end);
-    setEditingArticle({ ...editingArticle, body_markdown: next });
-    requestAnimationFrame(() => {
-      ta.focus();
-      const cursor = start + before.length + selected.length;
-      ta.setSelectionRange(cursor, cursor);
-    });
+    setBodyAtCursor(next, start + before.length + selected.length);
   };
 
-  const insertHeading = (level: 1 | 2 | 3) => {
+  const insertHeading = (level: 2 | 3) => {
     const ta = bodyRef.current;
     if (!ta || !editingArticle) return;
     const hashes = "#".repeat(level);
@@ -95,11 +112,25 @@ export default function AdminSEO() {
     wrapOrInsertAtCursor(`${needsNewlineBefore ? "\n" : ""}${hashes} `, "\n", "Heading");
   };
 
+  const prefixSelectedLines = (prefix: string, placeholder: string) => {
+    const ta = bodyRef.current;
+    if (!ta || !editingArticle) return;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    const value = ta.value;
+    const selected = value.slice(start, end) || placeholder;
+    const needsNewlineBefore = start > 0 && value[start - 1] !== "\n";
+    const block = `${needsNewlineBefore ? "\n" : ""}${selected.split("\n").map((line) => `${prefix}${line}`).join("\n")}`;
+    const next = value.slice(0, start) + block + value.slice(end);
+    setBodyAtCursor(next, start + block.length);
+  };
+
   const insertImagePrompt = () => {
-    const url = window.prompt("Paste image or GIF URL (Giphy/Tenor/Media Library):");
+    const url = window.prompt("Paste image or GIF URL (Giphy, Tenor, or a media URL):");
     if (!url) return;
     const alt = window.prompt("Alt text (describe the image — include your keyword if natural):", "") || "";
-    wrapOrInsertAtCursor(`\n![${alt}](${url.trim()})\n`, "");
+    const label = window.prompt("Optional caption label:", "Visual") || "Visual";
+    wrapOrInsertAtCursor(`\n*${label}: ${alt || "Relevant article visual"}*\n\n![${alt}](${url.trim()})\n`, "");
   };
 
   const insertLinkPrompt = () => {
@@ -110,18 +141,37 @@ export default function AdminSEO() {
 
   const uploadMediaAndInsert = async (file: File) => {
     if (!editingArticle) return;
+    if (!ACCEPTED_ARTICLE_MEDIA.includes(file.type)) { toast.error("Use PNG, JPG, GIF, or WebP"); return; }
     if (file.size > 20 * 1024 * 1024) { toast.error("Max 20MB"); return; }
     setUploadingMedia(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
       const ext = file.name.split(".").pop() || "bin";
-      const path = `${editingArticle.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("blog-media").upload(path, file, {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `articles/${editingArticle.id}/${crypto.randomUUID()}_${safeName}`.slice(0, 240) + (safeName.endsWith(ext) ? "" : `.${ext}`);
+      const { error: upErr } = await supabase.storage.from("media-library").upload(path, file, {
         cacheControl: "31536000", upsert: false, contentType: file.type,
       });
       if (upErr) throw upErr;
-      const { data } = supabase.storage.from("blog-media").getPublicUrl(path);
       const alt = window.prompt("Alt text for this image:", file.name.replace(/\.[^.]+$/, "")) || "";
-      wrapOrInsertAtCursor(`\n![${alt}](${data.publicUrl})\n`, "");
+      const url = articleMediaUrl(path);
+      const { data: row, error: insErr } = await supabase
+        .from("media_assets")
+        .insert({
+          filename: file.name,
+          storage_path: path,
+          public_url: url,
+          mime_type: file.type,
+          file_size: file.size,
+          alt_text: alt || null,
+          uploaded_by: user.id,
+        })
+        .select("id")
+        .single();
+      if (insErr) throw insErr;
+      wrapOrInsertAtCursor(`\n*Visual: ${alt || "Article media"}*\n\n![${alt}](${url})\n`, "");
+      if (row?.id) supabase.functions.invoke("media-analyze", { body: { id: row.id } });
       toast.success("Uploaded & inserted");
     } catch (e: any) {
       toast.error(e?.message ?? "Upload failed");
@@ -272,8 +322,9 @@ export default function AdminSEO() {
       title: editingArticle.title,
       slug: editingArticle.slug,
       excerpt: editingArticle.excerpt,
-      meta_description: editingArticle.meta_description,
-      body_markdown: editingArticle.body_markdown,
+        meta_description: editingArticle.meta_description,
+        body_markdown: editingArticle.body_markdown,
+        cover_image_url: editingArticle.cover_image_url ?? firstMarkdownImage(editingArticle.body_markdown),
     }).eq("id", editingArticle.id);
     setSavingArticle(false);
     if (error) { toast.error(error.message); return; }
@@ -504,23 +555,23 @@ export default function AdminSEO() {
               <div>
                 <Label>Body (markdown)</Label>
                 <div className="mt-1 flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 border-input bg-muted/40 p-1">
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Heading 1" onClick={() => insertHeading(1)}><Heading1 className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Heading 2" onClick={() => insertHeading(2)}><Heading2 className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Heading 3" onClick={() => insertHeading(3)}><Heading3 className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2" title="Add section header" onClick={() => insertHeading(2)}><Heading2 className="h-4 w-4" />Header</Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 gap-1 px-2" title="Add subheader" onClick={() => insertHeading(3)}><Heading3 className="h-4 w-4" />Subhead</Button>
                   <span className="mx-1 h-5 w-px bg-border" />
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Bold" onClick={() => wrapOrInsertAtCursor("**", "**", "bold text")}><Bold className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Italic" onClick={() => wrapOrInsertAtCursor("_", "_", "italic")}><Italic className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Bulleted list" onClick={() => wrapOrInsertAtCursor("\n- ", "", "list item")}><List className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Quote" onClick={() => wrapOrInsertAtCursor("\n> ", "", "quote")}><Quote className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Bold" onClick={() => wrapOrInsertAtCursor("**", "**", "bold text")}><Bold className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Italic" onClick={() => wrapOrInsertAtCursor("_", "_", "italic")}><Italic className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Bulleted list" onClick={() => prefixSelectedLines("- ", "list item")}><List className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Quote" onClick={() => prefixSelectedLines("> ", "quote")}><Quote className="h-4 w-4" /></Button>
                   <span className="mx-1 h-5 w-px bg-border" />
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Link" onClick={insertLinkPrompt}><LinkIcon className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Insert image / GIF by URL (Giphy, Tenor, Media Library)" onClick={insertImagePrompt}><ImageIcon className="h-4 w-4" /></Button>
-                  <Button type="button" size="sm" variant="ghost" className="h-7 px-2" title="Upload image or GIF" disabled={uploadingMedia} onClick={() => uploadInputRef.current?.click()}>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 px-2" title="Link" onClick={insertLinkPrompt}><LinkIcon className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2" title="Insert image or GIF by URL" onClick={insertImagePrompt}><ImageIcon className="h-4 w-4" />GIF URL</Button>
+                  <Button type="button" size="sm" variant="default" className="h-8 gap-1 px-2" title="Upload image or GIF" disabled={uploadingMedia} onClick={() => uploadInputRef.current?.click()}>
                     {uploadingMedia ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                    Upload GIF
                   </Button>
-                  <input ref={uploadInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden
+                  <input ref={uploadInputRef} type="file" accept={ACCEPTED_ARTICLE_MEDIA.join(",")} hidden
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaAndInsert(f); }} />
-                  <span className="ml-auto pr-1 text-[10px] text-muted-foreground">Markdown · paste GIF URLs from Giphy/Tenor</span>
+                  <span className="ml-auto pr-1 text-[10px] text-muted-foreground">Headers use H2/H3 for SEO · GIFs insert at cursor</span>
                 </div>
                 <Textarea ref={bodyRef} value={editingArticle.body_markdown} rows={20}
                   className="rounded-t-none font-mono text-xs"
