@@ -89,49 +89,62 @@ Deno.serve(async (req) => {
     }
     const dataUrl = signed.signedUrl;
 
-    // For large GIFs, skip vision (model can't reliably process animated GIFs anyway)
-    // and score from filename + size only.
+    // For large GIFs, skip vision (model can't reliably process animated GIFs anyway
+    // and signed URLs to large binaries cause AI gateway fetch failures). Score from
+    // filename + size heuristics only.
     const isLargeGif = asset.mime_type === "image/gif" && (asset.file_size ?? 0) > 4 * 1024 * 1024;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: `Analyze this asset (filename: ${asset.filename}). Return JSON only.` },
-              { type: "image_url", image_url: { url: dataUrl } },
-            ],
-          },
-        ],
-      }),
-    });
+    let parsed: any = null;
+    if (isLargeGif) {
+      const name = asset.filename.toLowerCase();
+      const guessTags = ["gif", "animation", "demo"];
+      parsed = {
+        seoScore: 65,
+        altText: `Animated demo: ${asset.filename}`,
+        description: `Animated GIF (${Math.round((asset.file_size ?? 0) / 1024 / 1024)}MB). Auto-scored — re-score after upload to refine.`,
+        tags: guessTags,
+        category: name.includes("dashboard") ? "dashboard" : name.includes("mobile") ? "mobile-view" : "workflow",
+      };
+    } else {
+      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: `Analyze this asset (filename: ${asset.filename}). Return JSON only.` },
+                { type: "image_url", image_url: { url: dataUrl } },
+              ],
+            },
+          ],
+        }),
+      });
 
-    if (!aiRes.ok) {
-      const errText = await aiRes.text();
-      await admin.from("media_assets").update({ analysis_error: `ai ${aiRes.status}: ${errText.slice(0, 500)}` }).eq("id", id);
-      return jsonResponse({ error: `AI error ${aiRes.status}`, detail: errText }, 502);
-    }
+      if (!aiRes.ok) {
+        const errText = await aiRes.text();
+        await admin.from("media_assets").update({ analysis_error: `ai ${aiRes.status}: ${errText.slice(0, 500)}` }).eq("id", id);
+        return jsonResponse({ error: `AI error ${aiRes.status}`, detail: errText }, 502);
+      }
 
-    const aiJson = await aiRes.json();
-    const raw: string = aiJson?.choices?.[0]?.message?.content ?? "";
-    const cleaned = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      const aiJson = await aiRes.json();
+      const raw: string = aiJson?.choices?.[0]?.message?.content ?? "";
+      const cleaned = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
 
-    let parsed: any;
-    try { parsed = JSON.parse(cleaned); } catch {
-      const m = cleaned.match(/\{[\s\S]*\}/);
-      parsed = m ? JSON.parse(m[0]) : null;
-    }
-    if (!parsed) {
-      await admin.from("media_assets").update({ analysis_error: "AI returned non-JSON" }).eq("id", id);
-      return jsonResponse({ error: "AI returned non-JSON", raw }, 502);
+      try { parsed = JSON.parse(cleaned); } catch {
+        const m = cleaned.match(/\{[\s\S]*\}/);
+        parsed = m ? JSON.parse(m[0]) : null;
+      }
+      if (!parsed) {
+        await admin.from("media_assets").update({ analysis_error: "AI returned non-JSON" }).eq("id", id);
+        return jsonResponse({ error: "AI returned non-JSON", raw }, 502);
+      }
     }
 
     const score = Math.max(0, Math.min(100, Math.round(Number(parsed.seoScore) || 0)));
