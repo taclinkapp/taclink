@@ -1526,6 +1526,7 @@ export type Database = {
       }
       influencer_links: {
         Row: {
+          access_pin: string | null
           active: boolean
           audience: string
           commission_pct: number | null
@@ -1551,6 +1552,7 @@ export type Database = {
           vip_starts_at: string | null
         }
         Insert: {
+          access_pin?: string | null
           active?: boolean
           audience?: string
           commission_pct?: number | null
@@ -1576,6 +1578,7 @@ export type Database = {
           vip_starts_at?: string | null
         }
         Update: {
+          access_pin?: string | null
           active?: boolean
           audience?: string
           commission_pct?: number | null
