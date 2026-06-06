@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.create-helcim-checkout]
 verify_jwt = false
+
+[functions.public-blog-media]
+verify_jwt = false
