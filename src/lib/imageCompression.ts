@@ -15,6 +15,8 @@ export async function compressImageFile(
   if (!file.type.startsWith('image/')) return file;
   // HEIC/HEIF can't be decoded by canvas in most browsers — return as-is.
   if (/heic|heif/i.test(file.type)) return file;
+  // GIFs must stay as GIFs to preserve animation; canvas.toBlob would turn them into static JPEGs.
+  if (file.type === 'image/gif') return file;
   if (file.size <= maxBytes && file.type === 'image/jpeg') return file;
 
   try {
