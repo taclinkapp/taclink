@@ -267,7 +267,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
-          credentials: Json
+          credential_keys: string[]
           display_label: string
           environment: string
           id: string
@@ -279,7 +279,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
-          credentials?: Json
+          credential_keys?: string[]
           display_label: string
           environment?: string
           id?: string
@@ -291,7 +291,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
-          credentials?: Json
+          credential_keys?: string[]
           display_label?: string
           environment?: string
           id?: string
@@ -3891,33 +3891,27 @@ export type Database = {
       profiles_public: {
         Row: {
           bio: string | null
-          created_at: string | null
           display_name: string | null
           id: string | null
           photo_url: string | null
           service_categories: string[] | null
-          service_city: string | null
-          service_state: string | null
+          state: string | null
         }
         Insert: {
           bio?: string | null
-          created_at?: string | null
           display_name?: string | null
           id?: string | null
           photo_url?: string | null
           service_categories?: string[] | null
-          service_city?: string | null
-          service_state?: string | null
+          state?: string | null
         }
         Update: {
           bio?: string | null
-          created_at?: string | null
           display_name?: string | null
           id?: string | null
           photo_url?: string | null
           service_categories?: string[] | null
-          service_city?: string | null
-          service_state?: string | null
+          state?: string | null
         }
         Relationships: []
       }
