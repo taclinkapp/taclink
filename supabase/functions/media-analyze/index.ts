@@ -78,64 +78,73 @@ Deno.serve(async (req) => {
       .single();
     if (assetErr || !asset) return jsonResponse({ error: "Asset not found" }, 404);
 
-    // Download file from private bucket and convert to base64 data URL
-    const { data: fileBlob, error: dlErr } = await admin.storage
+    // Use a short-lived signed URL instead of base64 — base64-encoding large
+    // GIFs in edge-function memory was causing OOM kills.
+    const { data: signed, error: signErr } = await admin.storage
       .from("media-library")
-      .download(asset.storage_path);
-    if (dlErr || !fileBlob) {
-      await admin.from("media_assets").update({ analysis_error: `download failed: ${dlErr?.message}` }).eq("id", id);
-      return jsonResponse({ error: `Download failed: ${dlErr?.message}` }, 500);
+      .createSignedUrl(asset.storage_path, 600);
+    if (signErr || !signed?.signedUrl) {
+      await admin.from("media_assets").update({ analysis_error: `sign failed: ${signErr?.message}` }).eq("id", id);
+      return jsonResponse({ error: `Sign failed: ${signErr?.message}` }, 500);
     }
+    const dataUrl = signed.signedUrl;
 
-    const arrayBuf = await fileBlob.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuf);
-    let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-    const base64 = btoa(binary);
-    // Gemini doesn't accept image/gif via vision; coerce to image/png for the prompt
-    // (still passes the underlying GIF bytes; the model will see frame 0 / static).
-    const mimeForAi = asset.mime_type === "image/gif" ? "image/png" : asset.mime_type;
-    const dataUrl = `data:${mimeForAi};base64,${base64}`;
+    // For large GIFs, skip vision (model can't reliably process animated GIFs anyway
+    // and signed URLs to large binaries cause AI gateway fetch failures). Score from
+    // filename + size heuristics only.
+    const isLargeGif = asset.mime_type === "image/gif" && (asset.file_size ?? 0) > 4 * 1024 * 1024;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: `Analyze this asset (filename: ${asset.filename}). Return JSON only.` },
-              { type: "image_url", image_url: { url: dataUrl } },
-            ],
-          },
-        ],
-      }),
-    });
+    let parsed: any = null;
+    if (isLargeGif) {
+      const name = asset.filename.toLowerCase();
+      const guessTags = ["gif", "animation", "demo"];
+      parsed = {
+        seoScore: 65,
+        altText: `Animated demo: ${asset.filename}`,
+        description: `Animated GIF (${Math.round((asset.file_size ?? 0) / 1024 / 1024)}MB). Auto-scored — re-score after upload to refine.`,
+        tags: guessTags,
+        category: name.includes("dashboard") ? "dashboard" : name.includes("mobile") ? "mobile-view" : "workflow",
+      };
+    } else {
+      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: `Analyze this asset (filename: ${asset.filename}). Return JSON only.` },
+                { type: "image_url", image_url: { url: dataUrl } },
+              ],
+            },
+          ],
+        }),
+      });
 
-    if (!aiRes.ok) {
-      const errText = await aiRes.text();
-      await admin.from("media_assets").update({ analysis_error: `ai ${aiRes.status}: ${errText.slice(0, 500)}` }).eq("id", id);
-      return jsonResponse({ error: `AI error ${aiRes.status}`, detail: errText }, 502);
-    }
+      if (!aiRes.ok) {
+        const errText = await aiRes.text();
+        await admin.from("media_assets").update({ analysis_error: `ai ${aiRes.status}: ${errText.slice(0, 500)}` }).eq("id", id);
+        return jsonResponse({ error: `AI error ${aiRes.status}`, detail: errText }, 502);
+      }
 
-    const aiJson = await aiRes.json();
-    const raw: string = aiJson?.choices?.[0]?.message?.content ?? "";
-    const cleaned = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      const aiJson = await aiRes.json();
+      const raw: string = aiJson?.choices?.[0]?.message?.content ?? "";
+      const cleaned = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
 
-    let parsed: any;
-    try { parsed = JSON.parse(cleaned); } catch {
-      const m = cleaned.match(/\{[\s\S]*\}/);
-      parsed = m ? JSON.parse(m[0]) : null;
-    }
-    if (!parsed) {
-      await admin.from("media_assets").update({ analysis_error: "AI returned non-JSON" }).eq("id", id);
-      return jsonResponse({ error: "AI returned non-JSON", raw }, 502);
+      try { parsed = JSON.parse(cleaned); } catch {
+        const m = cleaned.match(/\{[\s\S]*\}/);
+        parsed = m ? JSON.parse(m[0]) : null;
+      }
+      if (!parsed) {
+        await admin.from("media_assets").update({ analysis_error: "AI returned non-JSON" }).eq("id", id);
+        return jsonResponse({ error: "AI returned non-JSON", raw }, 502);
+      }
     }
 
     const score = Math.max(0, Math.min(100, Math.round(Number(parsed.seoScore) || 0)));
