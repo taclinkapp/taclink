@@ -31,7 +31,7 @@ type Asset = {
 };
 
 const ACCEPTED = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"];
-const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_BYTES = 20 * 1024 * 1024;
 
 function scoreBadge(score: number) {
   if (score >= 70) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
