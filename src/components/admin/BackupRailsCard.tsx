@@ -82,23 +82,22 @@ export function BackupRailsCard() {
       display_label: r.display_label,
       environment: r.environment,
       status: r.status,
-      credentialsText: JSON.stringify(r.credentials ?? {}, null, 2),
+      credentialKeysText: (r.credential_keys ?? []).join(", "),
       notes: r.notes ?? "",
     });
   };
 
   const save = async () => {
-    let creds: Record<string, string>;
-    try {
-      creds = JSON.parse(draft.credentialsText || "{}");
-      if (typeof creds !== "object" || Array.isArray(creds)) throw new Error("not object");
-    } catch {
-      toast.error("Credentials must be valid JSON, e.g. { \"api_key\": \"...\" }");
-      return;
-    }
+    const keys = parseKeys(draft.credentialKeysText);
     if (!draft.provider_key.trim() || !draft.display_label.trim()) {
       toast.error("Provider key and label are required");
       return;
+    }
+    for (const k of keys) {
+      if (!/^[A-Z_][A-Z0-9_]*$/.test(k)) {
+        toast.error(`Invalid secret name: ${k} — use UPPER_SNAKE_CASE`);
+        return;
+      }
     }
     setBusy(true);
     try {
@@ -107,7 +106,7 @@ export function BackupRailsCard() {
         display_label: draft.display_label.trim(),
         environment: draft.environment,
         status: draft.status,
-        credentials: creds,
+        credential_keys: keys,
         notes: draft.notes || null,
       };
       const q = editingId
