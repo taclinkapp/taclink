@@ -114,12 +114,12 @@ export default function AdminSEO() {
     setUploadingMedia(true);
     try {
       const ext = file.name.split(".").pop() || "bin";
-      const path = `seo/${editingArticle.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("media").upload(path, file, {
+      const path = `${editingArticle.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("blog-media").upload(path, file, {
         cacheControl: "31536000", upsert: false, contentType: file.type,
       });
       if (upErr) throw upErr;
-      const { data } = supabase.storage.from("media").getPublicUrl(path);
+      const { data } = supabase.storage.from("blog-media").getPublicUrl(path);
       const alt = window.prompt("Alt text for this image:", file.name.replace(/\.[^.]+$/, "")) || "";
       wrapOrInsertAtCursor(`\n![${alt}](${data.publicUrl})\n`, "");
       toast.success("Uploaded & inserted");
