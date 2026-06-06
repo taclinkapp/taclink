@@ -635,26 +635,31 @@ export const CRASH_COURSES: CrashCourse[] = [
         tip: 'Use the "Generate draft" button if you want the AI to write a first pass from the chosen angle — always edit before publishing.',
       },
       {
-        heading: 'Step 3 — Add a cover image',
-        body: 'Every article needs a cover. Upload a 1600×900 JPG or PNG via the cover image picker. Add alt text that includes the primary keyword — this is what screen readers and Google Images read.',
-        tip: 'Photos of real training scenes beat stock photos for click-through. Avoid anything that reads as staged.',
-      },
-      {
-        heading: 'Step 4 — Insert images and GIFs into the body',
-        body: 'Inside the body editor, place the cursor where you want the asset and click the image / GIF button in the toolbar. You have three sources:',
+        heading: 'Step 3 — Upload your images & GIFs to the Media Library',
+        body: 'The article editor is plain markdown — there is no cover picker or toolbar. All visuals live in the Media Library tab (left sidebar → Media). Upload everything you plan to use there first, then copy each asset URL to paste into the body.',
         bullets: [
-          { label: 'Upload', text: 'Drag a .jpg, .png, .webp, or .gif from your desktop (max 5 MB). GIFs stay animated — do not re-encode them.' },
-          { label: 'GIF search', text: 'Type a query in the GIF picker to search the built-in library. Click to insert.' },
-          { label: 'Paste URL', text: 'For GIFs hosted elsewhere (Giphy, Tenor) paste the direct .gif URL — the editor embeds it inline.' },
+          { label: 'Open Media', text: 'Go to /admin/media and drag your files into the upload zone (PNG, JPG, GIF, WebP — up to 20 MB).' },
+          { label: 'Auto-score', text: 'Each upload is auto-analyzed for SEO. Aim for green (70+) — re-upload a better version if it scores red.' },
+          { label: 'Cover image', text: 'Use a 1600×900 JPG or PNG. It will be the first image referenced at the very top of your markdown body.' },
         ],
-        tip: 'Keep GIFs under 3 MB and 1 per section. Big or stacked GIFs tank mobile load time and hurt rankings.',
+        tip: 'Real training photos out-click stock photos. Keep GIFs under 3 MB so mobile readers do not bounce.',
       },
       {
-        heading: 'Step 5 — Caption, alt, and accessibility',
-        body: 'After inserting an image or GIF, click it to open the asset panel. Fill in alt text (required) and an optional caption. Alt text describes the image for screen readers AND for Google Images — write a real sentence, not the file name.',
+        heading: 'Step 4 — Insert images and GIFs into the markdown body',
+        body: 'Back in the SEO → Articles editor, the Body field is a markdown Textarea. Place an image or GIF by pasting markdown image syntax wherever you want it to appear: `![alt text](https://...url...)`. Copy the URL from any tile in the Media Library.',
         bullets: [
-          { label: 'Good alt', text: '"Instructor demonstrating a low-ready stance during a CCW class."' },
-          { label: 'Bad alt', text: '"IMG_2381.gif"' },
+          { label: 'Cover', text: 'Put the cover image as the FIRST line of the body so it renders above the intro paragraph.' },
+          { label: 'Inline', text: 'Drop one image or GIF per H2 section to break up the text. One per section is plenty.' },
+          { label: 'External GIFs', text: 'Giphy / Tenor links work too — paste the direct .gif URL inside the parentheses.' },
+        ],
+        tip: 'No drag-and-drop, no toolbar — it really is just markdown. If you forget the syntax: `![what the image shows](url)`.',
+      },
+      {
+        heading: 'Step 5 — Write strong alt text inside the markdown',
+        body: 'The text between the square brackets `![...]` IS the alt text. Screen readers read it aloud and Google Images uses it to rank the image. Write a full sentence with your primary keyword, not the file name.',
+        bullets: [
+          { label: 'Good', text: '`![Instructor demonstrating a low-ready stance during a CCW class](https://...)`' },
+          { label: 'Bad',  text: '`![IMG_2381.gif](https://...)`' },
         ],
       },
       {
