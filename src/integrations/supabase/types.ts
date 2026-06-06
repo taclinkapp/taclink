@@ -1345,13 +1345,6 @@ export type Database = {
             foreignKeyName: "influencer_commission_pct_audit_link_id_fkey"
             columns: ["link_id"]
             isOneToOne: false
-            referencedRelation: "affiliate_my_link"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "influencer_commission_pct_audit_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
             referencedRelation: "influencer_links"
             referencedColumns: ["id"]
           },
@@ -1411,13 +1404,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "influencer_commissions_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
-            referencedRelation: "affiliate_my_link"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "influencer_commissions_link_id_fkey"
             columns: ["link_id"]
@@ -1487,13 +1473,6 @@ export type Database = {
             foreignKeyName: "influencer_link_redirect_log_link_id_fkey"
             columns: ["link_id"]
             isOneToOne: false
-            referencedRelation: "affiliate_my_link"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "influencer_link_redirect_log_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
             referencedRelation: "influencer_links"
             referencedColumns: ["id"]
           },
@@ -1529,13 +1508,6 @@ export type Database = {
           user_role?: Database["public"]["Enums"]["app_role"] | null
         }
         Relationships: [
-          {
-            foreignKeyName: "influencer_link_signups_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
-            referencedRelation: "affiliate_my_link"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "influencer_link_signups_link_id_fkey"
             columns: ["link_id"]
@@ -1671,13 +1643,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "influencer_payouts_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
-            referencedRelation: "affiliate_my_link"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "influencer_payouts_link_id_fkey"
             columns: ["link_id"]
@@ -1876,13 +1841,6 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "instructor_ledger_instructor_id_fkey"
-            columns: ["instructor_id"]
-            isOneToOne: false
-            referencedRelation: "public_instructor_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       instructor_payout_accounts: {
@@ -1935,13 +1893,6 @@ export type Database = {
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "instructor_payout_accounts_instructor_id_fkey"
-            columns: ["instructor_id"]
-            isOneToOne: false
-            referencedRelation: "public_instructor_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3889,60 +3840,6 @@ export type Database = {
       }
     }
     Views: {
-      affiliate_my_link: {
-        Row: {
-          active: boolean | null
-          audience: string | null
-          created_at: string | null
-          id: string | null
-          influencer_handle: string | null
-          influencer_name: string | null
-          is_vip: boolean | null
-          owner_user_id: string | null
-          payout_handle: string | null
-          payout_method: string | null
-          payout_notes: string | null
-          slug: string | null
-          updated_at: string | null
-          vip_duration_days: number | null
-          vip_starts_at: string | null
-        }
-        Insert: {
-          active?: boolean | null
-          audience?: string | null
-          created_at?: string | null
-          id?: string | null
-          influencer_handle?: string | null
-          influencer_name?: string | null
-          is_vip?: boolean | null
-          owner_user_id?: string | null
-          payout_handle?: string | null
-          payout_method?: string | null
-          payout_notes?: string | null
-          slug?: string | null
-          updated_at?: string | null
-          vip_duration_days?: number | null
-          vip_starts_at?: string | null
-        }
-        Update: {
-          active?: boolean | null
-          audience?: string | null
-          created_at?: string | null
-          id?: string | null
-          influencer_handle?: string | null
-          influencer_name?: string | null
-          is_vip?: boolean | null
-          owner_user_id?: string | null
-          payout_handle?: string | null
-          payout_method?: string | null
-          payout_notes?: string | null
-          slug?: string | null
-          updated_at?: string | null
-          vip_duration_days?: number | null
-          vip_starts_at?: string | null
-        }
-        Relationships: []
-      }
       influencer_links_public: {
         Row: {
           active: boolean | null
@@ -3997,42 +3894,6 @@ export type Database = {
           service_categories?: string[] | null
           service_city?: string | null
           service_state?: string | null
-        }
-        Relationships: []
-      }
-      public_instructor_profiles: {
-        Row: {
-          bio: string | null
-          created_at: string | null
-          display_name: string | null
-          id: string | null
-          photo_url: string | null
-          service_categories: string[] | null
-          service_city: string | null
-          service_state: string | null
-          state: string | null
-        }
-        Insert: {
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          photo_url?: string | null
-          service_categories?: string[] | null
-          service_city?: string | null
-          service_state?: string | null
-          state?: string | null
-        }
-        Update: {
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          photo_url?: string | null
-          service_categories?: string[] | null
-          service_city?: string | null
-          service_state?: string | null
-          state?: string | null
         }
         Relationships: []
       }
@@ -4145,6 +4006,26 @@ export type Database = {
         Args: { _pin: string; _slug: string }
         Returns: Json
       }
+      get_my_affiliate_links: {
+        Args: never
+        Returns: {
+          active: boolean
+          audience: string
+          created_at: string
+          id: string
+          influencer_handle: string
+          influencer_name: string
+          is_vip: boolean
+          owner_user_id: string
+          payout_handle: string
+          payout_method: string
+          payout_notes: string
+          slug: string
+          updated_at: string
+          vip_duration_days: number
+          vip_starts_at: string
+        }[]
+      }
       get_my_founder_status: { Args: never; Returns: Json }
       get_public_founder_badge: {
         Args: { _user_id: string }
@@ -4160,6 +4041,20 @@ export type Database = {
           founder_rank: number
           founder_status: Database["public"]["Enums"]["founder_status"]
           user_id: string
+        }[]
+      }
+      get_public_instructor_profile: {
+        Args: { _id: string }
+        Returns: {
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          photo_url: string
+          service_categories: string[]
+          service_city: string
+          service_state: string
+          state: string
         }[]
       }
       get_public_profile_cards: {
@@ -4244,6 +4139,20 @@ export type Database = {
           claim_id: string
           instructor_id: string
           student_id: string
+        }[]
+      }
+      list_public_instructor_profiles: {
+        Args: { _ids: string[] }
+        Returns: {
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          photo_url: string
+          service_categories: string[]
+          service_city: string
+          service_state: string
+          state: string
         }[]
       }
       list_releasable_deposits: {
