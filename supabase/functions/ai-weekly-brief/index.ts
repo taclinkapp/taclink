@@ -15,6 +15,39 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // AuthN: cron secret OR admin JWT
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const provided = req.headers.get("x-cron-secret");
+    let authorized = !!cronSecret && provided === cronSecret;
+    if (!authorized) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      if (authHeader.startsWith("Bearer ")) {
+        try {
+          const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+            global: { headers: { Authorization: authHeader } },
+          });
+          const { data: u } = await userClient.auth.getUser();
+          const uid = u?.user?.id;
+          if (uid) {
+            const adminCheck = createClient(SUPABASE_URL, SERVICE_KEY);
+            const { data: r } = await adminCheck
+              .from("user_roles").select("role")
+              .eq("user_id", uid).eq("role", "admin").maybeSingle();
+            if (r) authorized = true;
+          }
+        } catch (_) { /* fall through */ }
+      }
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY missing" }, 500);
 
