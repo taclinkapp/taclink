@@ -65,6 +65,11 @@ export default function AdminTestAccounts() {
   const [label, setLabel] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [tab, setTab] = useState<"instructor" | "student">("instructor");
+  const [backdoor, setBackdoor] = useState<
+    Array<{ role: string; email: string; password: string }> | null
+  >(null);
+  const [backdoorBusy, setBackdoorBusy] = useState(false);
+  const [backdoorCopied, setBackdoorCopied] = useState<string | null>(null);
   const [generated, setGenerated] = useState<GeneratedCreds[]>(() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
