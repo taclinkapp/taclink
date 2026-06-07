@@ -241,6 +241,52 @@ export default function AdminTestAccounts() {
       `Mock data seeded — ${data.courses_created ?? 0} courses, profiles + reviews ready`,
     );
   };
+  const signInAsBackdoor = async (role: "instructor" | "student") => {
+    if (
+      !confirm(
+        `Sign in as the backdoor ${role}? You will be signed out of your admin session and dropped directly into the ${role} app with mock data.`,
+      )
+    )
+      return;
+    setSigningInAs(role);
+    try {
+      // Ensure backdoor accounts exist + mock data is seeded, and get fresh credentials.
+      const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
+        body: { action: "ensure_backdoor" },
+      });
+      if (error || data?.error) {
+        toast.error(error?.message ?? data?.error ?? "Failed to prepare backdoor");
+        setSigningInAs(null);
+        return;
+      }
+      const creds = (data.backdoor ?? []).find(
+        (b: { role: string }) => b.role === role,
+      ) as { email: string; password: string } | undefined;
+      if (!creds) {
+        toast.error(`No backdoor ${role} credentials returned`);
+        setSigningInAs(null);
+        return;
+      }
+      // Drop the admin session and sign in as the backdoor account.
+      await supabase.auth.signOut();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: creds.email,
+        password: creds.password,
+      });
+      if (signInError) {
+        toast.error(signInError.message);
+        setSigningInAs(null);
+        return;
+      }
+      toast.success(`Signed in as backdoor ${role}`);
+      // Full reload to ensure all role-gated providers re-initialize cleanly.
+      window.location.href = role === "instructor" ? "/instructor" : "/student";
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sign-in failed");
+      setSigningInAs(null);
+    }
+  };
+
 
 
 
