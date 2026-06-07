@@ -806,7 +806,7 @@ Deno.serve(async (req) => {
           400,
         );
       }
-      const result = await seedBackdoorMockData(admin, instr.id, stud.id);
+      const result = await seedBackdoorMockData(admin, instr.id, stud.id, userId);
       return json({
         ok: true,
         instructor_id: instr.id,
