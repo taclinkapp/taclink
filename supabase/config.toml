@@ -83,3 +83,9 @@ verify_jwt = false
 
 [functions.public-blog-media]
 verify_jwt = false
+
+[functions.seo-backlinks-sync]
+verify_jwt = false
+
+[functions.seo-internal-links]
+verify_jwt = false
