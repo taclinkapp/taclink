@@ -11,7 +11,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Bell, ExternalLink, Link2, Megaphone, Plus, TrendingUp, Trash2, Check, RefreshCw } from 'lucide-react';
+import { Bell, ExternalLink, Link2, Megaphone, Plus, TrendingUp, Trash2, Check, RefreshCw, Shield } from 'lucide-react';
 
 type Backlink = {
   id: string;
@@ -86,6 +86,32 @@ export default function AdminBacklinks() {
   const [backlinkOpen, setBacklinkOpen] = useState(false);
   const [outreachOpen, setOutreachOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const selectAll = () => {
+    if (selectedIds.size === backlinks.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(backlinks.map(b => b.id)));
+  };
+
+  const bulkDisavow = async () => {
+    if (!selectedIds.size) return;
+    if (!confirm(`Mark ${selectedIds.size} selected backlink(s) as disavowed?`)) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase.from('backlinks').update({ status: 'disavowed' }).in('id', ids);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`${ids.length} backlink(s) disavowed`);
+      setSelectedIds(new Set());
+      load();
+    }
+  };
 
   const syncSemrush = async () => {
     setSyncing(true);
@@ -220,6 +246,11 @@ export default function AdminBacklinks() {
             <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? 'Syncing…' : 'Sync from Semrush'}
           </Button>
+          {selectedIds.size > 0 && (
+            <Button variant="secondary" onClick={bulkDisavow}>
+              <Shield className="h-4 w-4 mr-2" /> Disavow {selectedIds.size}
+            </Button>
+          )}
           <NewOutreachDialog
             open={outreachOpen} setOpen={setOutreachOpen}
             courses={courses} articles={articles} onSaved={load}
@@ -323,6 +354,14 @@ export default function AdminBacklinks() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <input
+                          type="checkbox"
+                          checked={backlinks.length > 0 && selectedIds.size === backlinks.length}
+                          onChange={selectAll}
+                          className="h-4 w-4"
+                        />
+                      </TableHead>
                       <TableHead>Source</TableHead>
                       <TableHead>Anchor</TableHead>
                       <TableHead>Target</TableHead>
@@ -339,6 +378,14 @@ export default function AdminBacklinks() {
                       const article = articles.find(a => a.id === b.linked_article_id);
                       return (
                         <TableRow key={b.id}>
+                          <TableCell className="w-10">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(b.id)}
+                              onChange={() => toggleSelect(b.id)}
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
                           <TableCell>
                             <a href={b.source_url} target="_blank" rel="noopener noreferrer"
                               className="text-primary hover:underline inline-flex items-center gap-1 text-sm">
