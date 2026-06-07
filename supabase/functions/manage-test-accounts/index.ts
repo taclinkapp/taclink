@@ -508,7 +508,10 @@ Deno.serve(async (req) => {
     if (body.action === "ensure_backdoor") {
       // Idempotent: for each role, find-or-create the fixed-email auth user,
       // reset its password, mark fully onboarded, ensure role + test_accounts row.
+      // Then auto-seed advertising-quality mock data (profile photo, courses,
+      // credential, bookings, review) so the accounts are demo-ready on first use.
       const results: Array<{ role: string; email: string; password: string }> = [];
+      const ids: { instructor?: string; student?: string } = {};
       for (const role of ["instructor", "student"] as const) {
         const cfg = BACKDOOR[role];
 
@@ -553,7 +556,9 @@ Deno.serve(async (req) => {
           userIdForRole = created.user.id;
         }
 
-        // Profile: mark fully onboarded
+        ids[role] = userIdForRole;
+
+        // Baseline profile (will be enriched by seedBackdoorMockData below)
         await admin.from("profiles").upsert(
           {
             id: userIdForRole,
@@ -595,7 +600,18 @@ Deno.serve(async (req) => {
 
         results.push({ role, email: cfg.email, password: BACKDOOR_PASSWORD });
       }
-      return json({ ok: true, backdoor: results });
+
+      // Auto-seed mock data so the accounts are demo-ready immediately.
+      let seeded: { courses_created: number } | null = null;
+      if (ids.instructor && ids.student) {
+        try {
+          seeded = await seedBackdoorMockData(admin, ids.instructor, ids.student);
+        } catch (e) {
+          console.error("ensure_backdoor: auto-seed failed", (e as Error).message);
+        }
+      }
+
+      return json({ ok: true, backdoor: results, seeded });
     }
 
     if (body.action === "seed_mock_data") {
