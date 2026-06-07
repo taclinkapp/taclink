@@ -5,7 +5,6 @@ import {
   PillarId,
   computeTaclinkScore,
   getLevelInfo,
-  getRankLabel,
   PILLAR_BY_ID,
   LevelInfo,
 } from "@/lib/pillars";
