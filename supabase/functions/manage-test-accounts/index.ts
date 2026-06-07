@@ -20,7 +20,25 @@ type Action =
   | { action: "list" }
   | { action: "create"; role: "instructor" | "student"; label?: string }
   | { action: "delete"; id: string }
-  | { action: "rotate" };
+  | { action: "rotate" }
+  | { action: "ensure_backdoor" };
+
+// Fixed-credential backdoor accounts: persistent test users that bypass
+// onboarding (subscription, credential upload, policy ack) so an admin can
+// log straight in as either role for QA / screenshots / demos.
+const BACKDOOR_PASSWORD = "BackDoor!Taclink2026";
+const BACKDOOR = {
+  instructor: {
+    email: "backdoor.instructor@taclink.test",
+    display_name: "Backdoor Instructor",
+    label: "Backdoor — full instructor access",
+  },
+  student: {
+    email: "backdoor.student@taclink.test",
+    display_name: "Backdoor Student",
+    label: "Backdoor — full student access",
+  },
+} as const;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -230,6 +248,99 @@ Deno.serve(async (req) => {
       }
 
       return json({ ok: true, deleted, created: created.length });
+    }
+
+    if (body.action === "ensure_backdoor") {
+      // Idempotent: for each role, find-or-create the fixed-email auth user,
+      // reset its password, mark fully onboarded, ensure role + test_accounts row.
+      const results: Array<{ role: string; email: string; password: string }> = [];
+      for (const role of ["instructor", "student"] as const) {
+        const cfg = BACKDOOR[role];
+
+        // Find existing auth user by email
+        let userIdForRole: string | null = null;
+        const { data: list, error: listErr } = await admin.auth.admin.listUsers({
+          page: 1,
+          perPage: 200,
+        });
+        if (listErr) throw listErr;
+        const existing = list.users.find(
+          (u) => (u.email ?? "").toLowerCase() === cfg.email.toLowerCase(),
+        );
+
+        if (existing) {
+          userIdForRole = existing.id;
+          await admin.auth.admin.updateUserById(existing.id, {
+            password: BACKDOOR_PASSWORD,
+            email_confirm: true,
+            user_metadata: {
+              role,
+              display_name: cfg.display_name,
+              is_test_account: true,
+              is_backdoor: true,
+            },
+          });
+        } else {
+          const { data: created, error: createErr } = await admin.auth.admin.createUser({
+            email: cfg.email,
+            password: BACKDOOR_PASSWORD,
+            email_confirm: true,
+            user_metadata: {
+              role,
+              display_name: cfg.display_name,
+              is_test_account: true,
+              is_backdoor: true,
+            },
+          });
+          if (createErr || !created.user) {
+            throw new Error(createErr?.message ?? `Failed to create backdoor ${role}`);
+          }
+          userIdForRole = created.user.id;
+        }
+
+        // Profile: mark fully onboarded
+        await admin.from("profiles").upsert(
+          {
+            id: userIdForRole,
+            display_name: cfg.display_name,
+            onboarding_started_at: new Date().toISOString(),
+            onboarding_completed_at: new Date().toISOString(),
+            subscription_chosen_at: new Date().toISOString(),
+            credential_uploaded_at:
+              role === "instructor" ? new Date().toISOString() : null,
+            policy_acknowledged_at: new Date().toISOString(),
+            subscription_status: role === "instructor" ? "active" : "free",
+          },
+          { onConflict: "id" },
+        );
+
+        // Role row
+        await admin
+          .from("user_roles")
+          .upsert(
+            { user_id: userIdForRole, role },
+            { onConflict: "user_id,role", ignoreDuplicates: true },
+          );
+
+        // Track in test_accounts (one row per backdoor account, deduped by user_id)
+        const { data: existingRow } = await admin
+          .from("test_accounts")
+          .select("id")
+          .eq("user_id", userIdForRole)
+          .maybeSingle();
+        if (!existingRow) {
+          await admin.from("test_accounts").insert({
+            user_id: userIdForRole,
+            email: cfg.email,
+            role,
+            label: cfg.label,
+            created_by: userId,
+          });
+        }
+
+        results.push({ role, email: cfg.email, password: BACKDOOR_PASSWORD });
+      }
+      return json({ ok: true, backdoor: results });
     }
 
     return json({ error: "Unknown action" }, 400);
