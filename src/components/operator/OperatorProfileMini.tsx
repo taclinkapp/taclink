@@ -32,9 +32,10 @@ export const OperatorProfileMini = ({ studentId, linkTo, className, title = "Stu
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
           TacLink Score
         </span>
-        <span className="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm bg-primary/15 text-primary border border-primary/30">
-          {data?.rankLabel ?? "Civilian"}
+        <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">
+          Score
         </span>
+
       </div>
 
       <div className="space-y-1.5">
