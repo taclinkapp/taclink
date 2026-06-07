@@ -301,19 +301,42 @@ export default function AdminTestAccounts() {
                 the password back to the known value.
               </p>
             </div>
-            <Button
-              onClick={ensureBackdoor}
-              disabled={backdoorBusy}
-              className="bg-primary text-primary-foreground"
-            >
-              {backdoorBusy ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <KeyRound className="h-4 w-4" />
-              )}
-              Create / reset backdoor
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                onClick={ensureBackdoor}
+                disabled={backdoorBusy}
+                className="bg-primary text-primary-foreground"
+              >
+                {backdoorBusy ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <KeyRound className="h-4 w-4" />
+                )}
+                Create / reset backdoor
+              </Button>
+              <Button
+                onClick={seedMockData}
+                disabled={seeding}
+                variant="secondary"
+              >
+                {seeding ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                Seed mock data (for ads)
+              </Button>
+            </div>
           </div>
+
+          <p className="text-[11px] text-muted-foreground -mt-1">
+            <strong>Seed mock data</strong> populates the two backdoor accounts with a
+            polished instructor profile (SSG Marcus Reed — 3 published courses,
+            approved credential, 5★ review) and student profile (Jake Calloway —
+            attended + upcoming bookings, completed onboarding) so they look real for
+            screenshots and advertising. Test-account isolation keeps these courses
+            invisible to real users.
+          </p>
 
           {backdoor && backdoor.length > 0 && (
             <div className="overflow-x-auto rounded border border-border">
