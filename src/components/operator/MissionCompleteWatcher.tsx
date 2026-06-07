@@ -234,9 +234,6 @@ export const MissionCompleteWatcher = () => {
                 {afterScore}
               </span>
             </div>
-            <div className="mt-1 text-[11px] font-bold uppercase tracking-wider text-primary">
-              {getRankLabel(afterScore)}
-            </div>
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-2">
