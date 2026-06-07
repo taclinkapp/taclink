@@ -81,20 +81,8 @@ export function getLevelInfo(xp: number): LevelInfo {
   };
 }
 
-// Rank labels by composite TacLink Score
-export const RANKS = [
-  { min: 0,    label: "Civilian" },
-  { min: 100,  label: "Trained Civilian" },
-  { min: 300,  label: "Tactical Student" },
-  { min: 600,  label: "Advanced Student" },
-  { min: 900,  label: "Senior Student" },
-  { min: 1200, label: "Elite Student" },
-] as const;
+// Ranking system removed — only the raw TacLink Score is shown.
 
-export function getRankLabel(score: number): string {
-  const safe = Math.max(0, Math.floor(score || 0));
-  return RANKS.slice().reverse().find((r) => safe >= r.min)?.label ?? "Civilian";
-}
 
 export function computeTaclinkScore(pillarTotals: Record<PillarId, number>): number {
   const sum = PILLARS.reduce((s, p) => s + (pillarTotals[p.id] || 0), 0);
