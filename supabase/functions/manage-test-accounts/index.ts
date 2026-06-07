@@ -114,6 +114,260 @@ async function provisionAccount(
   return { ...row, password };
 }
 
+// Seed advertising-quality mock content onto the two backdoor accounts.
+// Idempotent: clears prior content for these two users, then re-creates a
+// known baseline (instructor profile/courses/credential + student profile/
+// onboarding/bookings/review). Used by `ensure_backdoor` (auto) and the
+// explicit `seed_mock_data` action.
+async function seedBackdoorMockData(
+  admin: any,
+  instructorId: string,
+  studentId: string,
+) {
+  // Clear prior mock content (cascades to bookings + reviews)
+  await admin.from("courses").delete().eq("instructor_id", instructorId);
+  await admin.from("instructor_credentials").delete().eq("instructor_id", instructorId);
+  await admin.from("student_xp_awards").delete().eq("student_id", studentId);
+
+  // ---- Instructor profile ----
+  await admin.from("profiles").upsert(
+    {
+      id: instructorId,
+      display_name: "SSG Marcus Reed",
+      photo_url:
+        "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop&crop=faces",
+      phone: "+1 (512) 555-0142",
+      state: "TX",
+      service_state: "TX",
+      service_city: "Austin",
+      service_categories: ["Firearms", "CQB", "Medical", "Tactics"],
+      bio:
+        "Former U.S. Army Ranger (3rd Bn, 75th RR) with 12 years of service and 4 combat deployments. NRA-certified instructor and TCOLE firearms trainer. I teach hard-won fundamentals — weapon manipulation, low-light CQB, and battlefield medicine — to civilians, LEOs, and military shooters who want to train like operators.",
+      payment_method_added: true,
+      subscription_status: "active",
+      subscription_updated_at: new Date().toISOString(),
+      onboarding_started_at: new Date(Date.now() - 30 * 86400000).toISOString(),
+      onboarding_completed_at: new Date(Date.now() - 29 * 86400000).toISOString(),
+      subscription_chosen_at: new Date(Date.now() - 29 * 86400000).toISOString(),
+      credential_uploaded_at: new Date(Date.now() - 28 * 86400000).toISOString(),
+      policy_acknowledged_at: new Date(Date.now() - 28 * 86400000).toISOString(),
+      stripe_connect_status: "active",
+      stripe_connect_account_id: "acct_test_backdoor_instructor",
+    },
+    { onConflict: "id" },
+  );
+
+  await admin.from("instructor_credentials").insert({
+    instructor_id: instructorId,
+    credential_type: "military_dd214",
+    display_name: "DD-214 — U.S. Army Ranger, SSG",
+    file_path: "mock/backdoor/dd214.pdf",
+    file_mime: "application/pdf",
+    status: "approved",
+    ai_confidence: 0.98,
+    ai_issuer: "United States Department of the Army",
+    ai_holder_name: "Marcus Reed",
+    ai_decided_at: new Date().toISOString(),
+  });
+
+  // ---- Courses ----
+  const now = Date.now();
+  const day = 86400000;
+  const cover = (id: string) =>
+    `https://images.unsplash.com/${id}?w=1200&h=800&fit=crop`;
+  const courses = [
+    {
+      title: "Pistol Fundamentals — Draw, Press, Hit",
+      description:
+        "Two-day defensive pistol course covering grip, stance, draw stroke, recoil management, and combat reloads. Round count ~600. Bring eye/ear pro and a duty-style holster.",
+      category: "Firearms",
+      primary_pillar: "firearms",
+      secondary_pillar: "tactics",
+      price_cents: 39900,
+      duration_minutes: 480,
+      capacity: 10,
+      location_name: "Reed Tactical Range",
+      address: "12450 Range Rd",
+      city: "Austin",
+      state: "TX",
+      lat: 30.2672,
+      lng: -97.7431,
+      skill_level: "beginner",
+      starts_at: new Date(now + 7 * day).toISOString(),
+      ends_at: new Date(now + 7 * day + 8 * 3600 * 1000).toISOString(),
+      cover_image_url: cover("photo-1595590424283-b8f17842773f"),
+    },
+    {
+      title: "Low-Light CQB — Force on Force",
+      description:
+        "Advanced room clearing, threshold work, and weapon-mounted light technique. Sim-rounds, role players, instrumented scenarios. Prereq: intermediate pistol/carbine.",
+      category: "CQB",
+      primary_pillar: "tactics",
+      secondary_pillar: "firearms",
+      price_cents: 59900,
+      duration_minutes: 600,
+      capacity: 8,
+      location_name: "Hill Country Shoothouse",
+      address: "8800 Ranch Rd 12",
+      city: "Wimberley",
+      state: "TX",
+      lat: 30.0044,
+      lng: -98.0972,
+      skill_level: "advanced",
+      starts_at: new Date(now + 21 * day).toISOString(),
+      ends_at: new Date(now + 21 * day + 10 * 3600 * 1000).toISOString(),
+      cover_image_url: cover("photo-1584553421349-3557471bed79"),
+    },
+    {
+      title: "Tactical Combat Casualty Care (TCCC)",
+      description:
+        "Civilian TCCC curriculum: MARCH algorithm, tourniquet application, wound packing, needle decompression. Hands-on with live tissue analogs. Cert on completion.",
+      category: "Medical",
+      primary_pillar: "medical",
+      secondary_pillar: null,
+      price_cents: 29900,
+      duration_minutes: 480,
+      capacity: 16,
+      location_name: "Reed Tactical HQ",
+      address: "12450 Range Rd",
+      city: "Austin",
+      state: "TX",
+      lat: 30.2672,
+      lng: -97.7431,
+      skill_level: "all_levels",
+      starts_at: new Date(now - 21 * day).toISOString(),
+      ends_at: new Date(now - 21 * day + 8 * 3600 * 1000).toISOString(),
+      cover_image_url: cover("photo-1518152006812-edab29b069ac"),
+    },
+  ];
+
+  const insertedCourses: any[] = [];
+  for (const c of courses) {
+    const { data, error } = await admin
+      .from("courses")
+      .insert({
+        instructor_id: instructorId,
+        status: "published",
+        moderation_status: "approved",
+        in_person_waiver: true,
+        gallery_urls: [c.cover_image_url],
+        ...c,
+      })
+      .select()
+      .single();
+    if (error) {
+      console.error("seed: course insert failed", error.message);
+      continue;
+    }
+    insertedCourses.push(data);
+  }
+
+  // ---- Student profile ----
+  await admin.from("profiles").upsert(
+    {
+      id: studentId,
+      display_name: "Jake Calloway",
+      photo_url:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=faces",
+      phone: "+1 (737) 555-0199",
+      state: "TX",
+      service_state: "TX",
+      service_city: "Austin",
+      bio:
+        "EDC carrier and weekend warrior. Training toward instructor-level pistol and a TCCC cert. Looking for real-world reps, not square-range theatre.",
+      payment_method_added: true,
+      subscription_status: "free",
+      onboarding_started_at: new Date(Date.now() - 14 * day).toISOString(),
+      onboarding_completed_at: new Date(Date.now() - 13 * day).toISOString(),
+      subscription_chosen_at: new Date(Date.now() - 13 * day).toISOString(),
+      policy_acknowledged_at: new Date(Date.now() - 13 * day).toISOString(),
+    },
+    { onConflict: "id" },
+  );
+
+  await admin.from("student_onboarding").upsert(
+    {
+      user_id: studentId,
+      experience_level: "intermediate",
+      training_goal: "Build defensive pistol + medical skills for EDC",
+      selected_pillars: ["firearms", "medical", "tactics"],
+      travel_radius_miles: 100,
+      checklist: {
+        profile_created: true,
+        browsed_courses: true,
+        first_booking: true,
+        first_completion: true,
+        followed_instructor: true,
+        shared_profile: true,
+      },
+      checklist_dismissed: true,
+      notif_prompt_shown: true,
+      quiz_completed_at: new Date(Date.now() - 13 * day).toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+
+  // ---- Bookings + reviews ----
+  const pastCourse = insertedCourses.find((c) => new Date(c.starts_at).getTime() < now);
+  const upcomingCourse = insertedCourses.find(
+    (c) => new Date(c.starts_at).getTime() > now,
+  );
+
+  if (pastCourse) {
+    const { data: b, error: be } = await admin
+      .from("bookings")
+      .insert({
+        student_id: studentId,
+        course_id: pastCourse.id,
+        status: "attended",
+        attended_at: new Date(
+          new Date(pastCourse.starts_at).getTime() + 6 * 3600 * 1000,
+        ).toISOString(),
+        booked_at: new Date(
+          new Date(pastCourse.starts_at).getTime() - 7 * day,
+        ).toISOString(),
+        course_price_cents: pastCourse.price_cents,
+        online_total_cents: pastCourse.price_cents,
+        platform_fee_cents: 2500,
+        escrow_status: "released",
+        deposit_status: "released",
+      })
+      .select()
+      .single();
+    if (be) console.error("seed: past booking failed", be.message);
+
+    if (b) {
+      await admin.from("reviews").insert({
+        course_id: pastCourse.id,
+        instructor_id: instructorId,
+        student_id: studentId,
+        rating: 5,
+        comment:
+          "Best medical course I've taken outside the military. Marcus runs realistic scenarios under stress and gives feedback that actually sticks. Highly recommend.",
+        instructor_reply:
+          "Appreciate the kind words, Jake. Glad the TQ drills landed — see you in the pistol class.",
+        instructor_reply_at: new Date().toISOString(),
+      });
+    }
+  }
+
+  if (upcomingCourse) {
+    const { error: ube } = await admin.from("bookings").insert({
+      student_id: studentId,
+      course_id: upcomingCourse.id,
+      status: "reserved",
+      course_price_cents: upcomingCourse.price_cents,
+      online_total_cents: upcomingCourse.price_cents,
+      platform_fee_cents: 2500,
+      escrow_status: "held",
+      deposit_status: "held_in_escrow",
+    });
+    if (ube) console.error("seed: upcoming booking failed", ube.message);
+  }
+
+  return { courses_created: insertedCourses.length };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -254,7 +508,10 @@ Deno.serve(async (req) => {
     if (body.action === "ensure_backdoor") {
       // Idempotent: for each role, find-or-create the fixed-email auth user,
       // reset its password, mark fully onboarded, ensure role + test_accounts row.
+      // Then auto-seed advertising-quality mock data (profile photo, courses,
+      // credential, bookings, review) so the accounts are demo-ready on first use.
       const results: Array<{ role: string; email: string; password: string }> = [];
+      const ids: { instructor?: string; student?: string } = {};
       for (const role of ["instructor", "student"] as const) {
         const cfg = BACKDOOR[role];
 
@@ -299,7 +556,9 @@ Deno.serve(async (req) => {
           userIdForRole = created.user.id;
         }
 
-        // Profile: mark fully onboarded
+        ids[role] = userIdForRole;
+
+        // Baseline profile (will be enriched by seedBackdoorMockData below)
         await admin.from("profiles").upsert(
           {
             id: userIdForRole,
@@ -341,16 +600,21 @@ Deno.serve(async (req) => {
 
         results.push({ role, email: cfg.email, password: BACKDOOR_PASSWORD });
       }
-      return json({ ok: true, backdoor: results });
+
+      // Auto-seed mock data so the accounts are demo-ready immediately.
+      let seeded: { courses_created: number } | null = null;
+      if (ids.instructor && ids.student) {
+        try {
+          seeded = await seedBackdoorMockData(admin, ids.instructor, ids.student);
+        } catch (e) {
+          console.error("ensure_backdoor: auto-seed failed", (e as Error).message);
+        }
+      }
+
+      return json({ ok: true, backdoor: results, seeded });
     }
 
     if (body.action === "seed_mock_data") {
-      // Populate the two backdoor accounts with rich, advertising-quality
-      // mock content (profile bio + photo, courses, credentials, bookings,
-      // reviews, XP). Idempotent: deletes any prior mock content for these
-      // two users first, then re-creates a known good baseline.
-
-      // Find backdoor users
       const { data: list, error: listErr } = await admin.auth.admin.listUsers({
         page: 1,
         perPage: 200,
@@ -366,259 +630,12 @@ Deno.serve(async (req) => {
           400,
         );
       }
-      const instructorId = instr.id;
-      const studentId = stud.id;
-
-      // ---- Clean prior mock content for these two users ----
-      // Deleting courses cascades to bookings + reviews.
-      await admin.from("courses").delete().eq("instructor_id", instructorId);
-      await admin.from("instructor_credentials").delete().eq("instructor_id", instructorId);
-      await admin.from("student_xp_awards").delete().eq("student_id", studentId);
-
-      // ---- Instructor profile ----
-      const instructorPhoto =
-        "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop&crop=faces";
-      await admin.from("profiles").upsert(
-        {
-          id: instructorId,
-          display_name: "SSG Marcus Reed",
-          photo_url: instructorPhoto,
-          phone: "+1 (512) 555-0142",
-          state: "TX",
-          service_state: "TX",
-          service_city: "Austin",
-          service_categories: ["Firearms", "CQB", "Medical", "Tactics"],
-          bio:
-            "Former U.S. Army Ranger (3rd Bn, 75th RR) with 12 years of service and 4 combat deployments. NRA-certified instructor and TCOLE firearms trainer. I teach hard-won fundamentals — weapon manipulation, low-light CQB, and battlefield medicine — to civilians, LEOs, and military shooters who want to train like operators.",
-          payment_method_added: true,
-          subscription_status: "active",
-          subscription_updated_at: new Date().toISOString(),
-          onboarding_started_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-          onboarding_completed_at: new Date(Date.now() - 29 * 86400000).toISOString(),
-          subscription_chosen_at: new Date(Date.now() - 29 * 86400000).toISOString(),
-          credential_uploaded_at: new Date(Date.now() - 28 * 86400000).toISOString(),
-          policy_acknowledged_at: new Date(Date.now() - 28 * 86400000).toISOString(),
-          stripe_connect_status: "active",
-          stripe_connect_account_id: "acct_test_backdoor_instructor",
-        },
-        { onConflict: "id" },
-      );
-
-      // Approved credential
-      await admin.from("instructor_credentials").insert({
-        instructor_id: instructorId,
-        credential_type: "military_dd214",
-        display_name: "DD-214 — U.S. Army Ranger, SSG",
-        file_path: "mock/backdoor/dd214.pdf",
-        file_mime: "application/pdf",
-        status: "approved",
-        ai_confidence: 0.98,
-        ai_issuer: "United States Department of the Army",
-        ai_holder_name: "Marcus Reed",
-        ai_decided_at: new Date().toISOString(),
-      });
-
-      // ---- Courses ----
-      const now = Date.now();
-      const day = 86400000;
-      const cover = (id: string) =>
-        `https://images.unsplash.com/${id}?w=1200&h=800&fit=crop`;
-      const courses = [
-        {
-          title: "Pistol Fundamentals — Draw, Press, Hit",
-          description:
-            "Two-day defensive pistol course covering grip, stance, draw stroke, recoil management, and combat reloads. Round count ~600. Bring eye/ear pro and a duty-style holster.",
-          category: "Firearms",
-          primary_pillar: "firearms",
-          secondary_pillar: "tactics",
-          price_cents: 39900,
-          duration_minutes: 480,
-          capacity: 10,
-          location_name: "Reed Tactical Range",
-          address: "12450 Range Rd",
-          city: "Austin",
-          state: "TX",
-          lat: 30.2672,
-          lng: -97.7431,
-          skill_level: "beginner",
-          starts_at: new Date(now + 7 * day).toISOString(),
-          ends_at: new Date(now + 7 * day + 8 * 3600 * 1000).toISOString(),
-          cover_image_url: cover("photo-1595590424283-b8f17842773f"),
-        },
-        {
-          title: "Low-Light CQB — Force on Force",
-          description:
-            "Advanced room clearing, threshold work, and weapon-mounted light technique. Sim-rounds, role players, instrumented scenarios. Prereq: intermediate pistol/carbine.",
-          category: "CQB",
-          primary_pillar: "tactics",
-          secondary_pillar: "firearms",
-          price_cents: 59900,
-          duration_minutes: 600,
-          capacity: 8,
-          location_name: "Hill Country Shoothouse",
-          address: "8800 Ranch Rd 12",
-          city: "Wimberley",
-          state: "TX",
-          lat: 30.0044,
-          lng: -98.0972,
-          skill_level: "advanced",
-          starts_at: new Date(now + 21 * day).toISOString(),
-          ends_at: new Date(now + 21 * day + 10 * 3600 * 1000).toISOString(),
-          cover_image_url: cover("photo-1584553421349-3557471bed79"),
-        },
-        {
-          title: "Tactical Combat Casualty Care (TCCC)",
-          description:
-            "Civilian TCCC curriculum: MARCH algorithm, tourniquet application, wound packing, needle decompression. Hands-on with live tissue analogs. Cert on completion.",
-          category: "Medical",
-          primary_pillar: "medical",
-          secondary_pillar: null,
-          price_cents: 29900,
-          duration_minutes: 480,
-          capacity: 16,
-          location_name: "Reed Tactical HQ",
-          address: "12450 Range Rd",
-          city: "Austin",
-          state: "TX",
-          lat: 30.2672,
-          lng: -97.7431,
-          skill_level: "all_levels",
-          starts_at: new Date(now - 21 * day).toISOString(),
-          ends_at: new Date(now - 21 * day + 8 * 3600 * 1000).toISOString(),
-          cover_image_url: cover("photo-1518152006812-edab29b069ac"),
-        },
-      ];
-
-      const insertedCourses: any[] = [];
-      for (const c of courses) {
-        const { data, error } = await admin
-          .from("courses")
-          .insert({
-            instructor_id: instructorId,
-            status: "published",
-            moderation_status: "approved",
-            in_person_waiver: true,
-            gallery_urls: [c.cover_image_url],
-            ...c,
-          })
-          .select()
-          .single();
-        if (error) {
-          console.error("seed_mock_data: course insert failed", error.message);
-          continue;
-        }
-        insertedCourses.push(data);
-      }
-
-      // ---- Student profile ----
-      await admin.from("profiles").upsert(
-        {
-          id: studentId,
-          display_name: "Jake Calloway",
-          photo_url:
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=faces",
-          phone: "+1 (737) 555-0199",
-          state: "TX",
-          service_state: "TX",
-          service_city: "Austin",
-          bio:
-            "EDC carrier and weekend warrior. Training toward instructor-level pistol and a TCCC cert. Looking for real-world reps, not square-range theatre.",
-          payment_method_added: true,
-          subscription_status: "free",
-          onboarding_started_at: new Date(Date.now() - 14 * day).toISOString(),
-          onboarding_completed_at: new Date(Date.now() - 13 * day).toISOString(),
-          subscription_chosen_at: new Date(Date.now() - 13 * day).toISOString(),
-          policy_acknowledged_at: new Date(Date.now() - 13 * day).toISOString(),
-        },
-        { onConflict: "id" },
-      );
-
-      await admin.from("student_onboarding").upsert(
-        {
-          user_id: studentId,
-          experience_level: "intermediate",
-          training_goal: "Build defensive pistol + medical skills for EDC",
-          selected_pillars: ["firearms", "medical", "tactics"],
-          travel_radius_miles: 100,
-          checklist: {
-            profile_created: true,
-            browsed_courses: true,
-            first_booking: true,
-            first_completion: true,
-            followed_instructor: true,
-            shared_profile: true,
-          },
-          checklist_dismissed: true,
-          notif_prompt_shown: true,
-          quiz_completed_at: new Date(Date.now() - 13 * day).toISOString(),
-        },
-        { onConflict: "user_id" },
-      );
-
-      // ---- Bookings + reviews ----
-      // Find the past course (TCCC) and an upcoming one (Pistol Fundamentals)
-      const pastCourse = insertedCourses.find((c) => new Date(c.starts_at).getTime() < now);
-      const upcomingCourse = insertedCourses.find(
-        (c) => new Date(c.starts_at).getTime() > now,
-      );
-
-      if (pastCourse) {
-        const { data: b, error: be } = await admin
-          .from("bookings")
-          .insert({
-            student_id: studentId,
-            course_id: pastCourse.id,
-            status: "attended",
-            attended_at: new Date(
-              new Date(pastCourse.starts_at).getTime() + 6 * 3600 * 1000,
-            ).toISOString(),
-            booked_at: new Date(
-              new Date(pastCourse.starts_at).getTime() - 7 * day,
-            ).toISOString(),
-            course_price_cents: pastCourse.price_cents,
-            online_total_cents: pastCourse.price_cents,
-            platform_fee_cents: 2500,
-            escrow_status: "released",
-            deposit_status: "released",
-          })
-          .select()
-          .single();
-        if (be) console.error("seed: past booking failed", be.message);
-
-        if (b) {
-          await admin.from("reviews").insert({
-            course_id: pastCourse.id,
-            instructor_id: instructorId,
-            student_id: studentId,
-            rating: 5,
-            comment:
-              "Best medical course I've taken outside the military. Marcus runs realistic scenarios under stress and gives feedback that actually sticks. Highly recommend.",
-            instructor_reply:
-              "Appreciate the kind words, Jake. Glad the TQ drills landed — see you in the pistol class.",
-            instructor_reply_at: new Date().toISOString(),
-          });
-        }
-      }
-
-      if (upcomingCourse) {
-        const { error: ube } = await admin.from("bookings").insert({
-          student_id: studentId,
-          course_id: upcomingCourse.id,
-          status: "reserved",
-          course_price_cents: upcomingCourse.price_cents,
-          online_total_cents: upcomingCourse.price_cents,
-          platform_fee_cents: 2500,
-          escrow_status: "held",
-          deposit_status: "held_in_escrow",
-        });
-        if (ube) console.error("seed: upcoming booking failed", ube.message);
-      }
-
+      const result = await seedBackdoorMockData(admin, instr.id, stud.id);
       return json({
         ok: true,
-        instructor_id: instructorId,
-        student_id: studentId,
-        courses_created: insertedCourses.length,
+        instructor_id: instr.id,
+        student_id: stud.id,
+        ...result,
       });
     }
 
