@@ -20,7 +20,7 @@ const OperatorProfile = () => {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const text = `My TacLink Score: ${data?.taclinkScore ?? 0} — ${data?.rankLabel ?? ""}`;
+    const text = `My TacLink Score: ${data?.taclinkScore ?? 0}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: "My Student Profile", text, url });
