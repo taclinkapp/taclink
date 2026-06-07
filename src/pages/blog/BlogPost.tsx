@@ -4,7 +4,8 @@ import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
+import { linkifyMarkdown, splitAtFirstH2 } from "@/lib/articleEnhancers";
 
 type Article = {
   id: string;
@@ -118,9 +119,46 @@ export default function BlogPost() {
             )}
           </header>
 
-          <article className="prose prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-primary prose-h2:mt-12 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl prose-p:leading-relaxed prose-img:mx-auto prose-img:max-h-96 prose-img:w-auto prose-img:rounded-md">
-            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{article.body_markdown}</ReactMarkdown>
-          </article>
+          {(() => {
+            const enhanced = linkifyMarkdown(article.body_markdown);
+            const [intro, rest] = splitAtFirstH2(enhanced);
+            const proseClass =
+              "prose prose-invert max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-primary prose-h2:mt-12 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl prose-p:leading-relaxed prose-img:mx-auto prose-img:max-h-96 prose-img:w-auto prose-img:rounded-md";
+            return (
+              <>
+                <article className={proseClass}>
+                  <ReactMarkdown rehypePlugins={[rehypeRaw]}>{intro}</ReactMarkdown>
+                </article>
+                {rest && (
+                  <aside className="my-10 rounded-lg border border-primary/30 bg-primary/5 p-6">
+                    <div className="flex items-start gap-3">
+                      <ShieldCheck className="mt-1 h-5 w-5 flex-shrink-0 text-primary" />
+                      <div>
+                        <p className="font-display text-lg leading-snug text-foreground">
+                          Train with vetted instructors near you.
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          TacLink connects you with credential-verified firearms,
+                          tactical, and combatives instructors across the U.S.
+                        </p>
+                        <Link
+                          to="/student/discover"
+                          className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+                        >
+                          Find an instructor →
+                        </Link>
+                      </div>
+                    </div>
+                  </aside>
+                )}
+                {rest && (
+                  <article className={proseClass}>
+                    <ReactMarkdown rehypePlugins={[rehypeRaw]}>{rest}</ReactMarkdown>
+                  </article>
+                )}
+              </>
+            );
+          })()}
 
           <div className="mt-16 border-t border-border pt-8">
             <p className="text-muted-foreground">
