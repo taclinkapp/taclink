@@ -658,7 +658,40 @@ export default function AdminSEO() {
                 </div>
               </div>
             )}
-            <div className="mt-4 flex justify-end gap-2">
+              </div>
+            )}
+            {linkSuggestOpen && (
+              <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold flex items-center gap-1">
+                    <LinkIcon className="h-4 w-4" /> AI internal-link suggestions
+                  </p>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setLinkSuggestOpen(false)}>Close</Button>
+                </div>
+                {linkSuggesting && <p className="text-xs text-muted-foreground">Analyzing article & catalog…</p>}
+                {!linkSuggesting && linkSuggestions.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No suggestions. Try adding more body content first.</p>
+                )}
+                <ul className="space-y-2">
+                  {linkSuggestions.map((s, i) => (
+                    <li key={i} className="flex items-start justify-between gap-3 rounded border border-border bg-card p-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm">
+                          Link <span className="font-semibold">"{s.anchor}"</span> →{" "}
+                          <span className="font-mono text-xs text-primary">{s.target_url}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">{s.target_label}</div>
+                        <div className="mt-1 text-[11px] italic text-muted-foreground">{s.reason}</div>
+                      </div>
+                      <Button type="button" size="sm" variant="secondary" onClick={() => applyInternalLink(s)}>
+                        Insert
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div style={{display:'none'}}>
               <Button variant="ghost" onClick={() => setEditingArticle(null)}>Close</Button>
               <Button onClick={saveArticle} disabled={savingArticle}>
                 {savingArticle && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
