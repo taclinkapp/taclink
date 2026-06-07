@@ -69,7 +69,7 @@ async function fetchOperatorProfile(studentId: string): Promise<OperatorProfile>
     pillarTotals: totals,
     pillarLevels,
     taclinkScore,
-    rankLabel: getRankLabel(taclinkScore),
+    
     coursesCompleted: attended.length,
     totalTrainingHours: Math.round(totalTrainingHours * 10) / 10,
     memberSince: profile?.created_at ?? null,
