@@ -378,6 +378,14 @@ export default function AdminBacklinks() {
                       const article = articles.find(a => a.id === b.linked_article_id);
                       return (
                         <TableRow key={b.id}>
+                          <TableCell className="w-10">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(b.id)}
+                              onChange={() => toggleSelect(b.id)}
+                              className="h-4 w-4"
+                            />
+                          </TableCell>
                           <TableCell>
                             <a href={b.source_url} target="_blank" rel="noopener noreferrer"
                               className="text-primary hover:underline inline-flex items-center gap-1 text-sm">
