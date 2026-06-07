@@ -781,7 +781,7 @@ Deno.serve(async (req) => {
       let seeded: { courses_created: number } | null = null;
       if (ids.instructor && ids.student) {
         try {
-          seeded = await seedBackdoorMockData(admin, ids.instructor, ids.student);
+          seeded = await seedBackdoorMockData(admin, ids.instructor, ids.student, userId);
         } catch (e) {
           console.error("ensure_backdoor: auto-seed failed", (e as Error).message);
         }
