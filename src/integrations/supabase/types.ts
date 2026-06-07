@@ -263,6 +263,204 @@ export type Database = {
         }
         Relationships: []
       }
+      backlink_alerts: {
+        Row: {
+          acknowledged: boolean
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          backlink_id: string | null
+          created_at: string
+          id: string
+          message: string | null
+          source_domain: string
+        }
+        Insert: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          backlink_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          source_domain: string
+        }
+        Update: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          backlink_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          source_domain?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backlink_alerts_backlink_id_fkey"
+            columns: ["backlink_id"]
+            isOneToOne: false
+            referencedRelation: "backlinks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backlink_outreach: {
+        Row: {
+          acquired_backlink_id: string | null
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          follow_up_at: string | null
+          id: string
+          linked_article_id: string | null
+          linked_course_id: string | null
+          outreach_type: string
+          pitch_notes: string | null
+          responded_at: string | null
+          status: string
+          target_domain: string
+          target_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          acquired_backlink_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          follow_up_at?: string | null
+          id?: string
+          linked_article_id?: string | null
+          linked_course_id?: string | null
+          outreach_type?: string
+          pitch_notes?: string | null
+          responded_at?: string | null
+          status?: string
+          target_domain: string
+          target_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acquired_backlink_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          follow_up_at?: string | null
+          id?: string
+          linked_article_id?: string | null
+          linked_course_id?: string | null
+          outreach_type?: string
+          pitch_notes?: string | null
+          responded_at?: string | null
+          status?: string
+          target_domain?: string
+          target_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backlink_outreach_linked_article_id_fkey"
+            columns: ["linked_article_id"]
+            isOneToOne: false
+            referencedRelation: "seo_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backlink_outreach_linked_course_id_fkey"
+            columns: ["linked_course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backlinks: {
+        Row: {
+          anchor_text: string | null
+          created_at: string
+          created_by: string | null
+          domain_authority: number | null
+          first_seen_at: string
+          id: string
+          last_checked_at: string | null
+          link_type: string
+          linked_article_id: string | null
+          linked_course_id: string | null
+          notes: string | null
+          outreach_id: string | null
+          source_domain: string
+          source_url: string
+          status: string
+          target_url: string
+          updated_at: string
+        }
+        Insert: {
+          anchor_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_authority?: number | null
+          first_seen_at?: string
+          id?: string
+          last_checked_at?: string | null
+          link_type?: string
+          linked_article_id?: string | null
+          linked_course_id?: string | null
+          notes?: string | null
+          outreach_id?: string | null
+          source_domain: string
+          source_url: string
+          status?: string
+          target_url: string
+          updated_at?: string
+        }
+        Update: {
+          anchor_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_authority?: number | null
+          first_seen_at?: string
+          id?: string
+          last_checked_at?: string | null
+          link_type?: string
+          linked_article_id?: string | null
+          linked_course_id?: string | null
+          notes?: string | null
+          outreach_id?: string | null
+          source_domain?: string
+          source_url?: string
+          status?: string
+          target_url?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backlinks_linked_article_id_fkey"
+            columns: ["linked_article_id"]
+            isOneToOne: false
+            referencedRelation: "seo_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backlinks_linked_course_id_fkey"
+            columns: ["linked_course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backlinks_outreach_id_fkey"
+            columns: ["outreach_id"]
+            isOneToOne: false
+            referencedRelation: "backlink_outreach"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_payment_rails: {
         Row: {
           created_at: string

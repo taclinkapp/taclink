@@ -135,6 +135,7 @@ const AdminSubscriptionPlans = lazy(() => import("./pages/admin/AdminSubscriptio
 const AdminFoundingInstructors = lazy(() => import("./pages/admin/AdminFoundingInstructors"));
 const AdminSEO = lazy(() => import("./pages/admin/AdminSEO"));
 const AdminMedia = lazy(() => import("./pages/admin/AdminMedia"));
+const AdminBacklinks = lazy(() => import("./pages/admin/AdminBacklinks"));
 const BlogIndex = lazy(() => import("./pages/blog/BlogIndex"));
 const BlogPost = lazy(() => import("./pages/blog/BlogPost"));
 
@@ -289,6 +290,7 @@ const App = () => (
               <Route path="founding-instructors" element={<AdminFoundingInstructors />} />
               <Route path="seo" element={<AdminSEO />} />
               <Route path="media" element={<AdminMedia />} />
+              <Route path="backlinks" element={<AdminBacklinks />} />
               <Route path="deposit-review" element={<AdminDepositReview />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
