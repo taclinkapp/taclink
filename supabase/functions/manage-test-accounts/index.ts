@@ -119,11 +119,60 @@ async function provisionAccount(
 // known baseline (instructor profile/courses/credential + student profile/
 // onboarding/bookings/review). Used by `ensure_backdoor` (auto) and the
 // explicit `seed_mock_data` action.
+const MOCK_STUDENT_LABEL = "backdoor mock student";
+const MOCK_STUDENT_EMAIL_PREFIX = "qa+mockstudent-";
+
+const MOCK_STUDENT_NAMES = [
+  "Tyler Hawkins", "Sam Whitfield", "Diego Ramirez", "Jordan Pierce",
+  "Brooke Sullivan", "Aaron Castillo", "Cole Bennett", "Wyatt Nguyen",
+  "Logan McAllister", "Maddie Cross", "Ethan Park", "Ryan Doyle",
+  "Brett Holloway", "Cody Vance", "Sierra Maddox", "Hunter Beaumont",
+  "Carlos Ibarra", "Owen Brennan", "Reese Cavanaugh", "Trent Wilcox",
+];
+
+const MOCK_STUDENT_PHOTOS = [
+  "photo-1500648767791-00dcc994a43e", // man portrait
+  "photo-1531123897727-8f129e1688ce", // woman portrait
+  "photo-1506794778202-cad84cf45f1d", // man portrait
+  "photo-1438761681033-6461ffad8d80", // woman portrait
+  "photo-1492562080023-ab3db95bfbce", // man portrait
+  "photo-1544005313-94ddf0286df2", // woman portrait
+  "photo-1463453091185-61582044d556", // man portrait
+  "photo-1488161628813-04466f872be2", // woman portrait
+  "photo-1507591064344-4c6ce005b128", // man portrait
+  "photo-1517841905240-472988babdf9", // woman portrait
+];
+
+// Seed advertising-quality mock content onto the two backdoor accounts.
+// Idempotent: clears prior content for these two users + previously seeded
+// mock students, then re-creates a known baseline (instructor profile/courses/
+// credential + student profile/onboarding/bookings/review + 20 mock students
+// with bookings — 10 attended this month, 10 reserved/upcoming).
 async function seedBackdoorMockData(
   admin: any,
   instructorId: string,
   studentId: string,
+  adminUserId: string,
 ) {
+  // ---- Clean up previously seeded mock students ----
+  // Their bookings live on courses we're about to delete (cascade), so we
+  // only need to drop the auth users (cascades profiles) + test_accounts rows.
+  const { data: priorMocks } = await admin
+    .from("test_accounts")
+    .select("id, user_id")
+    .eq("label", MOCK_STUDENT_LABEL);
+  if (priorMocks?.length) {
+    const ids = priorMocks.map((r: any) => r.id);
+    await admin.from("test_accounts").delete().in("id", ids);
+    for (const r of priorMocks) {
+      try {
+        await admin.auth.admin.deleteUser(r.user_id);
+      } catch (e) {
+        console.error("seed: deleteUser mock student failed", (e as Error).message);
+      }
+    }
+  }
+
   // Clear prior mock content (cascades to bookings + reviews)
   await admin.from("courses").delete().eq("instructor_id", instructorId);
   await admin.from("instructor_credentials").delete().eq("instructor_id", instructorId);
@@ -133,7 +182,7 @@ async function seedBackdoorMockData(
   await admin.from("profiles").upsert(
     {
       id: instructorId,
-      display_name: "SSG Marcus Reed",
+      display_name: "Marcus Reed",
       photo_url:
         "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop&crop=faces",
       phone: "+1 (512) 555-0142",
@@ -160,7 +209,7 @@ async function seedBackdoorMockData(
   await admin.from("instructor_credentials").insert({
     instructor_id: instructorId,
     credential_type: "military_dd214",
-    display_name: "DD-214 — U.S. Army Ranger, SSG",
+    display_name: "DD-214 — U.S. Army Ranger",
     file_path: "mock/backdoor/dd214.pdf",
     file_mime: "application/pdf",
     status: "approved",
@@ -185,7 +234,7 @@ async function seedBackdoorMockData(
       secondary_pillar: "tactics",
       price_cents: 39900,
       duration_minutes: 480,
-      capacity: 10,
+      capacity: 20,
       location_name: "Reed Tactical Range",
       address: "12450 Range Rd",
       city: "Austin",
@@ -206,7 +255,7 @@ async function seedBackdoorMockData(
       secondary_pillar: "firearms",
       price_cents: 59900,
       duration_minutes: 600,
-      capacity: 8,
+      capacity: 16,
       location_name: "Hill Country Shoothouse",
       address: "8800 Ranch Rd 12",
       city: "Wimberley",
@@ -227,7 +276,7 @@ async function seedBackdoorMockData(
       secondary_pillar: null,
       price_cents: 29900,
       duration_minutes: 480,
-      capacity: 16,
+      capacity: 20,
       location_name: "Reed Tactical HQ",
       address: "12450 Range Rd",
       city: "Austin",
@@ -235,8 +284,8 @@ async function seedBackdoorMockData(
       lat: 30.2672,
       lng: -97.7431,
       skill_level: "all_levels",
-      starts_at: new Date(now - 21 * day).toISOString(),
-      ends_at: new Date(now - 21 * day + 8 * 3600 * 1000).toISOString(),
+      starts_at: new Date(now - 14 * day).toISOString(),
+      ends_at: new Date(now - 14 * day + 8 * 3600 * 1000).toISOString(),
       cover_image_url: cover("photo-1518152006812-edab29b069ac"),
     },
   ];
@@ -262,7 +311,7 @@ async function seedBackdoorMockData(
     insertedCourses.push(data);
   }
 
-  // ---- Student profile ----
+  // ---- Student profile (backdoor student "Jake Calloway") ----
   await admin.from("profiles").upsert(
     {
       id: studentId,
@@ -307,12 +356,12 @@ async function seedBackdoorMockData(
     { onConflict: "user_id" },
   );
 
-  // ---- Bookings + reviews ----
   const pastCourse = insertedCourses.find((c) => new Date(c.starts_at).getTime() < now);
-  const upcomingCourse = insertedCourses.find(
+  const upcomingCourses = insertedCourses.filter(
     (c) => new Date(c.starts_at).getTime() > now,
   );
 
+  // Backdoor student: 1 attended (past) + 1 reserved (upcoming) + review
   if (pastCourse) {
     const { data: b, error: be } = await admin
       .from("bookings")
@@ -351,7 +400,8 @@ async function seedBackdoorMockData(
     }
   }
 
-  if (upcomingCourse) {
+  if (upcomingCourses[0]) {
+    const upcomingCourse = upcomingCourses[0];
     const { error: ube } = await admin.from("bookings").insert({
       student_id: studentId,
       course_id: upcomingCourse.id,
@@ -362,11 +412,137 @@ async function seedBackdoorMockData(
       escrow_status: "held",
       deposit_status: "held_in_escrow",
     });
-    if (ube) console.error("seed: upcoming booking failed", ube.message);
+    if (ube) console.error("seed: upcoming backdoor booking failed", ube.message);
   }
 
-  return { courses_created: insertedCourses.length };
+  // ---- 20 mock students (10 attended this month + 10 active/reserved) ----
+  let mockStudentsCreated = 0;
+  const stamp = Date.now().toString(36);
+  const reviewComments = [
+    "Marcus runs a tight class — zero ego, max reps. Took my draw time down half a second in one weekend.",
+    "Real-world drills, not square-range theatre. Worth every dollar.",
+    "Best money I've spent on training this year. Coming back for the CQB course.",
+    "Patient with new shooters but won't let bad habits slide. Exactly what I needed.",
+    "TCCC content was no-joke — pulled straight from current battlefield medicine.",
+    "Instruction was clear, direct, and safe. Solid coaching on grip and trigger press.",
+    "Felt like getting reps with a buddy who happens to be a Ranger. Highly recommend.",
+  ];
+
+  for (let i = 0; i < MOCK_STUDENT_NAMES.length; i++) {
+    const name = MOCK_STUDENT_NAMES[i];
+    const email = `${MOCK_STUDENT_EMAIL_PREFIX}${stamp}-${i}@taclink.test`;
+    const { data: created, error: cerr } = await admin.auth.admin.createUser({
+      email,
+      password: `Mock!${stamp}${i}A1`,
+      email_confirm: true,
+      user_metadata: {
+        role: "student",
+        display_name: name,
+        is_test_account: true,
+      },
+    });
+    if (cerr || !created.user) {
+      console.error("seed: mock student create failed", cerr?.message);
+      continue;
+    }
+    const mockId = created.user.id;
+
+    await admin.from("test_accounts").insert({
+      user_id: mockId,
+      email,
+      role: "student",
+      label: MOCK_STUDENT_LABEL,
+      created_by: adminUserId,
+    });
+
+    await admin.from("user_roles").upsert(
+      { user_id: mockId, role: "student" },
+      { onConflict: "user_id,role", ignoreDuplicates: true },
+    );
+
+    const photo = MOCK_STUDENT_PHOTOS[i % MOCK_STUDENT_PHOTOS.length];
+    await admin.from("profiles").upsert(
+      {
+        id: mockId,
+        display_name: name,
+        photo_url: `https://images.unsplash.com/${photo}?w=400&h=400&fit=crop&crop=faces`,
+        state: "TX",
+        service_state: "TX",
+        service_city: "Austin",
+        subscription_status: "free",
+        onboarding_started_at: new Date(now - (20 - i) * day).toISOString(),
+        onboarding_completed_at: new Date(now - (20 - i) * day + 3600000).toISOString(),
+        policy_acknowledged_at: new Date(now - (20 - i) * day + 3600000).toISOString(),
+      },
+      { onConflict: "id" },
+    );
+
+    const isAttended = i < 10; // first 10 = attended this month, last 10 = active/reserved
+    const course = isAttended
+      ? (pastCourse ?? insertedCourses[0])
+      : upcomingCourses[i % Math.max(upcomingCourses.length, 1)] ?? insertedCourses[0];
+    if (!course) continue;
+
+    if (isAttended) {
+      // Attended within the last ~28 days (this month)
+      const bookedAt = new Date(now - (25 - i) * day);
+      const attendedAt = new Date(now - (14 - i) * day);
+      const { error: be } = await admin.from("bookings").insert({
+        student_id: mockId,
+        course_id: course.id,
+        status: "attended",
+        booked_at: bookedAt.toISOString(),
+        attended_at: attendedAt.toISOString(),
+        course_price_cents: course.price_cents,
+        online_total_cents: course.price_cents,
+        platform_fee_cents: 2500,
+        escrow_status: "released",
+        deposit_status: "released",
+      });
+      if (be) {
+        console.error("seed: mock attended booking failed", be.message);
+        continue;
+      }
+
+      // ~70% of attended students leave a review
+      if (i % 10 < 7) {
+        await admin.from("reviews").insert({
+          course_id: course.id,
+          instructor_id: instructorId,
+          student_id: mockId,
+          rating: i % 7 === 0 ? 4 : 5,
+          comment: reviewComments[i % reviewComments.length],
+        });
+      }
+    } else {
+      // Reserved for upcoming course this month
+      const bookedAt = new Date(now - (i - 9) * day);
+      const { error: be } = await admin.from("bookings").insert({
+        student_id: mockId,
+        course_id: course.id,
+        status: "reserved",
+        booked_at: bookedAt.toISOString(),
+        course_price_cents: course.price_cents,
+        online_total_cents: course.price_cents,
+        platform_fee_cents: 2500,
+        escrow_status: "held",
+        deposit_status: "held_in_escrow",
+      });
+      if (be) {
+        console.error("seed: mock reserved booking failed", be.message);
+        continue;
+      }
+    }
+
+    mockStudentsCreated++;
+  }
+
+  return {
+    courses_created: insertedCourses.length,
+    mock_students_created: mockStudentsCreated,
+  };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
