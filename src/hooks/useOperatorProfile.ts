@@ -16,7 +16,6 @@ export type OperatorProfile = {
   pillarTotals: PillarTotals;
   pillarLevels: Record<PillarId, LevelInfo>;
   taclinkScore: number;
-  rankLabel: string;
   coursesCompleted: number;
   totalTrainingHours: number;
   memberSince: string | null;
