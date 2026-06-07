@@ -84,9 +84,73 @@ function render(entries: Entry[]) {
   ].join("\n");
 }
 
+const US_STATE_SLUGS = [
+  "alabama","alaska","arizona","arkansas","california","colorado","connecticut","delaware",
+  "florida","georgia","hawaii","idaho","illinois","indiana","iowa","kansas","kentucky",
+  "louisiana","maine","maryland","massachusetts","michigan","minnesota","mississippi",
+  "missouri","montana","nebraska","nevada","new-hampshire","new-jersey","new-mexico",
+  "new-york","north-carolina","north-dakota","ohio","oklahoma","oregon","pennsylvania",
+  "rhode-island","south-carolina","south-dakota","tennessee","texas","utah","vermont",
+  "virginia","washington","west-virginia","wisconsin","wyoming","district-of-columbia",
+];
+
+const DISCIPLINE_SLUGS = [
+  "pistol","rifle","shotgun","multi-platform","concealed-carry-and-legal","combatives",
+  "tactical","medical","security-and-ep","law-enforcement","hunting-and-field",
+  "youth-and-family","specialty","other",
+];
+
+const stateEntries: Entry[] = US_STATE_SLUGS.map((slug) => ({
+  path: `/train/${slug}`,
+  changefreq: "weekly",
+  priority: "0.7",
+}));
+
+const disciplineEntries: Entry[] = DISCIPLINE_SLUGS.map((slug) => ({
+  path: `/discipline/${slug}`,
+  changefreq: "weekly",
+  priority: "0.7",
+}));
+
+async function fetchInstructorIds(): Promise<Entry[]> {
+  try {
+    // Distinct instructor_ids from published courses
+    const url = `${SUPABASE_URL}/rest/v1/courses?status=eq.published&select=instructor_id&limit=1000`;
+    const res = await fetch(url, {
+      headers: { apikey: PUBLISHABLE_KEY, Authorization: `Bearer ${PUBLISHABLE_KEY}` },
+    });
+    if (!res.ok) {
+      console.warn(`[sitemap] failed to fetch instructor ids (${res.status}); skipping`);
+      return [];
+    }
+    const rows: Array<{ instructor_id: string }> = await res.json();
+    const ids = Array.from(new Set(rows.map((r) => r.instructor_id).filter(Boolean)));
+    return ids.map((id) => ({
+      path: `/instructors/${id}`,
+      changefreq: "weekly" as const,
+      priority: "0.6",
+    }));
+  } catch (e) {
+    console.warn("[sitemap] error fetching instructor ids:", e);
+    return [];
+  }
+}
+
 (async () => {
-  const articleEntries = await fetchArticles();
-  const all = [...staticEntries, ...articleEntries];
+  const [articleEntries, instructorEntries] = await Promise.all([
+    fetchArticles(),
+    fetchInstructorIds(),
+  ]);
+  const all = [
+    ...staticEntries,
+    ...stateEntries,
+    ...disciplineEntries,
+    ...articleEntries,
+    ...instructorEntries,
+  ];
   writeFileSync(resolve("public/sitemap.xml"), render(all));
-  console.log(`sitemap.xml written (${all.length} entries; ${articleEntries.length} articles)`);
+  console.log(
+    `sitemap.xml written (${all.length} entries; ${stateEntries.length} states, ${disciplineEntries.length} disciplines, ${articleEntries.length} articles, ${instructorEntries.length} instructors)`,
+  );
 })();
+
