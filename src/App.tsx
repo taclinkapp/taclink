@@ -158,6 +158,20 @@ const RouteFallback = () => (
   </div>
 );
 
+const GtagTracker = () => {
+  const location = useLocation();
+  useEffect(() => {
+    if (typeof window !== "undefined" && "gtag" in window) {
+      (window as any).gtag("event", "page_view", {
+        page_path: location.pathname + location.search,
+        page_location: window.location.href,
+        page_title: document.title,
+      });
+    }
+  }, [location]);
+  return null;
+};
+
 const Student = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute requireRole="student">{children}</ProtectedRoute>
 );
