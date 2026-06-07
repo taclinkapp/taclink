@@ -52,6 +52,14 @@ export default function Faq() {
       acceptedAnswer: { "@type": "Answer", text: a },
     })),
   };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://taclink.app/" },
+      { "@type": "ListItem", position: 2, name: "FAQ", item: "https://taclink.app/faq" },
+    ],
+  };
 
   return (
     <>
@@ -70,6 +78,7 @@ export default function Faq() {
         <meta property="og:url" content="https://taclink.app/faq" />
         <meta property="og:type" content="website" />
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
       </Helmet>
 
       <main className="min-h-screen bg-background text-foreground">

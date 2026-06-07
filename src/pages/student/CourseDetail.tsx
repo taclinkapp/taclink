@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 import { useCourse } from '@/hooks/useCourses';
 import { MobileShell, PageHeader } from '@/components/MobileShell';
@@ -64,9 +65,46 @@ const CourseDetail = () => {
   }
 
   const isFull = course.spotsRemaining === 0;
+  const courseUrl = `https://taclink.app/student/course/${course.id}`;
+  const metaDesc = (course.description || '').slice(0, 155);
+  const courseSchema = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: course.title,
+    description: course.description,
+    provider: { "@type": "Organization", name: "TacLink", sameAs: "https://taclink.app" },
+    url: courseUrl,
+    image: course.heroImage || undefined,
+    instructor: { "@type": "Person", name: course.instructorName },
+    locationCreated: { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: course.city, addressRegion: course.state, addressCountry: "US" } },
+    offers: {
+      "@type": "Offer",
+      price: String(course.bookingFee ?? 0),
+      priceCurrency: "USD",
+      availability: isFull ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+      url: courseUrl,
+    },
+    hasCourseInstance: {
+      "@type": "CourseInstance",
+      courseMode: "InPerson",
+      startDate: course.date,
+      location: { "@type": "Place", name: `${course.city}, ${course.state}`, address: { "@type": "PostalAddress", addressLocality: course.city, addressRegion: course.state, addressCountry: "US" } },
+    },
+  };
 
   return (
     <MobileShell withTabBar={false}>
+      <Helmet>
+        <title>{`${course.title} — ${course.city}, ${course.state} | TacLink`}</title>
+        <meta name="description" content={metaDesc} />
+        <link rel="canonical" href={courseUrl} />
+        <meta property="og:title" content={course.title} />
+        <meta property="og:description" content={metaDesc} />
+        <meta property="og:url" content={courseUrl} />
+        <meta property="og:type" content="product" />
+        {course.heroImage && <meta property="og:image" content={course.heroImage} />}
+        <script type="application/ld+json">{JSON.stringify(courseSchema)}</script>
+      </Helmet>
       <div className="pb-28">
         <PageHeader back backTo="/student" />
         {/* Hero */}

@@ -29,6 +29,22 @@ export default function BlogIndex() {
       });
   }, []);
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://taclink.app/" },
+      { "@type": "ListItem", position: 2, name: "Blog", item: "https://taclink.app/blog" },
+    ],
+  };
+  const blogJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: "The TacLink Journal",
+    url: "https://taclink.app/blog",
+    publisher: { "@type": "Organization", name: "TacLink" },
+  };
+
   return (
     <>
       <Helmet>
@@ -42,6 +58,8 @@ export default function BlogIndex() {
         <meta property="og:description" content="Practical guides on tactical training and instruction." />
         <meta property="og:url" content="https://taclink.app/blog" />
         <meta property="og:type" content="website" />
+        <script type="application/ld+json">{JSON.stringify(blogJsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
       </Helmet>
 
       <main className="min-h-screen bg-background text-foreground">
