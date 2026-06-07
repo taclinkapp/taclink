@@ -197,6 +197,30 @@ export default function AdminTestAccounts() {
     setTimeout(() => setCopiedId(null), 1500);
   };
 
+  const ensureBackdoor = async () => {
+    setBackdoorBusy(true);
+    const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
+      body: { action: "ensure_backdoor" },
+    });
+    setBackdoorBusy(false);
+    if (error || data?.error) {
+      toast.error(error?.message ?? data?.error ?? "Failed to create backdoor accounts");
+      return;
+    }
+    setBackdoor(data.backdoor ?? []);
+    toast.success("Backdoor accounts ready");
+    await load();
+  };
+
+  const copyBackdoor = async (b: { email: string; password: string }) => {
+    await navigator.clipboard.writeText(`${b.email} / ${b.password}`);
+    setBackdoorCopied(b.email);
+    toast.success("Copied");
+    setTimeout(() => setBackdoorCopied(null), 1500);
+  };
+
+
+
   const filtered = accounts.filter((a) => a.role === tab);
   const cap = limits?.per_role_per_day ?? 10;
   const usedInstructor = limits?.today.instructor ?? 0;
