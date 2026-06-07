@@ -71,6 +71,7 @@ export default function AdminTestAccounts() {
   const [backdoorBusy, setBackdoorBusy] = useState(false);
   const [backdoorCopied, setBackdoorCopied] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [signingInAs, setSigningInAs] = useState<null | "instructor" | "student">(null);
   const [generated, setGenerated] = useState<GeneratedCreds[]>(() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
