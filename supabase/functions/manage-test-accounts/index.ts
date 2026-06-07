@@ -20,7 +20,25 @@ type Action =
   | { action: "list" }
   | { action: "create"; role: "instructor" | "student"; label?: string }
   | { action: "delete"; id: string }
-  | { action: "rotate" };
+  | { action: "rotate" }
+  | { action: "ensure_backdoor" };
+
+// Fixed-credential backdoor accounts: persistent test users that bypass
+// onboarding (subscription, credential upload, policy ack) so an admin can
+// log straight in as either role for QA / screenshots / demos.
+const BACKDOOR_PASSWORD = "BackDoor!Taclink2026";
+const BACKDOOR = {
+  instructor: {
+    email: "backdoor.instructor@taclink.test",
+    display_name: "Backdoor Instructor",
+    label: "Backdoor — full instructor access",
+  },
+  student: {
+    email: "backdoor.student@taclink.test",
+    display_name: "Backdoor Student",
+    label: "Backdoor — full student access",
+  },
+} as const;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
