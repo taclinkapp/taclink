@@ -246,6 +246,11 @@ export default function AdminBacklinks() {
             <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? 'Syncing…' : 'Sync from Semrush'}
           </Button>
+          {selectedIds.size > 0 && (
+            <Button variant="secondary" onClick={bulkDisavow}>
+              <Shield className="h-4 w-4 mr-2" /> Disavow {selectedIds.size}
+            </Button>
+          )}
           <NewOutreachDialog
             open={outreachOpen} setOpen={setOutreachOpen}
             courses={courses} articles={articles} onSaved={load}
