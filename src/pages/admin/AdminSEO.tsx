@@ -658,8 +658,6 @@ export default function AdminSEO() {
                 </div>
               </div>
             )}
-              </div>
-            )}
             {linkSuggestOpen && (
               <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
                 <div className="mb-2 flex items-center justify-between">
@@ -691,7 +689,7 @@ export default function AdminSEO() {
                 </ul>
               </div>
             )}
-            <div style={{display:'none'}}>
+            <div className="mt-4 flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setEditingArticle(null)}>Close</Button>
               <Button onClick={saveArticle} disabled={savingArticle}>
                 {savingArticle && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
