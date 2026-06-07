@@ -11,7 +11,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Bell, ExternalLink, Link2, Megaphone, Plus, TrendingUp, Trash2, Check } from 'lucide-react';
+import { Bell, ExternalLink, Link2, Megaphone, Plus, TrendingUp, Trash2, Check, RefreshCw } from 'lucide-react';
 
 type Backlink = {
   id: string;
@@ -85,6 +85,25 @@ export default function AdminBacklinks() {
   const [loading, setLoading] = useState(true);
   const [backlinkOpen, setBacklinkOpen] = useState(false);
   const [outreachOpen, setOutreachOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncSemrush = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('seo-backlinks-sync', {
+        body: { target: 'taclink.app', limit: 200 },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const d = data as { fetched: number; inserted: number; updated: number };
+      toast.success(`Synced ${d.fetched} links · ${d.inserted} new · ${d.updated} updated`);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Semrush sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -196,7 +215,11 @@ export default function AdminBacklinks() {
           </h1>
           <p className="text-sm text-muted-foreground">Outreach, acquired links, and referring-domain monitoring</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={syncSemrush} disabled={syncing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing…' : 'Sync from Semrush'}
+          </Button>
           <NewOutreachDialog
             open={outreachOpen} setOpen={setOutreachOpen}
             courses={courses} articles={articles} onSaved={load}
