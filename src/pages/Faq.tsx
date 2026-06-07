@@ -78,6 +78,7 @@ export default function Faq() {
         <meta property="og:url" content="https://taclink.app/faq" />
         <meta property="og:type" content="website" />
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
       </Helmet>
 
       <main className="min-h-screen bg-background text-foreground">
