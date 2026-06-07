@@ -52,6 +52,14 @@ export default function Faq() {
       acceptedAnswer: { "@type": "Answer", text: a },
     })),
   };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://taclink.app/" },
+      { "@type": "ListItem", position: 2, name: "FAQ", item: "https://taclink.app/faq" },
+    ],
+  };
 
   return (
     <>
