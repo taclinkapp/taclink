@@ -11,7 +11,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Bell, ExternalLink, Link2, Megaphone, Plus, TrendingUp, Trash2, Check, RefreshCw } from 'lucide-react';
+import { Bell, ExternalLink, Link2, Megaphone, Plus, TrendingUp, Trash2, Check, RefreshCw, Shield } from 'lucide-react';
 
 type Backlink = {
   id: string;
