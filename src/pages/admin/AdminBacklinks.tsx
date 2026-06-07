@@ -354,6 +354,14 @@ export default function AdminBacklinks() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <input
+                          type="checkbox"
+                          checked={backlinks.length > 0 && selectedIds.size === backlinks.length}
+                          onChange={selectAll}
+                          className="h-4 w-4"
+                        />
+                      </TableHead>
                       <TableHead>Source</TableHead>
                       <TableHead>Anchor</TableHead>
                       <TableHead>Target</TableHead>
