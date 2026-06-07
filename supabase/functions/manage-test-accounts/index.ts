@@ -265,7 +265,7 @@ async function seedBackdoorMockData(
       skill_level: "advanced",
       starts_at: new Date(now + 21 * day).toISOString(),
       ends_at: new Date(now + 21 * day + 10 * 3600 * 1000).toISOString(),
-      cover_image_url: cover("photo-1584553421349-3557471bed79"),
+      cover_image_url: "/__l5e/assets-v1/dd1acf4a-3b71-4729-b6a1-8f7a707f5059/full-moon-night.jpg",
     },
     {
       title: "Tactical Combat Casualty Care (TCCC)",
