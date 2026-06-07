@@ -643,6 +643,13 @@ export default function AdminSEO() {
                     </Button>
                     <input ref={uploadInputRef} type="file" accept={ACCEPTED_ARTICLE_MEDIA.join(",")} hidden
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaAndInsert(f); }} />
+                    <span className="mx-1 h-5 w-px bg-border" />
+                    <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2"
+                      title="AI suggests internal links to your courses & landing pages"
+                      onClick={fetchInternalLinks} disabled={linkSuggesting}>
+                      {linkSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                      AI internal links
+                    </Button>
                     <span className="ml-auto pr-1 text-[10px] text-muted-foreground">Headers use H2/H3 for SEO · GIFs insert at cursor</span>
                   </div>
                   <Textarea ref={bodyRef} value={editingArticle.body_markdown} rows={20}
