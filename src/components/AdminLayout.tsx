@@ -62,6 +62,7 @@ const items: Item[] = [
   { to: '/admin/founding-instructors', icon: Crown, label: 'Founding Instructors' },
   { to: '/admin/seo', icon: Lightbulb, label: 'SEO Content Engine' },
   { to: '/admin/media', icon: ImageIcon, label: 'Media Library' },
+  { to: '/admin/backlinks', icon: Link2, label: 'Backlinks' },
   { to: '/auth/change-password', icon: KeyRound, label: 'Change Password' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
