@@ -1,4 +1,5 @@
-// Generates public/sitemap.xml from static routes + published blog articles.
+// Generates public/sitemap.xml from static routes + published blog articles
+// + SEO landing pages (US states, disciplines, instructor profiles).
 // Runs before `vite dev` and `vite build` via predev/prebuild npm hooks.
 
 import { writeFileSync } from "fs";
