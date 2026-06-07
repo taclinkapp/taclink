@@ -120,7 +120,7 @@ async function provisionAccount(
 // onboarding/bookings/review). Used by `ensure_backdoor` (auto) and the
 // explicit `seed_mock_data` action.
 async function seedBackdoorMockData(
-  admin: ReturnType<typeof createClient>,
+  admin: any,
   instructorId: string,
   studentId: string,
 ) {
