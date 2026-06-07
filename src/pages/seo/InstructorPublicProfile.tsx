@@ -67,7 +67,7 @@ export default function InstructorPublicProfile() {
       </Helmet>
 
       <header className="px-4 pt-8 pb-4 max-w-5xl mx-auto">
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Instructors" }, { label: name }]} />
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Instructors" }, { label: name }]} />
         {loadingProfile ? (
           <div className="grid place-items-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
         ) : (

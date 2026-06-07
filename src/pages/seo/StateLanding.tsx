@@ -55,7 +55,7 @@ export default function StateLanding() {
       </Helmet>
 
       <header className="px-4 pt-8 pb-4 max-w-5xl mx-auto">
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Train" }, { label: state.name }]} />
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Train" }, { label: state.name }]} />
         <h1 className="font-stencil text-3xl md:text-4xl uppercase tracking-wider mt-3">
           Firearms & Tactical Training in {state.name}
         </h1>

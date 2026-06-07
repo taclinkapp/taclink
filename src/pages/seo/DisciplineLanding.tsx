@@ -46,7 +46,7 @@ export default function DisciplineLanding() {
       </Helmet>
 
       <header className="px-4 pt-8 pb-4 max-w-5xl mx-auto">
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Disciplines" }, { label: cat.label }]} />
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Disciplines" }, { label: cat.label }]} />
         <h1 className="font-stencil text-3xl md:text-4xl uppercase tracking-wider mt-3">{cat.label}</h1>
         <p className="mt-3 text-muted-foreground max-w-2xl">
           Find vetted {cat.label.toLowerCase()} instructors and book training directly. Course types include {cat.types.slice(0, 5).join(", ")}{cat.types.length > 5 ? ", and more." : "."}
