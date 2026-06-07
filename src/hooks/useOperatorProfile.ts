@@ -5,7 +5,6 @@ import {
   PillarId,
   computeTaclinkScore,
   getLevelInfo,
-  getRankLabel,
   PILLAR_BY_ID,
   LevelInfo,
 } from "@/lib/pillars";
@@ -17,7 +16,6 @@ export type OperatorProfile = {
   pillarTotals: PillarTotals;
   pillarLevels: Record<PillarId, LevelInfo>;
   taclinkScore: number;
-  rankLabel: string;
   coursesCompleted: number;
   totalTrainingHours: number;
   memberSince: string | null;
@@ -71,7 +69,7 @@ async function fetchOperatorProfile(studentId: string): Promise<OperatorProfile>
     pillarTotals: totals,
     pillarLevels,
     taclinkScore,
-    rankLabel: getRankLabel(taclinkScore),
+    
     coursesCompleted: attended.length,
     totalTrainingHours: Math.round(totalTrainingHours * 10) / 10,
     memberSince: profile?.created_at ?? null,
