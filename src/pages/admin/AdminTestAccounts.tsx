@@ -350,9 +350,33 @@ export default function AdminTestAccounts() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <Button
-                onClick={ensureBackdoor}
-                disabled={backdoorBusy}
+                onClick={() => signInAsBackdoor("instructor")}
+                disabled={signingInAs !== null || backdoorBusy}
                 className="bg-primary text-primary-foreground"
+              >
+                {signingInAs === "instructor" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4" />
+                )}
+                Sign in as Instructor
+              </Button>
+              <Button
+                onClick={() => signInAsBackdoor("student")}
+                disabled={signingInAs !== null || backdoorBusy}
+                variant="secondary"
+              >
+                {signingInAs === "student" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <GraduationCap className="h-4 w-4" />
+                )}
+                Sign in as Student
+              </Button>
+              <Button
+                onClick={ensureBackdoor}
+                disabled={backdoorBusy || signingInAs !== null}
+                variant="outline"
               >
                 {backdoorBusy ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -364,16 +388,17 @@ export default function AdminTestAccounts() {
               <Button
                 onClick={seedMockData}
                 disabled={seeding}
-                variant="secondary"
+                variant="ghost"
               >
                 {seeding ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Sparkles className="h-4 w-4" />
                 )}
-                Seed mock data (for ads)
+                Re-seed mock data
               </Button>
             </div>
+
           </div>
 
           <p className="text-[11px] text-muted-foreground -mt-1">
