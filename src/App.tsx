@@ -290,6 +290,7 @@ const App = () => (
               <Route path="founding-instructors" element={<AdminFoundingInstructors />} />
               <Route path="seo" element={<AdminSEO />} />
               <Route path="media" element={<AdminMedia />} />
+              <Route path="backlinks" element={<AdminBacklinks />} />
               <Route path="deposit-review" element={<AdminDepositReview />} />
               <Route path="settings" element={<AdminPlatformSettings />} />
             </Route>
