@@ -21,7 +21,8 @@ type Action =
   | { action: "create"; role: "instructor" | "student"; label?: string }
   | { action: "delete"; id: string }
   | { action: "rotate" }
-  | { action: "ensure_backdoor" };
+  | { action: "ensure_backdoor" }
+  | { action: "seed_mock_data" };
 
 // Fixed-credential backdoor accounts: persistent test users that bypass
 // onboarding (subscription, credential upload, policy ack) so an admin can
