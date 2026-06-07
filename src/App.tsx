@@ -138,6 +138,7 @@ const AdminMedia = lazy(() => import("./pages/admin/AdminMedia"));
 const AdminBacklinks = lazy(() => import("./pages/admin/AdminBacklinks"));
 const BlogIndex = lazy(() => import("./pages/blog/BlogIndex"));
 const BlogPost = lazy(() => import("./pages/blog/BlogPost"));
+const Faq = lazy(() => import("./pages/Faq"));
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
 import { InstallAppBanner } from "./components/InstallAppBanner";
@@ -309,6 +310,7 @@ const App = () => (
             {/* Public blog (SEO) */}
             <Route path="/blog" element={<BlogIndex />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/faq" element={<Faq />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
