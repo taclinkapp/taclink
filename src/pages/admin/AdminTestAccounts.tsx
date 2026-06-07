@@ -220,6 +220,27 @@ export default function AdminTestAccounts() {
     setTimeout(() => setBackdoorCopied(null), 1500);
   };
 
+  const seedMockData = async () => {
+    if (
+      !confirm(
+        "Seed mock data into the two backdoor accounts? This deletes any existing courses, bookings, reviews, XP and credentials on those accounts, then re-creates a polished baseline (instructor profile, 3 courses, credential, student bookings + reviews) for screenshots / advertising.",
+      )
+    )
+      return;
+    setSeeding(true);
+    const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
+      body: { action: "seed_mock_data" },
+    });
+    setSeeding(false);
+    if (error || data?.error) {
+      toast.error(error?.message ?? data?.error ?? "Seed failed");
+      return;
+    }
+    toast.success(
+      `Mock data seeded — ${data.courses_created ?? 0} courses, profiles + reviews ready`,
+    );
+  };
+
 
 
   const filtered = accounts.filter((a) => a.role === tab);
