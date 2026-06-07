@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PILLAR_BY_ID, PillarId, getLevelInfo, computeTaclinkScore, getRankLabel, PILLARS } from "@/lib/pillars";
+import { PILLAR_BY_ID, PillarId, getLevelInfo, computeTaclinkScore, PILLARS } from "@/lib/pillars";
 import { Trophy, ArrowUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -233,9 +233,6 @@ export const MissionCompleteWatcher = () => {
               <span className="font-stencil text-3xl font-bold text-primary">
                 {afterScore}
               </span>
-            </div>
-            <div className="mt-1 text-[11px] font-bold uppercase tracking-wider text-primary">
-              {getRankLabel(afterScore)}
             </div>
           </div>
 

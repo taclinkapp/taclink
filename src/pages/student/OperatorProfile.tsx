@@ -20,7 +20,7 @@ const OperatorProfile = () => {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const text = `My TacLink Score: ${data?.taclinkScore ?? 0} — ${data?.rankLabel ?? ""}`;
+    const text = `My TacLink Score: ${data?.taclinkScore ?? 0}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: "My Student Profile", text, url });
@@ -78,10 +78,8 @@ const OperatorProfile = () => {
               <div className="font-stencil text-6xl font-bold text-primary leading-none mt-1">
                 {data?.taclinkScore ?? 0}
               </div>
-              <div className="mt-2 inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-sm bg-primary/15 text-primary border border-primary/30">
-                {data?.rankLabel ?? "Civilian"}
-              </div>
             </div>
+
 
             <Button
               variant="outline"
