@@ -86,6 +86,32 @@ export default function AdminBacklinks() {
   const [backlinkOpen, setBacklinkOpen] = useState(false);
   const [outreachOpen, setOutreachOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const selectAll = () => {
+    if (selectedIds.size === backlinks.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(backlinks.map(b => b.id)));
+  };
+
+  const bulkDisavow = async () => {
+    if (!selectedIds.size) return;
+    if (!confirm(`Mark ${selectedIds.size} selected backlink(s) as disavowed?`)) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase.from('backlinks').update({ status: 'disavowed' }).in('id', ids);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`${ids.length} backlink(s) disavowed`);
+      setSelectedIds(new Set());
+      load();
+    }
+  };
 
   const syncSemrush = async () => {
     setSyncing(true);
