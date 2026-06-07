@@ -71,6 +71,7 @@ export default function AdminTestAccounts() {
   const [backdoorBusy, setBackdoorBusy] = useState(false);
   const [backdoorCopied, setBackdoorCopied] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [signingInAs, setSigningInAs] = useState<null | "instructor" | "student">(null);
   const [generated, setGenerated] = useState<GeneratedCreds[]>(() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -240,6 +241,52 @@ export default function AdminTestAccounts() {
       `Mock data seeded — ${data.courses_created ?? 0} courses, profiles + reviews ready`,
     );
   };
+  const signInAsBackdoor = async (role: "instructor" | "student") => {
+    if (
+      !confirm(
+        `Sign in as the backdoor ${role}? You will be signed out of your admin session and dropped directly into the ${role} app with mock data.`,
+      )
+    )
+      return;
+    setSigningInAs(role);
+    try {
+      // Ensure backdoor accounts exist + mock data is seeded, and get fresh credentials.
+      const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
+        body: { action: "ensure_backdoor" },
+      });
+      if (error || data?.error) {
+        toast.error(error?.message ?? data?.error ?? "Failed to prepare backdoor");
+        setSigningInAs(null);
+        return;
+      }
+      const creds = (data.backdoor ?? []).find(
+        (b: { role: string }) => b.role === role,
+      ) as { email: string; password: string } | undefined;
+      if (!creds) {
+        toast.error(`No backdoor ${role} credentials returned`);
+        setSigningInAs(null);
+        return;
+      }
+      // Drop the admin session and sign in as the backdoor account.
+      await supabase.auth.signOut();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: creds.email,
+        password: creds.password,
+      });
+      if (signInError) {
+        toast.error(signInError.message);
+        setSigningInAs(null);
+        return;
+      }
+      toast.success(`Signed in as backdoor ${role}`);
+      // Full reload to ensure all role-gated providers re-initialize cleanly.
+      window.location.href = role === "instructor" ? "/instructor" : "/student";
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sign-in failed");
+      setSigningInAs(null);
+    }
+  };
+
 
 
 
@@ -303,9 +350,33 @@ export default function AdminTestAccounts() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <Button
-                onClick={ensureBackdoor}
-                disabled={backdoorBusy}
+                onClick={() => signInAsBackdoor("instructor")}
+                disabled={signingInAs !== null || backdoorBusy}
                 className="bg-primary text-primary-foreground"
+              >
+                {signingInAs === "instructor" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4" />
+                )}
+                Sign in as Instructor
+              </Button>
+              <Button
+                onClick={() => signInAsBackdoor("student")}
+                disabled={signingInAs !== null || backdoorBusy}
+                variant="secondary"
+              >
+                {signingInAs === "student" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <GraduationCap className="h-4 w-4" />
+                )}
+                Sign in as Student
+              </Button>
+              <Button
+                onClick={ensureBackdoor}
+                disabled={backdoorBusy || signingInAs !== null}
+                variant="outline"
               >
                 {backdoorBusy ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -317,16 +388,17 @@ export default function AdminTestAccounts() {
               <Button
                 onClick={seedMockData}
                 disabled={seeding}
-                variant="secondary"
+                variant="ghost"
               >
                 {seeding ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Sparkles className="h-4 w-4" />
                 )}
-                Seed mock data (for ads)
+                Re-seed mock data
               </Button>
             </div>
+
           </div>
 
           <p className="text-[11px] text-muted-foreground -mt-1">
