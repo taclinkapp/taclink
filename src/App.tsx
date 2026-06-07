@@ -197,7 +197,8 @@ const App = () => (
       >
         <AuthProvider>
           <NavHistoryProvider>
-          <MaintenanceBanner />
+            <GtagTracker />
+            <MaintenanceBanner />
           <LaunchLiveNotifier />
           <Suspense fallback={<RouteFallback />}>
           <Routes>
