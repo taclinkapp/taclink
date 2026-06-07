@@ -139,6 +139,9 @@ const AdminBacklinks = lazy(() => import("./pages/admin/AdminBacklinks"));
 const BlogIndex = lazy(() => import("./pages/blog/BlogIndex"));
 const BlogPost = lazy(() => import("./pages/blog/BlogPost"));
 const Faq = lazy(() => import("./pages/Faq"));
+const StateLanding = lazy(() => import("./pages/seo/StateLanding"));
+const DisciplineLanding = lazy(() => import("./pages/seo/DisciplineLanding"));
+const InstructorPublicProfile = lazy(() => import("./pages/seo/InstructorPublicProfile"));
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
 import { InstallAppBanner } from "./components/InstallAppBanner";
@@ -311,6 +314,9 @@ const App = () => (
             <Route path="/blog" element={<BlogIndex />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/faq" element={<Faq />} />
+            <Route path="/train/:state" element={<StateLanding />} />
+            <Route path="/discipline/:discipline" element={<DisciplineLanding />} />
+            <Route path="/instructors/:id" element={<InstructorPublicProfile />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
