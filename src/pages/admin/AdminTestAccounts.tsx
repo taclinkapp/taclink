@@ -263,6 +263,78 @@ export default function AdminTestAccounts() {
           </div>
         </div>
 
+        {/* Backdoor accounts — fixed credentials, fully onboarded, persistent */}
+        <div className="tactical-card p-4 sm:p-5 space-y-3 border-primary/60">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-xs uppercase tracking-wider font-bold text-primary flex items-center gap-2">
+                <KeyRound className="h-3.5 w-3.5" />
+                Backdoor accounts (fixed credentials)
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Two persistent accounts — one instructor, one student — with the
+                same email/password every time. They skip onboarding (subscription,
+                credential upload, policy ack) and drop you straight into the role.
+                Click <strong>Create / reset backdoor</strong> to provision or rotate
+                the password back to the known value.
+              </p>
+            </div>
+            <Button
+              onClick={ensureBackdoor}
+              disabled={backdoorBusy}
+              className="bg-primary text-primary-foreground"
+            >
+              {backdoorBusy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <KeyRound className="h-4 w-4" />
+              )}
+              Create / reset backdoor
+            </Button>
+          </div>
+
+          {backdoor && backdoor.length > 0 && (
+            <div className="overflow-x-auto rounded border border-border">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-bold">Role</th>
+                    <th className="text-left px-3 py-2 font-bold">Email</th>
+                    <th className="text-left px-3 py-2 font-bold">Password</th>
+                    <th className="px-3 py-2 font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {backdoor.map((b) => (
+                    <tr key={b.email} className="hover:bg-muted/30">
+                      <td className="px-3 py-2 capitalize text-xs">{b.role}</td>
+                      <td className="px-3 py-2 font-mono text-xs">{b.email}</td>
+                      <td className="px-3 py-2 font-mono text-xs">{b.password}</td>
+                      <td className="px-3 py-2 text-right whitespace-nowrap">
+                        <Button size="sm" variant="outline" onClick={() => copyBackdoor(b)}>
+                          {backdoorCopied === b.email ? (
+                            <Check className="h-3.5 w-3.5" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                          Copy
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {!backdoor && (
+            <p className="text-xs text-muted-foreground">
+              No credentials shown yet — click the button above. The password is
+              the same every time (it&apos;s a backdoor, not a one-time secret).
+            </p>
+          )}
+        </div>
+
+
         {/* Signup credentials generator — does NOT create an auth user.
             Use these to walk through the real signup form yourself. */}
         <div className="tactical-card p-4 sm:p-5 space-y-3 border-primary/40">
