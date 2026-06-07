@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus, FileText, Monitor } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus, FileText, Monitor, Link as LinkPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
@@ -83,6 +83,51 @@ export default function AdminSEO() {
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+
+  // AI internal-link suggestions
+  type LinkSuggestion = { anchor: string; target_url: string; target_label: string; reason: string };
+  const [linkSuggesting, setLinkSuggesting] = useState(false);
+  const [linkSuggestions, setLinkSuggestions] = useState<LinkSuggestion[]>([]);
+  const [linkSuggestOpen, setLinkSuggestOpen] = useState(false);
+
+  const fetchInternalLinks = async () => {
+    if (!editingArticle?.body_markdown?.trim()) { toast.error("Write some content first"); return; }
+    setLinkSuggesting(true);
+    setLinkSuggestOpen(true);
+    setLinkSuggestions([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("seo-internal-links", {
+        body: {
+          article_id: editingArticle.id,
+          body_markdown: editingArticle.body_markdown,
+          title: editingArticle.title,
+          target_keyword: editingArticle.target_keyword,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const s = ((data as any)?.suggestions ?? []) as LinkSuggestion[];
+      if (!s.length) toast.error("No internal-link suggestions returned");
+      setLinkSuggestions(s);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Suggestion failed");
+    } finally {
+      setLinkSuggesting(false);
+    }
+  };
+
+  const applyInternalLink = (s: LinkSuggestion) => {
+    if (!editingArticle) return;
+    const body = editingArticle.body_markdown;
+    // Only replace the first occurrence that isn't already inside a markdown link
+    const safe = s.anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`(?<!\\]\\()${safe}(?!\\]\\()`);
+    if (!re.test(body)) { toast.error("Anchor no longer in body"); return; }
+    const next = body.replace(re, `[${s.anchor}](${s.target_url})`);
+    setEditingArticle({ ...editingArticle, body_markdown: next });
+    setLinkSuggestions((prev) => prev.filter((x) => x !== s));
+    toast.success(`Linked "${s.anchor}"`);
+  };
 
   const setBodyAtCursor = (next: string, cursor: number) => {
     if (!editingArticle) return;
@@ -598,12 +643,50 @@ export default function AdminSEO() {
                     </Button>
                     <input ref={uploadInputRef} type="file" accept={ACCEPTED_ARTICLE_MEDIA.join(",")} hidden
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaAndInsert(f); }} />
+                    <span className="mx-1 h-5 w-px bg-border" />
+                    <Button type="button" size="sm" variant="secondary" className="h-8 gap-1 px-2"
+                      title="AI suggests internal links to your courses & landing pages"
+                      onClick={fetchInternalLinks} disabled={linkSuggesting}>
+                      {linkSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                      AI internal links
+                    </Button>
                     <span className="ml-auto pr-1 text-[10px] text-muted-foreground">Headers use H2/H3 for SEO · GIFs insert at cursor</span>
                   </div>
                   <Textarea ref={bodyRef} value={editingArticle.body_markdown} rows={20}
                     className="rounded-t-none font-mono text-xs"
                     onChange={(e) => setEditingArticle({ ...editingArticle, body_markdown: e.target.value })} />
                 </div>
+              </div>
+            )}
+            {linkSuggestOpen && (
+              <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold flex items-center gap-1">
+                    <LinkIcon className="h-4 w-4" /> AI internal-link suggestions
+                  </p>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setLinkSuggestOpen(false)}>Close</Button>
+                </div>
+                {linkSuggesting && <p className="text-xs text-muted-foreground">Analyzing article & catalog…</p>}
+                {!linkSuggesting && linkSuggestions.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No suggestions. Try adding more body content first.</p>
+                )}
+                <ul className="space-y-2">
+                  {linkSuggestions.map((s, i) => (
+                    <li key={i} className="flex items-start justify-between gap-3 rounded border border-border bg-card p-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm">
+                          Link <span className="font-semibold">"{s.anchor}"</span> →{" "}
+                          <span className="font-mono text-xs text-primary">{s.target_url}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">{s.target_label}</div>
+                        <div className="mt-1 text-[11px] italic text-muted-foreground">{s.reason}</div>
+                      </div>
+                      <Button type="button" size="sm" variant="secondary" onClick={() => applyInternalLink(s)}>
+                        Insert
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
             <div className="mt-4 flex justify-end gap-2">
