@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus, FileText, Monitor } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ExternalLink, Eye, EyeOff, Wand2, Check, Heading2, Heading3, Bold, Italic, Link as LinkIcon, Image as ImageIcon, List, Quote, ImagePlus, FileText, Monitor, Link as LinkPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
@@ -83,6 +83,51 @@ export default function AdminSEO() {
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+
+  // AI internal-link suggestions
+  type LinkSuggestion = { anchor: string; target_url: string; target_label: string; reason: string };
+  const [linkSuggesting, setLinkSuggesting] = useState(false);
+  const [linkSuggestions, setLinkSuggestions] = useState<LinkSuggestion[]>([]);
+  const [linkSuggestOpen, setLinkSuggestOpen] = useState(false);
+
+  const fetchInternalLinks = async () => {
+    if (!editingArticle?.body_markdown?.trim()) { toast.error("Write some content first"); return; }
+    setLinkSuggesting(true);
+    setLinkSuggestOpen(true);
+    setLinkSuggestions([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("seo-internal-links", {
+        body: {
+          article_id: editingArticle.id,
+          body_markdown: editingArticle.body_markdown,
+          title: editingArticle.title,
+          target_keyword: editingArticle.target_keyword,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const s = ((data as any)?.suggestions ?? []) as LinkSuggestion[];
+      if (!s.length) toast.error("No internal-link suggestions returned");
+      setLinkSuggestions(s);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Suggestion failed");
+    } finally {
+      setLinkSuggesting(false);
+    }
+  };
+
+  const applyInternalLink = (s: LinkSuggestion) => {
+    if (!editingArticle) return;
+    const body = editingArticle.body_markdown;
+    // Only replace the first occurrence that isn't already inside a markdown link
+    const safe = s.anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`(?<!\\]\\()${safe}(?!\\]\\()`);
+    if (!re.test(body)) { toast.error("Anchor no longer in body"); return; }
+    const next = body.replace(re, `[${s.anchor}](${s.target_url})`);
+    setEditingArticle({ ...editingArticle, body_markdown: next });
+    setLinkSuggestions((prev) => prev.filter((x) => x !== s));
+    toast.success(`Linked "${s.anchor}"`);
+  };
 
   const setBodyAtCursor = (next: string, cursor: number) => {
     if (!editingArticle) return;
