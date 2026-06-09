@@ -71,24 +71,32 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return jsonResponse({ error: "LOVABLE_API_KEY not configured" }, 500);
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader) return jsonResponse({ error: "Missing auth" }, 401);
-
-    // Verify caller is admin
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData.user) return jsonResponse({ error: "Unauthorized" }, 401);
+    // Two paths in: admin user (with their JWT) OR internal service-role
+    // call from seo-auto-publish cron (with x-internal-key header).
+    const internalKey = req.headers.get("x-internal-key") ?? "";
+    const isInternal = internalKey && internalKey === SERVICE_ROLE_KEY;
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    const { data: roleRow } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!roleRow) return jsonResponse({ error: "Admin required" }, 403);
+    let callerUserId: string | null = null;
+
+    if (!isInternal) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      if (!authHeader) return jsonResponse({ error: "Missing auth" }, 401);
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData.user) return jsonResponse({ error: "Unauthorized" }, 401);
+      const { data: roleRow } = await admin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!roleRow) return jsonResponse({ error: "Admin required" }, 403);
+      callerUserId = userData.user.id;
+    }
+
 
     const body = await req.json().catch(() => ({}));
     const topic_id: string | undefined = body.topic_id;
