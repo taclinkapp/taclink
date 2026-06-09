@@ -423,6 +423,37 @@ export default function AdminSEO() {
         </p>
       </div>
 
+      <Card className={`flex flex-wrap items-center justify-between gap-3 p-4 ${autoPublishEnabled ? "border-emerald-500/40 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/5"}`}>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">
+            Auto-publish cron:{" "}
+            <span className={autoPublishEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
+              {autoPublishEnabled === null ? "…" : autoPublishEnabled ? "ON" : "PAUSED"}
+            </span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            When ON, picks the next queued topic Mon/Wed/Fri at 14:00 UTC, generates it, and publishes only if it meets the 1,500-word floor. Otherwise leaves it as a draft tagged <code>needs_review</code>.
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant={autoPublishEnabled ? "destructive" : "default"}
+          disabled={autoPublishSaving || autoPublishEnabled === null}
+          onClick={toggleAutoPublish}
+        >
+          {autoPublishSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {autoPublishEnabled ? "Pause auto-publish" : "Enable auto-publish"}
+        </Button>
+      </Card>
+
+      <Tabs defaultValue="topics">
+        <TabsList>
+          <TabsTrigger value="topics">Topics ({topics.length})</TabsTrigger>
+          <TabsTrigger value="articles">Articles ({articles.length})</TabsTrigger>
+        </TabsList>
+
+
+
       <Tabs defaultValue="topics">
         <TabsList>
           <TabsTrigger value="topics">Topics ({topics.length})</TabsTrigger>
