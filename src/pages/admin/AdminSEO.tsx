@@ -59,6 +59,9 @@ export default function AdminSEO() {
   const [savingArticle, setSavingArticle] = useState(false);
   const [editorMode, setEditorMode] = useState<"edit" | "preview">("edit");
   const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
+  const [autoPublishEnabled, setAutoPublishEnabled] = useState<boolean | null>(null);
+  const [autoPublishSaving, setAutoPublishSaving] = useState(false);
+
 
   // New topic form
   const [newTitle, setNewTitle] = useState("");
