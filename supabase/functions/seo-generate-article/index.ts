@@ -316,7 +316,7 @@ Deno.serve(async (req) => {
         status: "draft",
         topic_id: topic_id ?? null,
         model,
-        created_by: userData.user.id,
+        created_by: callerUserId,
       })
       .select()
       .single();
