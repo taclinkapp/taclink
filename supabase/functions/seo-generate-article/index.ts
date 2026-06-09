@@ -193,33 +193,52 @@ Deno.serve(async (req) => {
         ].join("\n")
       : "";
 
-    const userPrompt = [
-      `Topic / working title: ${title}`,
-      target_keyword ? `Primary keyword: ${target_keyword}` : null,
-      location ? `Geographic focus: ${location}` : null,
-      notes ? `Additional notes: ${notes}` : null,
+    const kbContext = buildResearchContext({
+      topic: title,
+      target_keyword,
+      location,
+    });
+
+    const baseUserPrompt = [
+      kbContext,
+      "",
+      notes ? `Additional notes from operator: ${notes}` : null,
       mediaBlock || null,
       "",
-      "Write the article now. Return ONLY the JSON object as specified.",
+      `Write the article now. Return ONLY the JSON object as specified. REMEMBER: the body_markdown field must be at least ${MIN_ARTICLE_WORDS} words.`,
     ].filter(Boolean).join("\n");
 
     const model = "google/gemini-2.5-pro";
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
 
+    async function callAI(userPrompt: string) {
+      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 12000,
+        }),
+      });
+    }
+
+    function parseAi(raw: string): any {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+        return JSON.parse(cleaned);
+      }
+    }
+
+    let aiRes = await callAI(baseUserPrompt);
     if (!aiRes.ok) {
       const t = await aiRes.text();
       console.error("AI gateway error", aiRes.status, t);
@@ -229,16 +248,35 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "AI generation failed" }, 500);
     }
 
-    const aiJson = await aiRes.json();
-    const raw = aiJson.choices?.[0]?.message?.content ?? "";
-    let parsed: any;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      // strip code fences if any
-      const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
-      parsed = JSON.parse(cleaned);
+    let aiJson = await aiRes.json();
+    let raw = aiJson.choices?.[0]?.message?.content ?? "";
+    let parsed: any = parseAi(raw);
+
+    // Word-count enforcement: ONE retry if under the floor.
+    let words = countWords(parsed.body_markdown ?? "");
+    if (words < MIN_ARTICLE_WORDS) {
+      console.warn(`Article ${words} words — under ${MIN_ARTICLE_WORDS}. Retrying with stronger instruction.`);
+      const retryPrompt =
+        baseUserPrompt +
+        `\n\nIMPORTANT: Your previous draft was ${words} words. That is under the ${MIN_ARTICLE_WORDS}-word minimum. Rewrite it with substantially more depth (concrete examples, walkthroughs, scenario breakdowns, common mistakes, gear specifics) so the final body_markdown is at least ${MIN_ARTICLE_WORDS} words. Do NOT pad with filler.`;
+      const retryRes = await callAI(retryPrompt);
+      if (retryRes.ok) {
+        const retryJson = await retryRes.json();
+        const retryRaw = retryJson.choices?.[0]?.message?.content ?? "";
+        try {
+          const retryParsed = parseAi(retryRaw);
+          const retryWords = countWords(retryParsed.body_markdown ?? "");
+          if (retryWords > words) {
+            parsed = retryParsed;
+            words = retryWords;
+          }
+        } catch (e) {
+          console.error("retry parse failed", e);
+        }
+      }
     }
+    const meetsWordFloor = words >= MIN_ARTICLE_WORDS;
+
 
     const slugBase = (parsed.slug || parsed.title || title)
       .toString()
