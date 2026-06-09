@@ -360,7 +360,7 @@ Deno.serve(async (req) => {
       console.error("media usage tracking failed", e);
     }
 
-    return jsonResponse({ article: inserted });
+    return jsonResponse({ article: inserted, word_count: words, meets_word_floor: meetsWordFloor });
   } catch (e) {
     console.error("seo-generate-article error", e);
     return jsonResponse({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
