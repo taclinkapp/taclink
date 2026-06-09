@@ -3221,6 +3221,8 @@ export type Database = {
           id: string
           location: string | null
           notes: string | null
+          priority: number
+          scheduled_for: string | null
           status: string
           target_keyword: string | null
           title: string
@@ -3233,6 +3235,8 @@ export type Database = {
           id?: string
           location?: string | null
           notes?: string | null
+          priority?: number
+          scheduled_for?: string | null
           status?: string
           target_keyword?: string | null
           title: string
@@ -3245,6 +3249,8 @@ export type Database = {
           id?: string
           location?: string | null
           notes?: string | null
+          priority?: number
+          scheduled_for?: string | null
           status?: string
           target_keyword?: string | null
           title?: string

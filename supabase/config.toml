@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.seo-internal-links]
 verify_jwt = false
+
+[functions.seo-auto-publish]
+verify_jwt = false

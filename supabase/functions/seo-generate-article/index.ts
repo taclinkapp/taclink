@@ -1,7 +1,11 @@
 // Generates an SEO blog article draft via Lovable AI Gateway.
 // Admin-only: requires the caller to have role 'admin' in user_roles.
+// Service-role callers (e.g. seo-auto-publish cron) bypass the admin check
+// by sending header `x-internal-key` matching SUPABASE_SERVICE_ROLE_KEY.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { buildResearchContext, countWords, MIN_ARTICLE_WORDS } from "../_shared/taclinkKnowledgeBase.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,8 +18,10 @@ const SYSTEM_PROMPT = `You are an SEO content writer for TacLink (https://taclin
 
 Voice: confident, practical, respectful of the discipline. No hype, no fluff, no purple prose. Write the way a serious instructor would talk to a serious student.
 
+HARD WORD-COUNT FLOOR: Every article MUST be at least 1500 words of substantive prose (target 1500-2200). Articles under 1500 words will be REJECTED and regenerated. Hit the floor by adding depth — concrete examples, step-by-step walkthroughs, scenario breakdowns, gear specifics, common mistakes — NOT by padding with filler sentences, repetition, or restating the intro.
+
 Every article must:
-- Be 900-1400 words of genuine, useful content (no padding).
+- Be at least 1500 words (1500-2200 target).
 - Open with a 1-2 sentence hook, NOT a heading. The hook MUST mention TacLink by name in a natural way (e.g. "At TacLink, we...", "We built TacLink because...", or "TacLink connects students with...").
 - Use H2 (##) and H3 (###) headings to structure the body. Never use H1.
 - Include a mid-article CTA callout (a single short blockquote line) AFTER the first or second H2, similar to: "> **Find a TacLink-vetted instructor near you** — [browse verified instructors](https://taclink.app/student/discover)." Vary the wording per article but always link to a TacLink URL.
@@ -65,24 +71,32 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return jsonResponse({ error: "LOVABLE_API_KEY not configured" }, 500);
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader) return jsonResponse({ error: "Missing auth" }, 401);
-
-    // Verify caller is admin
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData.user) return jsonResponse({ error: "Unauthorized" }, 401);
+    // Two paths in: admin user (with their JWT) OR internal service-role
+    // call from seo-auto-publish cron (with x-internal-key header).
+    const internalKey = req.headers.get("x-internal-key") ?? "";
+    const isInternal = internalKey && internalKey === SERVICE_ROLE_KEY;
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    const { data: roleRow } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!roleRow) return jsonResponse({ error: "Admin required" }, 403);
+    let callerUserId: string | null = null;
+
+    if (!isInternal) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      if (!authHeader) return jsonResponse({ error: "Missing auth" }, 401);
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData.user) return jsonResponse({ error: "Unauthorized" }, 401);
+      const { data: roleRow } = await admin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!roleRow) return jsonResponse({ error: "Admin required" }, 403);
+      callerUserId = userData.user.id;
+    }
+
 
     const body = await req.json().catch(() => ({}));
     const topic_id: string | undefined = body.topic_id;
@@ -179,33 +193,52 @@ Deno.serve(async (req) => {
         ].join("\n")
       : "";
 
-    const userPrompt = [
-      `Topic / working title: ${title}`,
-      target_keyword ? `Primary keyword: ${target_keyword}` : null,
-      location ? `Geographic focus: ${location}` : null,
-      notes ? `Additional notes: ${notes}` : null,
+    const kbContext = buildResearchContext({
+      topic: title,
+      target_keyword,
+      location,
+    });
+
+    const baseUserPrompt = [
+      kbContext,
+      "",
+      notes ? `Additional notes from operator: ${notes}` : null,
       mediaBlock || null,
       "",
-      "Write the article now. Return ONLY the JSON object as specified.",
+      `Write the article now. Return ONLY the JSON object as specified. REMEMBER: the body_markdown field must be at least ${MIN_ARTICLE_WORDS} words.`,
     ].filter(Boolean).join("\n");
 
     const model = "google/gemini-2.5-pro";
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
 
+    async function callAI(userPrompt: string) {
+      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 12000,
+        }),
+      });
+    }
+
+    function parseAi(raw: string): any {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+        return JSON.parse(cleaned);
+      }
+    }
+
+    let aiRes = await callAI(baseUserPrompt);
     if (!aiRes.ok) {
       const t = await aiRes.text();
       console.error("AI gateway error", aiRes.status, t);
@@ -215,16 +248,35 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "AI generation failed" }, 500);
     }
 
-    const aiJson = await aiRes.json();
-    const raw = aiJson.choices?.[0]?.message?.content ?? "";
-    let parsed: any;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      // strip code fences if any
-      const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
-      parsed = JSON.parse(cleaned);
+    let aiJson = await aiRes.json();
+    let raw = aiJson.choices?.[0]?.message?.content ?? "";
+    let parsed: any = parseAi(raw);
+
+    // Word-count enforcement: ONE retry if under the floor.
+    let words = countWords(parsed.body_markdown ?? "");
+    if (words < MIN_ARTICLE_WORDS) {
+      console.warn(`Article ${words} words — under ${MIN_ARTICLE_WORDS}. Retrying with stronger instruction.`);
+      const retryPrompt =
+        baseUserPrompt +
+        `\n\nIMPORTANT: Your previous draft was ${words} words. That is under the ${MIN_ARTICLE_WORDS}-word minimum. Rewrite it with substantially more depth (concrete examples, walkthroughs, scenario breakdowns, common mistakes, gear specifics) so the final body_markdown is at least ${MIN_ARTICLE_WORDS} words. Do NOT pad with filler.`;
+      const retryRes = await callAI(retryPrompt);
+      if (retryRes.ok) {
+        const retryJson = await retryRes.json();
+        const retryRaw = retryJson.choices?.[0]?.message?.content ?? "";
+        try {
+          const retryParsed = parseAi(retryRaw);
+          const retryWords = countWords(retryParsed.body_markdown ?? "");
+          if (retryWords > words) {
+            parsed = retryParsed;
+            words = retryWords;
+          }
+        } catch (e) {
+          console.error("retry parse failed", e);
+        }
+      }
     }
+    const meetsWordFloor = words >= MIN_ARTICLE_WORDS;
+
 
     const slugBase = (parsed.slug || parsed.title || title)
       .toString()
@@ -264,7 +316,7 @@ Deno.serve(async (req) => {
         status: "draft",
         topic_id: topic_id ?? null,
         model,
-        created_by: userData.user.id,
+        created_by: callerUserId,
       })
       .select()
       .single();
@@ -308,7 +360,7 @@ Deno.serve(async (req) => {
       console.error("media usage tracking failed", e);
     }
 
-    return jsonResponse({ article: inserted });
+    return jsonResponse({ article: inserted, word_count: words, meets_word_floor: meetsWordFloor });
   } catch (e) {
     console.error("seo-generate-article error", e);
     return jsonResponse({ error: e instanceof Error ? e.message : "Unknown error" }, 500);

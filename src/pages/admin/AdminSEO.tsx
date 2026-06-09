@@ -59,6 +59,9 @@ export default function AdminSEO() {
   const [savingArticle, setSavingArticle] = useState(false);
   const [editorMode, setEditorMode] = useState<"edit" | "preview">("edit");
   const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
+  const [autoPublishEnabled, setAutoPublishEnabled] = useState<boolean | null>(null);
+  const [autoPublishSaving, setAutoPublishSaving] = useState(false);
+
 
   // New topic form
   const [newTitle, setNewTitle] = useState("");
@@ -280,7 +283,32 @@ export default function AdminSEO() {
     setLoading(false);
   };
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadAll(); loadAutoPublish(); }, []);
+
+  const loadAutoPublish = async () => {
+    const { data } = await supabase
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "seo_auto_publish_enabled")
+      .maybeSingle();
+    setAutoPublishEnabled(data?.value === true);
+  };
+
+  const toggleAutoPublish = async () => {
+    if (autoPublishEnabled === null) return;
+    const next = !autoPublishEnabled;
+    setAutoPublishSaving(true);
+    const { error } = await supabase
+      .from("platform_settings")
+      .update({ value: next as any })
+      .eq("key", "seo_auto_publish_enabled");
+    setAutoPublishSaving(false);
+    if (error) { toast.error(error.message); return; }
+    setAutoPublishEnabled(next);
+    toast.success(next ? "Auto-publish ON (Mon/Wed/Fri 14:00 UTC)" : "Auto-publish paused");
+  };
+
+
 
   const addTopic = async () => {
     if (!newTitle.trim()) return;
@@ -394,6 +422,32 @@ export default function AdminSEO() {
           <Link to="/blog" className="text-primary hover:underline">/blog</Link>.
         </p>
       </div>
+
+      <Card className={`flex flex-wrap items-center justify-between gap-3 p-4 ${autoPublishEnabled ? "border-emerald-500/40 bg-emerald-500/5" : "border-amber-500/40 bg-amber-500/5"}`}>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">
+            Auto-publish cron:{" "}
+            <span className={autoPublishEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
+              {autoPublishEnabled === null ? "…" : autoPublishEnabled ? "ON" : "PAUSED"}
+            </span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            When ON, picks the next queued topic Mon/Wed/Fri at 14:00 UTC, generates it, and publishes only if it meets the 1,500-word floor. Otherwise leaves it as a draft tagged <code>needs_review</code>.
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant={autoPublishEnabled ? "destructive" : "default"}
+          disabled={autoPublishSaving || autoPublishEnabled === null}
+          onClick={toggleAutoPublish}
+        >
+          {autoPublishSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {autoPublishEnabled ? "Pause auto-publish" : "Enable auto-publish"}
+        </Button>
+      </Card>
+
+
+
 
       <Tabs defaultValue="topics">
         <TabsList>
