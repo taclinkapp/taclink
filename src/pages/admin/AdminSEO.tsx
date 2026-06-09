@@ -446,11 +446,6 @@ export default function AdminSEO() {
         </Button>
       </Card>
 
-      <Tabs defaultValue="topics">
-        <TabsList>
-          <TabsTrigger value="topics">Topics ({topics.length})</TabsTrigger>
-          <TabsTrigger value="articles">Articles ({articles.length})</TabsTrigger>
-        </TabsList>
 
 
 
