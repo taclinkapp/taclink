@@ -1,7 +1,11 @@
 // Generates an SEO blog article draft via Lovable AI Gateway.
 // Admin-only: requires the caller to have role 'admin' in user_roles.
+// Service-role callers (e.g. seo-auto-publish cron) bypass the admin check
+// by sending header `x-internal-key` matching SUPABASE_SERVICE_ROLE_KEY.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { buildResearchContext, countWords, MIN_ARTICLE_WORDS } from "../_shared/taclinkKnowledgeBase.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
