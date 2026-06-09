@@ -283,7 +283,32 @@ export default function AdminSEO() {
     setLoading(false);
   };
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadAll(); loadAutoPublish(); }, []);
+
+  const loadAutoPublish = async () => {
+    const { data } = await supabase
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "seo_auto_publish_enabled")
+      .maybeSingle();
+    setAutoPublishEnabled(data?.value === true);
+  };
+
+  const toggleAutoPublish = async () => {
+    if (autoPublishEnabled === null) return;
+    const next = !autoPublishEnabled;
+    setAutoPublishSaving(true);
+    const { error } = await supabase
+      .from("platform_settings")
+      .update({ value: next as any })
+      .eq("key", "seo_auto_publish_enabled");
+    setAutoPublishSaving(false);
+    if (error) { toast.error(error.message); return; }
+    setAutoPublishEnabled(next);
+    toast.success(next ? "Auto-publish ON (Mon/Wed/Fri 14:00 UTC)" : "Auto-publish paused");
+  };
+
+
 
   const addTopic = async () => {
     if (!newTitle.trim()) return;
