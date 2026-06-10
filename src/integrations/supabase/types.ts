@@ -4324,6 +4324,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      influencer_link_owner_update_allowed: {
+        Args: {
+          _access_pin: string
+          _active: boolean
+          _audience: string
+          _commission_pct: number
+          _first_booking_pct: number
+          _id: string
+          _is_vip: boolean
+          _owner_user_id: string
+          _recurring_pct: number
+          _slug: string
+          _vip_pct: number
+        }
+        Returns: boolean
+      }
       influencer_link_vip_active: {
         Args: { _link: Database["public"]["Tables"]["influencer_links"]["Row"] }
         Returns: boolean
