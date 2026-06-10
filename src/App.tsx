@@ -144,6 +144,7 @@ const DisciplineLanding = lazy(() => import("./pages/seo/DisciplineLanding"));
 const InstructorPublicProfile = lazy(() => import("./pages/seo/InstructorPublicProfile"));
 
 import { AIAssistantMount } from "./components/AIAssistantMount";
+import { IdleSignOutMount } from "./components/IdleSignOutMount";
 import { InstallAppBanner } from "./components/InstallAppBanner";
 import { InstructorOnboardingGate } from "./components/InstructorOnboardingGate";
 import { MissionCompleteWatcher } from "./components/operator/MissionCompleteWatcher";
@@ -337,6 +338,7 @@ const App = () => (
           </Routes>
           </Suspense>
           <AIAssistantMount />
+          <IdleSignOutMount />
           <InstallAppBanner />
           <MissionCompleteWatcher />
           </NavHistoryProvider>
