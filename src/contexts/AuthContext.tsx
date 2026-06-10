@@ -99,7 +99,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             'This account has been disabled by an administrator. Please contact support.'
           );
         } catch {}
-        try { await supabase.auth.signOut(); } catch { /* stale/disabled sessions still need local cleanup */ }
+        try {
+          await supabase.auth.signOut();
+        } catch (err) {
+          console.warn('[auth] disabled account sign-out failed; clearing local session', err);
+        }
         forceLocalSignedOut();
         return;
       }
@@ -107,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setProfile((prof as Profile) ?? null);
       setRoles(nextRoles);
       setRolesError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (activeUserIdRef.current !== uid) return;
       console.error(`[auth] role load failed (attempt ${attempt + 1})`, err);
       if (attempt < MAX_ROLE_RETRIES) {
