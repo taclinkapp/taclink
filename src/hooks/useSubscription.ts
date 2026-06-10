@@ -21,27 +21,34 @@ export function useSubscription() {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<SubscriptionRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isTestAccount, setIsTestAccount] = useState(false);
 
   const refetch = useCallback(async () => {
     if (!user) {
       setSubscription(null);
+      setIsTestAccount(false);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("environment", getPaymentEnvironment())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const [{ data }, { data: testRows }] = await Promise.all([
+      supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("environment", getPaymentEnvironment())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase.from("test_accounts").select("id").eq("user_id", user.id).limit(1),
+    ]);
     setSubscription((data as SubscriptionRow | null) ?? null);
+    setIsTestAccount(Array.isArray(testRows) && testRows.length > 0);
     setLoading(false);
   }, [user]);
 
   useEffect(() => { refetch(); }, [refetch]);
+
 
   // Realtime updates — depend only on user.id so refetch identity changes don't
   // cause us to re-add listeners to an already-subscribed channel.
@@ -71,13 +78,15 @@ export function useSubscription() {
   );
 
   // Paid Pro takes precedence; founder free Pro layers in cleanly when no paid sub is active.
-  const isActive = paidActive || founder.hasFreeProNow;
-  const isFounderPro = !paidActive && founder.hasFreeProNow;
+  // QA test accounts always get full Pro access to bypass subscription gates during E2E tests.
+  const isActive = paidActive || founder.hasFreeProNow || isTestAccount;
+  const isFounderPro = !paidActive && !isTestAccount && founder.hasFreeProNow;
 
-  const isPastDue = status === "past_due" && (!periodEnd || periodEnd > now);
-  const isCanceledGrace = status === "canceled" && !!periodEnd && periodEnd > now;
-  const isLapsed = !!subscription && !paidActive && !founder.hasFreeProNow;
-  const hasNeverSubscribed = !subscription && !founder.hasFreeProNow;
+  const isPastDue = !isTestAccount && status === "past_due" && (!periodEnd || periodEnd > now);
+  const isCanceledGrace = !isTestAccount && status === "canceled" && !!periodEnd && periodEnd > now;
+  const isLapsed = !isTestAccount && !!subscription && !paidActive && !founder.hasFreeProNow;
+  const hasNeverSubscribed = !isTestAccount && !subscription && !founder.hasFreeProNow;
+
 
   return {
     subscription,
