@@ -494,9 +494,11 @@ const NewCourse = () => {
       if (!date || !startTime || !endTime) return 'Date and times are required';
       if (!city || !state) return 'City and state are required';
       const startsAt = new Date(`${date}T${startTime}:00`);
-      const minStart = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      if (startsAt < minStart) {
-        return 'Course must start at least 7 days from today so students have time to find and book it.';
+      if (!skipPublishGuards) {
+        const minStart = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        if (startsAt < minStart) {
+          return 'Course must start at least 7 days from today so students have time to find and book it.';
+        }
       }
     }
     if (step === 2) {
