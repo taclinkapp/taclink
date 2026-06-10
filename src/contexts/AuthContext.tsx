@@ -98,7 +98,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             'auth_signin_error',
             'This account has been disabled by an administrator. Please contact support.'
           );
-        } catch {}
+        } catch {
+          // sessionStorage can be unavailable in private/browser-restricted contexts.
+        }
         try {
           await supabase.auth.signOut();
         } catch (err) {
