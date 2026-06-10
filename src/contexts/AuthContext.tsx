@@ -33,6 +33,7 @@ type AuthCtx = {
 const Ctx = createContext<AuthCtx | undefined>(undefined);
 
 const MAX_ROLE_RETRIES = 3;
+const AUTH_CACHE_FIX_KEY = 'taclink_auth_cache_fix_2026_06_10';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -135,6 +136,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    try {
+      if (localStorage.getItem(AUTH_CACHE_FIX_KEY) !== '1') {
+        clearLocalAuthArtifacts();
+        localStorage.setItem(AUTH_CACHE_FIX_KEY, '1');
+      }
+    } catch {
+      // Storage may be blocked; auth state will still be resolved by the SDK.
+    }
+
     // Set up listener FIRST (per Supabase guidance), then fetch session
     const {
       data: { subscription },
