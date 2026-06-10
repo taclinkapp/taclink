@@ -67,15 +67,20 @@ export const useFounderStatus = (): FounderState => {
   const endsAt = data?.free_pro_ends_at ? new Date(data.free_pro_ends_at).getTime() : null;
 
   const isActive = data?.founder_status === "active";
+  const isPendingPrelaunch = data?.founder_status === "pending_prelaunch";
+  // Founders get Pro entitlement immediately on qualification so they can draft
+  // courses pre-launch. Publishing is still blocked by the prelaunch gate; the
+  // 6-month free Pro timer only begins counting at launch (free_pro_starts_at).
   const hasFreeProNow = !!(
-    isActive && startsAt !== null && startsAt <= now && (endsAt === null || endsAt > now)
+    isPendingPrelaunch ||
+    (isActive && startsAt !== null && startsAt <= now && (endsAt === null || endsAt > now))
   );
 
   return {
     loading: isLoading,
     isFounder: !!data && data.founder_status !== "revoked",
     record: data ?? null,
-    isPendingPrelaunch: data?.founder_status === "pending_prelaunch",
+    isPendingPrelaunch,
     isActive,
     isExpired: data?.founder_status === "expired",
     isRevoked: data?.founder_status === "revoked",
