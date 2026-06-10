@@ -127,6 +127,26 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
     [],
   );
 
+  const simulate = useCallback(async () => {
+    setError(null);
+    setSimulating(true);
+    try {
+      const { data, error: invokeErr } = await supabase.functions.invoke(
+        "create-helcim-checkout",
+        { body: { bookingId, returnUrl, mode: "simulate" } },
+      );
+      if (invokeErr || !data?.simulated) {
+        throw new Error(invokeErr?.message ?? "simulate failed");
+      }
+      window.location.href = returnUrl;
+    } catch (e: any) {
+      setError({ kind: "init_failed", message: String(e?.message ?? e) });
+      setPhase("error");
+    } finally {
+      setSimulating(false);
+    }
+  }, [bookingId, returnUrl]);
+
   const start = useCallback(async () => {
     cleanup();
     setError(null);
