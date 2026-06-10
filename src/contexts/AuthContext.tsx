@@ -43,6 +43,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [rolesError, setRolesError] = useState<string | null>(null);
   const activeUserIdRef = useRef<string | null>(null);
 
+  const clearLocalAuthArtifacts = () => {
+    const clearStore = (store: Storage) => {
+      for (let i = store.length - 1; i >= 0; i--) {
+        const k = store.key(i);
+        if (!k) continue;
+        if (
+          k === 'supabase.auth.token' ||
+          (k.startsWith('sb-') && (k.includes('-auth-token') || k.includes('-code-verifier'))) ||
+          k.startsWith('taclink_free_waiver_ack:')
+        ) {
+          store.removeItem(k);
+        }
+      }
+    };
+
+    try { clearStore(localStorage); } catch { /* ignore */ }
+    try { clearStore(sessionStorage); } catch { /* ignore */ }
+  };
+
+  const resetAuthState = () => {
+    activeUserIdRef.current = null;
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setRoles([]);
+    setRolesError(null);
+    setLoading(false);
+  };
+
+  const forceLocalSignedOut = () => {
+    clearLocalAuthArtifacts();
+    resetAuthState();
+  };
+
   const loadProfileAndRoles = async (uid: string, attempt = 0): Promise<void> => {
     try {
       if (activeUserIdRef.current !== uid) return;
@@ -65,7 +99,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             'This account has been disabled by an administrator. Please contact support.'
           );
         } catch {}
-        await supabase.auth.signOut();
+        try { await supabase.auth.signOut(); } catch { /* stale/disabled sessions still need local cleanup */ }
+        forceLocalSignedOut();
         return;
       }
 
@@ -137,14 +172,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    // Clear per-user local-only flags so they never leak between accounts.
+    // Update local state first so the root route cannot briefly redirect back
+    // into the old role while the backend sign-out request is still in flight.
+    resetAuthState();
     try {
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith('taclink_free_waiver_ack:')) localStorage.removeItem(k);
-      }
-    } catch { /* ignore */ }
-    await supabase.auth.signOut();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('[auth] remote sign-out failed; clearing local session', err);
+    } finally {
+      forceLocalSignedOut();
+    }
   };
 
   const refreshProfile = async () => {
