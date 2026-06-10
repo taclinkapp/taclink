@@ -33,6 +33,7 @@ type AuthCtx = {
 const Ctx = createContext<AuthCtx | undefined>(undefined);
 
 const MAX_ROLE_RETRIES = 3;
+const AUTH_CACHE_FIX_KEY = 'taclink_auth_cache_fix_2026_06_10';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -42,6 +43,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [rolesError, setRolesError] = useState<string | null>(null);
   const activeUserIdRef = useRef<string | null>(null);
+
+  const clearLocalAuthArtifacts = () => {
+    const clearStore = (store: Storage) => {
+      for (let i = store.length - 1; i >= 0; i--) {
+        const k = store.key(i);
+        if (!k) continue;
+        if (
+          k === 'supabase.auth.token' ||
+          (k.startsWith('sb-') && (k.includes('-auth-token') || k.includes('-code-verifier'))) ||
+          k.startsWith('taclink_free_waiver_ack:')
+        ) {
+          store.removeItem(k);
+        }
+      }
+    };
+
+    try { clearStore(localStorage); } catch { /* ignore */ }
+    try { clearStore(sessionStorage); } catch { /* ignore */ }
+  };
+
+  const resetAuthState = () => {
+    activeUserIdRef.current = null;
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setRoles([]);
+    setRolesError(null);
+    setLoading(false);
+  };
+
+  const forceLocalSignedOut = () => {
+    clearLocalAuthArtifacts();
+    resetAuthState();
+  };
 
   const loadProfileAndRoles = async (uid: string, attempt = 0): Promise<void> => {
     try {
@@ -64,15 +99,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             'auth_signin_error',
             'This account has been disabled by an administrator. Please contact support.'
           );
-        } catch {}
-        await supabase.auth.signOut();
+        } catch {
+          // sessionStorage can be unavailable in private/browser-restricted contexts.
+        }
+        try {
+          await supabase.auth.signOut();
+        } catch (err) {
+          console.warn('[auth] disabled account sign-out failed; clearing local session', err);
+        }
+        forceLocalSignedOut();
         return;
       }
 
       setProfile((prof as Profile) ?? null);
       setRoles(nextRoles);
       setRolesError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (activeUserIdRef.current !== uid) return;
       console.error(`[auth] role load failed (attempt ${attempt + 1})`, err);
       if (attempt < MAX_ROLE_RETRIES) {
@@ -94,6 +136,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    try {
+      if (localStorage.getItem(AUTH_CACHE_FIX_KEY) !== '1') {
+        clearLocalAuthArtifacts();
+        localStorage.setItem(AUTH_CACHE_FIX_KEY, '1');
+      }
+    } catch {
+      // Storage may be blocked; auth state will still be resolved by the SDK.
+    }
+
     // Set up listener FIRST (per Supabase guidance), then fetch session
     const {
       data: { subscription },
@@ -137,14 +188,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    // Clear per-user local-only flags so they never leak between accounts.
+    // Update local state first so the root route cannot briefly redirect back
+    // into the old role while the backend sign-out request is still in flight.
+    resetAuthState();
     try {
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith('taclink_free_waiver_ack:')) localStorage.removeItem(k);
-      }
-    } catch { /* ignore */ }
-    await supabase.auth.signOut();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('[auth] remote sign-out failed; clearing local session', err);
+    } finally {
+      forceLocalSignedOut();
+    }
   };
 
   const refreshProfile = async () => {
