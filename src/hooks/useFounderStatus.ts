@@ -80,7 +80,7 @@ export const useFounderStatus = (): FounderState => {
     loading: isLoading,
     isFounder: !!data && data.founder_status !== "revoked",
     record: data ?? null,
-    isPendingPrelaunch: data?.founder_status === "pending_prelaunch",
+    isPendingPrelaunch,
     isActive,
     isExpired: data?.founder_status === "expired",
     isRevoked: data?.founder_status === "revoked",
