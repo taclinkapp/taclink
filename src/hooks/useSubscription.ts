@@ -78,13 +78,15 @@ export function useSubscription() {
   );
 
   // Paid Pro takes precedence; founder free Pro layers in cleanly when no paid sub is active.
-  const isActive = paidActive || founder.hasFreeProNow;
-  const isFounderPro = !paidActive && founder.hasFreeProNow;
+  // QA test accounts always get full Pro access to bypass subscription gates during E2E tests.
+  const isActive = paidActive || founder.hasFreeProNow || isTestAccount;
+  const isFounderPro = !paidActive && !isTestAccount && founder.hasFreeProNow;
 
-  const isPastDue = status === "past_due" && (!periodEnd || periodEnd > now);
-  const isCanceledGrace = status === "canceled" && !!periodEnd && periodEnd > now;
-  const isLapsed = !!subscription && !paidActive && !founder.hasFreeProNow;
-  const hasNeverSubscribed = !subscription && !founder.hasFreeProNow;
+  const isPastDue = !isTestAccount && status === "past_due" && (!periodEnd || periodEnd > now);
+  const isCanceledGrace = !isTestAccount && status === "canceled" && !!periodEnd && periodEnd > now;
+  const isLapsed = !isTestAccount && !!subscription && !paidActive && !founder.hasFreeProNow;
+  const hasNeverSubscribed = !isTestAccount && !subscription && !founder.hasFreeProNow;
+
 
   return {
     subscription,
