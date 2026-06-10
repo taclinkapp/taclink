@@ -21,27 +21,34 @@ export function useSubscription() {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<SubscriptionRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isTestAccount, setIsTestAccount] = useState(false);
 
   const refetch = useCallback(async () => {
     if (!user) {
       setSubscription(null);
+      setIsTestAccount(false);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("environment", getPaymentEnvironment())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const [{ data }, { data: testRows }] = await Promise.all([
+      supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("environment", getPaymentEnvironment())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase.from("test_accounts").select("id").eq("user_id", user.id).limit(1),
+    ]);
     setSubscription((data as SubscriptionRow | null) ?? null);
+    setIsTestAccount(Array.isArray(testRows) && testRows.length > 0);
     setLoading(false);
   }, [user]);
 
   useEffect(() => { refetch(); }, [refetch]);
+
 
   // Realtime updates — depend only on user.id so refetch identity changes don't
   // cause us to re-add listeners to an already-subscribed channel.
