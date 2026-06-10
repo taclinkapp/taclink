@@ -180,6 +180,77 @@ Deno.serve(async (req) => {
       }, 409);
     }
 
+    // ---- Test-account simulate branch: mirror confirm-helcim-payment ----
+    if (mode === "simulate") {
+      const now = new Date().toISOString();
+      const simulatedTxn = `sim_${booking.id}_${crypto.randomUUID()}`;
+      const { error: updErr } = await supabase
+        .from("bookings")
+        .update({
+          helcim_transaction_id: simulatedTxn,
+          deposit_status: "held_in_escrow",
+          escrow_status: "held",
+          escrow_held_at: now,
+          payment_provider: "helcim",
+          updated_at: now,
+        })
+        .eq("id", booking.id)
+        .in("deposit_status", ["pending_payment", "pending_send", "unpaid", "awaiting_payment"]);
+      if (updErr) {
+        // Fallback: force update even if status wasn't in the list above.
+        const { error: forceErr } = await supabase
+          .from("bookings")
+          .update({
+            helcim_transaction_id: simulatedTxn,
+            deposit_status: "held_in_escrow",
+            escrow_status: "held",
+            escrow_held_at: now,
+            payment_provider: "helcim",
+            updated_at: now,
+          })
+          .eq("id", booking.id);
+        if (forceErr) throw forceErr;
+      }
+
+      const { data: course } = await supabase
+        .from("courses")
+        .select("instructor_id, ends_at, starts_at")
+        .eq("id", booking.course_id)
+        .maybeSingle();
+
+      const owedCents = ((booking as any).instructor_payout_cents ?? 0) > 0
+        ? (booking as any).instructor_payout_cents
+        : booking.course_price_cents;
+      if (course?.instructor_id && owedCents > 0) {
+        const endsAt = course.ends_at ?? course.starts_at;
+        const availableAt = endsAt
+          ? new Date(new Date(endsAt).getTime() + 24 * 3600 * 1000).toISOString()
+          : null;
+        const { error: ledgerErr } = await supabase.from("instructor_ledger").insert({
+          instructor_id: course.instructor_id,
+          booking_id: booking.id,
+          provider: "helcim",
+          entry_type: "owed",
+          amount_cents: owedCents,
+          currency: "usd",
+          available_at: availableAt,
+          notes: `[TEST simulate] ${simulatedTxn}`,
+        });
+        if (ledgerErr && (ledgerErr as any).code !== "23505") {
+          console.error("[simulate] ledger insert error", ledgerErr);
+        }
+      }
+
+      console.warn(`[create-helcim-checkout] SIMULATED paid booking ${booking.id} for test user ${user.id}`);
+      return json({
+        simulated: true,
+        bookingId: booking.id,
+        transactionId: simulatedTxn,
+        returnUrl,
+      });
+    }
+
+
     const courseTitle = (booking as any).courses?.title ?? "TacLink Course";
     const description = `${courseTitle} — escrow charge (course price + $25 platform fee)`;
     const apiToken = Deno.env.get("HELCIM_API_TOKEN");
