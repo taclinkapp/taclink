@@ -60,6 +60,8 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
   const [stub, setStub] = useState(false);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [pmLoading, setPmLoading] = useState(true);
+  const [isTestAccount, setIsTestAccount] = useState(false);
+  const [simulating, setSimulating] = useState(false);
 
   const messageHandlerRef = useRef<((e: MessageEvent) => void) | null>(null);
   const timeoutRef = useRef<number | null>(null);
