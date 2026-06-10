@@ -60,6 +60,8 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
   const [stub, setStub] = useState(false);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [pmLoading, setPmLoading] = useState(true);
+  const [isTestAccount, setIsTestAccount] = useState(false);
+  const [simulating, setSimulating] = useState(false);
 
   const messageHandlerRef = useRef<((e: MessageEvent) => void) | null>(null);
   const timeoutRef = useRef<number | null>(null);
@@ -94,6 +96,12 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
         .order("created_at", { ascending: false });
       if (cancelled) return;
       setSavedCards((data as SavedCard[]) ?? []);
+      const { data: testRow } = await supabase
+        .from("test_accounts")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled) setIsTestAccount(Boolean(testRow));
       setPmLoading(false);
     })();
     return () => { cancelled = true; };
@@ -118,6 +126,26 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
       }),
     [],
   );
+
+  const simulate = useCallback(async () => {
+    setError(null);
+    setSimulating(true);
+    try {
+      const { data, error: invokeErr } = await supabase.functions.invoke(
+        "create-helcim-checkout",
+        { body: { bookingId, returnUrl, mode: "simulate" } },
+      );
+      if (invokeErr || !data?.simulated) {
+        throw new Error(invokeErr?.message ?? "simulate failed");
+      }
+      window.location.href = returnUrl;
+    } catch (e: any) {
+      setError({ kind: "init_failed", message: String(e?.message ?? e) });
+      setPhase("error");
+    } finally {
+      setSimulating(false);
+    }
+  }, [bookingId, returnUrl]);
 
   const start = useCallback(async () => {
     cleanup();
@@ -323,6 +351,28 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
       <p className="text-[10px] text-muted-foreground text-center">
         Opens a PCI-compliant payment window. Your card never touches our servers.
       </p>
+      {isTestAccount && (
+        <div className="mt-3 border border-amber-500/40 bg-amber-500/10 rounded-md p-3 space-y-2">
+          <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+            QA test account — bypass available
+          </div>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Skip Helcim entirely and mark this booking paid in escrow. Used for end-to-end check-in / payout flow tests. The live Helcim button above still works for testing the real webhook path.
+          </p>
+          <Button
+            variant="outline"
+            onClick={simulate}
+            disabled={simulating || pmLoading}
+            className="w-full h-9 text-xs border-amber-500/50"
+          >
+            {simulating ? (
+              <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Simulating…</>
+            ) : (
+              "Simulate paid (skip Helcim)"
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

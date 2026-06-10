@@ -114,12 +114,24 @@ Deno.serve(async (req) => {
     if (authErr || !user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const { bookingId, returnUrl } = body as {
+    const { bookingId, returnUrl, mode } = body as {
       bookingId?: string;
       returnUrl?: string;
+      mode?: "live" | "simulate";
     };
     if (!bookingId || !returnUrl) {
       return json({ error: "bookingId and returnUrl required" }, 400);
+    }
+
+    // Test-account short-circuit: when an allowlisted QA user requests
+    // mode:"simulate", skip Helcim entirely and mark the booking paid
+    // in-place. The live Helcim webhook path stays available for separate
+    // tests via the default mode.
+    if (mode === "simulate") {
+      const { data: isTest } = await supabase.rpc("is_test_account", { _user_id: user.id });
+      if (!isTest) {
+        return json({ error: "simulate mode is restricted to test accounts" }, 403);
+      }
     }
 
     // Provider gate — only run when active_provider = 'helcim'.
@@ -167,6 +179,77 @@ Deno.serve(async (req) => {
         message: "The course price has changed since you opened this page. Please refresh to see the latest pricing.",
       }, 409);
     }
+
+    // ---- Test-account simulate branch: mirror confirm-helcim-payment ----
+    if (mode === "simulate") {
+      const now = new Date().toISOString();
+      const simulatedTxn = `sim_${booking.id}_${crypto.randomUUID()}`;
+      const { error: updErr } = await supabase
+        .from("bookings")
+        .update({
+          helcim_transaction_id: simulatedTxn,
+          deposit_status: "held_in_escrow",
+          escrow_status: "held",
+          escrow_held_at: now,
+          payment_provider: "helcim",
+          updated_at: now,
+        })
+        .eq("id", booking.id)
+        .in("deposit_status", ["pending_payment", "pending_send", "unpaid", "awaiting_payment"]);
+      if (updErr) {
+        // Fallback: force update even if status wasn't in the list above.
+        const { error: forceErr } = await supabase
+          .from("bookings")
+          .update({
+            helcim_transaction_id: simulatedTxn,
+            deposit_status: "held_in_escrow",
+            escrow_status: "held",
+            escrow_held_at: now,
+            payment_provider: "helcim",
+            updated_at: now,
+          })
+          .eq("id", booking.id);
+        if (forceErr) throw forceErr;
+      }
+
+      const { data: course } = await supabase
+        .from("courses")
+        .select("instructor_id, ends_at, starts_at")
+        .eq("id", booking.course_id)
+        .maybeSingle();
+
+      const owedCents = ((booking as any).instructor_payout_cents ?? 0) > 0
+        ? (booking as any).instructor_payout_cents
+        : booking.course_price_cents;
+      if (course?.instructor_id && owedCents > 0) {
+        const endsAt = course.ends_at ?? course.starts_at;
+        const availableAt = endsAt
+          ? new Date(new Date(endsAt).getTime() + 24 * 3600 * 1000).toISOString()
+          : null;
+        const { error: ledgerErr } = await supabase.from("instructor_ledger").insert({
+          instructor_id: course.instructor_id,
+          booking_id: booking.id,
+          provider: "helcim",
+          entry_type: "owed",
+          amount_cents: owedCents,
+          currency: "usd",
+          available_at: availableAt,
+          notes: `[TEST simulate] ${simulatedTxn}`,
+        });
+        if (ledgerErr && (ledgerErr as any).code !== "23505") {
+          console.error("[simulate] ledger insert error", ledgerErr);
+        }
+      }
+
+      console.warn(`[create-helcim-checkout] SIMULATED paid booking ${booking.id} for test user ${user.id}`);
+      return json({
+        simulated: true,
+        bookingId: booking.id,
+        transactionId: simulatedTxn,
+        returnUrl,
+      });
+    }
+
 
     const courseTitle = (booking as any).courses?.title ?? "TacLink Course";
     const description = `${courseTitle} — escrow charge (course price + $25 platform fee)`;
