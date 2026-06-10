@@ -96,12 +96,12 @@ export const HelcimEscrowCheckout = ({ bookingId, returnUrl }: Props) => {
         .order("created_at", { ascending: false });
       if (cancelled) return;
       setSavedCards((data as SavedCard[]) ?? []);
-      const { data: testRow } = await supabase
+      const { data: testRows } = await supabase
         .from("test_accounts")
         .select("user_id")
         .eq("user_id", user.id)
-        .maybeSingle();
-      if (!cancelled) setIsTestAccount(Boolean(testRow));
+        .limit(1);
+      if (!cancelled) setIsTestAccount(Array.isArray(testRows) && testRows.length > 0);
       setPmLoading(false);
     })();
     return () => { cancelled = true; };
