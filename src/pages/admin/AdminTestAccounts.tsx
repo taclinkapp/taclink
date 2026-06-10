@@ -1,22 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminHeader } from "./AdminDashboard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Loader2,
   Trash2,
   Copy,
   Check,
   GraduationCap,
   ShieldCheck,
-  RefreshCw,
   Sparkles,
   ExternalLink,
-  KeyRound,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type GeneratedCreds = {
@@ -39,39 +33,7 @@ function generatePassword() {
   return `Qa!${base}A1`;
 }
 
-type TestAccount = {
-  id: string;
-  user_id: string;
-  email: string;
-  // Password is only available immediately after creation (returned from the
-  // edge function). It is never persisted to the database.
-  password?: string;
-  role: "instructor" | "student";
-  label: string | null;
-  created_at: string;
-};
-
-type Limits = {
-  per_role_per_day: number;
-  today: { instructor: number; student: number };
-};
-
 export default function AdminTestAccounts() {
-  const [accounts, setAccounts] = useState<TestAccount[]>([]);
-  const [limits, setLimits] = useState<Limits | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState<null | "instructor" | "student">(null);
-  const [rotating, setRotating] = useState(false);
-  const [label, setLabel] = useState("");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [tab, setTab] = useState<"instructor" | "student">("instructor");
-  const [backdoor, setBackdoor] = useState<
-    Array<{ role: string; email: string; password: string }> | null
-  >(null);
-  const [backdoorBusy, setBackdoorBusy] = useState(false);
-  const [backdoorCopied, setBackdoorCopied] = useState<string | null>(null);
-  const [seeding, setSeeding] = useState(false);
-  const [signingInAs, setSigningInAs] = useState<null | "instructor" | "student">(null);
   const [generated, setGenerated] = useState<GeneratedCreds[]>(() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -120,340 +82,13 @@ export default function AdminTestAccounts() {
     persistGenerated([]);
   };
 
-  const load = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
-      body: { action: "list" },
-    });
-    setLoading(false);
-    if (error || data?.error) {
-      toast.error(error?.message ?? data?.error ?? "Failed to load");
-      return;
-    }
-    setAccounts(data.accounts ?? []);
-    setLimits(data.limits ?? null);
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const create = async (role: "instructor" | "student") => {
-    setCreating(role);
-    const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
-      body: { action: "create", role, label: label.trim() || undefined },
-    });
-    setCreating(null);
-    if (error || data?.error) {
-      toast.error(error?.message ?? data?.error ?? "Failed to create");
-      return;
-    }
-    setLabel("");
-    toast.success(`Created fake ${role} account`);
-    await load();
-  };
-
-  const remove = async (id: string) => {
-    if (!confirm("Delete this fake test account? The auth user will be removed.")) return;
-    const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
-      body: { action: "delete", id },
-    });
-    if (error || data?.error) {
-      toast.error(error?.message ?? data?.error ?? "Failed to delete");
-      return;
-    }
-    setAccounts((prev) => prev.filter((a) => a.id !== id));
-    toast.success("Deleted");
-  };
-
-  const rotate = async () => {
-    if (
-      !confirm(
-        "Rotate ALL fake test accounts? Every existing account will be deleted and re-created with fresh emails and passwords. Anyone signed in to an old account will be logged out.",
-      )
-    )
-      return;
-    setRotating(true);
-    const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
-      body: { action: "rotate" },
-    });
-    setRotating(false);
-    if (error || data?.error) {
-      toast.error(error?.message ?? data?.error ?? "Rotate failed");
-      return;
-    }
-    toast.success(
-      `Rotated test accounts: ${data.deleted ?? 0} removed, ${data.created ?? 0} re-created`,
-    );
-    await load();
-  };
-
-  const copy = async (acc: TestAccount) => {
-    if (!acc.password) {
-      toast.error("Password is only available right after creation. Rotate this account to get a new one.");
-      return;
-    }
-    await navigator.clipboard.writeText(`${acc.email} / ${acc.password}`);
-    setCopiedId(acc.id);
-    toast.success("Credentials copied");
-    setTimeout(() => setCopiedId(null), 1500);
-  };
-
-  const ensureBackdoor = async () => {
-    setBackdoorBusy(true);
-    const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
-      body: { action: "ensure_backdoor" },
-    });
-    setBackdoorBusy(false);
-    if (error || data?.error) {
-      toast.error(error?.message ?? data?.error ?? "Failed to create backdoor accounts");
-      return;
-    }
-    setBackdoor(data.backdoor ?? []);
-    toast.success("Backdoor accounts ready");
-    await load();
-  };
-
-  const copyBackdoor = async (b: { email: string; password: string }) => {
-    await navigator.clipboard.writeText(`${b.email} / ${b.password}`);
-    setBackdoorCopied(b.email);
-    toast.success("Copied");
-    setTimeout(() => setBackdoorCopied(null), 1500);
-  };
-
-  const seedMockData = async () => {
-    if (
-      !confirm(
-        "Seed mock data into the two backdoor accounts? This deletes any existing courses, bookings, reviews, XP and credentials on those accounts, then re-creates a polished baseline (instructor profile, 3 courses, credential, student bookings + reviews) for screenshots / advertising.",
-      )
-    )
-      return;
-    setSeeding(true);
-    const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
-      body: { action: "seed_mock_data" },
-    });
-    setSeeding(false);
-    if (error || data?.error) {
-      toast.error(error?.message ?? data?.error ?? "Seed failed");
-      return;
-    }
-    toast.success(
-      `Mock data seeded — ${data.courses_created ?? 0} courses, profiles + reviews ready`,
-    );
-  };
-  const signInAsBackdoor = async (role: "instructor" | "student") => {
-    if (
-      !confirm(
-        `Sign in as the backdoor ${role}? You will be signed out of your admin session and dropped directly into the ${role} app with mock data.`,
-      )
-    )
-      return;
-    setSigningInAs(role);
-    try {
-      // Ensure backdoor accounts exist + mock data is seeded, and get fresh credentials.
-      const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
-        body: { action: "ensure_backdoor" },
-      });
-      if (error || data?.error) {
-        toast.error(error?.message ?? data?.error ?? "Failed to prepare backdoor");
-        setSigningInAs(null);
-        return;
-      }
-      const creds = (data.backdoor ?? []).find(
-        (b: { role: string }) => b.role === role,
-      ) as { email: string; password: string } | undefined;
-      if (!creds) {
-        toast.error(`No backdoor ${role} credentials returned`);
-        setSigningInAs(null);
-        return;
-      }
-      // Drop the admin session and sign in as the backdoor account.
-      await supabase.auth.signOut();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: creds.email,
-        password: creds.password,
-      });
-      if (signInError) {
-        toast.error(signInError.message);
-        setSigningInAs(null);
-        return;
-      }
-      toast.success(`Signed in as backdoor ${role}`);
-      // Full reload to ensure all role-gated providers re-initialize cleanly.
-      window.location.href = role === "instructor" ? "/instructor" : "/student";
-    } catch (e: any) {
-      toast.error(e?.message ?? "Sign-in failed");
-      setSigningInAs(null);
-    }
-  };
-
-
-
-
-  const filtered = accounts.filter((a) => a.role === tab);
-  const cap = limits?.per_role_per_day ?? 10;
-  const usedInstructor = limits?.today.instructor ?? 0;
-  const usedStudent = limits?.today.student ?? 0;
-  const instructorBlocked = usedInstructor >= cap;
-  const studentBlocked = usedStudent >= cap;
-
   return (
     <>
       <AdminHeader
-        title="Fake Onboarding Testing Accounts"
-        subtitle="Create reusable instructor & student accounts to QA the onboarding flow"
+        title="QA Signup Credentials"
+        subtitle="Generate test instructor & student accounts that bypass onboarding, credential, and booking blockers"
       />
       <div className="p-4 sm:p-8 space-y-6">
-        {/* Admin View-As — jump straight into student/instructor UIs while staying signed in as admin */}
-        <div className="tactical-card p-4 sm:p-5 space-y-3 border-primary/40">
-          <div>
-            <div className="text-xs uppercase tracking-wider font-bold text-primary flex items-center gap-2">
-              <ExternalLink className="h-3.5 w-3.5" />
-              View as student / instructor
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Open the student or instructor app in your admin session to validate every step of
-              the flow. A banner at the top of those views lets you jump back to the admin panel.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button asChild className="bg-primary text-primary-foreground">
-              <Link to="/student">
-                <GraduationCap className="h-4 w-4" />
-                Open Student app
-              </Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link to="/instructor">
-                <ShieldCheck className="h-4 w-4" />
-                Open Instructor app
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        {/* Backdoor accounts — fixed credentials, fully onboarded, persistent */}
-        <div className="tactical-card p-4 sm:p-5 space-y-3 border-primary/60">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <div className="text-xs uppercase tracking-wider font-bold text-primary flex items-center gap-2">
-                <KeyRound className="h-3.5 w-3.5" />
-                Backdoor accounts (fixed credentials)
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Two persistent accounts — one instructor, one student — with the
-                same email/password every time. They skip onboarding (subscription,
-                credential upload, policy ack) and drop you straight into the role.
-                Click <strong>Create / reset backdoor</strong> to provision or rotate
-                the password back to the known value.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                onClick={() => signInAsBackdoor("instructor")}
-                disabled={signingInAs !== null || backdoorBusy}
-                className="bg-primary text-primary-foreground"
-              >
-                {signingInAs === "instructor" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ShieldCheck className="h-4 w-4" />
-                )}
-                Sign in as Instructor
-              </Button>
-              <Button
-                onClick={() => signInAsBackdoor("student")}
-                disabled={signingInAs !== null || backdoorBusy}
-                variant="secondary"
-              >
-                {signingInAs === "student" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <GraduationCap className="h-4 w-4" />
-                )}
-                Sign in as Student
-              </Button>
-              <Button
-                onClick={ensureBackdoor}
-                disabled={backdoorBusy || signingInAs !== null}
-                variant="outline"
-              >
-                {backdoorBusy ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <KeyRound className="h-4 w-4" />
-                )}
-                Create / reset backdoor
-              </Button>
-              <Button
-                onClick={seedMockData}
-                disabled={seeding}
-                variant="ghost"
-              >
-                {seeding ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-                Re-seed mock data
-              </Button>
-            </div>
-
-          </div>
-
-          <p className="text-[11px] text-muted-foreground -mt-1">
-            <strong>Seed mock data</strong> populates the two backdoor accounts with a
-            polished instructor profile (SSG Marcus Reed — 3 published courses,
-            approved credential, 5★ review) and student profile (Jake Calloway —
-            attended + upcoming bookings, completed onboarding) so they look real for
-            screenshots and advertising. Test-account isolation keeps these courses
-            invisible to real users.
-          </p>
-
-          {backdoor && backdoor.length > 0 && (
-            <div className="overflow-x-auto rounded border border-border">
-              <table className="w-full min-w-[640px] text-sm">
-                <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
-                  <tr>
-                    <th className="text-left px-3 py-2 font-bold">Role</th>
-                    <th className="text-left px-3 py-2 font-bold">Email</th>
-                    <th className="text-left px-3 py-2 font-bold">Password</th>
-                    <th className="px-3 py-2 font-bold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {backdoor.map((b) => (
-                    <tr key={b.email} className="hover:bg-muted/30">
-                      <td className="px-3 py-2 capitalize text-xs">{b.role}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{b.email}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{b.password}</td>
-                      <td className="px-3 py-2 text-right whitespace-nowrap">
-                        <Button size="sm" variant="outline" onClick={() => copyBackdoor(b)}>
-                          {backdoorCopied === b.email ? (
-                            <Check className="h-3.5 w-3.5" />
-                          ) : (
-                            <Copy className="h-3.5 w-3.5" />
-                          )}
-                          Copy
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {!backdoor && (
-            <p className="text-xs text-muted-foreground">
-              No credentials shown yet — click the button above. The password is
-              the same every time (it&apos;s a backdoor, not a one-time secret).
-            </p>
-          )}
-        </div>
-
-
-        {/* Signup credentials generator — does NOT create an auth user.
-            Use these to walk through the real signup form yourself. */}
         <div className="tactical-card p-4 sm:p-5 space-y-3 border-primary/40">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
@@ -465,9 +100,10 @@ export default function AdminTestAccounts() {
                 Generates a fresh email + password. <strong>No account is created yet</strong> —
                 copy them and run through the real signup form to test onboarding end-to-end.
                 Emails on the <code className="font-mono">qa+…@taclink.test</code> pattern are
-                auto-confirmed (no inbox needed) and auto-tagged as test accounts, so you can run
-                full checkout: courses created by the fake instructor are only visible to fake
-                students, never to real users.
+                auto-confirmed (no inbox needed) and <strong>auto-added to the test-account
+                allowlist on signup</strong>, so they bypass onboarding, credential upload,
+                publishing gates, the booking week-out minimum, and Helcim checkout. Courses
+                created by a QA instructor are only visible to QA students, never to real users.
               </p>
             </div>
             <div className="flex gap-2">
@@ -557,143 +193,6 @@ export default function AdminTestAccounts() {
             </div>
           )}
         </div>
-
-        <div className="tactical-card p-4 sm:p-5 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-xs uppercase tracking-wider font-bold text-primary">
-              Create new fake account
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={rotate}
-              disabled={rotating || accounts.length === 0}
-              title="Delete all existing fake accounts and re-create them with fresh credentials"
-            >
-              {rotating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-              Rotate all ({accounts.length})
-            </Button>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Optional label (e.g. 'Tier page test')"
-              className="bg-card border-border"
-            />
-            <Button
-              onClick={() => create("instructor")}
-              disabled={creating !== null || instructorBlocked}
-              className="bg-primary text-primary-foreground"
-              title={
-                instructorBlocked
-                  ? `Daily limit reached (${cap}/day). Resets 00:00 UTC.`
-                  : undefined
-              }
-            >
-              {creating === "instructor" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ShieldCheck className="h-4 w-4" />
-              )}
-              New Instructor ({usedInstructor}/{cap})
-            </Button>
-            <Button
-              onClick={() => create("student")}
-              disabled={creating !== null || studentBlocked}
-              variant="secondary"
-              title={
-                studentBlocked
-                  ? `Daily limit reached (${cap}/day). Resets 00:00 UTC.`
-                  : undefined
-              }
-            >
-              {creating === "student" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <GraduationCap className="h-4 w-4" />
-              )}
-              New Student ({usedStudent}/{cap})
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Accounts are auto-confirmed. Limit: <strong>{cap} per role per day</strong> (per
-            admin, resets at 00:00 UTC). Use <strong>Rotate all</strong> to wipe and refresh
-            every fake account in one click for a clean test run.
-          </p>
-        </div>
-
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "instructor" | "student")}>
-          <TabsList>
-            <TabsTrigger value="instructor">
-              Instructor ({accounts.filter((a) => a.role === "instructor").length})
-            </TabsTrigger>
-            <TabsTrigger value="student">
-              Student ({accounts.filter((a) => a.role === "student").length})
-            </TabsTrigger>
-          </TabsList>
-
-          {(["instructor", "student"] as const).map((r) => (
-            <TabsContent key={r} value={r} className="mt-4">
-              {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              ) : filtered.length === 0 ? (
-                <div className="tactical-card p-6 text-sm text-muted-foreground text-center">
-                  No fake {r} accounts yet. Create one above.
-                </div>
-              ) : (
-                <div className="tactical-card overflow-x-auto">
-                  <table className="w-full min-w-[640px] text-sm">
-                    <thead className="bg-surface text-muted-foreground text-[10px] uppercase tracking-wider">
-                      <tr>
-                        <th className="text-left px-4 py-3 font-bold">Email</th>
-                        <th className="text-left px-4 py-3 font-bold">Password</th>
-                        <th className="text-left px-4 py-3 font-bold">Label</th>
-                        <th className="text-left px-4 py-3 font-bold">Created</th>
-                        <th className="px-4 py-3 font-bold text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {filtered.map((a) => (
-                        <tr key={a.id} className="hover:bg-muted/30">
-                          <td className="px-4 py-3 font-mono text-xs">{a.email}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{a.password ?? <span className="text-muted-foreground">—</span>}</td>
-                          <td className="px-4 py-3">{a.label ?? "—"}</td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">
-                            {new Date(a.created_at).toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-                            <Button size="sm" variant="outline" onClick={() => copy(a)}>
-                              {copiedId === a.id ? (
-                                <Check className="h-3.5 w-3.5" />
-                              ) : (
-                                <Copy className="h-3.5 w-3.5" />
-                              )}
-                              Copy
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => remove(a.id)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              Delete
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
       </div>
     </>
   );
