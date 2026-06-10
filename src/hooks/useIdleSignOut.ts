@@ -39,17 +39,11 @@ export const useIdleSignOut = () => {
     // Seed initial activity
     markActive();
 
-    const activityEvents: Array<keyof WindowEventMap> = [
-      'mousedown',
-      'keydown',
-      'touchstart',
-      'scroll',
-      'visibilitychange',
-      'focus',
-    ];
+    const activityEvents = ['mousedown', 'keydown', 'touchstart', 'scroll', 'focus'] as const;
     activityEvents.forEach((ev) =>
       window.addEventListener(ev, markActive, { passive: true })
     );
+    document.addEventListener('visibilitychange', markActive);
 
     const tick = async () => {
       const idleFor = Date.now() - readLastActivity();
@@ -80,6 +74,7 @@ export const useIdleSignOut = () => {
       activityEvents.forEach((ev) =>
         window.removeEventListener(ev, markActive)
       );
+      document.removeEventListener('visibilitychange', markActive);
       window.clearInterval(interval);
     };
   }, [user, signOut]);
