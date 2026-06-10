@@ -2549,6 +2549,27 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_test_accounts: {
+        Row: {
+          created_at: string
+          email: string
+          label: string | null
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          label?: string | null
+          role: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          label?: string | null
+          role?: string
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           category: string
