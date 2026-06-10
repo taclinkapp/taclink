@@ -131,8 +131,8 @@ const NewCourse = () => {
       .from('test_accounts')
       .select('id')
       .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => setIsTestAccount(!!data));
+      .limit(1)
+      .then(({ data }) => setIsTestAccount(Array.isArray(data) && data.length > 0));
   }, [user?.id]);
 
   useEffect(() => {
