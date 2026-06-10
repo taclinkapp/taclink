@@ -114,12 +114,24 @@ Deno.serve(async (req) => {
     if (authErr || !user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const { bookingId, returnUrl } = body as {
+    const { bookingId, returnUrl, mode } = body as {
       bookingId?: string;
       returnUrl?: string;
+      mode?: "live" | "simulate";
     };
     if (!bookingId || !returnUrl) {
       return json({ error: "bookingId and returnUrl required" }, 400);
+    }
+
+    // Test-account short-circuit: when an allowlisted QA user requests
+    // mode:"simulate", skip Helcim entirely and mark the booking paid
+    // in-place. The live Helcim webhook path stays available for separate
+    // tests via the default mode.
+    if (mode === "simulate") {
+      const { data: isTest } = await supabase.rpc("is_test_account", { _user_id: user.id });
+      if (!isTest) {
+        return json({ error: "simulate mode is restricted to test accounts" }, 403);
+      }
     }
 
     // Provider gate — only run when active_provider = 'helcim'.
