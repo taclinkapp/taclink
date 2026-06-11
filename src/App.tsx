@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NavHistoryProvider } from "@/contexts/NavHistoryContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { Loader2 } from "lucide-react";
 
 // Splash is the landing page — keep eager so the first paint is instant
@@ -196,6 +197,7 @@ const App = () => (
       <BrowserRouter
         future={{ v7_startTransition: true, v7_relativeSplatPath: true } as any}
       >
+        <AppErrorBoundary>
         <AuthProvider>
           <NavHistoryProvider>
             <GtagTracker />
@@ -343,6 +345,7 @@ const App = () => (
           <MissionCompleteWatcher />
           </NavHistoryProvider>
         </AuthProvider>
+        </AppErrorBoundary>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
