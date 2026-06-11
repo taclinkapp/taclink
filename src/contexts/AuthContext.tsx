@@ -170,19 +170,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      const nextUserId = s?.user?.id ?? null;
-      activeUserIdRef.current = nextUserId;
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        const uid = s.user.id;
-        loadProfileAndRoles(uid).finally(() => {
-          if (activeUserIdRef.current === uid) setLoading(false);
-        });
+    (async () => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        forceLocalSignedOut();
+        return;
       }
-      else setLoading(false);
-    });
+
+      const { data: { session: s } } = await supabase.auth.getSession();
+      const uid = userData.user.id;
+      activeUserIdRef.current = uid;
+      setSession(s);
+      setUser(userData.user);
+      loadProfileAndRoles(uid).finally(() => {
+        if (activeUserIdRef.current === uid) setLoading(false);
+      });
+    })();
 
     return () => subscription.unsubscribe();
   }, []);
