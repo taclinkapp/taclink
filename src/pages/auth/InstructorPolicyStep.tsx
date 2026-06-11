@@ -44,7 +44,7 @@ const InstructorPolicyStep = () => {
   useEffect(() => {
     const draft = getInstructorDraft();
     if (!draft) {
-      nav('/auth/instructor-signup', { replace: true });
+      nav(resumeAfterVerify ? '/instructor/subscription?onboarding=1' : '/auth/instructor-signup', { replace: true });
       return;
     }
     if (!draft.plan) {
