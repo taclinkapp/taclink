@@ -1017,6 +1017,11 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === "ensure_backdoor") {
+      if (!BACKDOOR_PASSWORD) {
+        return json({
+          error: "BACKDOOR_PASSWORD secret is not configured. Set it in Supabase Edge Function secrets before using ensure_backdoor.",
+        }, 503);
+      }
       // Idempotent: for each role, find-or-create the fixed-email auth user,
       // reset its password, mark fully onboarded, ensure role + test_accounts row.
       // Then auto-seed advertising-quality mock data (profile photo, courses,
