@@ -27,7 +27,11 @@ type Action =
 // Fixed-credential backdoor accounts: persistent test users that bypass
 // onboarding (subscription, credential upload, policy ack) so an admin can
 // log straight in as either role for QA / screenshots / demos.
-const BACKDOOR_PASSWORD = "BackDoor!Taclink2026";
+//
+// SECURITY: the password is loaded from the BACKDOOR_PASSWORD secret. It is
+// never persisted to the codebase. If the secret is missing, ensure_backdoor
+// refuses to run. Rotate by changing the secret and re-running ensure_backdoor.
+const BACKDOOR_PASSWORD = Deno.env.get("BACKDOOR_PASSWORD") ?? "";
 const BACKDOOR = {
   instructor: {
     email: "backdoor.instructor@taclink.test",
@@ -1013,6 +1017,11 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === "ensure_backdoor") {
+      if (!BACKDOOR_PASSWORD) {
+        return json({
+          error: "BACKDOOR_PASSWORD secret is not configured. Set it in Supabase Edge Function secrets before using ensure_backdoor.",
+        }, 503);
+      }
       // Idempotent: for each role, find-or-create the fixed-email auth user,
       // reset its password, mark fully onboarded, ensure role + test_accounts row.
       // Then auto-seed advertising-quality mock data (profile photo, courses,

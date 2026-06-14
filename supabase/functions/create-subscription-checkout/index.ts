@@ -1,4 +1,10 @@
 // Creates an embedded Stripe Checkout session for the Instructor Pro subscription.
+//
+// SECURITY: requires a valid user JWT. The `userId` written into Stripe
+// metadata is derived from the verified JWT, NEVER from the request body.
+// This prevents an attacker from creating a paid subscription and attributing
+// it to a different user.
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
 import { isPrelaunchEnabled } from "../_shared/prelaunch.ts";
 
@@ -15,8 +21,33 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // --- Auth: require a valid Bearer JWT and derive userId/email from claims.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const sbUrl = Deno.env.get("SUPABASE_URL")!;
+    const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const authClient = createClient(sbUrl, anon, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsErr } = await authClient.auth.getClaims(token);
+    const claims = claimsData?.claims;
+    if (claimsErr || !claims?.sub) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claims.sub as string;
+    const verifiedEmail = (claims.email as string | undefined) ?? null;
+
     const body = await req.json();
-    const { priceId, customerEmail, userId, returnUrl, environment } = body ?? {};
+    const { priceId, returnUrl, environment } = body ?? {};
 
     if (!priceId || typeof priceId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(priceId)) {
       return new Response(JSON.stringify({ error: "Invalid priceId" }), {
@@ -49,24 +80,20 @@ Deno.serve(async (req) => {
 
     // Admin lock check: reject if the plan is locked or inactive in our DB.
     try {
-      const sbUrl = Deno.env.get("SUPABASE_URL");
-      const anon = Deno.env.get("SUPABASE_ANON_KEY");
-      if (sbUrl && anon) {
-        const planRes = await fetch(
-          `${sbUrl}/rest/v1/subscription_plans?slug=eq.${encodeURIComponent(priceId)}&select=locked,active,locked_reason`,
-          { headers: { apikey: anon, Authorization: `Bearer ${anon}` } },
-        );
-        if (planRes.ok) {
-          const rows = (await planRes.json()) as Array<{ locked: boolean; active: boolean; locked_reason: string | null }>;
-          const plan = rows?.[0];
-          if (plan && (plan.locked || !plan.active)) {
-            return new Response(
-              JSON.stringify({
-                error: plan.locked_reason || "This plan is currently unavailable.",
-              }),
-              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-            );
-          }
+      const planRes = await fetch(
+        `${sbUrl}/rest/v1/subscription_plans?slug=eq.${encodeURIComponent(priceId)}&select=locked,active,locked_reason`,
+        { headers: { apikey: anon, Authorization: `Bearer ${anon}` } },
+      );
+      if (planRes.ok) {
+        const rows = (await planRes.json()) as Array<{ locked: boolean; active: boolean; locked_reason: string | null }>;
+        const plan = rows?.[0];
+        if (plan && (plan.locked || !plan.active)) {
+          return new Response(
+            JSON.stringify({
+              error: plan.locked_reason || "This plan is currently unavailable.",
+            }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
         }
       }
     } catch (e) {
@@ -91,11 +118,9 @@ Deno.serve(async (req) => {
       mode: isRecurring ? "subscription" : "payment",
       ui_mode: "embedded_page",
       return_url: returnUrl,
-      ...(customerEmail && { customer_email: customerEmail }),
-      ...(userId && {
-        metadata: { userId },
-        ...(isRecurring && { subscription_data: { metadata: { userId } } }),
-      }),
+      ...(verifiedEmail && { customer_email: verifiedEmail }),
+      metadata: { userId },
+      ...(isRecurring && { subscription_data: { metadata: { userId } } }),
     });
 
     return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
