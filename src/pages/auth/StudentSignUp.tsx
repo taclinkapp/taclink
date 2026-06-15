@@ -91,6 +91,21 @@ const StudentSignUp = () => {
       toast.error('You must agree to the terms');
       return;
     }
+    if (!dob) {
+      toast.error('Date of birth is required');
+      return;
+    }
+    const dobDate = new Date(dob);
+    if (Number.isNaN(dobDate.getTime())) {
+      toast.error('Enter a valid date of birth');
+      return;
+    }
+    const today = new Date();
+    const eighteen = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    if (dobDate > eighteen) {
+      toast.error('You must be at least 18 years old to create an account');
+      return;
+    }
     setLoading(true);
     logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'submitted', email });
     const { data: signUpData, error } = await supabase.auth.signUp({
