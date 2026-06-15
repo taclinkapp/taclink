@@ -33,6 +33,8 @@ const StudentSignUp = () => {
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
+  const [dob, setDob] = useState('');
+  
   
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -89,6 +91,21 @@ const StudentSignUp = () => {
       toast.error('You must agree to the terms');
       return;
     }
+    if (!dob) {
+      toast.error('Date of birth is required');
+      return;
+    }
+    const dobDate = new Date(dob);
+    if (Number.isNaN(dobDate.getTime())) {
+      toast.error('Enter a valid date of birth');
+      return;
+    }
+    const today = new Date();
+    const eighteen = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    if (dobDate > eighteen) {
+      toast.error('You must be at least 18 years old to create an account');
+      return;
+    }
     setLoading(true);
     logSignupRedirect({ role: 'student', intendedPath: '/student', status: 'submitted', email });
     const { data: signUpData, error } = await supabase.auth.signUp({
@@ -99,6 +116,7 @@ const StudentSignUp = () => {
         data: {
           display_name: `${first} ${last}`.trim(),
           role: 'student',
+          date_of_birth: dob,
           ...(referralCode ? { referral_code: referralCode } : {}),
           ...(influencerSlug ? { influencer_slug: influencerSlug } : {}),
         },
@@ -225,6 +243,18 @@ const StudentSignUp = () => {
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
             <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Date of Birth</Label>
+            <Input
+              type="date"
+              required
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+              className="bg-card border-border h-11 mt-1.5"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1.5">You must be 18 or older to create a student account.</p>
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
