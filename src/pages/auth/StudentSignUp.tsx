@@ -245,6 +245,18 @@ const StudentSignUp = () => {
             <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
           </div>
           <div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Date of Birth</Label>
+            <Input
+              type="date"
+              required
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+              className="bg-card border-border h-11 mt-1.5"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1.5">You must be 18 or older to create a student account.</p>
+          </div>
+          <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
             <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-card border-border h-11 mt-1.5" />
             <PasswordRequirements password={password} className="mt-2" />
