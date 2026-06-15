@@ -33,6 +33,8 @@ const StudentSignUp = () => {
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
   const [email, setEmail] = useState('');
+  const [dob, setDob] = useState('');
+  
   
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
