@@ -2633,6 +2633,7 @@ export type Database = {
           bio: string | null
           created_at: string
           credential_uploaded_at: string | null
+          date_of_birth: string | null
           disabled_at: string | null
           disabled_by: string | null
           disabled_reason: string | null
@@ -2662,6 +2663,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           credential_uploaded_at?: string | null
+          date_of_birth?: string | null
           disabled_at?: string | null
           disabled_by?: string | null
           disabled_reason?: string | null
@@ -2691,6 +2693,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           credential_uploaded_at?: string | null
+          date_of_birth?: string | null
           disabled_at?: string | null
           disabled_by?: string | null
           disabled_reason?: string | null
