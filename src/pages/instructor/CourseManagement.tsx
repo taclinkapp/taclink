@@ -186,7 +186,7 @@ const CourseManagement = () => {
     if (!scanOutcome || !id) return;
     const o = scanOutcome;
     const bookingId = 'bookingId' in o ? o.bookingId ?? null : null;
-    const source: 'qr' | 'proximity' = o.kind === 'success' ? o.source : 'qr';
+    const source: 'qr' | 'proximity' | 'manual' = o.kind === 'success' ? o.source : 'qr';
     const reason =
       o.kind === 'verification_failed' || o.kind === 'invalid_qr' || o.kind === 'rpc_error'
         ? o.reason
@@ -748,7 +748,7 @@ const CourseManagement = () => {
           qc.invalidateQueries({ queryKey: ['course_bookings', id] });
           setScanOutcome(result.alreadyAttended
             ? { kind: 'already_attended', bookingId: result.bookingId, studentName: result.studentName }
-            : { kind: 'success', bookingId: result.bookingId, studentName: result.studentName, source: 'qr' });
+            : { kind: 'success', bookingId: result.bookingId, studentName: result.studentName, source: 'manual' });
         }}
       />
 
