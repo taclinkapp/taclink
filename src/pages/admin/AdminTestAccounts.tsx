@@ -12,10 +12,12 @@ import {
   KeyRound,
   Loader2,
   LogIn,
+  RefreshCw,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 type BackdoorCred = {
   role: "instructor" | "student";
