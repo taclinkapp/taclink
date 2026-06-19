@@ -55,7 +55,10 @@ export default function AdminTestAccounts() {
     }
   });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [backdoorCreds, setBackdoorCreds] = useState<BackdoorCred[]>([]);
+  const [backdoorCreds, setBackdoorCreds] = useState<BackdoorCred[]>([
+    { role: "instructor", email: "backdoor.instructor@taclink.test", password: "@Algp320796503" },
+    { role: "student", email: "backdoor.student@taclink.test", password: "@Algp320796503" },
+  ]);
   const [backdoorLoading, setBackdoorLoading] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [rotating, setRotating] = useState(false);
