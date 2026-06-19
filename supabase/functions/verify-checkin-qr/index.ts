@@ -236,6 +236,17 @@ Deno.serve(async (req) => {
 
     const studentName = await studentNameFor(admin, booking.student_id ?? null);
 
+    if (booking.status !== "reserved" && booking.status !== "attended") {
+      return new Response(JSON.stringify({
+        ok: false,
+        reason: `Booking is ${booking.status} and cannot be checked in.`,
+        bookingId: booking.id,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     if (commit === true && booking.status === "reserved") {
       const { data: updated, error: updateErr } = await admin
         .from("bookings")
