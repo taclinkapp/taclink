@@ -748,6 +748,57 @@ export type Database = {
         }
         Relationships: []
       }
+      checkin_manual_codes: {
+        Row: {
+          booking_id: string
+          code_hash: string
+          consumed_at: string | null
+          course_id: string
+          created_at: string
+          expires_at: string
+          issued_at: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          code_hash: string
+          consumed_at?: string | null
+          course_id: string
+          created_at?: string
+          expires_at: string
+          issued_at?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          code_hash?: string
+          consumed_at?: string | null
+          course_id?: string
+          created_at?: string
+          expires_at?: string
+          issued_at?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_manual_codes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkin_manual_codes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cockpit_briefs: {
         Row: {
           action_items: Json
