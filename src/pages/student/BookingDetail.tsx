@@ -448,7 +448,7 @@ const BookingDetail = () => {
                       type="button"
                       size="sm"
                       className="mt-3 h-8 bg-primary text-primary-foreground"
-                      onClick={() => nav('/login')}
+                      onClick={() => nav('/auth/signin')}
                     >
                       Sign in
                     </Button>
