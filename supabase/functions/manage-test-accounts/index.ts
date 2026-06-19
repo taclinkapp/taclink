@@ -94,7 +94,12 @@ async function provisionAccount(
     email,
     password,
     email_confirm: true,
-    user_metadata: { role, display_name, is_test_account: true },
+    user_metadata: {
+      role,
+      display_name,
+      is_test_account: true,
+      ...(role === "student" ? { date_of_birth: "1990-01-01" } : {}),
+    },
   });
   if (createErr || !created.user) {
     throw new Error(createErr?.message ?? "Failed to create user");
@@ -320,7 +325,7 @@ async function seedBackdoorMockData(
         "Half-day course on appendix and strong-side IWB draws, garment management, and reholstering safely under stress. ~250 rounds.",
       category: "Firearms",
       primary_pillar: "firearms",
-      secondary_pillar: "mindset",
+      secondary_pillar: "tactics",
       price_cents: 22900,
       duration_minutes: 240,
       capacity: 14,
@@ -383,7 +388,7 @@ async function seedBackdoorMockData(
         "Realistic counters to knife threats at contact distance, accessing a tool under pressure, and disengaging safely. Wear mouthguards.",
       category: "Combatives",
       primary_pillar: "combatives",
-      secondary_pillar: "mindset",
+      secondary_pillar: "tactics",
       price_cents: 17900,
       duration_minutes: 240,
       capacity: 20,
@@ -446,7 +451,7 @@ async function seedBackdoorMockData(
         "Female-only clinic taught with a female assistant instructor. Holsters, draw mechanics, and managing recoil. Welcoming, zero-judgment range.",
       category: "Firearms",
       primary_pillar: "firearms",
-      secondary_pillar: "mindset",
+      secondary_pillar: "combatives",
       price_cents: 19900,
       duration_minutes: 240,
       capacity: 12,
@@ -467,7 +472,7 @@ async function seedBackdoorMockData(
         "UTM/sim rounds in scripted scenarios — home invasion, parking lot ambush, active threat in retail. Reps, debriefs, and video review.",
       category: "CQB",
       primary_pillar: "tactics",
-      secondary_pillar: "mindset",
+      secondary_pillar: "protective_ops",
       price_cents: 49900,
       duration_minutes: 540,
       capacity: 12,
@@ -507,7 +512,7 @@ async function seedBackdoorMockData(
     {
       title: "Florida CCW Permit Course",
       description: "State-approved concealed weapons license course. Classroom block + live fire qualification. Same-day paperwork support.",
-      category: "Firearms", primary_pillar: "firearms", secondary_pillar: "mindset",
+      category: "Firearms", primary_pillar: "firearms", secondary_pillar: "tactics",
       price_cents: 14900, duration_minutes: 360, capacity: 20,
       location_name: "Shoot Straight Apopka", address: "1349 S Orange Blossom Trail",
       city: "Apopka", state: "FL", lat: 28.6757, lng: -81.5023,
@@ -543,7 +548,7 @@ async function seedBackdoorMockData(
     {
       title: "Georgia Home Defense Fundamentals",
       description: "Plan and rehearse a home defense response: layouts, choke points, lighting, family roles, and post-incident steps.",
-      category: "Tactics", primary_pillar: "tactics", secondary_pillar: "mindset",
+      category: "Tactics", primary_pillar: "tactics", secondary_pillar: "protective_ops",
       price_cents: 18900, duration_minutes: 300, capacity: 18,
       location_name: "Governors Gun Club", address: "1745 Old Ellis Rd",
       city: "Roswell", state: "GA", lat: 34.0876, lng: -84.3027,
@@ -579,7 +584,7 @@ async function seedBackdoorMockData(
     {
       title: "Ohio Defensive Pistol Skills",
       description: "Holster work, draw stroke, and recoil control. Build a foundation for CCW or duty carry. ~350 rounds.",
-      category: "Firearms", primary_pillar: "firearms", secondary_pillar: "mindset",
+      category: "Firearms", primary_pillar: "firearms", secondary_pillar: "tactics",
       price_cents: 24900, duration_minutes: 360, capacity: 16,
       location_name: "Black Wing Shooting Center", address: "3722 Dolson Ct NW",
       city: "Delaware", state: "OH", lat: 40.3553, lng: -83.0681,
@@ -603,7 +608,7 @@ async function seedBackdoorMockData(
     {
       title: "Tennessee Combatives Intro",
       description: "Stand-up clinch, takedown defense, and ground escapes for non-grapplers. Gear: mouthguard, athletic clothes.",
-      category: "Combatives", primary_pillar: "combatives", secondary_pillar: "mindset",
+      category: "Combatives", primary_pillar: "combatives", secondary_pillar: "tactics",
       price_cents: 14900, duration_minutes: 240, capacity: 20,
       location_name: "Nashville MMA", address: "915 Berry Rd",
       city: "Nashville", state: "TN", lat: 36.1245, lng: -86.7706,
@@ -774,6 +779,7 @@ async function seedBackdoorMockData(
       user_metadata: {
         role: "student",
         display_name: name,
+        date_of_birth: "1990-01-01",
         is_test_account: true,
       },
     });
@@ -1097,14 +1103,18 @@ Deno.serve(async (req) => {
 
         if (existing) {
           userIdForRole = existing.id;
+          // Do not include `password` here. Auth invalidates every active
+          // session for that user when password is present, even if the value
+          // is unchanged. Password rotation is handled only by the explicit
+          // `set_backdoor_password` action.
           await admin.auth.admin.updateUserById(existing.id, {
-            password: CURRENT_PASSWORD,
             email_confirm: true,
             user_metadata: {
               role,
               display_name: cfg.display_name,
               is_test_account: true,
               is_backdoor: true,
+              ...(role === "student" ? { date_of_birth: "1990-01-01" } : {}),
             },
           });
         } else {
