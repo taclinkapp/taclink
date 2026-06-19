@@ -395,7 +395,11 @@ const NewCourse = () => {
       if (typeof d.waiverTitle === 'string' && d.waiverTitle) setWaiverTitle(d.waiverTitle);
       if (typeof d.waiverNotes === 'string') setWaiverNotes(d.waiverNotes);
       if (d.waiverCriteria && typeof d.waiverCriteria === 'object') setWaiverCriteria(d.waiverCriteria);
-      if (typeof d.step === 'number') setStep(d.step);
+      // Intentionally do NOT restore `d.step`. Files (cover photo / gallery)
+      // can't be persisted in localStorage, so jumping straight to a later
+      // step would let the instructor publish without re-picking images and
+      // the course would save with cover_image_url=null. Always restart at
+      // step 0 so the cover-photo guard runs.
       if (d.savedAt) setLastSavedAt(new Date(d.savedAt));
       toast.message('Draft restored', { description: 'Picked up where you left off.' });
     } catch {
