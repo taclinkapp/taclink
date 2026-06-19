@@ -72,7 +72,20 @@ const BookingDetail = () => {
       const { data, error } = await supabase.functions.invoke('sign-checkin-qr', {
         body: { bookingId },
       });
-      if (error) throw error;
+      // supabase.functions.invoke wraps non-2xx as FunctionsHttpError and hides
+      // the JSON body. Pull the real message out so the student sees something
+      // actionable instead of "Edge Function returned a non-2xx status code".
+      if (error) {
+        let msg = error.message ?? 'Could not load secure QR';
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            if (body?.error) msg = body.error;
+          }
+        } catch { /* ignore parse errors */ }
+        throw new Error(msg);
+      }
       if (!data?.token) throw new Error('No token returned');
       setSignedToken(data.token);
       setTokenExpiresAt(data.expiresAt ?? null);
@@ -83,6 +96,7 @@ const BookingDetail = () => {
       setTokenLoading(false);
     }
   };
+
 
   const reload = async () => {
     if (!id) return;
