@@ -1098,7 +1098,7 @@ Deno.serve(async (req) => {
         if (existing) {
           userIdForRole = existing.id;
           await admin.auth.admin.updateUserById(existing.id, {
-            password: BACKDOOR_PASSWORD,
+            password: CURRENT_PASSWORD,
             email_confirm: true,
             user_metadata: {
               role,
@@ -1110,7 +1110,7 @@ Deno.serve(async (req) => {
         } else {
           const { data: created, error: createErr } = await admin.auth.admin.createUser({
             email: cfg.email,
-            password: BACKDOOR_PASSWORD,
+            password: CURRENT_PASSWORD,
             email_confirm: true,
             user_metadata: {
               role,
@@ -1170,7 +1170,7 @@ Deno.serve(async (req) => {
           });
         }
 
-        results.push({ role, email: cfg.email, password: BACKDOOR_PASSWORD });
+        results.push({ role, email: cfg.email, password: CURRENT_PASSWORD });
       }
 
       // Auto-seed mock data so the accounts are demo-ready immediately.
