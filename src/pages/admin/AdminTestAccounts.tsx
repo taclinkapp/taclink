@@ -63,7 +63,7 @@ export default function AdminTestAccounts() {
         body: { action: "ensure_backdoor" },
       });
       if (error) throw error;
-      const results = (data?.results ?? []) as BackdoorCred[];
+      const results = (data?.backdoor ?? data?.results ?? []) as BackdoorCred[];
       if (!results.length) throw new Error("No credentials returned");
       setBackdoorCreds(results);
       toast.success("Sign-in-ready test accounts are provisioned");
