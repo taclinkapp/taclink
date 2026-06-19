@@ -478,7 +478,17 @@ const CourseManagement = () => {
                   >
                     <Camera className="h-4 w-4" /> Open Scanner
                   </button>
+                  <button
+                    onClick={() => setManualOpen(true)}
+                    className="mt-2 w-full h-10 rounded-md border border-border bg-card hover:bg-muted text-foreground font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                  >
+                    <KeyRound className="h-3.5 w-3.5" /> Enter 6-digit code instead
+                  </button>
+                  <div className="mt-2 text-[10px] text-muted-foreground leading-relaxed">
+                    Use the manual code if the student's QR won't scan. Codes activate 30 min before start.
+                  </div>
                 </div>
+
 
                 {/* AI auto check-in */}
                 <div className="tactical-card p-4 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
