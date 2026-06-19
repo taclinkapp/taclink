@@ -617,10 +617,23 @@ const CourseManagement = () => {
             }
 
             if (!resolvedBookingId) return;
-            const match = bookings.find((b: any) => b.id === resolvedBookingId);
+            let match = bookings.find((b: any) => b.id === resolvedBookingId);
+            // Cache may be stale (e.g. student booked after this page loaded).
+            // Re-check the DB directly before declaring a wrong-course mismatch
+            // so a fresh booking on the correct course isn't rejected.
             if (!match) {
-              setScanOutcome({ kind: 'wrong_course', bookingId: resolvedBookingId });
-              return;
+              const { data: fresh } = await supabase
+                .from('bookings')
+                .select('id, status, course_id, student_id, attended_at, profiles:student_id(display_name)')
+                .eq('id', resolvedBookingId)
+                .maybeSingle();
+              if (fresh && fresh.course_id === id) {
+                match = fresh;
+                qc.invalidateQueries({ queryKey: ['course_bookings', id] });
+              } else {
+                setScanOutcome({ kind: 'wrong_course', bookingId: resolvedBookingId });
+                return;
+              }
             }
             const studentName = studentNameFor(match);
 
