@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { getAvatarSrc } from '@/lib/avatar';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
-import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
