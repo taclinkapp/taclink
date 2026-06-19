@@ -57,6 +57,38 @@ export default function AdminTestAccounts() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [backdoorCreds, setBackdoorCreds] = useState<BackdoorCred[]>([]);
   const [backdoorLoading, setBackdoorLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [rotating, setRotating] = useState(false);
+
+  const rotateBackdoorPassword = async () => {
+    if (newPassword.length < 10) {
+      toast.error("Password must be at least 10 characters");
+      return;
+    }
+    setRotating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
+        body: { action: "set_backdoor_password", password: newPassword },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      setBackdoorCreds((prev) =>
+        prev.length
+          ? prev.map((c) => ({ ...c, password: newPassword }))
+          : [
+              { role: "instructor", email: "backdoor.instructor@taclink.test", password: newPassword },
+              { role: "student", email: "backdoor.student@taclink.test", password: newPassword },
+            ],
+      );
+      setNewPassword("");
+      toast.success("Backdoor password updated for both accounts");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to update password";
+      toast.error(msg);
+    } finally {
+      setRotating(false);
+    }
+  };
 
   const provisionBackdoor = async () => {
     setBackdoorLoading(true);
