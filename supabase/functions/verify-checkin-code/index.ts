@@ -45,6 +45,16 @@ const codeFor = async (bookingId: string, day: string) => {
   return String(n % 1_000_000).padStart(6, "0");
 };
 
+const studentNameFor = async (admin: any, studentId: string | null) => {
+  if (!studentId) return null;
+  const { data } = await admin
+    .from("profiles")
+    .select("display_name")
+    .eq("id", studentId)
+    .maybeSingle();
+  return data?.display_name ?? null;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -138,11 +148,18 @@ Deno.serve(async (req) => {
     const day = dayKey(course.starts_at);
 
     // Pull every booking on this course that could legitimately check in.
-    const { data: bookings } = await admin
+    const { data: bookings, error: bookingsErr } = await admin
       .from("bookings")
-      .select("id, status, student_id, profiles:student_id(display_name)")
+      .select("id, status, student_id")
       .eq("course_id", courseId)
       .in("status", ["reserved", "attended"]);
+
+    if (bookingsErr) {
+      return new Response(JSON.stringify({ ok: false, reason: bookingsErr.message }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!bookings || bookings.length === 0) {
       return new Response(JSON.stringify({ ok: false, reason: "No active bookings on this course." }), {
@@ -154,7 +171,7 @@ Deno.serve(async (req) => {
     for (const b of bookings) {
       const expected = await codeFor(b.id, day);
       if (expected === cleanCode) {
-        const studentName = (b as any)?.profiles?.display_name ?? null;
+        const studentName = await studentNameFor(admin, b.student_id ?? null);
         if (b.status === "attended") {
           return new Response(
             JSON.stringify({ ok: true, bookingId: b.id, status: "attended", alreadyAttended: true, studentName }),

@@ -19,6 +19,7 @@ import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
 import { ManualCheckinDialog } from '@/components/instructor/ManualCheckinDialog';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
+import { fetchPublicProfileMap } from '@/lib/profilePhotos';
 
 const tabs = ['Roster', 'Check-In'] as const;
 
@@ -49,16 +50,21 @@ const CourseManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bookings')
-        .select('id, status, student_id, attended_at, profiles:student_id(display_name)')
+        .select('id, status, student_id, attended_at')
         .eq('course_id', id as string);
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      const profileMap = await fetchPublicProfileMap(rows.map((b: any) => b.student_id));
+      return rows.map((b: any) => ({
+        ...b,
+        studentName: profileMap.get(b.student_id)?.display_name ?? null,
+      }));
     },
     enabled: !!id,
   });
 
   const studentNameFor = (b: any): string | null =>
-    b?.profiles?.display_name || null;
+    b?.studentName || null;
 
   const markAttended = async (
     bookingId: string,
@@ -70,13 +76,14 @@ const CourseManagement = () => {
     if (!existing) {
       const { data: fresh } = await supabase
         .from('bookings')
-        .select('id, status, course_id, student_id, attended_at, profiles:student_id(display_name)')
+        .select('id, status, course_id, student_id, attended_at')
         .eq('id', bookingId)
         .maybeSingle();
       if (!fresh || fresh.course_id !== id) {
         return { kind: 'wrong_course' };
       }
-      existing = fresh;
+      const profileMap = await fetchPublicProfileMap([fresh.student_id]);
+      existing = { ...fresh, studentName: profileMap.get(fresh.student_id)?.display_name ?? null };
     }
     const studentName = studentNameFor(existing);
     if (existing.status === 'attended') {
@@ -179,7 +186,7 @@ const CourseManagement = () => {
     if (!scanOutcome || !id) return;
     const o = scanOutcome;
     const bookingId = 'bookingId' in o ? o.bookingId ?? null : null;
-    const source: 'qr' | 'proximity' = o.kind === 'success' ? o.source : 'qr';
+    const source: 'qr' | 'proximity' | 'manual' = o.kind === 'success' ? o.source : 'qr';
     const reason =
       o.kind === 'verification_failed' || o.kind === 'invalid_qr' || o.kind === 'rpc_error'
         ? o.reason
@@ -434,7 +441,7 @@ const CourseManagement = () => {
                 </div>
               ) : (
                 activeBookings.map((b: any) => {
-                  const name = b.profiles?.display_name ?? `Booking ${b.id.slice(0, 8).toUpperCase()}`;
+                  const name = b.studentName ?? `Booking ${b.id.slice(0, 8).toUpperCase()}`;
                   const isAttended = b.status === 'attended';
                   return (
                     <div key={b.id} className="tactical-card p-3 flex items-center gap-3">
@@ -577,7 +584,7 @@ const CourseManagement = () => {
                             <Check className="h-4 w-4 text-success" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold truncate">Booking {b.id.slice(0, 8).toUpperCase()}</div>
+                            <div className="text-sm font-semibold truncate">{b.studentName ?? `Booking ${b.id.slice(0, 8).toUpperCase()}`}</div>
                             <div className="text-[10px] text-muted-foreground">
                               {b.attended_at ? new Date(b.attended_at).toLocaleTimeString() : 'just now'}
                             </div>
@@ -662,11 +669,12 @@ const CourseManagement = () => {
             if (!match) {
               const { data: fresh, error: freshErr } = await supabase
                 .from('bookings')
-                .select('id, status, course_id, student_id, attended_at, profiles:student_id(display_name)')
+                .select('id, status, course_id, student_id, attended_at')
                 .eq('id', resolvedBookingId)
                 .maybeSingle();
               if (fresh && fresh.course_id === id) {
-                match = fresh;
+                const profileMap = await fetchPublicProfileMap([fresh.student_id]);
+                match = { ...fresh, studentName: profileMap.get(fresh.student_id)?.display_name ?? null };
                 qc.invalidateQueries({ queryKey: ['course_bookings', id] });
               } else if (fresh && fresh.course_id !== id) {
                 setScanOutcome({ kind: 'wrong_course', bookingId: resolvedBookingId });
@@ -740,7 +748,7 @@ const CourseManagement = () => {
           qc.invalidateQueries({ queryKey: ['course_bookings', id] });
           setScanOutcome(result.alreadyAttended
             ? { kind: 'already_attended', bookingId: result.bookingId, studentName: result.studentName }
-            : { kind: 'success', bookingId: result.bookingId, studentName: result.studentName, source: 'qr' });
+            : { kind: 'success', bookingId: result.bookingId, studentName: result.studentName, source: 'manual' });
         }}
       />
 
