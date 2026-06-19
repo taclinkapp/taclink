@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { clearAuthStorage, hasCachedAuthSession, isRecoverableAuthError, recoverFromStaleAuth } from "@/lib/authRecovery";
+import { clearAuthStorage, isRecoverableAuthError, recoverFromStaleAuth } from "@/lib/authRecovery";
 
 type Props = { children: ReactNode };
 type State = { error: Error | null };
@@ -15,7 +15,7 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("[app] render crashed", error, info);
-    if (isRecoverableAuthError(error) || hasCachedAuthSession()) recoverFromStaleAuth();
+    if (isRecoverableAuthError(error)) recoverFromStaleAuth();
   }
 
   render() {
