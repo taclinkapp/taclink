@@ -22,8 +22,16 @@ const MyCourses = () => {
 
   const now = Date.now();
   const filtered = courses.filter((c) => {
-    const startMs = c.date ? new Date(c.date).getTime() : 0;
-    const isPast = startMs && startMs < now;
+    // c.date is YYYY-MM-DD; pair it with endTime (or startTime + 2h fallback)
+    // so an in-progress course doesn't flip to Past the moment it starts.
+    let endMs = 0;
+    if (c.date) {
+      const t = c.endTime || c.startTime || '23:59';
+      const composed = new Date(`${c.date}T${t}:00`);
+      endMs = composed.getTime();
+      if (!c.endTime && c.startTime) endMs += 2 * 60 * 60 * 1000;
+    }
+    const isPast = endMs > 0 && endMs < now;
     const isCancelled = c.status === 'cancelled';
     if (tab === 'Active') return c.status === 'active' && !isPast;
     if (tab === 'Draft') return c.status === 'draft';
