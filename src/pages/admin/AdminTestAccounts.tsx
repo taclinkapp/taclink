@@ -237,6 +237,36 @@ export default function AdminTestAccounts() {
               </table>
             </div>
           )}
+
+          {/* Rotate password */}
+          <div className="rounded border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+            <div className="text-[11px] uppercase tracking-wider font-bold text-amber-500 flex items-center gap-2">
+              <RefreshCw className="h-3 w-3" />
+              Change password (both accounts)
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Updates the password on both backdoor accounts immediately and stores it so future
+              re-provisions keep this value. Minimum 10 characters.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                type="text"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password (10+ chars)"
+                className="font-mono text-xs"
+                autoComplete="off"
+              />
+              <Button
+                onClick={rotateBackdoorPassword}
+                disabled={rotating || newPassword.length < 10}
+                className="bg-amber-500 text-black hover:bg-amber-400 whitespace-nowrap"
+              >
+                {rotating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Update password
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="tactical-card p-4 sm:p-5 space-y-3 border-primary/40">
