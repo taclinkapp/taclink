@@ -1064,6 +1064,9 @@ Deno.serve(async (req) => {
               display_name: cfg.display_name,
               is_test_account: true,
               is_backdoor: true,
+              // handle_new_user() trigger requires date_of_birth for students
+              // (18+ check). Provide a fixed compliant DOB for the backdoor.
+              ...(role === "student" ? { date_of_birth: "1990-01-01" } : {}),
             },
           });
           if (createErr || !created.user) {
