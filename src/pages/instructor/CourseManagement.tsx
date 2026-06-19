@@ -712,6 +712,16 @@ const CourseManagement = () => {
       />
 
 
+      <ManualCheckinDialog
+        open={manualOpen}
+        courseId={c.id}
+        onOpenChange={setManualOpen}
+        onVerified={async (bookingId) => {
+          const outcome = await markAttended(bookingId, { source: 'qr' });
+          setScanOutcome(outcome);
+        }}
+      />
+
       <CancelCourseDialog
         open={cancelOpen}
         onOpenChange={setCancelOpen}
