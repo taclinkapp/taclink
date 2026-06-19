@@ -1,29 +1,10 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { clearAuthStorage, isRecoverableAuthError, recoverFromStaleAuth } from "@/lib/authRecovery";
 
 type Props = { children: ReactNode };
 type State = { error: Error | null };
-
-const clearAuthStorage = () => {
-  const clearStore = (store: Storage) => {
-    for (let i = store.length - 1; i >= 0; i--) {
-      const key = store.key(i);
-      if (!key) continue;
-      if (
-        key === "supabase.auth.token" ||
-        (key.startsWith("sb-") && (key.includes("-auth-token") || key.includes("-code-verifier"))) ||
-        key.startsWith("taclink_free_waiver_ack:") ||
-        key === "taclink_last_activity_at"
-      ) {
-        store.removeItem(key);
-      }
-    }
-  };
-
-  try { clearStore(localStorage); } catch { /* ignore */ }
-  try { clearStore(sessionStorage); } catch { /* ignore */ }
-};
 
 export class AppErrorBoundary extends Component<Props, State> {
   state: State = { error: null };
@@ -34,6 +15,7 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("[app] render crashed", error, info);
+    if (isRecoverableAuthError(error)) recoverFromStaleAuth();
   }
 
   render() {
