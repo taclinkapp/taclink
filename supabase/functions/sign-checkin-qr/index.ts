@@ -180,9 +180,15 @@ Deno.serve(async (req) => {
       manualCodeAvailableAt = new Date(WINDOW_OPEN).toISOString();
       const now = Date.now();
       if (now >= WINDOW_OPEN && now <= WINDOW_CLOSE) {
+        const { data: existingCode } = await admin
+          .from("checkin_manual_codes")
+          .select("code_hash")
+          .eq("booking_id", booking.id)
+          .maybeSingle();
         for (let attempt = 0; attempt < 8 && !manualCode; attempt++) {
           const candidate = randomSixDigitCode();
           const codeHash = b64url(await hmac(`MCH:${booking.course_id}:${candidate}`));
+          if (existingCode?.code_hash === codeHash) continue;
           const { error: upsertErr } = await admin
             .from("checkin_manual_codes")
             .upsert({
@@ -201,6 +207,7 @@ Deno.serve(async (req) => {
             throw upsertErr;
           }
         }
+        if (!manualCode) throw new Error("Could not generate a fresh backup code. Please refresh again.");
       }
     }
 
