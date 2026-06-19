@@ -441,7 +441,7 @@ const CourseManagement = () => {
                 </div>
               ) : (
                 activeBookings.map((b: any) => {
-                  const name = b.profiles?.display_name ?? `Booking ${b.id.slice(0, 8).toUpperCase()}`;
+                  const name = b.studentName ?? `Booking ${b.id.slice(0, 8).toUpperCase()}`;
                   const isAttended = b.status === 'attended';
                   return (
                     <div key={b.id} className="tactical-card p-3 flex items-center gap-3">
@@ -584,7 +584,7 @@ const CourseManagement = () => {
                             <Check className="h-4 w-4 text-success" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold truncate">Booking {b.id.slice(0, 8).toUpperCase()}</div>
+                            <div className="text-sm font-semibold truncate">{b.studentName ?? `Booking ${b.id.slice(0, 8).toUpperCase()}`}</div>
                             <div className="text-[10px] text-muted-foreground">
                               {b.attended_at ? new Date(b.attended_at).toLocaleTimeString() : 'just now'}
                             </div>
@@ -669,11 +669,12 @@ const CourseManagement = () => {
             if (!match) {
               const { data: fresh, error: freshErr } = await supabase
                 .from('bookings')
-                .select('id, status, course_id, student_id, attended_at, profiles:student_id(display_name)')
+                .select('id, status, course_id, student_id, attended_at')
                 .eq('id', resolvedBookingId)
                 .maybeSingle();
               if (fresh && fresh.course_id === id) {
-                match = fresh;
+                const profileMap = await fetchPublicProfileMap([fresh.student_id]);
+                match = { ...fresh, studentName: profileMap.get(fresh.student_id)?.display_name ?? null };
                 qc.invalidateQueries({ queryKey: ['course_bookings', id] });
               } else if (fresh && fresh.course_id !== id) {
                 setScanOutcome({ kind: 'wrong_course', bookingId: resolvedBookingId });
