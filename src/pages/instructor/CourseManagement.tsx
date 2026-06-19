@@ -19,6 +19,7 @@ import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
 import { ManualCheckinDialog } from '@/components/instructor/ManualCheckinDialog';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
+import { fetchPublicProfileMap } from '@/lib/profilePhotos';
 
 const tabs = ['Roster', 'Check-In'] as const;
 
@@ -49,16 +50,21 @@ const CourseManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bookings')
-        .select('id, status, student_id, attended_at, profiles:student_id(display_name)')
+        .select('id, status, student_id, attended_at')
         .eq('course_id', id as string);
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      const profileMap = await fetchPublicProfileMap(rows.map((b: any) => b.student_id));
+      return rows.map((b: any) => ({
+        ...b,
+        studentName: profileMap.get(b.student_id)?.display_name ?? null,
+      }));
     },
     enabled: !!id,
   });
 
   const studentNameFor = (b: any): string | null =>
-    b?.profiles?.display_name || null;
+    b?.studentName || null;
 
   const markAttended = async (
     bookingId: string,
@@ -70,13 +76,14 @@ const CourseManagement = () => {
     if (!existing) {
       const { data: fresh } = await supabase
         .from('bookings')
-        .select('id, status, course_id, student_id, attended_at, profiles:student_id(display_name)')
+        .select('id, status, course_id, student_id, attended_at')
         .eq('id', bookingId)
         .maybeSingle();
       if (!fresh || fresh.course_id !== id) {
         return { kind: 'wrong_course' };
       }
-      existing = fresh;
+      const profileMap = await fetchPublicProfileMap([fresh.student_id]);
+      existing = { ...fresh, studentName: profileMap.get(fresh.student_id)?.display_name ?? null };
     }
     const studentName = studentNameFor(existing);
     if (existing.status === 'attended') {
