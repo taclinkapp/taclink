@@ -109,9 +109,12 @@ const BookingDetail = () => {
       if (!data?.token) throw new Error('No token returned');
       setSignedToken(data.token);
       setTokenExpiresAt(data.expiresAt ?? null);
+      setManualCode(data.manualCode ?? null);
+      setManualCodeAvailableAt(data.manualCodeAvailableAt ?? null);
     } catch (e: any) {
       setTokenError(e?.message ?? 'Could not load secure QR');
       setSignedToken(null);
+      setManualCode(null);
     } finally {
       setTokenLoading(false);
     }
