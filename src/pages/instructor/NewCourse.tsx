@@ -660,6 +660,16 @@ const NewCourse = () => {
         if (error) throw error;
         created = data;
       } else {
+        if (!coverUrl) {
+          // Defense-in-depth: a brand-new course MUST have a cover photo
+          // uploaded to the bucket. Bail loudly instead of inserting a row
+          // with cover_image_url=null (which then shows the placeholder to
+          // every student).
+          toast.error('Cover photo is missing — please re-pick your cover before publishing.');
+          setSaving(false);
+          setStep(0);
+          return;
+        }
         created = await createCourse(user.id, {
           title: title.trim(),
           description: description.trim() || undefined,
