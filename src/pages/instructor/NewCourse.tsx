@@ -538,6 +538,30 @@ const NewCourse = () => {
     const err = validate();
     if (err) { toast.error(err); return; }
     if (step < 4) { setStep(step + 1); return; }
+    // Final publish guard: re-validate prerequisites that live on earlier
+    // steps so a restored draft or any state drift can't ship a course with
+    // a missing cover photo (which then renders the placeholder for
+    // students). If anything is missing, jump back to the offending step.
+    if (!coverFile && !coverPreview) {
+      toast.error('A cover photo is required so students can recognize your course on the map and listings');
+      setStep(0);
+      return;
+    }
+    if (!title.trim() || !category || !skillLevel || !primaryPillar) {
+      toast.error('Finish the Basics step before publishing');
+      setStep(0);
+      return;
+    }
+    if (!date || !startTime || !endTime || !city || !state) {
+      toast.error('Finish the Schedule step before publishing');
+      setStep(1);
+      return;
+    }
+    if (!capacity || Number(capacity) < 1 || !price || Number(price) < 5) {
+      toast.error('Finish the Pricing step before publishing');
+      setStep(2);
+      return;
+    }
     if (!user) { toast.error('You must be signed in'); return; }
     // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
     // since nothing is being published or charged yet.
