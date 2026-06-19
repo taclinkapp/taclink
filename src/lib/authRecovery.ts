@@ -39,6 +39,25 @@ export const isRecoverableAuthError = (error: unknown) => {
   );
 };
 
+export const hasCachedAuthSession = () => {
+  const hasSession = (store: Storage) => {
+    for (let i = store.length - 1; i >= 0; i--) {
+      const key = store.key(i);
+      if (
+        key === "supabase.auth.token" ||
+        (key?.startsWith("sb-") && key.includes("-auth-token"))
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  try { if (hasSession(localStorage)) return true; } catch { /* ignore */ }
+  try { if (hasSession(sessionStorage)) return true; } catch { /* ignore */ }
+  return false;
+};
+
 export const recoverFromStaleAuth = () => {
   clearAuthStorage();
   try {
