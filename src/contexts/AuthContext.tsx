@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAuthStorage, hasCachedAuthSession, isRecoverableAuthError, markAuthRecoveryHealthy } from "@/lib/authRecovery";
 
 export type AppRole = "student" | "instructor" | "admin";
 
@@ -44,25 +45,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [rolesError, setRolesError] = useState<string | null>(null);
   const activeUserIdRef = useRef<string | null>(null);
 
-  const clearLocalAuthArtifacts = () => {
-    const clearStore = (store: Storage) => {
-      for (let i = store.length - 1; i >= 0; i--) {
-        const k = store.key(i);
-        if (!k) continue;
-        if (
-          k === 'supabase.auth.token' ||
-          (k.startsWith('sb-') && (k.includes('-auth-token') || k.includes('-code-verifier'))) ||
-          k.startsWith('taclink_free_waiver_ack:')
-        ) {
-          store.removeItem(k);
-        }
-      }
-    };
-
-    try { clearStore(localStorage); } catch { /* ignore */ }
-    try { clearStore(sessionStorage); } catch { /* ignore */ }
-  };
-
   const resetAuthState = () => {
     activeUserIdRef.current = null;
     setSession(null);
@@ -74,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const forceLocalSignedOut = () => {
-    clearLocalAuthArtifacts();
+    clearAuthStorage();
     resetAuthState();
   };
 
@@ -138,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       if (localStorage.getItem(AUTH_CACHE_FIX_KEY) !== '1') {
-        clearLocalAuthArtifacts();
+        clearAuthStorage();
         localStorage.setItem(AUTH_CACHE_FIX_KEY, '1');
       }
     } catch {
@@ -171,20 +153,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     (async () => {
-      const { data: userData, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userData.user) {
-        forceLocalSignedOut();
-        return;
-      }
+      try {
+        const { data: userData, error: userErr } = await supabase.auth.getUser();
+        if (userErr || !userData.user) {
+          if (userErr && isRecoverableAuthError(userErr)) {
+            try {
+              sessionStorage.setItem(
+                'auth_signin_error',
+                'Your previous sign-in expired, so TacLink cleared it. Sign in again to continue.'
+              );
+            } catch { /* ignore */ }
+          }
+          forceLocalSignedOut();
+          return;
+        }
+        markAuthRecoveryHealthy();
 
-      const { data: { session: s } } = await supabase.auth.getSession();
-      const uid = userData.user.id;
-      activeUserIdRef.current = uid;
-      setSession(s);
-      setUser(userData.user);
-      loadProfileAndRoles(uid).finally(() => {
-        if (activeUserIdRef.current === uid) setLoading(false);
-      });
+        const { data: { session: s } } = await supabase.auth.getSession();
+        const uid = userData.user.id;
+        activeUserIdRef.current = uid;
+        setSession(s);
+        setUser(userData.user);
+        loadProfileAndRoles(uid).finally(() => {
+          if (activeUserIdRef.current === uid) setLoading(false);
+        });
+      } catch (err) {
+        console.warn('[auth] startup failed; clearing stale local session', err);
+        if (isRecoverableAuthError(err) || hasCachedAuthSession()) {
+          try {
+            sessionStorage.setItem(
+              'auth_signin_error',
+              'Your previous sign-in expired, so TacLink cleared it. Sign in again to continue.'
+            );
+          } catch { /* ignore */ }
+          forceLocalSignedOut();
+          return;
+        }
+        forceLocalSignedOut();
+      }
     })();
 
     return () => subscription.unsubscribe();
