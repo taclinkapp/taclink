@@ -28,7 +28,8 @@ const SignIn = () => {
       const msg = sessionStorage.getItem('auth_signin_error');
       if (msg) {
         sessionStorage.removeItem('auth_signin_error');
-        toast.error('Login disabled', { description: msg });
+        const disabled = msg.toLowerCase().includes('disabled');
+        toast.error(disabled ? 'Login disabled' : 'Sign-in reset', { description: msg });
       }
     } catch {}
   }, []);
