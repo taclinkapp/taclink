@@ -74,6 +74,8 @@ const BookingSuccess = () => {
   const [signature, setSignature] = useState<Signature | null>(null);
   const [notifPromptOpen, setNotifPromptOpen] = useState(false);
   const [signedToken, setSignedToken] = useState<string | null>(null);
+  const [manualCode, setManualCode] = useState<string | null>(null);
+  const [manualCodeAvailableAt, setManualCodeAvailableAt] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [tokenLoading, setTokenLoading] = useState(false);
   const onboarding = useOnboarding();
@@ -86,9 +88,12 @@ const BookingSuccess = () => {
       if (error) throw error;
       if (!data?.token) throw new Error('No token returned');
       setSignedToken(data.token);
+      setManualCode(data.manualCode ?? null);
+      setManualCodeAvailableAt(data.manualCodeAvailableAt ?? null);
     } catch (e: any) {
       setTokenError(e?.message ?? 'Could not load secure QR');
       setSignedToken(null);
+      setManualCode(null);
     } finally {
       setTokenLoading(false);
     }
@@ -311,6 +316,34 @@ const BookingSuccess = () => {
               <RefreshCw className={`h-3 w-3 ${tokenLoading ? 'animate-spin' : ''}`} />
               {tokenLoading ? 'Refreshing' : 'Refresh QR'}
             </button>
+          )}
+          {qrSettled && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">
+                Backup check-in code
+              </div>
+              {manualCode ? (
+                <>
+                  <div className="font-mono text-3xl font-black tracking-[0.35em] text-primary tabular-nums">
+                    {manualCode.slice(0, 3)} {manualCode.slice(3)}
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
+                    If the QR won't scan, read this 6-digit code to your instructor.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="font-mono text-2xl font-black tracking-[0.3em] text-muted-foreground/40 tabular-nums">
+                    — — — — — —
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
+                    Activates {manualCodeAvailableAt
+                      ? `at ${new Date(manualCodeAvailableAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      : '30 minutes before your course starts'}.
+                  </p>
+                </>
+              )}
+            </div>
           )}
           <div className="text-[10px] text-muted-foreground mt-2">Show this on the day of training</div>
         </div>
