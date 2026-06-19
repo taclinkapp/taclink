@@ -149,12 +149,22 @@ const Checkout = () => {
     if (!user) { toast.error('Please sign in to book'); return; }
     if (!course) return;
     if (!launch.flags.bookingsEnabled) {
-      toast.error(
-        launch.isPaused
-          ? (launch.maintenanceMessage || 'Bookings are temporarily paused for maintenance.')
-          : 'Bookings unlock on launch day — sit tight!'
-      );
-      return;
+      // QA test accounts bypass the prelaunch booking gate so end-to-end
+      // booking flows can be exercised before launch day.
+      const { data: testRows } = await supabase
+        .from('test_accounts')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      const isTestAccount = Array.isArray(testRows) && testRows.length > 0;
+      if (!isTestAccount) {
+        toast.error(
+          launch.isPaused
+            ? (launch.maintenanceMessage || 'Bookings are temporarily paused for maintenance.')
+            : 'Bookings unlock on launch day — sit tight!'
+        );
+        return;
+      }
     }
     if (waiver && !waiverReady) {
       toast.error('Sign the waiver above before continuing to payment.');
