@@ -7,7 +7,7 @@ import { useCourse } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock, Camera, Sparkles, MapPin, Loader2 } from 'lucide-react';
+import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock, Camera, Sparkles, MapPin, Loader2, KeyRound } from 'lucide-react';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { toast } from 'sonner';
 import { QrScanner } from '@/components/QrScanner';
@@ -17,6 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
+import { ManualCheckinDialog } from '@/components/instructor/ManualCheckinDialog';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 
 const tabs = ['Roster', 'Check-In'] as const;
