@@ -44,6 +44,28 @@ export const InstructorInsights = () => {
   const { isActive } = useSubscription();
   const { data: prelaunch } = usePrelaunch();
   const isPrelaunch = !!prelaunch?.enabled;
+  const [serviceState, setServiceState] = useState("");
+  const [serviceCity, setServiceCity] = useState("");
+  const [serviceCategories, setServiceCategories] = useState<string[]>([]);
+  const [savingArea, setSavingArea] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [insight, setInsight] = useState<Insight | null>(null);
+
+  useEffect(() => {
+    if (!user || !isActive) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("service_state, service_city, service_categories")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (data) {
+        setServiceState(data.service_state ?? "");
+        setServiceCity(data.service_city ?? "");
+        setServiceCategories((data.service_categories as string[]) ?? []);
+      }
+    })();
+  }, [user, isActive]);
 
   if (!isActive) {
     if (isPrelaunch) return null;
@@ -68,29 +90,6 @@ export const InstructorInsights = () => {
       </div>
     );
   }
-
-  const [serviceState, setServiceState] = useState("");
-  const [serviceCity, setServiceCity] = useState("");
-  const [serviceCategories, setServiceCategories] = useState<string[]>([]);
-  const [savingArea, setSavingArea] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [insight, setInsight] = useState<Insight | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("service_state, service_city, service_categories")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (data) {
-        setServiceState(data.service_state ?? "");
-        setServiceCity(data.service_city ?? "");
-        setServiceCategories((data.service_categories as string[]) ?? []);
-      }
-    })();
-  }, [user]);
 
   const saveArea = async () => {
     if (!user) return;
