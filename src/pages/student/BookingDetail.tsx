@@ -109,15 +109,15 @@ const BookingDetail = () => {
       if (!data?.token) throw new Error('No token returned');
       setSignedToken(data.token);
       setTokenExpiresAt(data.expiresAt ?? null);
-      // Backup code is deterministic per (booking, course day). Keep the
-      // previously displayed value sticky if the server returns null during
-      // a refresh so it never appears to "change" alongside the QR.
-      if (data.manualCode) setManualCode(data.manualCode);
+      // Backup code rotates with each successful QR refresh. Match the screen
+      // to the latest server response, including null before the activation window.
+      setManualCode(data.manualCode ?? null);
       if (data.manualCodeAvailableAt) setManualCodeAvailableAt(data.manualCodeAvailableAt);
     } catch (e: any) {
       setTokenError(e?.message ?? 'Could not load secure QR');
       setSignedToken(null);
-      // Do NOT clear manualCode on transient errors — it's stable for the day.
+      // Do NOT clear manualCode on transient errors — only a successful refresh
+      // should replace the currently visible backup code.
     } finally {
       setTokenLoading(false);
     }
