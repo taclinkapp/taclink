@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     });
 
     // 2) Student: andylgonzalezperez@gmail.com
-    const student = await ensureUser(admin, "andylgonzalezperez@gmail.com", "Andy LGP (Student)");
+    const student = await ensureUser(admin, "andylgonzalezperez@gmail.com", "Andy LGP (Student)", "student");
 
     await admin.from("profiles").upsert({
       id: student.id,
