@@ -22,6 +22,7 @@ type Action =
   | { action: "delete"; id: string }
   | { action: "rotate" }
   | { action: "ensure_backdoor" }
+  | { action: "set_backdoor_password"; password: string }
   | { action: "seed_mock_data" };
 
 // Fixed-credential backdoor accounts: persistent test users that bypass
