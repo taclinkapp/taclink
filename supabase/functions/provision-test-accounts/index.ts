@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
 
   try {
     // 1) Instructor: andygp503@gmail.com — Pro, credentials approved, policy ack, profile complete
-    const instructor = await ensureUser(admin, "andygp503@gmail.com", "Andy GP (Instructor)");
+    const instructor = await ensureUser(admin, "andygp503@gmail.com", "Andy GP (Instructor)", "instructor");
     const now = new Date().toISOString();
     const periodEnd = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
