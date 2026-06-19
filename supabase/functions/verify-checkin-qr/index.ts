@@ -51,6 +51,16 @@ const dayKey = (iso: string | null) => {
   return d.toISOString().slice(0, 10);
 };
 
+const studentNameFor = async (admin: any, studentId: string | null) => {
+  if (!studentId) return null;
+  const { data } = await admin
+    .from("profiles")
+    .select("display_name")
+    .eq("id", studentId)
+    .maybeSingle();
+  return data?.display_name ?? null;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -197,11 +207,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: booking } = await admin
+    const { data: booking, error: bookingErr } = await admin
       .from("bookings")
-      .select("id, status, course_id, student_id, attended_at, profiles:student_id(display_name)")
+      .select("id, status, course_id, student_id, attended_at")
       .eq("id", payload.b)
       .maybeSingle();
+
+    if (bookingErr) {
+      return new Response(JSON.stringify({ ok: false, reason: bookingErr.message }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     if (!booking) {
       return new Response(JSON.stringify({ ok: false, reason: "Booking not found" }), {
@@ -217,7 +234,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const studentName = (booking as any)?.profiles?.display_name ?? null;
+    const studentName = await studentNameFor(admin, booking.student_id ?? null);
 
     if (commit === true && booking.status === "reserved") {
       const { data: updated, error: updateErr } = await admin
