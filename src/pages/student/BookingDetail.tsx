@@ -69,6 +69,20 @@ const BookingDetail = () => {
     setTokenLoading(true);
     setTokenError(null);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error('Session expired — please sign in again.');
+      }
+
+      const expiresAtSeconds = sessionData.session.expires_at ?? 0;
+      if (expiresAtSeconds * 1000 < Date.now() + 60_000) {
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          await supabase.auth.signOut({ scope: 'local' });
+          throw new Error('Session expired — please sign in again.');
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('sign-checkin-qr', {
         body: { bookingId },
       });
@@ -84,6 +98,10 @@ const BookingDetail = () => {
             if (body?.error) msg = body.error;
           }
         } catch { /* ignore parse errors */ }
+        if (/session|jwt|auth/i.test(msg)) {
+          await supabase.auth.signOut({ scope: 'local' });
+          msg = 'Session expired — please sign in again.';
+        }
         throw new Error(msg);
       }
       if (!data?.token) throw new Error('No token returned');
