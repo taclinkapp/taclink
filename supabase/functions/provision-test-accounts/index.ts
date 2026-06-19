@@ -11,23 +11,24 @@ const PRO_PLAN_ID = "d093c86a-a2ff-45ff-9ad7-c906d4ac77c2";
 
 const PASSWORD = "@Algp320796503";
 
-async function ensureUser(admin: any, email: string, displayName: string) {
-  // Try to find existing
+async function ensureUser(admin: any, email: string, displayName: string, role: "instructor" | "student") {
   const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
   let user = list?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+  const meta: Record<string, unknown> = { display_name: displayName, role };
+  if (role === "student") meta.date_of_birth = "1990-01-01";
   if (user) {
     await admin.auth.admin.updateUserById(user.id, {
       password: PASSWORD,
       email_confirm: true,
       ban_duration: "none",
-      user_metadata: { ...(user.user_metadata ?? {}), display_name: displayName },
+      user_metadata: { ...(user.user_metadata ?? {}), ...meta },
     });
   } else {
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password: PASSWORD,
       email_confirm: true,
-      user_metadata: { display_name: displayName, date_of_birth: "1990-01-01" },
+      user_metadata: meta,
     });
     if (error) throw error;
     user = data.user;
