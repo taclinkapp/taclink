@@ -472,7 +472,7 @@ async function seedBackdoorMockData(
         "UTM/sim rounds in scripted scenarios — home invasion, parking lot ambush, active threat in retail. Reps, debriefs, and video review.",
       category: "CQB",
       primary_pillar: "tactics",
-      secondary_pillar: "mindset",
+      secondary_pillar: "protective_ops",
       price_cents: 49900,
       duration_minutes: 540,
       capacity: 12,
