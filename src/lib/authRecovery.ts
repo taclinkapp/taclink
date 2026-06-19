@@ -32,13 +32,12 @@ export const isRecoverableAuthError = (error: unknown) => {
   return (
     text.includes("bad session") ||
     text.includes("authsessionmissing") ||
+    text.includes("auth session missing") ||
     text.includes("invalid refresh token") ||
     text.includes("refresh token not found") ||
     text.includes("session_not_found") ||
     text.includes("jwt expired") ||
-    text.includes("invalid jwt") ||
-    text.includes("supabaseauthclient") ||
-    text.includes("@supabase")
+    text.includes("invalid jwt")
   );
 };
 
