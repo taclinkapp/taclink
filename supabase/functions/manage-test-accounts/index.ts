@@ -512,7 +512,7 @@ async function seedBackdoorMockData(
     {
       title: "Florida CCW Permit Course",
       description: "State-approved concealed weapons license course. Classroom block + live fire qualification. Same-day paperwork support.",
-      category: "Firearms", primary_pillar: "firearms", secondary_pillar: "mindset",
+      category: "Firearms", primary_pillar: "firearms", secondary_pillar: "tactics",
       price_cents: 14900, duration_minutes: 360, capacity: 20,
       location_name: "Shoot Straight Apopka", address: "1349 S Orange Blossom Trail",
       city: "Apopka", state: "FL", lat: 28.6757, lng: -81.5023,
@@ -548,7 +548,7 @@ async function seedBackdoorMockData(
     {
       title: "Georgia Home Defense Fundamentals",
       description: "Plan and rehearse a home defense response: layouts, choke points, lighting, family roles, and post-incident steps.",
-      category: "Tactics", primary_pillar: "tactics", secondary_pillar: "mindset",
+      category: "Tactics", primary_pillar: "tactics", secondary_pillar: "protective_ops",
       price_cents: 18900, duration_minutes: 300, capacity: 18,
       location_name: "Governors Gun Club", address: "1745 Old Ellis Rd",
       city: "Roswell", state: "GA", lat: 34.0876, lng: -84.3027,
@@ -584,7 +584,7 @@ async function seedBackdoorMockData(
     {
       title: "Ohio Defensive Pistol Skills",
       description: "Holster work, draw stroke, and recoil control. Build a foundation for CCW or duty carry. ~350 rounds.",
-      category: "Firearms", primary_pillar: "firearms", secondary_pillar: "mindset",
+      category: "Firearms", primary_pillar: "firearms", secondary_pillar: "tactics",
       price_cents: 24900, duration_minutes: 360, capacity: 16,
       location_name: "Black Wing Shooting Center", address: "3722 Dolson Ct NW",
       city: "Delaware", state: "OH", lat: 40.3553, lng: -83.0681,
@@ -608,7 +608,7 @@ async function seedBackdoorMockData(
     {
       title: "Tennessee Combatives Intro",
       description: "Stand-up clinch, takedown defense, and ground escapes for non-grapplers. Gear: mouthguard, athletic clothes.",
-      category: "Combatives", primary_pillar: "combatives", secondary_pillar: "mindset",
+      category: "Combatives", primary_pillar: "combatives", secondary_pillar: "tactics",
       price_cents: 14900, duration_minutes: 240, capacity: 20,
       location_name: "Nashville MMA", address: "915 Berry Rd",
       city: "Nashville", state: "TN", lat: 36.1245, lng: -86.7706,
