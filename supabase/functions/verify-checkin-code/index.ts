@@ -1,8 +1,7 @@
 // Verifies a 6-digit manual check-in code submitted by an instructor.
-// Codes are deterministic HMAC(secret, "MC:<bookingId>:<day>") truncated to 6
-// digits. The function iterates the course's active bookings, recomputes each
-// expected code, and returns the matching bookingId — so the manual code never
-// has to be stored in the DB and can't be enumerated by a client.
+// Codes rotate whenever the student's QR is refreshed. sign-checkin-qr stores
+// only an HMAC fingerprint of the latest 6-digit code, and this function checks
+// that fingerprint before marking attendance.
 //
 // Window: codes are only accepted from 30 min before course start through
 // 12h after course end, matching sign-checkin-qr.
@@ -34,15 +33,9 @@ const hmac = async (data: string) => {
   return new Uint8Array(sig);
 };
 
-const dayKey = (iso: string | null) => {
-  const d = iso ? new Date(iso) : new Date();
-  return d.toISOString().slice(0, 10);
-};
-
-const codeFor = async (bookingId: string, day: string) => {
-  const mc = await hmac(`MC:${bookingId}:${day}`);
-  const n = ((mc[0] << 24) | (mc[1] << 16) | (mc[2] << 8) | mc[3]) >>> 0;
-  return String(n % 1_000_000).padStart(6, "0");
+const b64url = (bytes: Uint8Array) => {
+  let s = btoa(String.fromCharCode(...bytes));
+  return s.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
 
 const studentNameFor = async (admin: any, studentId: string | null) => {
@@ -145,33 +138,52 @@ Deno.serve(async (req) => {
       }
     }
 
-    const day = dayKey(course.starts_at);
+    const codeHash = b64url(await hmac(`MCH:${courseId}:${cleanCode}`));
+    const { data: codeRow, error: codeErr } = await admin
+      .from("checkin_manual_codes")
+      .select("booking_id")
+      .eq("course_id", courseId)
+      .eq("code_hash", codeHash)
+      .is("consumed_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
 
-    // Pull every booking on this course that could legitimately check in.
-    const { data: bookings, error: bookingsErr } = await admin
+    if (codeErr) {
+      return new Response(JSON.stringify({ ok: false, reason: codeErr.message }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!codeRow) {
+      return new Response(JSON.stringify({ ok: false, reason: "Code didn't match the latest backup code for this course. Ask the student to read the current code under their QR." }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: b, error: bookingErr } = await admin
       .from("bookings")
       .select("id, status, student_id")
+      .eq("id", codeRow.booking_id)
       .eq("course_id", courseId)
-      .in("status", ["reserved", "attended"]);
+      .maybeSingle();
 
-    if (bookingsErr) {
-      return new Response(JSON.stringify({ ok: false, reason: bookingsErr.message }), {
+    if (bookingErr) {
+      return new Response(JSON.stringify({ ok: false, reason: bookingErr.message }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (!bookings || bookings.length === 0) {
-      return new Response(JSON.stringify({ ok: false, reason: "No active bookings on this course." }), {
+    if (!b || (b.status !== "reserved" && b.status !== "attended")) {
+      return new Response(JSON.stringify({ ok: false, reason: "Booking is no longer active for this course." }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    for (const b of bookings) {
-      const expected = await codeFor(b.id, day);
-      if (expected === cleanCode) {
-        const studentName = await studentNameFor(admin, b.student_id ?? null);
+    const studentName = await studentNameFor(admin, b.student_id ?? null);
         if (b.status === "attended") {
           return new Response(
             JSON.stringify({ ok: true, bookingId: b.id, status: "attended", alreadyAttended: true, studentName }),
@@ -179,41 +191,39 @@ Deno.serve(async (req) => {
           );
         }
 
-        const { data: updated, error: updateErr } = await admin
-          .from("bookings")
-          .update({ status: "attended", attended_at: new Date().toISOString() })
-          .eq("id", b.id)
-          .eq("course_id", courseId)
-          .eq("status", "reserved")
-          .is("attended_at", null)
-          .select("id, status")
-          .maybeSingle();
+    const { data: updated, error: updateErr } = await admin
+      .from("bookings")
+      .update({ status: "attended", attended_at: new Date().toISOString() })
+      .eq("id", b.id)
+      .eq("course_id", courseId)
+      .eq("status", "reserved")
+      .is("attended_at", null)
+      .select("id, status")
+      .maybeSingle();
 
-        if (updateErr) {
-          return new Response(JSON.stringify({ ok: false, reason: updateErr.message }), {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        return new Response(
-          JSON.stringify({
-            ok: true,
-            bookingId: b.id,
-            status: updated?.status ?? "attended",
-            checkedIn: !!updated,
-            alreadyAttended: !updated,
-            studentName,
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
-        );
-      }
+    if (updateErr) {
+      return new Response(JSON.stringify({ ok: false, reason: updateErr.message }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    return new Response(JSON.stringify({ ok: false, reason: "Code didn't match any student on this course." }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    await admin
+      .from("checkin_manual_codes")
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("booking_id", b.id);
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        bookingId: b.id,
+        status: updated?.status ?? "attended",
+        checkedIn: !!updated,
+        alreadyAttended: !updated,
+        studentName,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+    );
   } catch (e) {
     return new Response(JSON.stringify({ ok: false, reason: String(e?.message ?? e) }), {
       status: 500,

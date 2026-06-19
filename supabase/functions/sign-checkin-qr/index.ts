@@ -20,6 +20,12 @@ const b64url = (bytes: Uint8Array) => {
   return s.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
 
+const randomSixDigitCode = () => {
+  const bytes = new Uint32Array(1);
+  crypto.getRandomValues(bytes);
+  return String(bytes[0] % 1_000_000).padStart(6, "0");
+};
+
 const getSecret = () =>
   Deno.env.get("CHECKIN_HMAC_SECRET") ??
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
@@ -161,9 +167,9 @@ Deno.serve(async (req) => {
     const sigB64 = b64url(sigBytes);
     const token = `TLCI:v2:${payloadB64}.${sigB64}`;
 
-    // Manual fallback 6-digit code — deterministic from (bookingId, day).
-    // Only revealed inside a window that opens 30 min BEFORE course start
-    // and closes 12h AFTER end, so it can't be shared days ahead.
+    // Manual fallback 6-digit code — rotates every time a fresh QR is issued.
+    // We store only an HMAC fingerprint so verify-checkin-code can accept the
+    // latest shown code without persisting the readable number.
     let manualCode: string | null = null;
     let manualCodeAvailableAt: string | null = null;
     if (course?.starts_at) {
@@ -174,9 +180,34 @@ Deno.serve(async (req) => {
       manualCodeAvailableAt = new Date(WINDOW_OPEN).toISOString();
       const now = Date.now();
       if (now >= WINDOW_OPEN && now <= WINDOW_CLOSE) {
-        const mcBytes = await hmac(`MC:${booking.id}:${day}`);
-        const n = ((mcBytes[0] << 24) | (mcBytes[1] << 16) | (mcBytes[2] << 8) | mcBytes[3]) >>> 0;
-        manualCode = String(n % 1_000_000).padStart(6, "0");
+        const { data: existingCode } = await admin
+          .from("checkin_manual_codes")
+          .select("code_hash")
+          .eq("booking_id", booking.id)
+          .maybeSingle();
+        for (let attempt = 0; attempt < 8 && !manualCode; attempt++) {
+          const candidate = randomSixDigitCode();
+          const codeHash = b64url(await hmac(`MCH:${booking.course_id}:${candidate}`));
+          if (existingCode?.code_hash === codeHash) continue;
+          const { error: upsertErr } = await admin
+            .from("checkin_manual_codes")
+            .upsert({
+              booking_id: booking.id,
+              course_id: booking.course_id,
+              student_id: booking.student_id,
+              code_hash: codeHash,
+              issued_at: new Date(issuedAt).toISOString(),
+              expires_at: new Date(Math.min(expiresAt, WINDOW_CLOSE)).toISOString(),
+              consumed_at: null,
+            }, { onConflict: "booking_id" });
+
+          if (!upsertErr) {
+            manualCode = candidate;
+          } else if (!/duplicate key|unique/i.test(upsertErr.message ?? "")) {
+            throw upsertErr;
+          }
+        }
+        if (!manualCode) throw new Error("Could not generate a fresh backup code. Please refresh again.");
       }
     }
 
