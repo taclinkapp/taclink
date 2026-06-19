@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 
 export type ScanOutcome =
-  | { kind: 'success'; bookingId: string; studentName?: string | null; source: 'qr' | 'proximity' }
+  | { kind: 'success'; bookingId: string; studentName?: string | null; source: 'qr' | 'proximity' | 'manual' }
   | { kind: 'already_attended'; bookingId?: string; studentName?: string | null }
   | { kind: 'wrong_course'; bookingId?: string }
   | { kind: 'invalid_qr'; reason: string }
