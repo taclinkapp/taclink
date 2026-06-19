@@ -9,7 +9,7 @@ type Props = {
   open: boolean;
   courseId: string;
   onOpenChange: (open: boolean) => void;
-  onVerified: (bookingId: string) => void;
+  onVerified: (result: { bookingId: string; alreadyAttended?: boolean; studentName?: string | null }) => void;
 };
 
 export const ManualCheckinDialog = ({ open, courseId, onOpenChange, onVerified }: Props) => {
@@ -46,7 +46,11 @@ export const ManualCheckinDialog = ({ open, courseId, onOpenChange, onVerified }
         return;
       }
       setCode('');
-      onVerified(data.bookingId);
+      onVerified({
+        bookingId: data.bookingId,
+        alreadyAttended: !!data.alreadyAttended,
+        studentName: data.studentName ?? null,
+      });
       onOpenChange(false);
     } finally {
       setSubmitting(false);
