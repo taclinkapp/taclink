@@ -53,6 +53,34 @@ export default function AdminTestAccounts() {
     }
   });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [backdoorCreds, setBackdoorCreds] = useState<BackdoorCred[]>([]);
+  const [backdoorLoading, setBackdoorLoading] = useState(false);
+
+  const provisionBackdoor = async () => {
+    setBackdoorLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
+        body: { action: "ensure_backdoor" },
+      });
+      if (error) throw error;
+      const results = (data?.results ?? []) as BackdoorCred[];
+      if (!results.length) throw new Error("No credentials returned");
+      setBackdoorCreds(results);
+      toast.success("Sign-in-ready test accounts are provisioned");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to provision backdoor accounts";
+      toast.error(msg);
+    } finally {
+      setBackdoorLoading(false);
+    }
+  };
+
+  const copyBackdoor = async (c: BackdoorCred) => {
+    await navigator.clipboard.writeText(`${c.email} / ${c.password}`);
+    setCopiedKey(`backdoor-${c.role}`);
+    toast.success("Copied — paste into the sign-in form");
+    setTimeout(() => setCopiedKey(null), 1500);
+  };
 
   const persistGenerated = (next: GeneratedCreds[]) => {
     setGenerated(next);
