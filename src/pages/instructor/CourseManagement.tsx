@@ -62,11 +62,21 @@ const CourseManagement = () => {
     bookingId: string,
     opts?: { source: 'qr' | 'proximity' },
   ): Promise<ScanOutcome> => {
-    const existing = bookings.find((b: any) => b.id === bookingId);
-    const studentName = existing ? studentNameFor(existing) : null;
+    let existing: any = bookings.find((b: any) => b.id === bookingId);
+    // Fall back to a direct read so a freshly-created booking that hasn't
+    // landed in the React Query cache yet isn't mis-flagged as wrong-course.
     if (!existing) {
-      return { kind: 'wrong_course' };
+      const { data: fresh } = await supabase
+        .from('bookings')
+        .select('id, status, course_id, student_id, attended_at, profiles:student_id(display_name)')
+        .eq('id', bookingId)
+        .maybeSingle();
+      if (!fresh || fresh.course_id !== id) {
+        return { kind: 'wrong_course' };
+      }
+      existing = fresh;
     }
+    const studentName = studentNameFor(existing);
     if (existing.status === 'attended') {
       return { kind: 'already_attended', bookingId, studentName };
     }
