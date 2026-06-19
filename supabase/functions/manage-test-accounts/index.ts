@@ -779,6 +779,7 @@ async function seedBackdoorMockData(
       user_metadata: {
         role: "student",
         display_name: name,
+        date_of_birth: "1990-01-01",
         is_test_account: true,
       },
     });
