@@ -121,7 +121,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       if (localStorage.getItem(AUTH_CACHE_FIX_KEY) !== '1') {
-        clearAuthStorage();
         localStorage.setItem(AUTH_CACHE_FIX_KEY, '1');
       }
     } catch {
@@ -166,7 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (authChanged()) return;
 
         if (sessionErr || !initialSession?.user) {
-          if (sessionErr && isRecoverableAuthError(sessionErr) && hasCachedAuthSession()) {
+          if (sessionErr && isRecoverableAuthError(sessionErr)) {
             forceLocalSignedOut();
             try {
               sessionStorage.setItem(
@@ -190,8 +189,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       } catch (err) {
         if (authChanged()) return;
-        console.warn('[auth] startup failed; clearing stale local session', err);
-        if (isRecoverableAuthError(err) || hasCachedAuthSession()) {
+        console.warn('[auth] startup failed; keeping local session until auth resolves', err);
+        if (isRecoverableAuthError(err) && hasCachedAuthSession()) {
           forceLocalSignedOut();
           try {
             sessionStorage.setItem(
