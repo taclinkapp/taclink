@@ -32,6 +32,7 @@ const CourseManagement = () => {
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
   const [showReceipt, setShowReceipt] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const [autoCheckin, setAutoCheckin] = useState(false);
   // Two-factor auto check-in: a scanned QR stages a pending booking that
   // proximity must then confirm in-range before the row is marked attended.
