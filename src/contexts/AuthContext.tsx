@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [rolesError, setRolesError] = useState<string | null>(null);
   const activeUserIdRef = useRef<string | null>(null);
+  const authChangeVersionRef = useRef(0);
 
   const resetAuthState = () => {
     activeUserIdRef.current = null;
@@ -127,10 +128,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Storage may be blocked; auth state will still be resolved by the SDK.
     }
 
-    // Set up listener FIRST (per Supabase guidance), then fetch session
+    let cancelled = false;
+
+    // Set up listener FIRST (per Supabase guidance), then fetch session.
+    // The version guard prevents a stale startup check from clearing a fresh
+    // sign-in that completed while the startup request was still in flight.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      authChangeVersionRef.current += 1;
       const nextUserId = newSession?.user?.id ?? null;
       activeUserIdRef.current = nextUserId;
       setSession(newSession);
@@ -153,47 +159,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     (async () => {
+      const startupVersion = authChangeVersionRef.current;
+      const authChanged = () => cancelled || authChangeVersionRef.current !== startupVersion;
       try {
-        const { data: userData, error: userErr } = await supabase.auth.getUser();
-        if (userErr || !userData.user) {
-          if (userErr && isRecoverableAuthError(userErr)) {
+        const { data: { session: initialSession }, error: sessionErr } = await supabase.auth.getSession();
+        if (authChanged()) return;
+
+        if (sessionErr || !initialSession?.user) {
+          if (sessionErr && isRecoverableAuthError(sessionErr) && hasCachedAuthSession()) {
+            forceLocalSignedOut();
             try {
               sessionStorage.setItem(
                 'auth_signin_error',
                 'Your previous sign-in expired, so TacLink cleared it. Sign in again to continue.'
               );
             } catch { /* ignore */ }
+          } else {
+            resetAuthState();
           }
-          forceLocalSignedOut();
           return;
         }
-        markAuthRecoveryHealthy();
 
-        const { data: { session: s } } = await supabase.auth.getSession();
-        const uid = userData.user.id;
+        markAuthRecoveryHealthy();
+        const uid = initialSession.user.id;
         activeUserIdRef.current = uid;
-        setSession(s);
-        setUser(userData.user);
+        setSession(initialSession);
+        setUser(initialSession.user);
         loadProfileAndRoles(uid).finally(() => {
-          if (activeUserIdRef.current === uid) setLoading(false);
+          if (!authChanged() && activeUserIdRef.current === uid) setLoading(false);
         });
       } catch (err) {
+        if (authChanged()) return;
         console.warn('[auth] startup failed; clearing stale local session', err);
         if (isRecoverableAuthError(err) || hasCachedAuthSession()) {
+          forceLocalSignedOut();
           try {
             sessionStorage.setItem(
               'auth_signin_error',
               'Your previous sign-in expired, so TacLink cleared it. Sign in again to continue.'
             );
           } catch { /* ignore */ }
-          forceLocalSignedOut();
           return;
         }
-        forceLocalSignedOut();
+        resetAuthState();
       }
     })();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
