@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     }
 
 
-    const { token, courseId } = await req.json().catch(() => ({}));
+    const { token, courseId, commit } = await req.json().catch(() => ({}));
     if (!token || typeof token !== "string") {
       return new Response(JSON.stringify({ ok: false, reason: "Token required" }), {
         status: 400,
@@ -159,9 +159,23 @@ Deno.serve(async (req) => {
     );
     const { data: course } = await admin
       .from("courses")
-      .select("id, starts_at, ends_at")
+      .select("id, instructor_id, starts_at, ends_at")
       .eq("id", payload.c)
       .maybeSingle();
+
+    if (!course) {
+      return new Response(JSON.stringify({ ok: false, reason: "Course not found" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    if (course.instructor_id !== userId) {
+      return new Response(JSON.stringify({ ok: false, reason: "Not your course" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
+      });
+    }
 
     if (course?.starts_at) {
       const startMs = new Date(course.starts_at).getTime();
@@ -183,6 +197,61 @@ Deno.serve(async (req) => {
       }
     }
 
+    const { data: booking } = await admin
+      .from("bookings")
+      .select("id, status, course_id, student_id, attended_at, profiles:student_id(display_name)")
+      .eq("id", payload.b)
+      .maybeSingle();
+
+    if (!booking) {
+      return new Response(JSON.stringify({ ok: false, reason: "Booking not found" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    if (booking.course_id !== payload.c) {
+      return new Response(JSON.stringify({ ok: false, reason: "QR is for a different course" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    const studentName = (booking as any)?.profiles?.display_name ?? null;
+
+    if (commit === true && booking.status === "reserved") {
+      const { data: updated, error: updateErr } = await admin
+        .from("bookings")
+        .update({ status: "attended", attended_at: new Date().toISOString() })
+        .eq("id", booking.id)
+        .eq("course_id", payload.c)
+        .eq("status", "reserved")
+        .is("attended_at", null)
+        .select("id, status")
+        .maybeSingle();
+
+      if (updateErr) {
+        return new Response(JSON.stringify({ ok: false, reason: updateErr.message }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          bookingId: payload.b,
+          courseId: payload.c,
+          day: payload.d,
+          expiresAt: payload.exp,
+          checkedIn: !!updated,
+          alreadyAttended: !updated,
+          studentName,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+      );
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -190,6 +259,9 @@ Deno.serve(async (req) => {
         courseId: payload.c,
         day: payload.d,
         expiresAt: payload.exp,
+        status: booking.status,
+        alreadyAttended: booking.status === "attended",
+        studentName,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
