@@ -672,7 +672,9 @@ const CourseManagement = () => {
                 setScanOutcome({ kind: 'wrong_course', bookingId: resolvedBookingId });
                 return;
               } else if (serverVerified) {
-                match = { id: resolvedBookingId, status: 'reserved', profiles: { display_name: verifiedStudentName } };
+                setPending({ bookingId: resolvedBookingId, scannedAt: Date.now() });
+                setScanOutcome({ kind: 'pending_proximity', bookingId: resolvedBookingId, studentName: verifiedStudentName });
+                return;
               } else {
                 // RLS hid the row, or it was deleted. The signed QR was valid
                 // for THIS course, so don't blame the student with "wrong course".
