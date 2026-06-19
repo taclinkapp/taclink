@@ -716,9 +716,11 @@ const CourseManagement = () => {
         open={manualOpen}
         courseId={c.id}
         onOpenChange={setManualOpen}
-        onVerified={async (bookingId) => {
-          const outcome = await markAttended(bookingId, { source: 'qr' });
-          setScanOutcome(outcome);
+        onVerified={(result) => {
+          qc.invalidateQueries({ queryKey: ['course_bookings', id] });
+          setScanOutcome(result.alreadyAttended
+            ? { kind: 'already_attended', bookingId: result.bookingId, studentName: result.studentName }
+            : { kind: 'success', bookingId: result.bookingId, studentName: result.studentName, source: 'qr' });
         }}
       />
 
