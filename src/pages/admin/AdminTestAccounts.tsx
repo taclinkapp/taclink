@@ -9,9 +9,19 @@ import {
   ShieldCheck,
   Sparkles,
   ExternalLink,
+  KeyRound,
+  Loader2,
+  LogIn,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+type BackdoorCred = {
+  role: "instructor" | "student";
+  email: string;
+  password: string;
+};
 
 type GeneratedCreds = {
   email: string;
