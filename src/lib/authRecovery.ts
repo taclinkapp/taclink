@@ -1,4 +1,5 @@
 const AUTH_RECOVERY_REDIRECT_KEY = "taclink_auth_recovery_redirected";
+const AUTH_SIGNIN_ERROR_KEY = "auth_signin_error";
 
 export const clearAuthStorage = () => {
   const clearStore = (store: Storage) => {
@@ -7,7 +8,9 @@ export const clearAuthStorage = () => {
       if (!key) continue;
       if (
         key === "supabase.auth.token" ||
-        (key.startsWith("sb-") && (key.includes("-auth-token") || key.includes("-code-verifier"))) ||
+        key === AUTH_RECOVERY_REDIRECT_KEY ||
+        key === AUTH_SIGNIN_ERROR_KEY ||
+        key.startsWith("sb-") ||
         key.startsWith("taclink_free_waiver_ack:") ||
         key === "taclink_last_activity_at"
       ) {
@@ -62,21 +65,22 @@ export const recoverFromStaleAuth = () => {
   clearAuthStorage();
   try {
     sessionStorage.setItem(
-      "auth_signin_error",
+      AUTH_SIGNIN_ERROR_KEY,
       "Your previous sign-in expired, so TacLink cleared it. Sign in again to continue.",
     );
   } catch { /* ignore */ }
 
   if (typeof window === "undefined") return;
-  const alreadyRedirected = (() => {
+  const isSignInPage = window.location.pathname === "/auth/signin";
+  const alreadyRedirectedOnSignIn = (() => {
     try { return sessionStorage.getItem(AUTH_RECOVERY_REDIRECT_KEY) === "1"; }
     catch { return false; }
   })();
 
-  if (!alreadyRedirected) {
-    try { sessionStorage.setItem(AUTH_RECOVERY_REDIRECT_KEY, "1"); } catch { /* ignore */ }
-    window.location.replace("/auth/signin");
-  }
+  if (isSignInPage && alreadyRedirectedOnSignIn) return;
+
+  try { sessionStorage.setItem(AUTH_RECOVERY_REDIRECT_KEY, "1"); } catch { /* ignore */ }
+  window.location.replace("/auth/signin?authReset=1");
 };
 
 export const markAuthRecoveryHealthy = () => {
