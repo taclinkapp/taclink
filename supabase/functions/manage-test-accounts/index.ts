@@ -94,7 +94,12 @@ async function provisionAccount(
     email,
     password,
     email_confirm: true,
-    user_metadata: { role, display_name, is_test_account: true },
+    user_metadata: {
+      role,
+      display_name,
+      is_test_account: true,
+      ...(role === "student" ? { date_of_birth: "1990-01-01" } : {}),
+    },
   });
   if (createErr || !created.user) {
     throw new Error(createErr?.message ?? "Failed to create user");
@@ -320,7 +325,7 @@ async function seedBackdoorMockData(
         "Half-day course on appendix and strong-side IWB draws, garment management, and reholstering safely under stress. ~250 rounds.",
       category: "Firearms",
       primary_pillar: "firearms",
-      secondary_pillar: "mindset",
+      secondary_pillar: "tactics",
       price_cents: 22900,
       duration_minutes: 240,
       capacity: 14,
@@ -383,7 +388,7 @@ async function seedBackdoorMockData(
         "Realistic counters to knife threats at contact distance, accessing a tool under pressure, and disengaging safely. Wear mouthguards.",
       category: "Combatives",
       primary_pillar: "combatives",
-      secondary_pillar: "mindset",
+      secondary_pillar: "tactics",
       price_cents: 17900,
       duration_minutes: 240,
       capacity: 20,
@@ -446,7 +451,7 @@ async function seedBackdoorMockData(
         "Female-only clinic taught with a female assistant instructor. Holsters, draw mechanics, and managing recoil. Welcoming, zero-judgment range.",
       category: "Firearms",
       primary_pillar: "firearms",
-      secondary_pillar: "mindset",
+      secondary_pillar: "combatives",
       price_cents: 19900,
       duration_minutes: 240,
       capacity: 12,
