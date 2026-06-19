@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.seo-auto-publish]
 verify_jwt = false
+
+[functions.sign-checkin-qr]
+verify_jwt = false
