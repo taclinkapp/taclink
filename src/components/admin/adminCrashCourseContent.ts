@@ -390,22 +390,6 @@ export const CRASH_COURSES: CrashCourse[] = [
     ],
   },
   {
-    id: 'test-accounts',
-    route: '/admin/test-accounts',
-    title: 'Fake Onboarding Test Accounts',
-    subtitle: 'Spin up disposable users for QA without polluting prod metrics.',
-    steps: [
-      {
-        heading: 'Create test users',
-        body: 'Generates an account flagged "test" — excluded from financials, analytics, and email broadcasts.',
-      },
-      {
-        heading: 'Cleanup',
-        body: 'Delete from this tab when done. Test accounts auto-expire after 30 days.',
-      },
-    ],
-  },
-  {
     id: 'warrior-quotes',
     route: '/admin/warrior-quotes',
     title: 'Warrior Quotes',

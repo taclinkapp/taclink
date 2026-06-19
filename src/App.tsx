@@ -123,7 +123,6 @@ const AdminFeeOverrides = lazy(() => import("./pages/admin/AdminFeeOverrides"));
 const OwnerConsole = lazy(() => import("./pages/admin/OwnerConsole"));
 const AdminInfluencerLinks = lazy(() => import("./pages/admin/AdminInfluencerLinks"));
 const WeeklyBrief = lazy(() => import("./pages/admin/WeeklyBrief"));
-const AdminTestAccounts = lazy(() => import("./pages/admin/AdminTestAccounts"));
 const AdminWarriorQuotes = lazy(() => import("./pages/admin/AdminWarriorQuotes"));
 const AdminSecurity = lazy(() => import("./pages/admin/AdminSecurity"));
 const AdminHelcimWebhooks = lazy(() => import("./pages/admin/AdminHelcimWebhooks"));
@@ -301,7 +300,7 @@ const App = () => (
               <Route path="fee-overrides" element={<AdminFeeOverrides />} />
               <Route path="activity" element={<AdminAuditLog />} />
               <Route path="flags" element={<AdminFeatureFlags />} />
-              <Route path="test-accounts" element={<AdminTestAccounts />} />
+              <Route path="test-accounts" element={<Navigate to="/admin" replace />} />
               <Route path="warrior-quotes" element={<AdminWarriorQuotes />} />
               <Route path="security" element={<AdminSecurity />} />
               <Route path="helcim-webhooks" element={<AdminHelcimWebhooks />} />
