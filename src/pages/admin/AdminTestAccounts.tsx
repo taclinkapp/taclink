@@ -209,11 +209,6 @@ export default function AdminTestAccounts() {
                 <Sparkles className="h-3.5 w-3.5" />
                 Signup credentials generator
               </div>
-            <div>
-              <div className="text-xs uppercase tracking-wider font-bold text-primary flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5" />
-                Signup credentials generator
-              </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Generates a fresh email + password. <strong>No account is created yet</strong> —
                 copy them and run through the real signup form to test onboarding end-to-end.
