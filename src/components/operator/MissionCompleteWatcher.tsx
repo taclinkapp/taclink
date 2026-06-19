@@ -38,7 +38,11 @@ export const MissionCompleteWatcher = () => {
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let showTimer: ReturnType<typeof setTimeout> | null = null;
     const STORAGE_KEY = `xp-seen-${user.id}`;
+    seenIds.current.clear();
+    initialized.current = false;
 
     const seed = async () => {
       try {
@@ -121,9 +125,10 @@ export const MissionCompleteWatcher = () => {
     };
 
     seed().then(() => {
+      if (cancelled) return;
       // Subscribe to inserts
-      const ch = supabase
-        .channel(`xp-${user.id}`)
+      channel = supabase
+        .channel(`xp-${user.id}-${crypto.randomUUID()}`)
         .on(
           "postgres_changes",
           {
@@ -134,14 +139,18 @@ export const MissionCompleteWatcher = () => {
           },
           () => {
             // small debounce so the secondary pillar lands too
-            setTimeout(fetchAndShow, 600);
+            if (showTimer) window.clearTimeout(showTimer);
+            showTimer = setTimeout(fetchAndShow, 600);
           },
         )
         .subscribe();
-      return () => { supabase.removeChannel(ch); };
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (showTimer) window.clearTimeout(showTimer);
+      if (channel) supabase.removeChannel(channel);
+    };
   }, [user?.id, qc]);
 
   if (!payload) return null;
