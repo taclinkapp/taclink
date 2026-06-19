@@ -603,11 +603,17 @@ const CourseManagement = () => {
             // refreshed QR.
             let resolvedBookingId: string | null = null;
             let unsigned = false;
+            let serverVerified = false;
+            let verifiedStudentName: string | null = null;
 
             if (looksLikeSignedToken(text)) {
               try {
+                const inRange = !!(
+                  autoCheckin && proximity.reading && proximity.reading.smoothedM <= PROXIMITY_TRIGGER_METERS
+                );
+                const commitNow = !autoCheckin || inRange;
                 const { data, error } = await supabase.functions.invoke('verify-checkin-qr', {
-                  body: { token: text, courseId: id },
+                  body: { token: text, courseId: id, commit: commitNow },
                 });
                 if (error) throw error;
                 if (!data?.ok) {
@@ -618,6 +624,16 @@ const CourseManagement = () => {
                   return;
                 }
                 resolvedBookingId = data.bookingId;
+                serverVerified = true;
+                verifiedStudentName = data.studentName ?? null;
+                if (commitNow) {
+                  qc.invalidateQueries({ queryKey: ['course_bookings', id] });
+                  setPending(null);
+                  setScanOutcome(data.alreadyAttended
+                    ? { kind: 'already_attended', bookingId: data.bookingId, studentName: verifiedStudentName }
+                    : { kind: 'success', bookingId: data.bookingId, studentName: verifiedStudentName, source: inRange ? 'proximity' : 'qr' });
+                  return;
+                }
               } catch (e: any) {
                 setScanOutcome({
                   kind: 'verification_failed',
@@ -655,6 +671,8 @@ const CourseManagement = () => {
               } else if (fresh && fresh.course_id !== id) {
                 setScanOutcome({ kind: 'wrong_course', bookingId: resolvedBookingId });
                 return;
+              } else if (serverVerified) {
+                match = { id: resolvedBookingId, status: 'reserved', profiles: { display_name: verifiedStudentName } };
               } else {
                 // RLS hid the row, or it was deleted. The signed QR was valid
                 // for THIS course, so don't blame the student with "wrong course".
