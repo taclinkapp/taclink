@@ -62,6 +62,8 @@ const BookingDetail = () => {
   const [instructor, setInstructor] = useState<{ id: string; display_name: string | null; photo_url: string | null } | null>(null);
   const [signedToken, setSignedToken] = useState<string | null>(null);
   const [tokenExpiresAt, setTokenExpiresAt] = useState<number | null>(null);
+  const [manualCode, setManualCode] = useState<string | null>(null);
+  const [manualCodeAvailableAt, setManualCodeAvailableAt] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [tokenLoading, setTokenLoading] = useState(false);
 
@@ -107,9 +109,12 @@ const BookingDetail = () => {
       if (!data?.token) throw new Error('No token returned');
       setSignedToken(data.token);
       setTokenExpiresAt(data.expiresAt ?? null);
+      setManualCode(data.manualCode ?? null);
+      setManualCodeAvailableAt(data.manualCodeAvailableAt ?? null);
     } catch (e: any) {
       setTokenError(e?.message ?? 'Could not load secure QR');
       setSignedToken(null);
+      setManualCode(null);
     } finally {
       setTokenLoading(false);
     }
@@ -451,14 +456,43 @@ const BookingDetail = () => {
             <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed">
               Cryptographically signed — bound to this booking and today's date. Cannot be forged, shared, or used on the wrong day.
             </p>
+
+            {/* Manual fallback code — only revealed 30 min before start. */}
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">
+                Backup check-in code
+              </div>
+              {manualCode ? (
+                <>
+                  <div className="font-mono text-3xl font-black tracking-[0.35em] text-primary tabular-nums">
+                    {manualCode.slice(0, 3)} {manualCode.slice(3)}
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
+                    If the QR won't scan, read this 6-digit code to your instructor. They can enter it manually to check you in.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="font-mono text-2xl font-black tracking-[0.3em] text-muted-foreground/40 tabular-nums">
+                    — — — — — —
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
+                    Activates {manualCodeAvailableAt
+                      ? `at ${new Date(manualCodeAvailableAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      : '30 minutes before your course starts'}.
+                  </p>
+                </>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={() => fetchSignedToken(b.id)}
               disabled={tokenLoading}
-              className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-primary hover:underline disabled:opacity-50"
+              className="mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-primary hover:underline disabled:opacity-50"
             >
               <RefreshCw className={`h-3 w-3 ${tokenLoading ? 'animate-spin' : ''}`} />
-              {tokenLoading ? 'Refreshing' : 'Refresh QR'}
+              {tokenLoading ? 'Refreshing' : 'Refresh'}
             </button>
           </div>
         )}

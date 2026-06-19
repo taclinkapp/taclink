@@ -7,7 +7,7 @@ import { useCourse } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock, Camera, Sparkles, MapPin, Loader2 } from 'lucide-react';
+import { Check, X, Bell, QrCode, AlertTriangle, Receipt, ChevronDown, Copy, Lock, Camera, Sparkles, MapPin, Loader2, KeyRound } from 'lucide-react';
 import { computeListingFeeCents, fmt, INSTRUCTOR_LISTING_FEE_PCT } from '@/lib/fees';
 import { toast } from 'sonner';
 import { QrScanner } from '@/components/QrScanner';
@@ -17,6 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import CancelCourseDialog from '@/components/instructor/CancelCourseDialog';
 import { ScanResultDialog, type ScanOutcome } from '@/components/instructor/ScanResultDialog';
+import { ManualCheckinDialog } from '@/components/instructor/ManualCheckinDialog';
 import { usePrelaunch } from '@/hooks/usePrelaunch';
 
 const tabs = ['Roster', 'Check-In'] as const;
@@ -31,6 +32,7 @@ const CourseManagement = () => {
   const [tab, setTab] = useState<typeof tabs[number]>('Roster');
   const [showReceipt, setShowReceipt] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const [autoCheckin, setAutoCheckin] = useState(false);
   // Two-factor auto check-in: a scanned QR stages a pending booking that
   // proximity must then confirm in-range before the row is marked attended.
@@ -476,7 +478,17 @@ const CourseManagement = () => {
                   >
                     <Camera className="h-4 w-4" /> Open Scanner
                   </button>
+                  <button
+                    onClick={() => setManualOpen(true)}
+                    className="mt-2 w-full h-10 rounded-md border border-border bg-card hover:bg-muted text-foreground font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                  >
+                    <KeyRound className="h-3.5 w-3.5" /> Enter 6-digit code instead
+                  </button>
+                  <div className="mt-2 text-[10px] text-muted-foreground leading-relaxed">
+                    Use the manual code if the student's QR won't scan. Codes activate 30 min before start.
+                  </div>
                 </div>
+
 
                 {/* AI auto check-in */}
                 <div className="tactical-card p-4 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
@@ -699,6 +711,16 @@ const CourseManagement = () => {
         onClose={() => setScanOutcome(null)}
       />
 
+
+      <ManualCheckinDialog
+        open={manualOpen}
+        courseId={c.id}
+        onOpenChange={setManualOpen}
+        onVerified={async (bookingId) => {
+          const outcome = await markAttended(bookingId, { source: 'qr' });
+          setScanOutcome(outcome);
+        }}
+      />
 
       <CancelCourseDialog
         open={cancelOpen}

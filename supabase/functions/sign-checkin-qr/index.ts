@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
 
     const { data: course } = await admin
       .from("courses")
-      .select("id, starts_at")
+      .select("id, starts_at, ends_at")
       .eq("id", booking.course_id)
       .maybeSingle();
 
@@ -161,8 +161,27 @@ Deno.serve(async (req) => {
     const sigB64 = b64url(sigBytes);
     const token = `TLCI:v2:${payloadB64}.${sigB64}`;
 
+    // Manual fallback 6-digit code — deterministic from (bookingId, day).
+    // Only revealed inside a window that opens 30 min BEFORE course start
+    // and closes 12h AFTER end, so it can't be shared days ahead.
+    let manualCode: string | null = null;
+    let manualCodeAvailableAt: string | null = null;
+    if (course?.starts_at) {
+      const startMs = new Date(course.starts_at).getTime();
+      const endMs = course.ends_at ? new Date(course.ends_at).getTime() : startMs + 8 * 60 * 60 * 1000;
+      const WINDOW_OPEN = startMs - 30 * 60 * 1000;
+      const WINDOW_CLOSE = endMs + 12 * 60 * 60 * 1000;
+      manualCodeAvailableAt = new Date(WINDOW_OPEN).toISOString();
+      const now = Date.now();
+      if (now >= WINDOW_OPEN && now <= WINDOW_CLOSE) {
+        const mcBytes = await hmac(`MC:${booking.id}:${day}`);
+        const n = ((mcBytes[0] << 24) | (mcBytes[1] << 16) | (mcBytes[2] << 8) | mcBytes[3]) >>> 0;
+        manualCode = String(n % 1_000_000).padStart(6, "0");
+      }
+    }
+
     return new Response(
-      JSON.stringify({ token, expiresAt, day }),
+      JSON.stringify({ token, expiresAt, day, manualCode, manualCodeAvailableAt }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
