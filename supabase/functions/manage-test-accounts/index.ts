@@ -1103,14 +1103,18 @@ Deno.serve(async (req) => {
 
         if (existing) {
           userIdForRole = existing.id;
+          // Do not include `password` here. Auth invalidates every active
+          // session for that user when password is present, even if the value
+          // is unchanged. Password rotation is handled only by the explicit
+          // `set_backdoor_password` action.
           await admin.auth.admin.updateUserById(existing.id, {
-            password: CURRENT_PASSWORD,
             email_confirm: true,
             user_metadata: {
               role,
               display_name: cfg.display_name,
               is_test_account: true,
               is_backdoor: true,
+              ...(role === "student" ? { date_of_birth: "1990-01-01" } : {}),
             },
           });
         } else {
