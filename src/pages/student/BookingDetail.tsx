@@ -435,6 +435,16 @@ const BookingDetail = () => {
                 <div className="h-[208px] w-[208px] flex flex-col items-center justify-center text-xs text-destructive p-4 text-center">
                   <AlertTriangle className="h-5 w-5 mb-2" />
                   {tokenError ?? 'Could not load secure QR'}
+                  {tokenError?.toLowerCase().includes('sign in') && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="mt-3 h-8 bg-primary text-primary-foreground"
+                      onClick={() => nav('/login')}
+                    >
+                      Sign in
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
