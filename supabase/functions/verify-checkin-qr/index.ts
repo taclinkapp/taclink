@@ -58,18 +58,30 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
+    const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user) {
-      return new Response(JSON.stringify({ ok: false, reason: "Unauthorized" }), {
+    let userId: string | null = null;
+    if (bearer) {
+      try {
+        const { data: claimsData } = await (supabase.auth as any).getClaims?.(bearer) ?? { data: null };
+        if (claimsData?.claims?.sub) userId = claimsData.claims.sub as string;
+      } catch { /* fall through */ }
+    }
+    if (!userId) {
+      const { data: userData } = await supabase.auth.getUser();
+      userId = userData?.user?.id ?? null;
+    }
+    if (!userId) {
+      return new Response(JSON.stringify({ ok: false, reason: "Session expired — please sign in again." }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const { token, courseId } = await req.json().catch(() => ({}));
     if (!token || typeof token !== "string") {

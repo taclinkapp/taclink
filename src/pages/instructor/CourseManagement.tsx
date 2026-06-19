@@ -632,7 +632,7 @@ const CourseManagement = () => {
             // Re-check the DB directly before declaring a wrong-course mismatch
             // so a fresh booking on the correct course isn't rejected.
             if (!match) {
-              const { data: fresh } = await supabase
+              const { data: fresh, error: freshErr } = await supabase
                 .from('bookings')
                 .select('id, status, course_id, student_id, attended_at, profiles:student_id(display_name)')
                 .eq('id', resolvedBookingId)
@@ -640,11 +640,22 @@ const CourseManagement = () => {
               if (fresh && fresh.course_id === id) {
                 match = fresh;
                 qc.invalidateQueries({ queryKey: ['course_bookings', id] });
-              } else {
+              } else if (fresh && fresh.course_id !== id) {
                 setScanOutcome({ kind: 'wrong_course', bookingId: resolvedBookingId });
+                return;
+              } else {
+                // RLS hid the row, or it was deleted. The signed QR was valid
+                // for THIS course, so don't blame the student with "wrong course".
+                setScanOutcome({
+                  kind: 'verification_failed',
+                  reason: freshErr?.message
+                    ? `Could not load booking (${freshErr.message})`
+                    : 'Booking is no longer accessible — try refreshing the roster and scan again',
+                });
                 return;
               }
             }
+
             const studentName = studentNameFor(match);
 
             // Surface unsigned-QR warning before attempting attendance so the

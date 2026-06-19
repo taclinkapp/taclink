@@ -50,20 +50,42 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
+    const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (!bearer) {
+      console.warn("sign-checkin-qr: missing bearer token");
+      return new Response(JSON.stringify({ error: "Missing auth token — please sign in again." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const { data: userData, error: userErr } = await supabase.auth.getUser();
-    if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // getClaims validates the JWT locally (no extra network round-trip), which
+    // avoids transient 401s when the auth API is briefly slow/unreachable.
+    // Fallback to getUser() if claims aren't returned (e.g. legacy HS256 key).
+    let userId: string | null = null;
+    try {
+      const { data: claimsData } = await (supabase.auth as any).getClaims?.(bearer) ?? { data: null };
+      if (claimsData?.claims?.sub) userId = claimsData.claims.sub as string;
+    } catch (e) {
+      console.warn("sign-checkin-qr: getClaims failed", String(e));
     }
-    const userId = userData.user.id;
+    if (!userId) {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData?.user) {
+        console.warn("sign-checkin-qr: auth.getUser failed", userErr?.message);
+        return new Response(JSON.stringify({ error: "Session expired — please sign in again." }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = userData.user.id;
+    }
 
     const { bookingId } = await req.json().catch(() => ({}));
     if (!bookingId || typeof bookingId !== "string") {
@@ -72,6 +94,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // Verify the requesting user owns this booking and load the course day.
     const admin = createClient(
