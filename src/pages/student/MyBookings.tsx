@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { WatermarkedAvatar } from '@/components/WatermarkedAvatar';
 import { getAvatarSrc } from '@/lib/avatar';
 import { HowPaymentsWorkCard } from '@/components/HowPaymentsWorkCard';
-import { CancelGraceBadge } from '@/components/student/CancelGraceBadge';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -192,15 +192,6 @@ const MyBookings = () => {
                     <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{dateLabel}</span>
                     {b.course?.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{b.course.city}</span>}
                   </div>
-                  {tab === 'upcoming' && !isCancelled && (
-                    <div className="mt-1.5">
-                      <CancelGraceBadge
-                        startsAt={startsAt}
-                        bookedAt={b.booked_at}
-                        cutoffHours={b.cancellation_cutoff_hours ?? undefined}
-                      />
-                    </div>
-                  )}
                   {isCancelled && refund && (
                     <div className="mt-2 rounded-sm border border-destructive/30 bg-destructive/5 p-2">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive">
