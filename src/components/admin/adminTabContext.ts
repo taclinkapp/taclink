@@ -24,7 +24,6 @@ const TABS: AdminTabContext[] = [
   { path: '/admin/support', label: 'Support Tickets', purpose: 'Open/closed support tickets from users.' },
   { path: '/admin/activity', label: 'Audit Log', purpose: 'Recent admin actions for compliance and review.' },
   { path: '/admin/flags', label: 'Feature Flags', purpose: 'Toggle feature flags on/off platform-wide.' },
-  { path: '/admin/test-accounts', label: 'Test Accounts', purpose: 'Manage fake onboarding/test accounts for QA.' },
   { path: '/admin/warrior-quotes', label: 'Warrior Quotes', purpose: 'Manage motivational quotes shown across the app.' },
   { path: '/admin/security', label: 'Security', purpose: 'Security posture: keys, sessions, sensitive settings.' },
   { path: '/admin/helcim-webhooks', label: 'Helcim Webhooks', purpose: 'Inspect and replay Helcim payment webhooks.' },

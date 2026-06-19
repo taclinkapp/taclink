@@ -489,7 +489,7 @@ Deno.serve(async (req) => {
     "/admin/moderation", "/admin/deposit-review", "/admin/financials",
     "/admin/fee-overrides", "/admin/refunds", "/admin/bug-triage", "/admin/reliability",
     "/admin/reports", "/admin/feedback", "/admin/support", "/admin/activity",
-    "/admin/flags", "/admin/test-accounts", "/admin/warrior-quotes", "/admin/security",
+    "/admin/flags", "/admin/warrior-quotes", "/admin/security",
     "/admin/helcim-webhooks", "/admin/refund-test", "/admin/uptime",
     "/admin/background-videos", "/admin/subscription-plans", "/admin/settings",
   ];
