@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
     // Pull every booking on this course that could legitimately check in.
     const { data: bookings } = await admin
       .from("bookings")
-      .select("id, status, student_id")
+      .select("id, status, student_id, profiles:student_id(display_name)")
       .eq("course_id", courseId)
       .in("status", ["reserved", "attended"]);
 
@@ -154,8 +154,40 @@ Deno.serve(async (req) => {
     for (const b of bookings) {
       const expected = await codeFor(b.id, day);
       if (expected === cleanCode) {
+        const studentName = (b as any)?.profiles?.display_name ?? null;
+        if (b.status === "attended") {
+          return new Response(
+            JSON.stringify({ ok: true, bookingId: b.id, status: "attended", alreadyAttended: true, studentName }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+          );
+        }
+
+        const { data: updated, error: updateErr } = await admin
+          .from("bookings")
+          .update({ status: "attended", attended_at: new Date().toISOString() })
+          .eq("id", b.id)
+          .eq("course_id", courseId)
+          .eq("status", "reserved")
+          .is("attended_at", null)
+          .select("id, status")
+          .maybeSingle();
+
+        if (updateErr) {
+          return new Response(JSON.stringify({ ok: false, reason: updateErr.message }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         return new Response(
-          JSON.stringify({ ok: true, bookingId: b.id, status: b.status }),
+          JSON.stringify({
+            ok: true,
+            bookingId: b.id,
+            status: updated?.status ?? "attended",
+            checkedIn: !!updated,
+            alreadyAttended: !updated,
+            studentName,
+          }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
         );
       }
