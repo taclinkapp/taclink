@@ -395,7 +395,11 @@ const NewCourse = () => {
       if (typeof d.waiverTitle === 'string' && d.waiverTitle) setWaiverTitle(d.waiverTitle);
       if (typeof d.waiverNotes === 'string') setWaiverNotes(d.waiverNotes);
       if (d.waiverCriteria && typeof d.waiverCriteria === 'object') setWaiverCriteria(d.waiverCriteria);
-      if (typeof d.step === 'number') setStep(d.step);
+      // Intentionally do NOT restore `d.step`. Files (cover photo / gallery)
+      // can't be persisted in localStorage, so jumping straight to a later
+      // step would let the instructor publish without re-picking images and
+      // the course would save with cover_image_url=null. Always restart at
+      // step 0 so the cover-photo guard runs.
       if (d.savedAt) setLastSavedAt(new Date(d.savedAt));
       toast.message('Draft restored', { description: 'Picked up where you left off.' });
     } catch {
@@ -534,6 +538,30 @@ const NewCourse = () => {
     const err = validate();
     if (err) { toast.error(err); return; }
     if (step < 4) { setStep(step + 1); return; }
+    // Final publish guard: re-validate prerequisites that live on earlier
+    // steps so a restored draft or any state drift can't ship a course with
+    // a missing cover photo (which then renders the placeholder for
+    // students). If anything is missing, jump back to the offending step.
+    if (!coverFile && !coverPreview) {
+      toast.error('A cover photo is required so students can recognize your course on the map and listings');
+      setStep(0);
+      return;
+    }
+    if (!title.trim() || !category || !skillLevel || !primaryPillar) {
+      toast.error('Finish the Basics step before publishing');
+      setStep(0);
+      return;
+    }
+    if (!date || !startTime || !endTime || !city || !state) {
+      toast.error('Finish the Schedule step before publishing');
+      setStep(1);
+      return;
+    }
+    if (!capacity || Number(capacity) < 1 || !price || Number(price) < 5) {
+      toast.error('Finish the Pricing step before publishing');
+      setStep(2);
+      return;
+    }
     if (!user) { toast.error('You must be signed in'); return; }
     // Pre-launch: allow saving as draft only. Skip listing-fee/payout guards
     // since nothing is being published or charged yet.
@@ -632,6 +660,16 @@ const NewCourse = () => {
         if (error) throw error;
         created = data;
       } else {
+        if (!coverUrl) {
+          // Defense-in-depth: a brand-new course MUST have a cover photo
+          // uploaded to the bucket. Bail loudly instead of inserting a row
+          // with cover_image_url=null (which then shows the placeholder to
+          // every student).
+          toast.error('Cover photo is missing — please re-pick your cover before publishing.');
+          setSaving(false);
+          setStep(0);
+          return;
+        }
         created = await createCourse(user.id, {
           title: title.trim(),
           description: description.trim() || undefined,
