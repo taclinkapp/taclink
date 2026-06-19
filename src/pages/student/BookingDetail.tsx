@@ -62,6 +62,8 @@ const BookingDetail = () => {
   const [instructor, setInstructor] = useState<{ id: string; display_name: string | null; photo_url: string | null } | null>(null);
   const [signedToken, setSignedToken] = useState<string | null>(null);
   const [tokenExpiresAt, setTokenExpiresAt] = useState<number | null>(null);
+  const [manualCode, setManualCode] = useState<string | null>(null);
+  const [manualCodeAvailableAt, setManualCodeAvailableAt] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [tokenLoading, setTokenLoading] = useState(false);
 
