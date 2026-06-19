@@ -69,6 +69,20 @@ const BookingDetail = () => {
     setTokenLoading(true);
     setTokenError(null);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error('Session expired — please sign in again.');
+      }
+
+      const expiresAtSeconds = sessionData.session.expires_at ?? 0;
+      if (expiresAtSeconds * 1000 < Date.now() + 60_000) {
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          await supabase.auth.signOut({ scope: 'local' });
+          throw new Error('Session expired — please sign in again.');
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('sign-checkin-qr', {
         body: { bookingId },
       });
@@ -84,6 +98,10 @@ const BookingDetail = () => {
             if (body?.error) msg = body.error;
           }
         } catch { /* ignore parse errors */ }
+        if (/session|jwt|auth/i.test(msg)) {
+          await supabase.auth.signOut({ scope: 'local' });
+          msg = 'Session expired — please sign in again.';
+        }
         throw new Error(msg);
       }
       if (!data?.token) throw new Error('No token returned');
@@ -417,6 +435,16 @@ const BookingDetail = () => {
                 <div className="h-[208px] w-[208px] flex flex-col items-center justify-center text-xs text-destructive p-4 text-center">
                   <AlertTriangle className="h-5 w-5 mb-2" />
                   {tokenError ?? 'Could not load secure QR'}
+                  {tokenError?.toLowerCase().includes('sign in') && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="mt-3 h-8 bg-primary text-primary-foreground"
+                      onClick={() => nav('/login')}
+                    >
+                      Sign in
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
