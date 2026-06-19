@@ -186,7 +186,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               'Your previous sign-in expired, so TacLink cleared it. Sign in again to continue.'
             );
           } catch { /* ignore */ }
-          } catch { /* ignore */ }
           forceLocalSignedOut();
           return;
         }
