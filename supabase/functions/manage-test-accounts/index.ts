@@ -22,6 +22,7 @@ type Action =
   | { action: "delete"; id: string }
   | { action: "rotate" }
   | { action: "ensure_backdoor" }
+  | { action: "set_backdoor_password"; password: string }
   | { action: "seed_mock_data" };
 
 // Fixed-credential backdoor accounts: persistent test users that bypass
@@ -1016,8 +1017,60 @@ Deno.serve(async (req) => {
       return json({ ok: true, deleted, created: created.length });
     }
 
+    // Resolve current backdoor password: prefer DB-stored value (rotatable from
+    // admin UI) and fall back to the BACKDOOR_PASSWORD secret as a seed. This
+    // lets admins change the password without redeploying / rotating secrets.
+    async function getCurrentBackdoorPassword(): Promise<string> {
+      const { data } = await admin
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "backdoor_password")
+        .maybeSingle();
+      const stored = (data?.value as { password?: string } | null)?.password;
+      return stored || BACKDOOR_PASSWORD;
+    }
+
+    if (body.action === "set_backdoor_password") {
+      const newPassword = (body as { password?: string }).password ?? "";
+      if (newPassword.length < 10) {
+        return json({ error: "Password must be at least 10 characters." }, 400);
+      }
+      const { data: list, error: listErr } = await admin.auth.admin.listUsers({
+        page: 1,
+        perPage: 200,
+      });
+      if (listErr) throw listErr;
+      const updated: string[] = [];
+      for (const role of ["instructor", "student"] as const) {
+        const cfg = BACKDOOR[role];
+        const existing = list.users.find(
+          (u) => (u.email ?? "").toLowerCase() === cfg.email.toLowerCase(),
+        );
+        if (existing) {
+          const { error: upErr } = await admin.auth.admin.updateUserById(existing.id, {
+            password: newPassword,
+          });
+          if (upErr) throw upErr;
+          updated.push(cfg.email);
+        }
+      }
+      await admin.from("platform_settings").upsert(
+        {
+          key: "backdoor_password",
+          value: { password: newPassword },
+          description: "Current password for the two sign-in-ready backdoor test accounts.",
+          category: "test_accounts",
+          updated_by: userId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" },
+      );
+      return json({ ok: true, updated });
+    }
+
     if (body.action === "ensure_backdoor") {
-      if (!BACKDOOR_PASSWORD) {
+      const CURRENT_PASSWORD = await getCurrentBackdoorPassword();
+      if (!CURRENT_PASSWORD) {
         return json({
           error: "BACKDOOR_PASSWORD secret is not configured. Set it in Supabase Edge Function secrets before using ensure_backdoor.",
         }, 503);
@@ -1045,7 +1098,7 @@ Deno.serve(async (req) => {
         if (existing) {
           userIdForRole = existing.id;
           await admin.auth.admin.updateUserById(existing.id, {
-            password: BACKDOOR_PASSWORD,
+            password: CURRENT_PASSWORD,
             email_confirm: true,
             user_metadata: {
               role,
@@ -1057,7 +1110,7 @@ Deno.serve(async (req) => {
         } else {
           const { data: created, error: createErr } = await admin.auth.admin.createUser({
             email: cfg.email,
-            password: BACKDOOR_PASSWORD,
+            password: CURRENT_PASSWORD,
             email_confirm: true,
             user_metadata: {
               role,
@@ -1117,7 +1170,7 @@ Deno.serve(async (req) => {
           });
         }
 
-        results.push({ role, email: cfg.email, password: BACKDOOR_PASSWORD });
+        results.push({ role, email: cfg.email, password: CURRENT_PASSWORD });
       }
 
       // Auto-seed mock data so the accounts are demo-ready immediately.

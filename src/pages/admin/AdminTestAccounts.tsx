@@ -12,10 +12,12 @@ import {
   KeyRound,
   Loader2,
   LogIn,
+  RefreshCw,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 type BackdoorCred = {
   role: "instructor" | "student";
@@ -53,8 +55,43 @@ export default function AdminTestAccounts() {
     }
   });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [backdoorCreds, setBackdoorCreds] = useState<BackdoorCred[]>([]);
+  const [backdoorCreds, setBackdoorCreds] = useState<BackdoorCred[]>([
+    { role: "instructor", email: "backdoor.instructor@taclink.test", password: "@Algp320796503" },
+    { role: "student", email: "backdoor.student@taclink.test", password: "@Algp320796503" },
+  ]);
   const [backdoorLoading, setBackdoorLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [rotating, setRotating] = useState(false);
+
+  const rotateBackdoorPassword = async () => {
+    if (newPassword.length < 10) {
+      toast.error("Password must be at least 10 characters");
+      return;
+    }
+    setRotating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-test-accounts", {
+        body: { action: "set_backdoor_password", password: newPassword },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      setBackdoorCreds((prev) =>
+        prev.length
+          ? prev.map((c) => ({ ...c, password: newPassword }))
+          : [
+              { role: "instructor", email: "backdoor.instructor@taclink.test", password: newPassword },
+              { role: "student", email: "backdoor.student@taclink.test", password: newPassword },
+            ],
+      );
+      setNewPassword("");
+      toast.success("Backdoor password updated for both accounts");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to update password";
+      toast.error(msg);
+    } finally {
+      setRotating(false);
+    }
+  };
 
   const provisionBackdoor = async () => {
     setBackdoorLoading(true);
@@ -200,6 +237,36 @@ export default function AdminTestAccounts() {
               </table>
             </div>
           )}
+
+          {/* Rotate password */}
+          <div className="rounded border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+            <div className="text-[11px] uppercase tracking-wider font-bold text-amber-500 flex items-center gap-2">
+              <RefreshCw className="h-3 w-3" />
+              Change password (both accounts)
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Updates the password on both backdoor accounts immediately and stores it so future
+              re-provisions keep this value. Minimum 10 characters.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                type="text"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password (10+ chars)"
+                className="font-mono text-xs"
+                autoComplete="off"
+              />
+              <Button
+                onClick={rotateBackdoorPassword}
+                disabled={rotating || newPassword.length < 10}
+                className="bg-amber-500 text-black hover:bg-amber-400 whitespace-nowrap"
+              >
+                {rotating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Update password
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="tactical-card p-4 sm:p-5 space-y-3 border-primary/40">
